@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chiki Monsters — Welcome to Chikoria</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800;900&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{--gold:#ffd34d;--ink:#2a1a08;}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;overflow:hidden;background:#061426;font-family:'Nunito',system-ui,sans-serif;color:#fff}
+  a{color:inherit;text-decoration:none}
+  #hero{position:fixed;inset:0;background:url("homepage-hero.png") center center/cover no-repeat;transition:opacity .6s}
+
+  /* ---- image tab bar ---- */
+  #tabbar{position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:30;
+    display:flex;gap:0.8vw;align-items:center;justify-content:center;filter:drop-shadow(0 6px 12px rgba(0,0,0,.4))}
+  .mtab{height:clamp(34px,4.4vw,60px);width:auto;cursor:pointer;
+    transition:transform .07s ease,filter .07s ease;-webkit-user-drag:none;user-select:none}
+  .mtab:hover{transform:scale(1.05)}
+  .mtab:active{transform:scale(.93)}
+  .mtab.active{filter:brightness(1.12) drop-shadow(0 0 9px rgba(255,233,120,.92))}
+  /* accurate pointer arrow under the active tab */
+  #pointer{position:fixed;z-index:31;width:0;height:0;border-left:11px solid transparent;border-right:11px solid transparent;
+    border-top:14px solid var(--gold);filter:drop-shadow(0 3px 3px rgba(0,0,0,.5));
+    opacity:0;transition:left .28s cubic-bezier(.34,1.56,.64,1),opacity .2s;pointer-events:none}
+  #pointer.show{opacity:1;animation:bobp 1s ease-in-out infinite}
+  @keyframes bobp{50%{transform:translate(-50%,4px)}}
+
+  /* ---- hero play button ---- */
+  #playBtn{position:absolute;left:calc(50% - 1.4vw);top:0;width:min(280px,29vw);cursor:pointer;transform:translate(-50%,-50%);
+    filter:drop-shadow(0 8px 16px rgba(0,0,0,.5));transition:filter .15s,opacity .5s;animation:throb 1.8s ease-in-out infinite;z-index:10}
+  #playBtn:hover{animation:none;transform:translate(-50%,-50%) scale(1.06)}
+  #playBtn:active{transform:translate(-50%,-50%) scale(.96)}
+  @keyframes throb{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.03)}}
+
+  /* ---- panels ---- */
+  .panel{position:fixed;left:50%;top:50%;transform:translate(-50%,calc(-50% - 12px));z-index:25;
+    width:min(820px,92vw);max-height:calc(100vh - 160px);overflow-y:auto;
+    background:rgba(8,18,34,.97);border:3px solid var(--gold);border-radius:18px;
+    box-shadow:0 24px 70px rgba(0,0,0,.7);padding:26px 30px;opacity:0;pointer-events:none;transition:.25s}
+  .panel.show{opacity:1;pointer-events:auto;transform:translate(-50%,-50%);animation:popin .3s ease}
+  @keyframes popin{0%{transform:translate(-50%,calc(-50% - 12px)) scale(.96)}100%{transform:translate(-50%,-50%) scale(1)}}
+  .panel h2{font-family:'Baloo 2';font-size:26px;color:var(--gold);margin-bottom:6px}
+  .panel h3{font-family:'Baloo 2';font-size:16px;color:#9fd0ff;margin:16px 0 6px}
+  .panel p,.panel li{font-size:14.5px;line-height:1.6;color:#dce8fa}
+  .panel ul{margin:6px 0 6px 20px}
+  .panel .x{position:absolute;top:14px;right:18px;font-size:20px;color:#9fb6d8;cursor:pointer}
+  .panel .x:hover{color:#fff}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:10px}
+  .card{background:#0d2142;border:1px solid #29476f;border-radius:12px;padding:12px;font-size:13.5px}
+  .card b{color:var(--gold)}
+  .dex{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-top:10px}
+  .dex div{background:#0d2142;border:1px solid #29476f;border-radius:10px;padding:10px;text-align:center}
+  .dex .e{font-size:26px}.dex strong{display:block;font-family:'Baloo 2';margin-top:4px}.dex span{font-size:11px;color:#9fb6d8}
+  .note{font-size:12px;color:#90a6c8;margin-top:14px}
+  #tokimg{width:100%;border-radius:12px;border:1px solid #29476f;margin-top:6px;display:block}
+
+  .fading{opacity:0 !important;pointer-events:none}
+  body.intro #hero,body.intro #tabbar,body.intro .panel,body.intro #pointer{opacity:0;pointer-events:none}
+  #introVid{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;background:#000;display:none;z-index:50}
+  body.intro #introVid{display:block}
+  #skipHint{position:fixed;right:22px;bottom:18px;z-index:51;display:none;font-family:'Baloo 2';font-weight:800;font-size:13px;
+    color:rgba(255,255,255,.85);background:rgba(0,0,0,.45);padding:7px 16px;border-radius:999px;border:1px solid rgba(255,255,255,.3);cursor:pointer}
+  body.intro #skipHint{display:block}
+  #gameFrame{position:fixed;inset:0;width:100%;height:100%;border:0;display:none;background:#061426}
+  body.playing #hero,body.playing #tabbar,body.playing #introVid,body.playing #skipHint,body.playing .panel,body.playing #pointer{display:none}
+  body.playing #gameFrame{display:block}
+  ::-webkit-scrollbar{width:9px}::-webkit-scrollbar-thumb{background:#29476f;border-radius:5px}
+  /* ChikiDex 3D viewer */
+  #dexViewer{position:relative;width:100%;height:clamp(220px,32vh,300px);margin-top:12px;border:1px solid #29476f;border-radius:14px;overflow:hidden;
+    background:radial-gradient(circle at 50% 32%,#173255,#0a1830 75%)}
+  #dexCanvas{width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+  #dexCanvas:active{cursor:grabbing}
+  #dexName{position:absolute;top:10px;left:14px;font-family:'Baloo 2';font-weight:800;font-size:18px;color:var(--gold);text-shadow:0 2px 4px rgba(0,0,0,.6)}
+  #dexHint{position:absolute;bottom:8px;right:12px;font-size:11px;color:#9fb6d8}
+  .dex div{cursor:pointer;transition:transform .08s,border-color .08s}
+  .dex div:hover{transform:translateY(-2px)}
+  .dex div.sel{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold)}
+</style>
+</head>
+<body>
+<div id="hero">
+  <img id="playBtn" src="play-now.png" alt="PLAY NOW" onerror="this.style.display='none'">
+</div>
+
+<!-- ===== image tab bar (Main Tab Bar.png) with accurate click zones ===== -->
+<div id="tabbar">
+  <img class="mtab" data-tab="about"     src="ui/mt-about.png"     alt="About">
+  <img class="mtab" data-tab="chikis"    src="ui/mt-chikis.png"    alt="ChikiDex">
+  <img class="mtab" data-tab="play2"     src="ui/mt-play2.png"     alt="How to Play">
+  <img class="mtab" data-tab="regions"   src="ui/mt-regions.png"   alt="Regions">
+  <img class="mtab" data-tab="token"     src="ui/mt-token.png"     alt="$CHIKI">
+  <img class="mtab" data-tab="community" src="ui/mt-community.png" alt="Community">
+</div>
+<div id="pointer"></div>
+
+<!-- ===== PANELS ===== -->
+<div class="panel" id="p-about">
+  <span class="x" data-close>✕</span>
+  <h2>ⓘ Welcome to Chikoria</h2>
+  <p>Chiki Monsters is a 3D voxel world tied to the <b>$CHIKI</b> token. Every wallet holding at least
+  <b>500,000 $CHIKI</b> automatically receives a Chiki — a creature that lives in Chikoria, explores, works,
+  evolves, and earns <b>real SOL</b> for its holder. You watch it adventure, name it, level it up, and collect.</p>
+  <div class="grid">
+    <div class="card"><b>🐣 Hold to Play</b><br>Hold $CHIKI and your Chiki hatches automatically — no minting.</div>
+    <div class="card"><b>⚒ Auto-Adventure</b><br>It roams, fishes, mines and harvests — 24/7.</div>
+    <div class="card"><b>💰 Earn SOL</b><br>Every task it finishes pays a share of the creator-fee pool.</div>
+    <div class="card"><b>🌟 Level Up</b><br>Train your Chiki as it works and earns — more forms coming soon.</div>
+  </div>
+  <p class="note">Demo build — wallet, fees and payouts are simulated until the token launches.</p>
+</div>
+
+<div class="panel" id="p-chikis">
+  <span class="x" data-close>✕</span>
+  <h2>🐾 Ground-Zero Generation</h2>
+  <p>Ten elemental Chiki lines roam Chikoria, each with its own habitat. Tap a Chiki below, then <b>drag the model to rotate it</b> in 3D.</p>
+  <div id="dexViewer"><canvas id="dexCanvas"></canvas><div id="dexName">Mushrow</div><div id="dexHint">drag to rotate</div></div>
+  <div class="dex" id="dexGrid">
+    <div><div class="e">🌿</div><strong>Mushrow</strong><span>Plant</span></div>
+    <div><div class="e">⚡</div><strong>Electrox</strong><span>Lightning</span></div>
+    <div><div class="e">💧</div><strong>Jellox</strong><span>Ocean</span></div>
+    <div><div class="e">🔥</div><strong>Firix</strong><span>Flame</span></div>
+    <div><div class="e">🦉</div><strong>Owzard</strong><span>Ice</span></div>
+    <div><div class="e">🌲</div><strong>Forestle</strong><span>Mountain</span></div>
+    <div><div class="e">🌙</div><strong>Drolax</strong><span>Shadow</span></div>
+    <div><div class="e">💎</div><strong>Healix</strong><span>Crystal</span></div>
+    <div><div class="e">☁️</div><strong>Solarix</strong><span>Wind</span></div>
+    <div><div class="e">🦂</div><strong>Scorplex</strong><span>Cosmic</span></div>
+  </div>
+</div>
+
+<div class="panel" id="p-play2">
+  <span class="x" data-close>✕</span>
+  <h2>🎮 How to Play</h2>
+  <ul>
+    <li><b>Connect your wallet</b> in-game (top right). Hold ≥500k $CHIKI and your Chiki appears with a <b>YOU</b> marker.</li>
+    <li><b>Open My Chiki</b> for your personal stats: level, XP, stamina, earnings and achievements.</li>
+    <li><b>Name your Chiki</b> — your custom name is saved to your wallet.</li>
+    <li><b>Press Track</b> to follow your Chiki, or roam Chikoria freely (drag to orbit, scroll to zoom, WASD to move).</li>
+    <li><b>Level up</b> with $CHIKI or SOL — bigger stamina, shorter sleep, and evolutions that boost rare-task odds.</li>
+  </ul>
+  <h3>Tasks &amp; rewards</h3>
+  <p>12 timed tasks ranked from common to legendary — the rarer the task, the bigger the SOL payout (and the longer it
+  takes, from 1 minute up to 30). Watch for Treasure Storms (×2 payouts) and Shiny Hours.</p>
+</div>
+
+<div class="panel" id="p-regions">
+  <span class="x" data-close>✕</span>
+  <h2>🗺 The Regions of Chikoria</h2>
+  <div class="grid">
+    <div class="card"><b>🌸 Bloomvale Province</b><br>Spring forests, flower fields, berry bushes &amp; the village.</div>
+    <div class="card"><b>☀️ Solara Highlands</b><br>Relic digs, oasis fishing &amp; the Legendary Summit.</div>
+    <div class="card"><b>🍂 Amberwood Frontier</b><br>Autumn groves, the wheat farm &amp; barn.</div>
+    <div class="card"><b>❄️ Frostveil Peaks</b><br>Ice-lake fishing, frost caves &amp; aurora meadows.</div>
+    <div class="card"><b>🌙 Moonshade Wilds</b><br>Twilight grass, glowing mushrooms &amp; the stone circle.</div>
+    <div class="card"><b>🌋 Embercore Volcano</b><br>A lava island — Chikis keep their distance.</div>
+    <div class="card"><b>💎 Crystal Caverns</b><br>Torch-lit caves ringed with glowing crystals.</div>
+    <div class="card"><b>☁️ Nimbus Isles</b><br>Floating sky islands watched by circling birds.</div>
+  </div>
+  <p class="note">Chikis roam freely — even up the mountains — but avoid water, trees, the sea and the volcano.</p>
+</div>
+
+<div class="panel" id="p-token">
+  <span class="x" data-close>✕</span>
+  <h2>💎 $CHIKI Tokenomics</h2>
+  <img id="tokimg" src="ui/tokenomics.png" alt="Tokenomics infographic" onerror="this.style.display='none'">
+  <p class="note">Holder threshold: 500,000 $CHIKI · whales with 1M+ get a second Chiki · every upgrade splits 25% burn / 25% reward pool / 50% team.</p>
+</div>
+
+<div class="panel" id="p-community">
+  <span class="x" data-close>✕</span>
+  <h2>💬 Join the Community</h2>
+  <p>Catch 'em! Train 'em! Bond forever! Follow Chiki Monsters and become a Chiki Master.</p>
+  <div class="grid">
+    <div class="card"><b>𝕏 / Twitter</b><br>@CHIKIMONSTERS</div>
+    <div class="card"><b>Discord</b><br>Chikoria Server</div>
+  </div>
+  <p class="note">Replace these with your real links before launch.</p>
+</div>
+
+<video id="introVid" src="intro.mp4" playsinline preload="auto"></video>
+<div id="skipHint">Skip ▶</div>
+<iframe id="gameFrame" title="Chiki Monsters" allow="clipboard-write"></iframe>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="models.js"></script>
+<script>
+(function(){
+  var btn=document.getElementById("playBtn"),vid=document.getElementById("introVid"),
+      frame=document.getElementById("gameFrame"),skip=document.getElementById("skipHint"),
+      bar=document.getElementById("tabbar"),ptr=document.getElementById("pointer"),done=false;
+  var zones=[].slice.call(document.querySelectorAll(".mtab"));
+  function closeAll(){zones.forEach(z=>z.classList.remove("active"));
+    document.querySelectorAll(".panel.show").forEach(p=>p.classList.remove("show"));
+    ptr.classList.remove("show");}
+  function movePointer(z){
+    var r=z.getBoundingClientRect();
+    ptr.style.left=(r.left+r.width/2)+"px";
+    ptr.style.top=(r.bottom+2)+"px";
+    ptr.classList.add("show");
+  }
+  zones.forEach(function(z){
+    z.onclick=function(){
+      var id="p-"+z.dataset.tab, was=document.getElementById(id).classList.contains("show");
+      closeAll();
+      z.classList.remove("punch");void z.offsetWidth;z.classList.add("punch");  /* click bounce */
+      if(!was){z.classList.add("active");document.getElementById(id).classList.add("show");movePointer(z);}
+    };
+  });
+  document.querySelectorAll("[data-close]").forEach(x=>x.onclick=closeAll);
+  addEventListener("resize",function(){var a=document.querySelector(".mtab.active");if(a)movePointer(a);});
+
+  function toGame(){if(done)return;done=true;try{vid.pause();}catch(e){}
+    document.body.classList.remove("intro");document.body.classList.add("playing");}
+  function start(){
+    closeAll();
+    btn.classList.add("fading");
+    if(!frame.src)frame.src="play.html?embed=1";
+    setTimeout(function(){document.body.classList.add("intro");
+      var p=vid.play();if(p&&p.catch)p.catch(toGame);},450);
+    vid.onended=toGame;vid.onerror=toGame;skip.onclick=toGame;vid.onclick=toGame;
+  }
+  btn.onclick=start;
+
+  var QUOTE_Y=0.74, probe=new Image();
+  function place(){if(!probe.naturalWidth)return;
+    var vw=innerWidth,vh=innerHeight,iw=probe.naturalWidth,ih=probe.naturalHeight;
+    var s=Math.max(vw/iw,vh/ih),yOff=(vh-ih*s)/2;
+    btn.style.top=(yOff+QUOTE_Y*ih*s)+"px";}
+  probe.onload=place;probe.src="homepage-hero.png";addEventListener("resize",place);
+})();
+</script>
+<script>
+/* ChikiDex 3D viewer — rotate each Chiki */
+(function(){
+  const NAMES=["Mushrow","Electrox","Jellox","Firix","Owzard","Forestle","Drolax","Healix","Solarix","Scorplex"];
+  let renderer,scene,camera,current,rot=0,drag=false,lastX=0,inited=false;const cache={};
+  function b64(s){const b=atob(s),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u.buffer;}
+  function init(){
+    if(inited||typeof THREE==="undefined")return;inited=true;
+    const cv=document.getElementById("dexCanvas");
+    renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true});
+    renderer.setPixelRatio(Math.min(2,devicePixelRatio||1));
+    scene=new THREE.Scene();
+    camera=new THREE.PerspectiveCamera(40,1,0.1,2000);camera.position.set(0,26,92);camera.lookAt(0,18,0);
+    scene.add(new THREE.HemisphereLight(0xffffff,0x33425e,1.15));
+    const dl=new THREE.DirectionalLight(0xffffff,0.95);dl.position.set(50,70,40);scene.add(dl);
+    cv.addEventListener("pointerdown",e=>{drag=true;lastX=e.clientX;try{cv.setPointerCapture(e.pointerId);}catch(_){}}); 
+    cv.addEventListener("pointermove",e=>{if(drag){rot+=(e.clientX-lastX)*0.012;lastX=e.clientX;}});
+    addEventListener("pointerup",()=>drag=false);
+    resize();addEventListener("resize",resize);animate();
+  }
+  function resize(){if(!renderer)return;const cv=renderer.domElement,w=cv.clientWidth||320,h=cv.clientHeight||260;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
+  function setModel(m){if(current)scene.remove(current);current=m;scene.add(m);}
+  function load(i){
+    if(!window.BUILTIN_GLB||!window.BUILTIN_GLB[i]||typeof THREE.GLTFLoader==="undefined")return;
+    const nm=document.getElementById("dexName");if(nm)nm.textContent=NAMES[i]||"";
+    if(cache[i]){setModel(cache[i]);return;}
+    try{new THREE.GLTFLoader().parse(b64(window.BUILTIN_GLB[i]),"",gltf=>{
+      const root=gltf.scene,box=new THREE.Box3().setFromObject(root),sz=new THREE.Vector3();box.getSize(sz);
+      const ctr=new THREE.Vector3();box.getCenter(ctr),k=40/Math.max(0.001,sz.y);
+      root.position.set(-ctr.x,-box.min.y,-ctr.z);
+      const w=new THREE.Group();w.add(root);w.scale.setScalar(k);
+      cache[i]=w;setModel(w);
+    },()=>{});}catch(e){}
+  }
+  function animate(){requestAnimationFrame(animate);if(current&&!drag)rot+=0.006;if(current)current.rotation.y=rot;if(renderer)renderer.render(scene,camera);}
+  const grid=document.getElementById("dexGrid"),panel=document.getElementById("p-chikis");
+  if(grid){[...grid.children].forEach((it,i)=>{it.onclick=()=>{init();load(i);[...grid.children].forEach(x=>x.classList.remove("sel"));it.classList.add("sel");};});}
+  if(panel){new MutationObserver(()=>{if(panel.classList.contains("show")){init();setTimeout(()=>{resize();if(!current){load(0);const f=grid&&grid.children[0];if(f)f.classList.add("sel");}},80);}}).observe(panel,{attributes:true,attributeFilter:["class"]});}
+})();
+</script>
+</body>
+</html>
