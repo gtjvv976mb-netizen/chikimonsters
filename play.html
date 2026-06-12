@@ -1605,7 +1605,15 @@ async function backendClaim(){
     else addFeed("⚠️ Claim: "+(j.error||"nothing to claim yet"));
   }catch(e){addFeed("⚠️ Claim failed: "+(e.message||e));}
 }
+const inIframe=(function(){try{return window.self!==window.top;}catch(e){return true;}})();
 async function connectPhantom(){
+  /* Phantom can't reliably inject/connect inside an iframe — promote to a full top-level window first */
+  if(inIframe){
+    addFeed("👻 Opening the full game window so Phantom can connect…");
+    const url=location.href.replace(/\?.*$/,"")+"?connect=1";
+    try{window.top.location.href=url;return;}catch(e){}
+    try{window.open(url,"_blank","noopener");return;}catch(e){}
+  }
   const prov=window.solana||((window.phantom||{}).solana);
   if(!prov||!prov.isPhantom){
     addFeed("👻 Phantom not found — install it from <b>phantom.app</b>, or use a demo wallet meanwhile.");
@@ -1684,12 +1692,53 @@ async function pollPresence(){if(!CHAIN.BACKEND)return;try{const r=await fetch(C
 async function pingPresence(){
   if(!CHAIN.BACKEND)return;
   if(!player||!player.pk)return pollPresence();
-  try{const r=await fetch(CHAIN.BACKEND+"/presence",{method:"POST",headers:{"content-type":"application/json"},
-    body:JSON.stringify({wallet:player.pk,chikis:(typeof myChikis==="function"?myChikis().length:1)})});_setLive(await r.json());}
-  catch(e){pollPresence();}
+  try{
+    const mine=(typeof myChikis==="function")?myChikis():[];
+    const r=await fetch(CHAIN.BACKEND+"/presence",{method:"POST",headers:{"content-type":"application/json"},
+      body:JSON.stringify({wallet:player.pk,chikis:mine.length,roster:mine.map(c=>({sp:SPECIES.indexOf(c.sp),level:c.level}))})});
+    _setLive(await r.json());
+  }catch(e){pollPresence();}
 }
 pollPresence();
 setInterval(()=>{(player&&player.pk)?pingPresence():pollPresence();},25000);
+
+/* ===== Live shared world: render other online players' Chikis as nameless roamers ===== */
+const ghostMap=new Map();        /* "wallet#i" -> ghost creature */
+const ghostHolders=new Map();
+function ghostHolder(wallet){
+  let h=ghostHolders.get(wallet);
+  if(!h){const short=wallet.length>8?wallet.slice(0,4)+"…"+wallet.slice(-4):wallet;
+    h={addr:short,pk:wallet,bal:MIN_HOLD,sol:0,eligible:true,earned:0,creature:null,ghost:true};
+    ghostHolders.set(wallet,h);}
+  return h;
+}
+function despawnGhost(c){
+  if(typeof freeSpot==="function")freeSpot(c);
+  const i=creatures.indexOf(c);if(i>=0)creatures.splice(i,1);
+  if(c.mixer){try{c.mixer.stopAllAction();}catch(e){}}
+  if(c.mesh)chikiRoot.remove(c.mesh);
+  if(c.fx)["bar","zzz","emoji","name","bubble","beam","boat"].forEach(k=>{const o=c.fx[k];if(o&&o.parent)o.parent.remove(o);});
+}
+function clearGhosts(){for(const c of ghostMap.values())despawnGhost(c);ghostMap.clear();}
+async function fetchWorld(){
+  if(!CHAIN.BACKEND||!player)return;
+  try{
+    const r=await fetch(CHAIN.BACKEND+"/world?cap=40&exclude="+encodeURIComponent(player.pk||""),{cache:"no-store"});
+    const j=await r.json();const list=(j&&j.chikis)||[];
+    const desired=new Map(),perW={};
+    list.forEach(e=>{const i=(perW[e.wallet]=(perW[e.wallet]||0));perW[e.wallet]++;desired.set(e.wallet+"#"+i,e);});
+    for(const [key,c] of ghostMap){if(!desired.has(key)){despawnGhost(c);ghostMap.delete(key);}}
+    let count=ghostMap.size;
+    for(const [key,e] of desired){
+      if(ghostMap.has(key)){const c=ghostMap.get(key);const want=Math.max(1,e.level||1);
+        if(c.level!==want){const st=stageOf(c.level);c.level=want;if(stageOf(want)!==st&&typeof rebuildChiki==="function")rebuildChiki(c);}continue;}
+      if(count>=40)break;
+      const c=spawnCreature(ghostHolder(e.wallet),Math.max(1,e.level||1),(e.sp|0)%SPECIES.length);
+      c.ghost=true;ghostMap.set(key,c);count++;
+    }
+  }catch(e){}
+}
+setInterval(fetchWorld,12000);
 
 /* autosave the connected wallet's Chikis + progress so a refresh never resets them */
 setInterval(()=>{if(player&&player.pk)saveProfile(player);},8000);
@@ -1700,6 +1749,7 @@ document.getElementById("btnWallet").onclick=()=>{
   if(player){
     addFeed(`👛 ${player.addr} disconnected.`);
     player=null;followMode=false;
+    if(typeof clearGhosts==="function")clearGhosts();
     const bw=document.getElementById("btnWallet");
     bw.textContent="👛 Connect Wallet";bw.classList.add("primary");
     document.getElementById("btnMyFloat").style.display="none";
@@ -1732,6 +1782,7 @@ function loginAs(h){
   closePop("lbPop");
   refreshUI();
   if(typeof pingPresence==="function")pingPresence();   /* announce we're online now */
+  if(typeof fetchWorld==="function")fetchWorld();        /* pull in other online players' Chikis */
   startOnboarding();
 }
 function setFollow(on){
@@ -2902,6 +2953,12 @@ scene.add(new THREE.Points(aGeo,new THREE.PointsMaterial({size:5,vertexColors:tr
 /* ================= SIM ================= */
 function tickCreature(c,dt){
   c.bob+=dt*5;
+  if(c.ghost){                       /* other players' Chikis — cosmetic roaming, no economy/feed */
+    if((c.vx===0&&c.vy===0)||Math.random()<dt*0.6)steerClear(c);
+    if(!wanderClear(c.x+c.vx*dt*5,c.y+c.vy*dt*5)||creatureAhead(c))steerClear(c);
+    if(!moveWith(c,c.vx*dt,c.vy*dt))steerClear(c);
+    return;
+  }
   if(c.state==="sleeping"){
     if(c.hungry)return;                       /* won't wake until its master feeds it */
     c.sleepT-=dt;
@@ -3578,6 +3635,7 @@ function installModel(i,list){
     splash.classList.add("hide");
     document.body.classList.remove("pre");
     if(window.__startMusic)window.__startMusic();
+    if(/[?&]connect=1/.test(location.search)){const md=document.getElementById("walletModal");if(md)md.classList.add("show");}
     setTimeout(()=>{if(splash.parentNode)splash.parentNode.removeChild(splash);},900);
   };
   const eb=document.getElementById("enterBtn");

@@ -88,18 +88,30 @@ function pgStore() {
       await pool.query(`ALTER TABLE players ADD COLUMN IF NOT EXISTS profile JSONB`);
       await pool.query(`CREATE TABLE IF NOT EXISTS presence(
         wallet TEXT PRIMARY KEY, last_active BIGINT NOT NULL, chikis INT NOT NULL DEFAULT 1)`);
+      await pool.query(`ALTER TABLE presence ADD COLUMN IF NOT EXISTS roster JSONB`);
     },
-    async heartbeat(wallet, chikis) {
+    async heartbeat(wallet, chikis, roster) {
       await pool.query(
-        `INSERT INTO presence(wallet,last_active,chikis) VALUES($1,$2::bigint,$3)
-         ON CONFLICT(wallet) DO UPDATE SET last_active=$2::bigint, chikis=$3`,
-        [wallet, Date.now(), Math.max(0, chikis | 0)]);
+        `INSERT INTO presence(wallet,last_active,chikis,roster) VALUES($1,$2::bigint,$3,$4::jsonb)
+         ON CONFLICT(wallet) DO UPDATE SET last_active=$2::bigint, chikis=$3, roster=$4::jsonb`,
+        [wallet, Date.now(), Math.max(0, chikis | 0), JSON.stringify(Array.isArray(roster) ? roster.slice(0, 8) : [])]);
     },
     async presence(windowMs) {
       const r = await pool.query(
         `SELECT COUNT(*)::int a, COALESCE(SUM(chikis),0)::int c FROM presence WHERE last_active > $1`,
         [Date.now() - windowMs]);
       return { activeUsers: r.rows[0].a, chikimons: r.rows[0].c };
+    },
+    async world(windowMs, exclude, cap) {
+      const r = await pool.query(
+        `SELECT wallet, roster FROM presence WHERE last_active > $1 AND wallet <> $2 ORDER BY last_active DESC`,
+        [Date.now() - windowMs, exclude || ""]);
+      const out = [];
+      for (const row of r.rows) for (const e of (row.roster || [])) {
+        out.push({ wallet: row.wallet, sp: e.sp | 0, level: e.level | 0 });
+        if (out.length >= cap) return out;
+      }
+      return out;
     },
     async getProfile(wallet) {
       const r = await pool.query(`SELECT profile FROM players WHERE wallet=$1`, [wallet]);
@@ -172,11 +184,19 @@ function memStore() {
       const p = get(wallet) || { wallet, first_seen: now, last_claim: now - 60000, lifetime_paid: 0 };
       p.profile = profile; players.set(wallet, p);
     },
-    async heartbeat(wallet, chikis) { presenceMap.set(wallet, { t: Date.now(), chikis: Math.max(0, chikis | 0) }); },
+    async heartbeat(wallet, chikis, roster) { presenceMap.set(wallet, { t: Date.now(), chikis: Math.max(0, chikis | 0), roster: Array.isArray(roster) ? roster.slice(0, 8) : [] }); },
     async presence(windowMs) {
       const cut = Date.now() - windowMs; let a = 0, c = 0;
       for (const v of presenceMap.values()) if (v.t > cut) { a++; c += v.chikis; }
       return { activeUsers: a, chikimons: c };
+    },
+    async world(windowMs, exclude, cap) {
+      const cut = Date.now() - windowMs; const out = [];
+      for (const [wallet, v] of presenceMap) {
+        if (v.t <= cut || wallet === exclude) continue;
+        for (const e of (v.roster || [])) { out.push({ wallet, sp: e.sp | 0, level: e.level | 0 }); if (out.length >= cap) return out; }
+      }
+      return out;
     },
     async dailyTotal() {
       const cut = Date.now() - 86_400_000;
@@ -257,11 +277,16 @@ const PRESENCE_WINDOW = 120000;   // a wallet counts as "online" for 2 min after
 app.post("/presence", async (req, res) => {
   const wallet = req.body?.wallet;
   if (!wallet || !isPubkey(wallet)) return res.status(400).json({ error: "valid 'wallet' required" });
-  try { await store.heartbeat(wallet, Number(req.body?.chikis) || 1); res.json(await store.presence(PRESENCE_WINDOW)); }
+  try { await store.heartbeat(wallet, Number(req.body?.chikis) || 1, req.body?.roster); res.json(await store.presence(PRESENCE_WINDOW)); }
   catch (e) { res.status(500).json({ error: String(e.message || e) }); }
 });
 app.get("/presence", async (_q, res) => {
   try { res.json(await store.presence(PRESENCE_WINDOW)); }
+  catch (e) { res.status(500).json({ error: String(e.message || e) }); }
+});
+// Roster of other online players' chikis, so each client can render a live, shared world.
+app.get("/world", async (req, res) => {
+  try { res.json({ chikis: await store.world(PRESENCE_WINDOW, req.query?.exclude || "", Math.min(60, Number(req.query?.cap) || 40)) }); }
   catch (e) { res.status(500).json({ error: String(e.message || e) }); }
 });
 
