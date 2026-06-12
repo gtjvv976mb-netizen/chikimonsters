@@ -923,6 +923,27 @@ function spawnCreature(h,lvl,spIdx){
   if(typeof scene!=="undefined")attachChiki(c);
   return c;
 }
+/* ---- per-wallet persistence: remember a holder's exact Chikis + progress ---- */
+function profileKey(pk){return "chikiProfile_"+pk;}
+function saveProfile(h){
+  if(!h||!h.pk)return;
+  try{
+    const mine=creatures.filter(c=>c.holder===h);
+    const data={pk:h.pk,bal:h.bal,sol:h.sol,earned:h.earned||0,
+      chikis:mine.map(c=>({sp:SPECIES.indexOf(c.sp),level:c.level,tasksDone:c.tasksDone||0,nick:c.nick||null}))};
+    localStorage.setItem(profileKey(h.pk),JSON.stringify(data));
+    if(CHAIN.BACKEND)fetch(CHAIN.BACKEND+"/profile",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:h.pk,profile:data})}).catch(()=>{});
+  }catch(e){}
+}
+function loadProfile(pk){try{const s=localStorage.getItem(profileKey(pk));return s?JSON.parse(s):null;}catch(e){return null;}}
+function restoreChikis(h,saved){
+  (saved.chikis||[]).forEach(cd=>{
+    const idx=(cd.sp>=0?cd.sp:ri(0,SPECIES.length-1));
+    const c=spawnCreature(h,Math.max(1,cd.level||1),idx);
+    c.tasksDone=cd.tasksDone||0;
+    if(cd.nick)c.nick=cd.nick;
+  });
+}
 const nameOf=c=>c.nick||c.sp.names[stageOf(c.level)-1];
 const QUIPS=["hi! ✋","☀️ nice day","🐟 fish soon?","best valley ever","⭐ legend someday","sniff sniff…","🍓 yum","race ya!","brb, work","💎 shiny dreams"];
 
@@ -1430,12 +1451,13 @@ async function connectPhantom(){
     const pk=res.publicKey.toString();
     const short=pk.slice(0,4)+"…"+pk.slice(-4);
     addFeed(`👻 Phantom connected: <b>${short}</b> — checking balance…`);
-    let bal,solBal=0;
+    let bal,solBal=0,serverProfile=null;
     if(CHAIN.BACKEND){
       const v=await backendVerify(pk);
       if(v){
         if(!v.eligible){addFeed(`⚠️ <b>${short}</b> holds ${(v.balance||0).toLocaleString()} $CHIKI — below the ${MIN_HOLD.toLocaleString()} threshold. Top up to receive your Chiki!`);modal.classList.remove("show");openPop("feedPop");return;}
         bal=Math.max(Math.floor(v.balance||0),MIN_HOLD);
+        serverProfile=v.profile||null;
         addFeed(`🔗 Verified via backend — eligible (${(v.balance||0).toLocaleString()} $CHIKI).`);
       }else addFeed("⚠️ Backend unreachable — using a direct on-chain check.");
     }
@@ -1463,10 +1485,21 @@ async function connectPhantom(){
     if(!h){
       h={addr:short,pk,bal,sol:+solBal.toFixed(3),eligible:true,earned:0,creature:null,live:true};
       holders.push(h);
-      assignChikis(h, bal>=1_000_000?2:1);
-      addFeed(`🎉 <b>${short}</b> entered Chikoria with ${bal.toLocaleString()} $CHIKI${bal>=1e6?" — whale perk: TWO Chikis!":""}`);
+      const saved=(serverProfile&&serverProfile.chikis&&serverProfile.chikis.length)?serverProfile:loadProfile(pk);
+      if(saved&&saved.chikis&&saved.chikis.length){
+        h.earned=saved.earned||0;
+        restoreChikis(h,saved);
+        if(typeof ensureSpots==="function")ensureSpots();
+        saveProfile(h);  /* mirror server profile back into localStorage */
+        addFeed(`🔁 Welcome back <b>${short}</b> — your ${saved.chikis.length>1?"Chikis":"Chiki"} and progress were restored.`);
+      }else{
+        assignChikis(h, bal>=1_000_000?2:1);
+        saveProfile(h);
+        addFeed(`🎉 <b>${short}</b> entered Chikoria with ${bal.toLocaleString()} $CHIKI${bal>=1e6?" — whale perk: TWO Chikis!":""}`);
+      }
     }else h.bal=bal;
     loginAs(h);
+    saveProfile(h);
   }catch(e){
     addFeed("⚠️ Phantom connection failed: "+(e.message||e));
   }
@@ -1477,6 +1510,10 @@ function connectOther(){
   addFeed(`🔗 Connected a SOL-compatible wallet <b>${h.addr}</b> — your Chiki hatched!`);
   loginAs(h);
 }
+/* autosave the connected wallet's Chikis + progress so a refresh never resets them */
+setInterval(()=>{if(player&&player.pk)saveProfile(player);},8000);
+addEventListener("beforeunload",()=>{if(player&&player.pk)saveProfile(player);});
+addEventListener("visibilitychange",()=>{if(document.hidden&&player&&player.pk)saveProfile(player);});
 document.getElementById("phantomBtn").onclick=connectPhantom;
 document.getElementById("otherBtn").onclick=connectOther;
 document.getElementById("btnWallet").onclick=()=>{
