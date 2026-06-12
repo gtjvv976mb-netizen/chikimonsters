@@ -1015,7 +1015,34 @@ function saveProfile(h){
   }catch(e){}
 }
 function loadProfile(pk){try{const s=localStorage.getItem(profileKey(pk));return s?JSON.parse(s):null;}catch(e){return null;}}
+/* ---- offline progression: fast-forward a Chiki for the time its master was away ---- */
+function offlineProgress(c,elapsedSec){
+  let t=Math.min(Math.max(0,elapsedSec),72*3600);   /* cap a long absence at 72h */
+  if(t<30)return 0;
+  let did=0,guard=0;const AVG=45,COST=16,stage0=stageOf(c.level);
+  while(t>0&&guard++<6000){
+    if(c.hungry)break;                                /* stuck asleep until fed — no progress */
+    if(c.stamina>=COST){                              /* working a task */
+      if(t<AVG)break;
+      t-=AVG;c.stamina-=COST;c.tasksDone++;did++;
+      c.xp=(c.xp||0)+COST*2;
+      while(c.level<MAX_LEVEL&&c.xp>=xpNeed(c.level)){c.xp-=xpNeed(c.level);c.level++;}
+    }else{                                            /* napping */
+      const dur=sleepTimeOf(c.level);
+      if(t<dur){c.state="sleeping";c.sleepT=dur-t;break;}
+      t-=dur;c.sleepCycles=(c.sleepCycles||0)+1;
+      if(c.sleepCycles%2===0){c.hungry=true;c.state="sleeping";c.sleepT=0;break;}
+      c.stamina=maxStamOf(c.level);
+    }
+  }
+  c.stamina=Math.min(c.stamina,maxStamOf(c.level));
+  if(stageOf(c.level)>stage0&&typeof rebuildChiki==="function")rebuildChiki(c);  /* evolved while away */
+  return did;
+}
 function restoreChikis(h,saved){
+  const since=saved._serverSavedAt||saved.savedAt||0;
+  const elapsed=since?Math.max(0,(Date.now()-since)/1000):0;
+  let totalTasks=0,lvUps=0,anyHungry=false;
   (saved.chikis||[]).forEach(cd=>{
     const idx=(cd.sp>=0?cd.sp:ri(0,SPECIES.length-1));
     const c=spawnCreature(h,Math.max(1,cd.level||1),idx);
@@ -1023,7 +1050,16 @@ function restoreChikis(h,saved){
     c.sleepCycles=cd.sleepCycles||0;
     if(cd.hungry){c.hungry=true;c.state="sleeping";c.sleepT=0;}
     if(cd.nick)c.nick=cd.nick;
+    const before=c.level;
+    totalTasks+=offlineProgress(c,elapsed);
+    lvUps+=Math.max(0,c.level-before);
+    if(c.hungry)anyHungry=true;
   });
+  if(elapsed>120&&(totalTasks>0||anyHungry)){
+    const away=elapsed>=3600?(Math.round(elapsed/360)/10)+"h":Math.max(1,Math.round(elapsed/60))+"m";
+    addFeed(`🌙 While you were away (${away}), your Chikis finished <b>${totalTasks}</b> task${totalTasks===1?"":"s"}${lvUps?` and gained <b>${lvUps}</b> level${lvUps>1?"s":""}`:""}.${anyHungry?" One is <b>hungry</b> 🍖 — feed it to wake it up!":""}`);
+  }
+  return {totalTasks,lvUps,anyHungry};
 }
 const nameOf=c=>c.nick||c.sp.names[stageOf(c.level)-1];
 const QUIPS=["hi! ✋","☀️ nice day","🐟 fish soon?","best valley ever","⭐ legend someday","sniff sniff…","🍓 yum","race ya!","brb, work","💎 shiny dreams"];
