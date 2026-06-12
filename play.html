@@ -732,8 +732,8 @@ const solCostOf=lv=>+(chikiCostOf(lv)*TOKEN_PRICE*1.15).toFixed(4);
 
 /* ====== LIVE CHAIN CONFIG — fill in after your pump.fun launch ====== */
 const CHAIN={
-  MINT:"",      /* your $CHIKI mint address (from pump.fun). Empty = demo mode */
-  RPC:"https://api.mainnet-beta.solana.com",  /* better: your Helius/QuickNode RPC URL */
+  MINT:"5A5sXRYqTaNaocjEJvpNC8Feh3eUonuBTndjnWJupump",   /* $CHIKI mint (pump.fun) — live balance check ON */
+  RPC:"https://mainnet.helius-rpc.com/?api-key=52a7f521-e1f8-4cb1-8f6c-05597e88527e",  /* Helius RPC */
   BACKEND:""    /* optional later: holder/payout server URL */
 };
 
@@ -1248,9 +1248,12 @@ function renderProfile(){
     <div class="row"><span>💰 Total SOL earned</span><span style="color:var(--green)">${player.earned?fmt(player.earned):"0"} ◎</span></div>
     <div class="row"><span>$CHIKI balance</span><span>${player.bal.toLocaleString()}</span></div>
     <div class="row"><span>SOL balance</span><span>${player.sol} ◎</span></div>
-    <div class="row"><span>🏅 Achievements</span><span>${(player.ach&&player.ach.size)||0}</span></div>`;
+    <div class="row"><span>🏅 Achievements</span><span>${(player.ach&&player.ach.size)||0}</span></div>
+    ${CHAIN.BACKEND&&player.pk?`<button id="claimBtn" style="width:100%;margin-top:11px;font-size:12px;padding:8px 10px">💰 Claim SOL rewards</button>`:""}`;
   const ln=document.getElementById("changeNameLink");
   if(ln)ln.onclick=(e)=>{e.preventDefault();openRename();};
+  const cl=document.getElementById("claimBtn");
+  if(cl)cl.onclick=backendClaim;
 }
 /* ===== rename pop-up (player name + chiki name) ===== */
 function openRename(){openPop("renamePop");renderRename();}
@@ -1401,6 +1404,21 @@ async function rpcCall(method,params){
   if(j.error)throw new Error(j.error.message||"RPC error");
   return j.result;
 }
+async function backendVerify(pk){
+  if(!CHAIN.BACKEND)return null;
+  try{const r=await fetch(CHAIN.BACKEND+"/verify",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:pk})});return await r.json();}catch(e){return null;}
+}
+async function backendClaim(){
+  if(!CHAIN.BACKEND){addFeed("⚙️ No backend configured — rewards are simulated.");return;}
+  if(!player||!player.pk){addFeed("👛 Connect with Phantom to claim real SOL.");return;}
+  addFeed("⏳ Claiming SOL from the reward pool…");
+  try{
+    const r=await fetch(CHAIN.BACKEND+"/claim",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:player.pk})});
+    const j=await r.json();
+    if(j.ok){player.sol=+(player.sol+j.amountSol).toFixed(4);player.earned=(player.earned||0)+j.amountSol;addFeed(`💰 Claimed <b>${j.amountSol} SOL</b> to your wallet — <a href="${j.explorer}" target="_blank" style="color:#3ddc84">view tx</a>`);refreshUI();}
+    else addFeed("⚠️ Claim: "+(j.error||"nothing to claim yet"));
+  }catch(e){addFeed("⚠️ Claim failed: "+(e.message||e));}
+}
 async function connectPhantom(){
   const prov=window.solana||((window.phantom||{}).solana);
   if(!prov||!prov.isPhantom){
@@ -1413,17 +1431,27 @@ async function connectPhantom(){
     const short=pk.slice(0,4)+"…"+pk.slice(-4);
     addFeed(`👻 Phantom connected: <b>${short}</b> — checking balance…`);
     let bal,solBal=0;
-    if(CHAIN.MINT){
-      const tok=await rpcCall("getTokenAccountsByOwner",[pk,{mint:CHAIN.MINT},{encoding:"jsonParsed"}]);
-      bal=0;
-      for(const acc of (tok.value||[]))
-        bal+=acc.account.data.parsed.info.tokenAmount.uiAmount||0;
-      try{const lam=await rpcCall("getBalance",[pk]);solBal=(lam.value||0)/1e9;}catch(e){}
-      addFeed(`🔗 On-chain: <b>${Math.floor(bal).toLocaleString()} $CHIKI</b> · ${solBal.toFixed(3)} SOL`);
-    }else{
-      addFeed("⚙️ Live mode not configured yet (no mint address set) — granting a demo balance for now.");
-      bal=1200000;solBal=5;
+    if(CHAIN.BACKEND){
+      const v=await backendVerify(pk);
+      if(v){
+        if(!v.eligible){addFeed(`⚠️ <b>${short}</b> holds ${(v.balance||0).toLocaleString()} $CHIKI — below the ${MIN_HOLD.toLocaleString()} threshold. Top up to receive your Chiki!`);modal.classList.remove("show");openPop("feedPop");return;}
+        bal=Math.max(Math.floor(v.balance||0),MIN_HOLD);
+        addFeed(`🔗 Verified via backend — eligible (${(v.balance||0).toLocaleString()} $CHIKI).`);
+      }else addFeed("⚠️ Backend unreachable — using a direct on-chain check.");
     }
+    if(bal===undefined){
+      if(CHAIN.MINT){
+        const tok=await rpcCall("getTokenAccountsByOwner",[pk,{mint:CHAIN.MINT},{encoding:"jsonParsed"}]);
+        bal=0;
+        for(const acc of (tok.value||[]))
+          bal+=acc.account.data.parsed.info.tokenAmount.uiAmount||0;
+        addFeed(`🔗 On-chain: <b>${Math.floor(bal).toLocaleString()} $CHIKI</b>`);
+      }else{
+        addFeed("⚙️ Live mode not configured yet (no mint address set) — granting a demo balance for now.");
+        bal=1200000;solBal=5;
+      }
+    }
+    try{const lam=await rpcCall("getBalance",[pk]);solBal=(lam.value||0)/1e9;}catch(e){}
     bal=Math.floor(bal);
     if(bal<MIN_HOLD){
       addFeed(`⚠️ <b>${short}</b> holds ${bal.toLocaleString()} $CHIKI — below the ${MIN_HOLD.toLocaleString()} threshold. Top up to receive your Chiki!`);
