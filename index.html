@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Chiki Monsters — Welcome to Chikoria</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800;900&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#061426;
+  --panel:rgba(7,18,37,.86);
+  --panel2:rgba(15,35,66,.90);
+  --gold:#ffd31a;
+  --orange:#ffb000;
+  --blue:#42a5ff;
+  --cyan:#3bd6ff;
+  --green:#6ee56f;
+  --red:#ff6b6b;
+  --purple:#b197fc;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Nunito',system-ui,sans-serif;background:var(--bg);color:white;overflow-x:hidden}
+a{text-decoration:none;color:inherit}
+.hero{
+  min-height:100vh;
+  background:url("homepage-hero.png") center center/cover no-repeat;
+  position:relative;
+}
+.hero::after{
+  content:"";
+  position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(2,8,18,.05),rgba(2,8,18,.15) 55%,#061426 100%);
+  pointer-events:none;
+}
+.nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  display:flex;align-items:center;gap:30px;padding:22px 44px;
+  background:linear-gradient(180deg,rgba(3,10,25,.86),rgba(3,10,25,0));
+}
+.nav a{
+  font-weight:900;text-transform:uppercase;letter-spacing:.5px;font-size:15px;
+  text-shadow:0 2px 5px #000;padding-bottom:8px;border-bottom:3px solid transparent;
+}
+.nav a:hover,.nav a.active{color:var(--gold);border-bottom-color:var(--gold)}
+.nav .spacer{flex:1}
+.wallet{
+  border:3px solid var(--blue)!important;border-radius:9px;padding:12px 22px!important;
+  background:rgba(5,21,48,.45);box-shadow:0 0 18px rgba(66,165,255,.3);
+}
+.hero-buttons{
+  position:absolute;z-index:10;left:50%;top:69%;transform:translate(-50%,-50%);
+  display:flex;gap:14px;flex-wrap:wrap;justify-content:center;
+}
+.hot-btn{
+  font-family:'Baloo 2';font-weight:900;font-size:26px;text-transform:uppercase;
+  padding:12px 38px;border-radius:12px;border:4px solid #3a2600;
+  background:linear-gradient(180deg,#ffe66d,#ffb300);color:#111;
+  box-shadow:0 7px 0 #3a2600,0 0 26px rgba(255,211,26,.35);
+  transition:.15s;
+}
+.hot-btn:hover{transform:translateY(-3px);filter:brightness(1.07)}
+.dark-btn{
+  font-weight:900;text-transform:uppercase;padding:14px 24px;border-radius:12px;
+  background:rgba(6,18,38,.72);border:2px solid rgba(120,190,255,.45);
+  backdrop-filter:blur(8px);
+}
+.section{
+  padding:90px 7vw;
+  background:
+    radial-gradient(circle at 10% 10%,rgba(66,165,255,.14),transparent 28%),
+    radial-gradient(circle at 90% 20%,rgba(255,211,26,.10),transparent 25%),
+    #061426;
+}
+.section:nth-of-type(even){
+  background:
+    radial-gradient(circle at 20% 20%,rgba(110,229,111,.12),transparent 25%),
+    radial-gradient(circle at 80% 30%,rgba(177,151,252,.13),transparent 28%),
+    #07182e;
+}
+.section h2{
+  font-family:'Baloo 2';font-size:clamp(40px,5vw,70px);line-height:.9;text-transform:uppercase;margin-bottom:12px;
+}
+.section h2 span{color:var(--gold)}
+.lead{font-size:19px;line-height:1.6;color:#d9e9ff;max-width:980px;margin-bottom:36px}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px}
+.grid4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.card{
+  background:linear-gradient(180deg,var(--panel2),var(--panel));
+  border:1px solid rgba(120,190,255,.34);border-radius:20px;padding:24px;
+  box-shadow:0 20px 45px rgba(0,0,0,.28),inset 0 1px rgba(255,255,255,.08);
+  min-height:170px;position:relative;overflow:hidden;
+}
+.card::after{content:"";position:absolute;right:-40px;top:-40px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.05)}
+.card .icon{font-size:42px;margin-bottom:12px}
+.card h3{font-family:'Baloo 2';font-size:30px;line-height:1;color:var(--gold);margin-bottom:8px}
+.card p,.card li{font-size:15.5px;line-height:1.55;color:#dcecff}
+.badge{display:inline-block;font-size:12px;font-weight:900;text-transform:uppercase;color:var(--gold);border:1px solid rgba(255,211,26,.38);background:rgba(255,211,26,.12);padding:5px 12px;border-radius:999px;margin-bottom:10px}
+.chikidex{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:15px}
+.chiki-card{
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:18px;
+  padding:18px;transition:.16s;cursor:pointer;
+}
+.chiki-card:hover{transform:translateY(-4px);background:rgba(255,255,255,.11)}
+.chiki-card .emoji{font-size:42px}
+.chiki-card strong{display:block;font-family:'Baloo 2';font-size:23px;color:white}
+.chiki-card span{color:#b9d7ff;font-size:13px}
+.map{
+  display:grid;grid-template-columns:1.2fr .8fr;gap:24px;align-items:stretch;
+}
+.map-board{
+  min-height:520px;border-radius:24px;border:1px solid rgba(120,190,255,.35);overflow:hidden;
+  background:
+    radial-gradient(circle at 30% 22%,#ff8ec7 0 8%,transparent 9%),
+    radial-gradient(circle at 70% 22%,#ffd75d 0 9%,transparent 10%),
+    radial-gradient(circle at 35% 60%,#32b86d 0 13%,transparent 14%),
+    radial-gradient(circle at 72% 62%,#a5d8ff 0 11%,transparent 12%),
+    radial-gradient(circle at 50% 83%,#8b5cf6 0 8%,transparent 9%),
+    linear-gradient(135deg,#0d4d77,#0a2e4e);
+  position:relative;box-shadow:0 22px 60px rgba(0,0,0,.32);
+}
+.region{
+  position:absolute;transform:translate(-50%,-50%);background:rgba(7,18,37,.75);
+  border:2px solid rgba(255,255,255,.25);border-radius:14px;padding:10px 14px;font-weight:900;
+  cursor:pointer;text-shadow:0 2px 4px #000;backdrop-filter:blur(4px)
+}
+.region:hover{border-color:var(--gold);color:var(--gold)}
+.r1{left:24%;top:24%}.r2{left:68%;top:25%}.r3{left:29%;top:63%}.r4{left:72%;top:63%}.r5{left:50%;top:84%}.r6{left:51%;top:45%}
+.info-panel{display:flex;flex-direction:column;gap:16px}
+.timeline{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+.phase{background:rgba(7,18,37,.78);border-left:6px solid var(--gold);border-radius:18px;padding:24px}
+.phase b{color:var(--gold)}
+.news-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:22px}
+.footer{background:#030b18;color:#9db4d8;text-align:center;padding:38px;border-top:1px solid rgba(255,255,255,.08)}
+.modal{
+  position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:200;display:none;align-items:center;justify-content:center;padding:24px;
+}
+.modal.show{display:flex}
+.modal-box{
+  max-width:520px;width:100%;background:#091a33;border:2px solid rgba(120,190,255,.42);
+  border-radius:22px;padding:28px;box-shadow:0 30px 80px rgba(0,0,0,.55)
+}
+.modal-box h3{font-family:'Baloo 2';font-size:36px;color:var(--gold);line-height:1}
+.modal-box p{line-height:1.6;color:#dcecff;margin:10px 0 20px}
+.close{float:right;cursor:pointer;font-size:24px}
+@media(max-width:1050px){
+  .nav{gap:14px;overflow-x:auto;padding-right:170px}.wallet{position:fixed;right:18px;top:18px}
+  .grid,.grid4,.timeline,.news-grid,.map{grid-template-columns:1fr 1fr}.chikidex{grid-template-columns:repeat(3,1fr)}
+}
+@media(max-width:680px){
+  .grid,.grid4,.timeline,.news-grid,.map,.chikidex{grid-template-columns:1fr}
+  .hero-buttons{top:74%}.hot-btn{font-size:22px;padding:10px 28px}.dark-btn{display:none}
+}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <a href="#home" class="active">Home</a>
+  <a href="#chikis">Chikis</a>
+  <a href="#chikoria">Explore Chikoria</a>
+  <a href="#gameplay">Gameplay</a>
+  <a href="#roadmap">Roadmap</a>
+  <a href="#news">News</a>
+  <a href="#about">About</a>
+  <a href="play.html" style="color:#ffd31a;font-weight:900">▶ Play</a>
+  <span class="spacer"></span>
+  <a href="#" class="wallet" onclick="openWallet(event)">Connect Wallet</a>
+</nav>
+
+<header class="hero" id="home">
+  <div class="hero-buttons">
+    <a class="hot-btn" href="play.html">Play Now</a>
+    <a class="dark-btn" href="#chikoria">Explore Chikoria</a>
+  </div>
+</header>
+
+<section class="section" id="chikis">
+  <h2>Chiki<span>dex</span></h2>
+  <p class="lead">Meet the first Chikimons of Chikoria. Each line has a unique element, habitat, and evolution path.</p>
+  <div class="chikidex">
+    <div class="chiki-card" onclick="openChiki('Leafpup','Plant','Bloomvale forests','Fernix → Bladewing')"><div class="emoji">🌿</div><strong>Leafpup</strong><span>Plant type</span></div>
+    <div class="chiki-card" onclick="openChiki('Sparkit','Lightning','Storm fields','Thundra → Voltyx')"><div class="emoji">⚡</div><strong>Sparkit</strong><span>Lightning type</span></div>
+    <div class="chiki-card" onclick="openChiki('Aquabit','Ocean','Lakes and rivers','Bubblor → Searapid')"><div class="emoji">💧</div><strong>Aquabit</strong><span>Ocean type</span></div>
+    <div class="chiki-card" onclick="openChiki('Pyrix','Flame','Embercore Volcano','Emberspin → Infernox')"><div class="emoji">🔥</div><strong>Pyrix</strong><span>Flame type</span></div>
+    <div class="chiki-card" onclick="openChiki('Snowclaw','Ice','Frostveil Peaks','Frostail → Tundrail')"><div class="emoji">❄️</div><strong>Snowclaw</strong><span>Ice type</span></div>
+    <div class="chiki-card" onclick="openChiki('Rocko','Mountain','Rocky cliffs','Quakeo → Stonehide')"><div class="emoji">🪨</div><strong>Rocko</strong><span>Mountain type</span></div>
+    <div class="chiki-card" onclick="openChiki('Nightbat','Shadow','Moonshade Wilds','Shadowl → Twilight')"><div class="emoji">🌙</div><strong>Nightbat</strong><span>Shadow type</span></div>
+    <div class="chiki-card" onclick="openChiki('Crystalix','Crystal','Crystal Caverns','Glimmer → Starix')"><div class="emoji">💎</div><strong>Crystalix</strong><span>Crystal type</span></div>
+    <div class="chiki-card" onclick="openChiki('Cloudo','Wind','Nimbus Isles','Zephir → Hurricub')"><div class="emoji">☁️</div><strong>Cloudo</strong><span>Wind type</span></div>
+    <div class="chiki-card" onclick="openChiki('Lunara','Cosmic','Night skies','Galaxi → Cometail')"><div class="emoji">🌌</div><strong>Lunara</strong><span>Cosmic type</span></div>
+  </div>
+</section>
+
+<section class="section" id="chikoria">
+  <h2>Explore <span>Chikoria</span></h2>
+  <p class="lead">Click a region on the map to learn about its biome, Chikimons, and secrets.</p>
+  <div class="map">
+    <div class="map-board">
+      <div class="region r1" onclick="regionInfo('Bloomvale Province','Spring forests, flower fields, berry bushes, and peaceful Chiki villages.')">🌸 Bloomvale</div>
+      <div class="region r2" onclick="regionInfo('Solara Highlands','Bright fields, warm cliffs, relic digs, oasis fishing, and summit trials.')">☀️ Solara</div>
+      <div class="region r3" onclick="regionInfo('Amberwood Frontier','Autumn groves, farms, barns, caves, and hidden treasure paths.')">🍂 Amberwood</div>
+      <div class="region r4" onclick="regionInfo('Frostveil Peaks','Frozen lakes, frost caves, aurora meadows, and rare ice Chikimons.')">❄️ Frostveil</div>
+      <div class="region r5" onclick="regionInfo('Crystal Caverns','Glowing caves with rare gems, ancient energy, and hidden encounters.')">💎 Caverns</div>
+      <div class="region r6" onclick="regionInfo('Ancient Grove','The heart of Chikoria, filled with ruins, roots, and nature energy.')">🌳 Ancient Grove</div>
+    </div>
+    <div class="info-panel">
+      <div class="card"><h3 id="regionTitle">Ancient Grove</h3><p id="regionText">The heart of Chikoria, filled with ruins, roots, waterfalls, and ancient nature energy.</p></div>
+      <div class="card"><h3>Special Features</h3><p>Hidden encounters, task areas, evolving Chikimons, rare rewards, villages, caves, and seasonal secrets.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="gameplay">
+  <h2>Game<span>play</span></h2>
+  <p class="lead">Hold $CHIKI to enter Chikoria, receive your Chikimon, and watch it explore, work, grow, evolve, and earn from the reward pool.</p>
+  <div class="grid">
+    <div class="card"><span class="badge">$CHIKI</span><h3>Hold to Play</h3><p>Hold 500,000 tokens to enter Chikoria and spend $CHIKI in-game.</p></div>
+    <div class="card"><span class="badge">Chikimons</span><h3>Train & Evolve</h3><p>Collect, train, upgrade, and evolve adorable voxel companions.</p></div>
+    <div class="card"><span class="badge">Earn SOL</span><h3>Reward Pool</h3><p>Let your Chikimon complete various tasks and earn SOL from the reward pool.</p></div>
+  </div>
+  <div style="text-align:center;margin-top:30px">
+    <a class="hot-btn" href="play.html" style="font-size:26px;padding:16px 46px;display:inline-block">▶ ENTER CHIKORIA — PLAY NOW</a>
+    <p style="color:#9db4d8;font-size:13px;margin-top:10px">Runs right in your browser · 3D voxel world · no install</p>
+  </div>
+</section>
+
+<section class="section" id="roadmap">
+  <h2>Road<span>map</span></h2>
+  <p class="lead">A phased growth plan for Chiki Monsters, from prototype to a full Chikoria ecosystem.</p>
+  <div class="timeline">
+    <div class="phase"><b>Phase 1</b><h3>Foundation</h3><p>Brand, community, first Chikis, $CHIKI launch, and website.</p></div>
+    <div class="phase"><b>Phase 2</b><h3>Playable Prototype</h3><p>Movement, tasks, wallet connection, levels, and first region.</p></div>
+    <div class="phase"><b>Phase 3</b><h3>World Expansion</h3><p>More biomes, Chikis, quests, improved graphics, and mechanics.</p></div>
+    <div class="phase"><b>Phase 4</b><h3>Multiplayer</h3><p>Trading, PvE/PvP, guilds, events, and marketplace systems.</p></div>
+    <div class="phase"><b>Phase 5</b><h3>Studio Growth</h3><p>More developers, better tools, larger worldbuilding, and content pipelines.</p></div>
+    <div class="phase"><b>Phase 6</b><h3>Ecosystem</h3><p>PC/mobile releases, creator tools, community content, and tournaments.</p></div>
+  </div>
+</section>
+
+<section class="section" id="news">
+  <h2>Latest <span>News</span></h2>
+  <div class="news-grid">
+    <div class="card"><span class="badge">Update</span><h3>Chikoria is born</h3><p>The official world of Chiki Monsters is now Chikoria: a living voxel world filled with adorable Chikimons and endless adventures.</p></div>
+    <div class="card"><span class="badge">Builder Tools</span><h3>Blockbench Ready</h3><p>Edit Chikimons using the starter .bbmodel pack and load custom species into the game.</p></div>
+  </div>
+</section>
+
+<section class="section" id="about">
+  <h2>About <span>Chiki Monsters</span></h2>
+  <p class="lead">Chiki Monsters is a voxel creature adventure set in Chikoria, blending collectible companions, autonomous Chikimon behavior, upgrade systems, world exploration, task rewards, and community-driven development.</p>
+  <div class="grid">
+    <div class="card"><h3>Vision</h3><p>Build a living world where players collect, train, evolve, and customize Chikimons.</p></div>
+    <div class="card"><h3>Community</h3><p>Players help shape the future through feedback, events, Chiki reveals, and design contests.</p></div>
+    <div class="card"><h3>Future</h3><p>More lands, more Chikimons, multiplayer, trading, and expanded game systems.</p></div>
+  </div>
+</section>
+
+<footer class="footer">CHIKI MONSTERS — Welcome to Chikoria. Little Legends. Big Adventures.</footer>
+
+<div class="modal" id="modal"><div class="modal-box"><span class="close" onclick="closeModal()">×</span><h3 id="modalTitle"></h3><p id="modalText"></p></div></div>
+
+<script>
+const links=[...document.querySelectorAll('.nav a[href^="#"]:not(.wallet)')];
+const sections=links.map(a=>document.querySelector(a.getAttribute('href'))).filter(Boolean);
+function setActive(){
+  let current=sections[0];
+  for(const s of sections){ if(scrollY>=s.offsetTop-150) current=s; }
+  links.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+current.id));
+}
+addEventListener('scroll',setActive);setActive();
+
+function regionInfo(title,text){
+  document.getElementById('regionTitle').textContent=title;
+  document.getElementById('regionText').textContent=text;
+}
+function openChiki(name,type,habitat,evo){
+  document.getElementById('modalTitle').textContent=name;
+  document.getElementById('modalText').innerHTML='<b>Type:</b> '+type+'<br><b>Habitat:</b> '+habitat+'<br><b>Evolution:</b> '+evo;
+  document.getElementById('modal').classList.add('show');
+}
+function openWallet(e){
+  e.preventDefault();
+  document.getElementById('modalTitle').textContent='Connect Wallet';
+  document.getElementById('modalText').innerHTML='Wallet integration placeholder. Connect Phantom or Solflare here later. Hold at least <b>500,000 $CHIKI</b> to enter Chikoria.';
+  document.getElementById('modal').classList.add('show');
+}
+function closeModal(){document.getElementById('modal').classList.remove('show')}
+</script>
+</body>
+</html>
