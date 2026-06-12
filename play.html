@@ -2845,7 +2845,6 @@ function rebuildChiki(c){
    the holder community, but without live creatures unless they're actually playing. */
 let youSprite=makeTextSprite("▼ YOU",30,"#ffd93d");youSprite.visible=false;scene.add(youSprite);
 let selSprite=makeTextSprite("🔍",22);selSprite.visible=false;scene.add(selSprite);
-let trackNameSprite=null,trackNameTxt=null;   /* floating name over the tracked Chiki */
 
 /* click select (raycast) */
 const raycaster=new THREE.Raycaster(),mouseV=new THREE.Vector2();
@@ -3158,6 +3157,17 @@ function frame(now){
     /* zzz */
     c.fx.zzz.visible=c.state==="sleeping";
     if(c.fx.zzz.visible)c.fx.zzz.position.set(c.x+8,gy+40+Math.sin(t*2)*4,c.y);
+    /* permanent name tag — ONLY over Chikis the viewer owns (bots stay nameless) */
+    if(player&&c.holder===player){
+      const nm=nameOf(c);
+      if(!c.fx.name||c.fx.nameTxt!==nm){
+        if(c.fx.name)scene.remove(c.fx.name);
+        c.fx.name=makeTextSprite(nm,20,c.sp.body);
+        c.fx.nameTxt=nm;scene.add(c.fx.name);
+      }
+      c.fx.name.visible=true;
+      c.fx.name.position.set(c.x,gy+88+Math.sin(t*2.4+c.bob)*2,c.y);
+    }else if(c.fx.name)c.fx.name.visible=false;
     /* chat bubble */
     if(c.say&&t<c.sayUntil){
       if(!c.fx.bubble||c.fx.bubbleTxt!==c.say){
@@ -3178,20 +3188,6 @@ function frame(now){
     const pc=player.creature;
     youSprite.position.set(pc.x,heightY(pc.x,pc.y)+78+Math.sin(t*3)*3,pc.y);
   }else youSprite.visible=false;
-  /* name label over the Chiki the player is tracking, synced with the other overhead effects */
-  if(followMode&&player&&player.creature){
-    const pc=(tracked&&tracked.holder===player)?tracked:player.creature;
-    if(pc&&pc.mesh){
-      const nm=nameOf(pc);
-      if(trackNameTxt!==nm){
-        if(trackNameSprite)scene.remove(trackNameSprite);
-        trackNameSprite=makeTextSprite(nm,22,pc.sp.body);
-        trackNameTxt=nm;scene.add(trackNameSprite);
-      }
-      trackNameSprite.visible=true;
-      trackNameSprite.position.set(pc.x,heightY(pc.x,pc.y)+96+Math.sin(t*3)*3,pc.y);
-    }else if(trackNameSprite)trackNameSprite.visible=false;
-  }else if(trackNameSprite)trackNameSprite.visible=false;
   if(inspected&&inspected.mesh){
     selSprite.visible=true;
     selSprite.position.set(inspected.x,heightY(inspected.x,inspected.y)+62,inspected.y);
