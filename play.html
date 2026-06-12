@@ -617,6 +617,22 @@ if(location.search.indexOf("embed")>-1){
   <div id="inspectBody"></div>
 </div>
 
+<!-- ===== Live activity HUD ===== -->
+<style>
+#liveHud{position:fixed;top:66px;left:50%;transform:translateX(-50%);z-index:55;
+  background:#16243fee;color:#ffe9a8;border:1.5px solid #ffd16699;border-radius:999px;
+  padding:5px 14px;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:12.5px;
+  box-shadow:0 3px 12px rgba(0,0,0,.3);display:flex;gap:9px;align-items:center;white-space:nowrap;
+  letter-spacing:.2px}
+#liveHud .ldot{width:7px;height:7px;border-radius:50%;background:#3ddc84;box-shadow:0 0 6px #3ddc84;animation:lpulse 1.6s ease-in-out infinite}
+#liveHud .lsep{opacity:.45}
+@keyframes lpulse{50%{opacity:.35}}
+body.pre #liveHud{display:none}
+</style>
+<div id="liveHud" title="Live activity in Chikoria">
+  <span class="ldot"></span><span id="liveUsers">👥 —</span><span class="lsep">·</span><span id="liveChikis">🐣 —</span>
+</div>
+
 <!-- ===== Audio: background music + Music / Sound controls ===== -->
 <style>
 #audioCtrl{position:fixed;left:12px;top:66px;z-index:60;font-family:'Baloo 2',sans-serif}
@@ -1659,6 +1675,22 @@ function connectOther(){
   addFeed(`🔗 Connected a SOL-compatible wallet <b>${h.addr}</b> — your Chiki hatched!`);
   loginAs(h);
 }
+/* live activity HUD — real presence via backend heartbeat */
+function _setLive(j){if(!j||typeof j.activeUsers!=="number")return;
+  const U=document.getElementById("liveUsers"),K=document.getElementById("liveChikis");
+  if(U)U.textContent="👥 "+j.activeUsers+(j.activeUsers===1?" player":" players");
+  if(K)K.textContent="🐣 "+j.chikimons+" roaming";}
+async function pollPresence(){if(!CHAIN.BACKEND)return;try{const r=await fetch(CHAIN.BACKEND+"/presence",{cache:"no-store"});_setLive(await r.json());}catch(e){}}
+async function pingPresence(){
+  if(!CHAIN.BACKEND)return;
+  if(!player||!player.pk)return pollPresence();
+  try{const r=await fetch(CHAIN.BACKEND+"/presence",{method:"POST",headers:{"content-type":"application/json"},
+    body:JSON.stringify({wallet:player.pk,chikis:(typeof myChikis==="function"?myChikis().length:1)})});_setLive(await r.json());}
+  catch(e){pollPresence();}
+}
+pollPresence();
+setInterval(()=>{(player&&player.pk)?pingPresence():pollPresence();},25000);
+
 /* autosave the connected wallet's Chikis + progress so a refresh never resets them */
 setInterval(()=>{if(player&&player.pk)saveProfile(player);},8000);
 addEventListener("beforeunload",()=>{if(player&&player.pk)saveProfile(player);});
@@ -1699,6 +1731,7 @@ function loginAs(h){
   addFeed(`👛 Wallet <b>${h.addr}</b> connected — tracking <b style="color:${h.creature.sp.body}">${nameOf(h.creature)}</b>.`);
   closePop("lbPop");
   refreshUI();
+  if(typeof pingPresence==="function")pingPresence();   /* announce we're online now */
   startOnboarding();
 }
 function setFollow(on){
@@ -2812,6 +2845,7 @@ function rebuildChiki(c){
    the holder community, but without live creatures unless they're actually playing. */
 let youSprite=makeTextSprite("▼ YOU",30,"#ffd93d");youSprite.visible=false;scene.add(youSprite);
 let selSprite=makeTextSprite("🔍",22);selSprite.visible=false;scene.add(selSprite);
+let trackNameSprite=null,trackNameTxt=null;   /* floating name over the tracked Chiki */
 
 /* click select (raycast) */
 const raycaster=new THREE.Raycaster(),mouseV=new THREE.Vector2();
@@ -3144,6 +3178,20 @@ function frame(now){
     const pc=player.creature;
     youSprite.position.set(pc.x,heightY(pc.x,pc.y)+78+Math.sin(t*3)*3,pc.y);
   }else youSprite.visible=false;
+  /* name label over the Chiki the player is tracking, synced with the other overhead effects */
+  if(followMode&&player&&player.creature){
+    const pc=(tracked&&tracked.holder===player)?tracked:player.creature;
+    if(pc&&pc.mesh){
+      const nm=nameOf(pc);
+      if(trackNameTxt!==nm){
+        if(trackNameSprite)scene.remove(trackNameSprite);
+        trackNameSprite=makeTextSprite(nm,22,pc.sp.body);
+        trackNameTxt=nm;scene.add(trackNameSprite);
+      }
+      trackNameSprite.visible=true;
+      trackNameSprite.position.set(pc.x,heightY(pc.x,pc.y)+96+Math.sin(t*3)*3,pc.y);
+    }else if(trackNameSprite)trackNameSprite.visible=false;
+  }else if(trackNameSprite)trackNameSprite.visible=false;
   if(inspected&&inspected.mesh){
     selSprite.visible=true;
     selSprite.position.set(inspected.x,heightY(inspected.x,inspected.y)+62,inspected.y);

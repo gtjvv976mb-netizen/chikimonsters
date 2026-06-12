@@ -86,6 +86,20 @@ function pgStore() {
           created_at TIMESTAMPTZ NOT NULL DEFAULT now()
         );`);
       await pool.query(`ALTER TABLE players ADD COLUMN IF NOT EXISTS profile JSONB`);
+      await pool.query(`CREATE TABLE IF NOT EXISTS presence(
+        wallet TEXT PRIMARY KEY, last_active BIGINT NOT NULL, chikis INT NOT NULL DEFAULT 1)`);
+    },
+    async heartbeat(wallet, chikis) {
+      await pool.query(
+        `INSERT INTO presence(wallet,last_active,chikis) VALUES($1,$2::bigint,$3)
+         ON CONFLICT(wallet) DO UPDATE SET last_active=$2::bigint, chikis=$3`,
+        [wallet, Date.now(), Math.max(0, chikis | 0)]);
+    },
+    async presence(windowMs) {
+      const r = await pool.query(
+        `SELECT COUNT(*)::int a, COALESCE(SUM(chikis),0)::int c FROM presence WHERE last_active > $1`,
+        [Date.now() - windowMs]);
+      return { activeUsers: r.rows[0].a, chikimons: r.rows[0].c };
     },
     async getProfile(wallet) {
       const r = await pool.query(`SELECT profile FROM players WHERE wallet=$1`, [wallet]);
@@ -142,7 +156,7 @@ function pgStore() {
 }
 
 function memStore() {
-  const players = new Map(); const payouts = [];
+  const players = new Map(); const payouts = []; const presenceMap = new Map();
   const get = (w) => players.get(w);
   return {
     kind: "memory",
@@ -157,6 +171,12 @@ function memStore() {
       const now = Date.now();
       const p = get(wallet) || { wallet, first_seen: now, last_claim: now - 60000, lifetime_paid: 0 };
       p.profile = profile; players.set(wallet, p);
+    },
+    async heartbeat(wallet, chikis) { presenceMap.set(wallet, { t: Date.now(), chikis: Math.max(0, chikis | 0) }); },
+    async presence(windowMs) {
+      const cut = Date.now() - windowMs; let a = 0, c = 0;
+      for (const v of presenceMap.values()) if (v.t > cut) { a++; c += v.chikis; }
+      return { activeUsers: a, chikimons: c };
     },
     async dailyTotal() {
       const cut = Date.now() - 86_400_000;
@@ -230,6 +250,19 @@ app.get("/profile", async (req, res) => {
   if (!wallet || !isPubkey(wallet)) return res.status(400).json({ error: "valid 'wallet' required" });
   try { res.json({ wallet, profile: await store.getProfile(wallet) }); }
   catch (e) { res.status(500).json({ error: "load failed: " + String(e.message || e) }); }
+});
+
+// Live activity: heartbeat in, get back current active users + roaming chikis.
+const PRESENCE_WINDOW = 120000;   // a wallet counts as "online" for 2 min after its last beat
+app.post("/presence", async (req, res) => {
+  const wallet = req.body?.wallet;
+  if (!wallet || !isPubkey(wallet)) return res.status(400).json({ error: "valid 'wallet' required" });
+  try { await store.heartbeat(wallet, Number(req.body?.chikis) || 1); res.json(await store.presence(PRESENCE_WINDOW)); }
+  catch (e) { res.status(500).json({ error: String(e.message || e) }); }
+});
+app.get("/presence", async (_q, res) => {
+  try { res.json(await store.presence(PRESENCE_WINDOW)); }
+  catch (e) { res.status(500).json({ error: String(e.message || e) }); }
 });
 
 app.post("/claim", async (req, res) => {
