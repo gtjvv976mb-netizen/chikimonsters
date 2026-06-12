@@ -802,6 +802,8 @@ for(let i=0;i<SPECIES.length;i++){
 const stageOf=lv=>lv>=EVOLVE_AT[1]?3:lv>=EVOLVE_AT[0]?2:1;
 const maxStamOf=lv=>80+lv*12;
 const sleepTimeOf=lv=>Math.max(900,Math.round(3600-(Math.min(lv,MAX_LEVEL)/MAX_LEVEL)*2700)); /* 60min low-lvl -> 15min max-lvl, lets the pool refill */
+const feedCostOf=lv=>Math.round(1000+(Math.min(lv,MAX_LEVEL)-1)/Math.max(1,MAX_LEVEL-1)*4000); /* 1,000 (Lv1) -> 5,000 (Lv50) $CHIKI */
+const fmtSleep=s=>{s=Math.max(0,Math.ceil(s));return s>=60?Math.floor(s/60)+"m "+(s%60)+"s":s+"s";};
 const rareBoostOf=c=>1+c.level*0.015+(stageOf(c.level)-1)*0.35;
 const chikiCostOf=lv=>Math.round(2500*Math.pow(1.09,lv));
 const solCostOf=lv=>+(chikiCostOf(lv)*TOKEN_PRICE*1.15).toFixed(4);
@@ -822,7 +824,7 @@ const usedHandles=new Set();
 let tracked=null;
 const usedChikiNames=new Set();
 function myChikis(){return player?creatures.filter(c=>c.holder===player):[];}
-function statusText(c){return c.state==="sleeping"?"💤 Sleeping":c.task?(c.state==="working"?"⚒ "+c.task.name:"→ "+c.task.name):"Wandering";}
+function statusText(c){return c.hungry?"🍖 Hungry — feed to wake":c.state==="sleeping"?"💤 Sleeping":c.task?(c.state==="working"?"⚒ "+c.task.name:"→ "+c.task.name):"Wandering";}
 function nameTaken(set,v){return set.has(String(v).trim().toLowerCase());}
 function saveNameDB(){try{localStorage.setItem("chikiNameDB",JSON.stringify([...usedChikiNames]));localStorage.setItem("handleDB",JSON.stringify([...usedHandles]));}catch(e){}}
 (function(){try{JSON.parse(localStorage.getItem("chikiNameDB")||"[]").forEach(n=>usedChikiNames.add(String(n).toLowerCase()));}catch(e){}try{JSON.parse(localStorage.getItem("handleDB")||"[]").forEach(n=>usedHandles.add(String(n).toLowerCase()));}catch(e){}})();
@@ -993,7 +995,8 @@ function spawnCreature(h,lvl,spIdx){
   do{x=rng(2,COLS-2)*TILE;y=rng(2,ROWS-2)*TILE;tries++;}while(!walkable(x,y)&&tries<299);
   const c={holder:h,sp,x,y,vx:0,vy:0,level:lvl,stamina:maxStamOf(lvl),
     state:"wander",task:null,target:null,workT:0,workDur:0,sleepT:0,nextTaskIn:rng(3,14),
-    bob:rng(0,6.28),tasksDone:0,lastReward:0,stuck:0,mesh:null,fx:null,dir:0,named:false};
+    bob:rng(0,6.28),tasksDone:0,lastReward:0,stuck:0,mesh:null,fx:null,dir:0,named:false,
+    sleepCycles:0,hungry:false};
   if(!h.creature)h.creature=c;   /* first chiki is the holder's primary */
   creatures.push(c);
   if(typeof scene!=="undefined")attachChiki(c);
@@ -1005,8 +1008,8 @@ function saveProfile(h){
   if(!h||!h.pk)return;
   try{
     const mine=creatures.filter(c=>c.holder===h);
-    const data={pk:h.pk,bal:h.bal,sol:h.sol,earned:h.earned||0,
-      chikis:mine.map(c=>({sp:SPECIES.indexOf(c.sp),level:c.level,tasksDone:c.tasksDone||0,nick:c.nick||null}))};
+    const data={pk:h.pk,bal:h.bal,sol:h.sol,earned:h.earned||0,savedAt:Date.now(),
+      chikis:mine.map(c=>({sp:SPECIES.indexOf(c.sp),level:c.level,tasksDone:c.tasksDone||0,nick:c.nick||null,sleepCycles:c.sleepCycles||0,hungry:!!c.hungry}))};
     localStorage.setItem(profileKey(h.pk),JSON.stringify(data));
     if(CHAIN.BACKEND)fetch(CHAIN.BACKEND+"/profile",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:h.pk,profile:data})}).catch(()=>{});
   }catch(e){}
@@ -1017,6 +1020,8 @@ function restoreChikis(h,saved){
     const idx=(cd.sp>=0?cd.sp:ri(0,SPECIES.length-1));
     const c=spawnCreature(h,Math.max(1,cd.level||1),idx);
     c.tasksDone=cd.tasksDone||0;
+    c.sleepCycles=cd.sleepCycles||0;
+    if(cd.hungry){c.hungry=true;c.state="sleeping";c.sleepT=0;}
     if(cd.nick)c.nick=cd.nick;
   });
 }
@@ -1156,11 +1161,33 @@ function startSleep(c){
   addFeed(`💤 <b>${nameOf(c)}</b> is exhausted — sleeping for ${Math.round(c.sleepT)}s`);
   refreshUI();
 }
+function finishSleep(c){
+  c.sleepCycles=(c.sleepCycles||0)+1;
+  /* every 2nd sleep cycle the Chiki must be fed before it will wake */
+  if(c.sleepCycles%2===0){
+    c.hungry=true;c.sleepT=0;
+    addFeed(`🍖 <b>${nameOf(c)}</b> is hungry after 2 naps — feed it <b>${feedCostOf(c.level).toLocaleString()} $CHIKI</b> to wake it.`);
+    if(c.holder===player)spawnFloat(c.x,c.y,"🍖 Feed me!","#ff922b");
+    refreshUI();
+  }else wakeUp(c);
+}
 function wakeUp(c){
-  c.stamina=maxStamOf(c.level);
+  c.stamina=maxStamOf(c.level);c.hungry=false;
   c.state="wander";c.nextTaskIn=rng(2,8);
   addFeed(`🌅 <b>${nameOf(c)}</b> woke up — stamina restored (${c.stamina}⚡)`);
   refreshUI();
+}
+function feedChiki(c){
+  const h=c.holder;if(!h||!c.hungry)return;
+  const cost=feedCostOf(c.level);
+  if(h.bal<cost||h.bal-cost<MIN_HOLD){addFeed(`⚠️ ${nameFor(h)}: needs ${cost.toLocaleString()} $CHIKI to feed ${nameOf(c)} while staying above 500k.`);refreshUI();return;}
+  h.bal-=cost;
+  const burn=cost*0.20,toPool=cost*0.45,toTeam=cost*0.35;
+  burnedChiki+=burn;pool+=toPool*TOKEN_PRICE;teamChiki+=toTeam;
+  addFeed(`🍖 ${nameFor(h)} fed <b>${nameOf(c)}</b> ${cost.toLocaleString()} $CHIKI → 🔥${fmtK(burn)} burned · 💰${fmtK(toPool)}→pool · 🏦${fmtK(toTeam)}→team`);
+  spawnBurst(c.x,c.y,"#ff922b",24);spawnFloat(c.x,c.y,"🍖 Yum!","#ff922b");
+  wakeUp(c);
+  if(typeof saveProfile==="function"&&h.pk)saveProfile(h);
 }
 
 /* ================= LEVELING — 25/25/50 ================= */
@@ -1230,9 +1257,12 @@ function addFeed(html,rarity){
 function staminaBarHTML(c){
   const max=maxStamOf(c.level),p=Math.round(c.stamina/max*100);
   const cls=c.state==="sleeping"?"sleep":p<25?"low":"";
-  return `<div class="stam"><i class="${cls}" style="width:${c.state==="sleeping"?Math.round((1-c.sleepT/sleepTimeOf(c.level))*100):p}%"></i></div>
-    <div style="font-size:11px;color:#8a7351">${c.state==="sleeping"
-      ?`💤 Sleeping — wakes in ${Math.ceil(c.sleepT)}s (Lv${c.level} sleep: ${Math.round(sleepTimeOf(c.level))}s)`
+  const barW=c.hungry?100:c.state==="sleeping"?Math.round((1-c.sleepT/sleepTimeOf(c.level))*100):p;
+  return `<div class="stam"><i class="${cls}" style="width:${barW}%"></i></div>
+    <div style="font-size:11px;color:#8a7351">${c.hungry
+      ?`🍖 Hungry — feed ${feedCostOf(c.level).toLocaleString()} $CHIKI to wake`
+      :c.state==="sleeping"
+      ?`💤 Sleeping — wakes in ${fmtSleep(c.sleepT)} (Lv${c.level} nap: ${fmtSleep(sleepTimeOf(c.level))})`
       :`⚡ ${Math.round(c.stamina)} / ${max} stamina`}</div>`;
 }
 function refreshUI(){
@@ -1265,6 +1295,11 @@ function refreshUI(){
     const r=lb.insertRow();
     if(!h.eligible){r.className="ineligible";
       r.innerHTML=`<td>${h.addr}</td><td>— below 500k —</td><td class="r">—</td><td class="r">${h.bal.toLocaleString()}</td><td class="r">—</td>`;
+    }else if(!h.creature){
+      const me=player===h?" 👤":"";
+      r.innerHTML=`<td>${h.addr}${me}</td><td style="color:#9a8a6a">— not roaming —</td>
+        <td class="r">—</td><td class="r">${h.bal.toLocaleString()}</td>
+        <td class="r" style="color:var(--green)">${h.earned?fmt(h.earned):"0"}</td>`;
     }else{
       const me=player===h?" 👤":"";
       const cnt=creatures.filter(cc=>cc.holder===h).length;
@@ -1290,6 +1325,7 @@ function renderMyPanel(){
         <span class="tag" style="background:${c.sp.body}22;color:${c.sp.body}">${c.sp.type}</span>
         <span class="tag" style="background:#ffd16622;color:#c47f00">Lv ${c.level}${atMax?" MAX":""}</span></div>
       ${staminaBarHTML(c)}
+      ${c.hungry?`<button class="feedBtn" data-i="${i}" style="width:100%;margin:7px 0;background:#ff922b;color:#fff;border-color:#e8590c">🍖 Feed ${feedCostOf(c.level).toLocaleString()} $CHIKI to wake</button>`:""}
       <div class="row"><span>Status</span><span>${statusText(c)}</span></div>
       <div class="row"><span>Tasks done</span><span style="color:var(--green)">${c.tasksDone}</span></div>
       <button class="tBtn" data-i="${i}" style="width:100%;margin:7px 0;${isT?'background:#3ddc84;color:#fff;border-color:#2bb673':''}">${isT?"🎯 Tracking this Chiki":"🎯 Track this Chiki"}</button>
@@ -1304,6 +1340,7 @@ function renderMyPanel(){
       <div style="border-color:#4dabf766"><b style="color:var(--blue)">35%</b>🏦 team</div>
     </div>`;
   document.getElementById("myBody").innerHTML=html;
+  document.querySelectorAll("#myBody .feedBtn").forEach(b=>b.onclick=()=>feedChiki(creatures[+b.dataset.i]));
   document.querySelectorAll("#myBody .tBtn").forEach(b=>b.onclick=()=>{tracked=creatures[+b.dataset.i];setFollow(true);renderMyPanel();});
   document.querySelectorAll("#myBody .lvC").forEach(b=>{if(!b.disabled)b.onclick=()=>levelUp(player,"chiki",creatures[+b.dataset.i]);});
   document.querySelectorAll("#myBody .lvS").forEach(b=>{if(!b.disabled)b.onclick=()=>levelUp(player,"sol",creatures[+b.dataset.i]);});
@@ -1320,7 +1357,7 @@ function showInspect(c,soft){
     <div class="row"><span>Holder wallet</span><span>${c.holder.addr}${c.holder===player?" 👤 you":""}</span></div>
     <div class="row"><span>$CHIKI balance</span><span>${c.holder.bal.toLocaleString()}</span></div>
     <div class="row"><span>Rare-task boost</span><span style="color:var(--blue)">+${Math.round((rareBoostOf(c)-1)*100)}% on Epic+</span></div>
-    <div class="row"><span>Status</span><span style="color:${col}">${c.state==="sleeping"?"💤 Sleeping":c.task?(c.state==="working"?"Doing: "+c.task.name+" ⏱"+fmtDur(c.workT):"Heading to: "+c.task.name):"Wandering"}</span></div>
+    <div class="row"><span>Status</span><span style="color:${col}">${c.hungry?"🍖 Hungry — needs feeding":c.state==="sleeping"?"💤 Sleeping — wakes in "+fmtSleep(c.sleepT):c.task?(c.state==="working"?"Doing: "+c.task.name+" ⏱"+fmtDur(c.workT):"Heading to: "+c.task.name):"Wandering"}</span></div>
     <div class="row"><span>Tasks completed</span><span>${c.tasksDone}</span></div>
     <div class="row"><span>Last reward</span><span>${c.lastReward?fmt(c.lastReward)+" SOL":"—"}</span></div>
     <div class="row"><span>Total earned</span><span style="color:var(--green)">${c.holder.earned?fmt(c.holder.earned):"0"} SOL</span></div>`;
@@ -2102,17 +2139,38 @@ function buildZoneProps(){
     structGroup.add(mb);
     structGroup.add(g);
   });
-  /* boats spaced evenly: 3 around each lake, 2 across the open sea */
-  LAKE_CENTERS.forEach((lc,li)=>{
-    const isSea=li===LAKE_CENTERS.length-1;
-    const n=isSea?2:3, R=isSea?150:58;
-    for(let i=0;i<n;i++){
-      const a=(i/n)*Math.PI*2 + li*0.6;
-      const lb=buildBoat();
-      lb.position.set(lc.x*TILE+Math.cos(a)*R,8,lc.y*TILE+Math.sin(a)*R);
-      lb.rotation.y=a+Math.PI/2;
-      structGroup.add(lb);
+  /* boats moored at the shore: ONE per lake, several along the beach — never in open water */
+  function lakeShorePoints(cx,cy,rx,ry,count){
+    const cand=[];
+    const x0=Math.max(1,Math.floor(cx-rx-2)),x1=Math.min(COLS-2,Math.ceil(cx+rx+2));
+    const y0=Math.max(1,Math.floor(cy-ry-2)),y1=Math.min(ROWS-2,Math.ceil(cy+ry+2));
+    for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){
+      if(map[y][x]===1||blocked[y][x])continue;             /* boat must rest on standable shore */
+      let wx=0,wy=0,found=false;
+      for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
+        const nx=x+dx,ny=y+dy;
+        if(nx<0||ny<0||nx>=COLS||ny>=ROWS)continue;
+        if(map[ny][nx]===1&&inEll(nx,ny,cx,cy,rx,ry)){found=true;wx+=dx;wy+=dy;}
+      }
+      if(found){const l=Math.hypot(wx,wy)||1;cand.push({x,y,nx:wx/l,ny:wy/l,ang:Math.atan2(y-cy,x-cx)});}
     }
+    if(!cand.length)return [];
+    cand.sort((a,b)=>a.ang-b.ang);
+    const out=[];for(let i=0;i<count;i++)out.push(cand[Math.floor(i*cand.length/count)]);
+    return out;
+  }
+  function placeShoreBoat(p){
+    if(!p)return;
+    const wx=(p.x+0.5)*TILE+p.nx*TILE*0.55, wz=(p.y+0.5)*TILE+p.ny*TILE*0.55;
+    const lb=buildBoat();
+    lb.position.set(wx,8,wz);
+    lb.rotation.y=Math.atan2(p.nx,p.ny);                    /* nose pointing out to the water */
+    structGroup.add(lb);
+  }
+  const LAKE_ELL=[[56,32,8.5,6],[100,17,5,4],[124,80,9,6.4],[165,52,18,43]];
+  LAKE_ELL.forEach((e,li)=>{
+    const isSea=li===LAKE_ELL.length-1;
+    lakeShorePoints(e[0],e[1],e[2],e[3], isSea?6:1).forEach(placeShoreBoat);
   });
   /* log piles & stumps */
   ZONES.wood.forEach(z=>{
@@ -2713,10 +2771,9 @@ function rebuildChiki(c){
   chikiRoot.add(c.mesh);
   if(c.fx){c.fx.tool=null;c.fx.toolZone=null;}  /* tool was attached to the old mesh */
 }
-holders.filter(h=>h.eligible).forEach((h,i)=>{
-  spawnCreature(h,ri(1,38),i);
-  if(h.bal>=1_000_000)spawnCreature(h,ri(1,20),i+3);  /* whale perk: 1M+ holders get a 2nd Chiki */
-});
+/* No ambient/demo Chikis roam the world by default — creatures are spawned only for the
+   connected wallet (real Phantom, or the on-demand demo wallet). Leaderboard still lists
+   the holder community, but without live creatures unless they're actually playing. */
 let youSprite=makeTextSprite("▼ YOU",30,"#ffd93d");youSprite.visible=false;scene.add(youSprite);
 let selSprite=makeTextSprite("🔍",22);selSprite.visible=false;scene.add(selSprite);
 
@@ -2776,13 +2833,19 @@ scene.add(new THREE.Points(aGeo,new THREE.PointsMaterial({size:5,vertexColors:tr
 /* ================= SIM ================= */
 function tickCreature(c,dt){
   c.bob+=dt*5;
-  if(c.state==="sleeping"){c.sleepT-=dt;if(c.sleepT<=0)wakeUp(c);return;}
+  if(c.state==="sleeping"){
+    if(c.hungry)return;                       /* won't wake until its master feeds it */
+    c.sleepT-=dt;
+    if(c.sleepT<=0)finishSleep(c);
+    return;
+  }
   if(c.state==="wander"){
     c.nextTaskIn-=dt;
     if(c.nextTaskIn<=0){assignTask(c,false);return;}
-    if(Math.random()<dt*0.8){const a=rng(0,6.28);c.vx=Math.cos(a)*22;c.vy=Math.sin(a)*22;}
+    if((c.vx===0&&c.vy===0)||Math.random()<dt*0.8)steerClear(c);
+    if(!wanderClear(c.x+c.vx*dt*5,c.y+c.vy*dt*5)||creatureAhead(c))steerClear(c);   /* obstacle ahead → turn away */
     if(!c.say&&Math.random()<dt*0.03){c.say=QUIPS[ri(0,QUIPS.length-1)];c.sayUntil=performance.now()/1000+3.2;}
-    moveWith(c,c.vx*dt,c.vy*dt);
+    if(!moveWith(c,c.vx*dt,c.vy*dt))steerClear(c);                                   /* bumped a wall → pick a clear heading */
   }else if(c.state==="walking"){
     const dx=c.target.x-c.x,dy=c.target.y-c.y,d=Math.hypot(dx,dy);
     if(d<6){c.state="working";c.workDur=c.task.dur*rng(0.9,1.1);c.workT=c.workDur;return;}
@@ -2805,6 +2868,32 @@ function moveWith(c,dx,dy){
   c.y=Math.max(14,Math.min(H-8,c.y));
   if(ok&&(Math.abs(dx)>0.01||Math.abs(dy)>0.01))c.dir=Math.atan2(dx,dy);
   return ok;
+}
+/* ---- roaming obstacle avoidance: steer around water, trees, buildings, mountains, peers ---- */
+function wanderClear(px,py){
+  const tx=Math.floor(px/TILE),ty=Math.floor(py/TILE);
+  if(tx<0||ty<0||tx>=COLS||ty>=ROWS)return false;
+  if(!walkable(px,py))return false;        /* water / trees / buildings / volcano */
+  if(map[ty][tx]===3)return false;         /* don't climb mountains while just roaming */
+  return true;
+}
+function creatureAhead(c){
+  const ahx=c.x+Math.cos(Math.atan2(c.vy,c.vx))*CHIKI_R*2.2;
+  const ahy=c.y+Math.sin(Math.atan2(c.vy,c.vx))*CHIKI_R*2.2;
+  for(const o of creatures){
+    if(o===c||!o.mesh)continue;
+    if((o.x-ahx)*(o.x-ahx)+(o.y-ahy)*(o.y-ahy) < (CHIKI_R*1.6)*(CHIKI_R*1.6))return true;
+  }
+  return false;
+}
+function steerClear(c){
+  const base=(c.vx===0&&c.vy===0)?rng(0,6.28):Math.atan2(c.vy,c.vx);
+  for(let k=0;k<10;k++){
+    const a=base+(k===0?0:(k%2?1:-1)*(0.45+0.32*k))+rng(-0.18,0.18);
+    const lx=c.x+Math.cos(a)*TILE*1.3, ly=c.y+Math.sin(a)*TILE*1.3;
+    if(wanderClear(lx,ly)){c.vx=Math.cos(a)*22;c.vy=Math.sin(a)*22;return true;}
+  }
+  const a=rng(0,6.28);c.vx=Math.cos(a)*22;c.vy=Math.sin(a)*22;return false;   /* boxed in: random nudge */
 }
 
 /* ================= MINIMAP ================= */
@@ -2885,7 +2974,7 @@ function frame(now){
     }else{
       if(c.sail){c.x=c.sail.ax;c.y=c.sail.az;c.sail=null;}  /* hop back onto the dock */
       c.fx.boat.visible=false;
-      const bob=c.state==="sleeping"?0:Math.abs(Math.sin(c.bob))*3;
+      const bob=c.state==="sleeping"?(Math.sin(t*1.6+c.bob)*0.7+0.7):Math.abs(Math.sin(c.bob))*3;  /* gentle breathing while asleep */
       c.mesh.position.set(c.x,gy+bob,c.y);
       c.mesh.rotation.y=c.dir;
     }
