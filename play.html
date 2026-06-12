@@ -617,6 +617,85 @@ if(location.search.indexOf("embed")>-1){
   <div id="inspectBody"></div>
 </div>
 
+<!-- ===== Audio: background music + Music / Sound controls ===== -->
+<style>
+#audioCtrl{position:fixed;left:12px;top:66px;z-index:60;font-family:'Baloo 2',sans-serif}
+#audioToggle{width:46px;height:46px;border-radius:50%;border:2px solid #ffd166;background:#fff;
+  box-shadow:0 3px 0 #e0a93a,0 4px 10px rgba(0,0,0,.2);font-size:21px;cursor:pointer;line-height:1}
+#audioToggle:active{transform:translateY(2px);box-shadow:0 1px 0 #e0a93a}
+#audioPanel{display:none;margin-top:8px;width:214px;background:#fffefa;border:2px solid #ffd16699;
+  border-radius:14px;padding:11px 12px 10px;box-shadow:0 8px 22px rgba(0,0,0,.18)}
+#audioPanel.show{display:block}
+#audioPanel h4{margin:0 0 8px;font-size:13px;color:#b5803a;font-weight:800}
+.arow{display:flex;align-items:center;gap:7px;margin:7px 0}
+.arow>span{font-size:12px;color:#7a5a2a;font-weight:700;width:64px}
+.arow input[type=range]{flex:1;accent-color:#ffb13b;height:4px}
+.amute{border:none;background:none;font-size:15px;cursor:pointer;width:22px;padding:0}
+.atrack{font-size:10.5px;color:#9a8050;margin:9px 0 6px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.arow2{display:flex;justify-content:center;gap:10px}
+.arow2 button{border:1px solid #ffd16688;background:#fff7e6;border-radius:8px;font-size:13px;cursor:pointer;padding:3px 10px}
+.arow2 button:active{transform:translateY(1px)}
+body.pre #audioCtrl{display:none}
+</style>
+<div id="audioCtrl">
+  <button id="audioToggle" title="Music & Sound">🎵</button>
+  <div id="audioPanel">
+    <h4>🎚️ Audio</h4>
+    <div class="arow"><span>🎵 Music</span><button class="amute" id="musicMute">🔊</button><input id="musicVol" type="range" min="0" max="100"></div>
+    <div class="arow"><span>🔔 Sound</span><button class="amute" id="soundMute">🔊</button><input id="soundVol" type="range" min="0" max="100"></div>
+    <div class="atrack" id="audioTrack">— paused —</div>
+    <div class="arow2"><button id="musicPrev" title="Previous">⏮</button><button id="musicPlay" title="Play / Pause">▶</button><button id="musicNext" title="Next">⏭</button></div>
+  </div>
+</div>
+<audio id="bgMusic" preload="auto"></audio>
+<script>
+(function(){
+  const TRACKS=["audio/music1.mp3","audio/music2.mp3","audio/music3.mp3"];
+  const NAMES=["Chikoria Theme","Valley Breeze","Hatchling Groove"];
+  const A=document.getElementById("bgMusic");
+  const $=id=>document.getElementById(id);
+  let idx=0, started=false;
+  const LS=k=>{try{return localStorage.getItem(k);}catch(e){return null;}};
+  const SS=(k,v)=>{try{localStorage.setItem(k,v);}catch(e){}};
+  let musicVol=Math.max(0,Math.min(1,parseFloat(LS("chikiMusicVol")||"0.55")));
+  let soundVol=Math.max(0,Math.min(1,parseFloat(LS("chikiSoundVol")||"0.7")));
+  let musicMuted=LS("chikiMusicMuted")==="1";
+  let soundMuted=LS("chikiSoundMuted")==="1";
+  $("musicVol").value=Math.round(musicVol*100);
+  $("soundVol").value=Math.round(soundVol*100);
+  function applyMusic(){ A.volume=musicMuted?0:musicVol; $("musicMute").textContent=(musicMuted||musicVol===0)?"🔇":"🔊"; }
+  function applySound(){ $("soundMute").textContent=(soundMuted||soundVol===0)?"🔇":"🔊"; }
+  applyMusic(); applySound();
+  function setTrack(i){ idx=(i%TRACKS.length+TRACKS.length)%TRACKS.length; A.src=TRACKS[idx]; $("audioTrack").textContent="♪ "+NAMES[idx]; }
+  function play(){ A.play().then(()=>{ $("musicPlay").textContent="⏸"; $("audioTrack").textContent="♪ "+NAMES[idx]; }).catch(()=>{}); }
+  setTrack(0);
+  A.addEventListener("ended",()=>{ setTrack(idx+1); play(); });
+  $("audioToggle").onclick=()=>$("audioPanel").classList.toggle("show");
+  $("musicVol").oninput=e=>{ musicVol=e.target.value/100; musicMuted=false; applyMusic(); SS("chikiMusicVol",musicVol); SS("chikiMusicMuted","0"); };
+  $("soundVol").oninput=e=>{ soundVol=e.target.value/100; soundMuted=false; applySound(); SS("chikiSoundVol",soundVol); SS("chikiSoundMuted","0"); };
+  $("musicMute").onclick=()=>{ musicMuted=!musicMuted; applyMusic(); SS("chikiMusicMuted",musicMuted?"1":"0"); };
+  $("soundMute").onclick=()=>{ soundMuted=!soundMuted; applySound(); SS("chikiSoundMuted",soundMuted?"1":"0"); };
+  $("musicPrev").onclick=()=>{ setTrack(idx-1); play(); };
+  $("musicNext").onclick=()=>{ setTrack(idx+1); play(); };
+  $("musicPlay").onclick=()=>{ if(A.paused){ play(); } else { A.pause(); $("musicPlay").textContent="▶"; $("audioTrack").textContent="— paused —"; } };
+  window.__startMusic=function(){ if(started)return; started=true; applyMusic(); play();
+    setTimeout(()=>{ if(A.paused){ const k=()=>{ play(); document.removeEventListener("pointerdown",k); document.removeEventListener("keydown",k); }; document.addEventListener("pointerdown",k); document.addEventListener("keydown",k); } },300);
+  };
+  /* "Sound" channel: lightweight WebAudio effects, gated by the Sound slider/mute */
+  let ac=null;
+  window.playSfx=function(type){ if(soundMuted||soundVol<=0)return; try{
+    ac=ac||new (window.AudioContext||window.webkitAudioContext)();
+    const t=ac.currentTime,o=ac.createOscillator(),g=ac.createGain();
+    const f={click:660,open:520,reward:880,level:990}[type]||600;
+    o.type="triangle"; o.frequency.setValueAtTime(f,t);
+    if(type==="reward"||type==="level")o.frequency.exponentialRampToValueAtTime(f*1.5,t+0.12);
+    g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.25*soundVol,t+0.012); g.gain.exponentialRampToValueAtTime(0.0001,t+0.16);
+    o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t+0.18);
+  }catch(e){} };
+  document.addEventListener("pointerdown",e=>{ const el=e.target.closest&&e.target.closest("button,.gtab,.wopt,.x,[data-pop],[data-proxy]"); if(el)window.playSfx("click"); },true);
+})();
+</script>
+
 <div class="pop" id="modelsPop">
   <h2>🧊 Blockbench Model Studio <span class="x" data-close="modelsPop">✕</span></h2>
   <p style="font-size:12px;line-height:1.55">Design your Chikis in <b>Blockbench</b> (free at <b>blockbench.net</b>):
@@ -643,9 +722,6 @@ if(location.search.indexOf("embed")>-1){
     <button class="wopt" id="phantomBtn" style="border-color:#a78bfa;box-shadow:0 2px 0 #a78bfa">
       <b style="color:#7c5cd6">👻 Connect Phantom</b>
       <small>Real Solana wallet — checks your on-chain $CHIKI balance</small></button>
-    <button class="wopt" id="otherBtn" style="border-color:#4dabf7;box-shadow:0 2px 0 #4dabf7">
-      <b style="color:#1f7bd6">🔗 Other SOL-compatible wallet</b>
-      <small>Solflare · Backpack · Glow · any Solana wallet</small></button>
     <button class="wopt" id="newWallet"><b>🆕 Create demo wallet</b><small>1,200,000 $CHIKI · 5 SOL · fresh level-1 Chiki</small></button>
     <button style="width:100%;margin-top:8px" id="closeModal">Cancel</button>
   </div>
@@ -1436,7 +1512,7 @@ async function backendClaim(){
   try{
     const r=await fetch(CHAIN.BACKEND+"/claim",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:player.pk})});
     const j=await r.json();
-    if(j.ok){player.sol=+(player.sol+j.amountSol).toFixed(4);player.earned=(player.earned||0)+j.amountSol;addFeed(`💰 Claimed <b>${j.amountSol} SOL</b> to your wallet — <a href="${j.explorer}" target="_blank" style="color:#3ddc84">view tx</a>`);refreshUI();}
+    if(j.ok){player.sol=+(player.sol+j.amountSol).toFixed(4);player.earned=(player.earned||0)+j.amountSol;if(window.playSfx)window.playSfx("reward");addFeed(`💰 Claimed <b>${j.amountSol} SOL</b> to your wallet — <a href="${j.explorer}" target="_blank" style="color:#3ddc84">view tx</a>`);refreshUI();}
     else addFeed("⚠️ Claim: "+(j.error||"nothing to claim yet"));
   }catch(e){addFeed("⚠️ Claim failed: "+(e.message||e));}
 }
@@ -1515,7 +1591,6 @@ setInterval(()=>{if(player&&player.pk)saveProfile(player);},8000);
 addEventListener("beforeunload",()=>{if(player&&player.pk)saveProfile(player);});
 addEventListener("visibilitychange",()=>{if(document.hidden&&player&&player.pk)saveProfile(player);});
 document.getElementById("phantomBtn").onclick=connectPhantom;
-document.getElementById("otherBtn").onclick=connectOther;
 document.getElementById("btnWallet").onclick=()=>{
   if(player){
     addFeed(`👛 ${player.addr} disconnected.`);
@@ -3333,6 +3408,7 @@ function installModel(i,list){
   const enter=()=>{
     splash.classList.add("hide");
     document.body.classList.remove("pre");
+    if(window.__startMusic)window.__startMusic();
     setTimeout(()=>{if(splash.parentNode)splash.parentNode.removeChild(splash);},900);
   };
   const eb=document.getElementById("enterBtn");
