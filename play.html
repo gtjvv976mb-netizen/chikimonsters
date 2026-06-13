@@ -452,12 +452,13 @@
   #btnProfile{right:16px;bottom:16px;height:84px;width:auto}
   #btnMyFloat:hover,#btnProfile:hover{transform:scale(1.05)}
   #btnMyFloat:active,#btnProfile:active{transform:scale(.92)}
-  /* ===== Chat ===== */
-  #btnChat{position:fixed;right:18px;bottom:112px;z-index:31;cursor:pointer;width:64px;height:64px;border-radius:50%;
-    background:radial-gradient(circle at 30% 30%,#7fd0ff,#2a73c8);border:3px solid #fff;color:#fff;font-size:28px;
-    display:flex;align-items:center;justify-content:center;box-shadow:0 4px 10px rgba(0,0,0,.45);transition:transform .08s}
-  #btnChat:hover{transform:scale(1.06)} #btnChat:active{transform:scale(.92)}
-  #chatBadge{position:absolute;top:-4px;right:-4px;min-width:20px;height:20px;padding:0 5px;border-radius:10px;
+  /* ===== Chat (tab sits just below the 🎵 sound tab, left side) ===== */
+  #btnChat{position:fixed;left:12px;top:120px;z-index:60;cursor:pointer;width:46px;height:46px;border-radius:50%;
+    background:radial-gradient(circle at 30% 30%,#7fd0ff,#2a73c8);border:2px solid #fff;color:#fff;font-size:21px;line-height:1;
+    display:flex;align-items:center;justify-content:center;box-shadow:0 3px 0 #1d5aa0,0 4px 10px rgba(0,0,0,.2);transition:transform .08s}
+  #btnChat:active{transform:translateY(2px);box-shadow:0 1px 0 #1d5aa0}
+  body.pre #btnChat{display:none}
+  #chatBadge{position:absolute;top:-5px;right:-5px;min-width:20px;height:20px;padding:0 5px;border-radius:10px;
     background:#ff4d4d;color:#fff;font-size:12px;font-weight:800;display:none;align-items:center;justify-content:center;border:2px solid #fff}
   #chatBadge.show{display:flex}
   #chatPop{top:50%!important;right:calc(var(--frameW) + 14px)!important;left:auto!important;bottom:auto!important;
@@ -484,8 +485,16 @@
   #chatText{flex:1;font-family:'Baloo 2',sans-serif;font-size:13px;padding:8px 10px;border-radius:8px;border:2px solid #cdb585;background:#fff;color:#3a2c16}
   #chatSend{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:13px;padding:8px 14px;border-radius:8px;border:none;background:#2a73c8;color:#fff;cursor:pointer}
   #chatSend:active{transform:scale(.94)}
-  #chatAdminRow{display:none;align-items:center;gap:6px;margin-top:6px;font-size:11.5px;color:#8a7351}
-  #chatAdminRow.show{display:flex} #chatAdminRow input{accent-color:#c0392b}
+  #ctabAdmin{display:none} #ctabAdmin.show{display:block;background:#fbeaea;border-color:#d9a3a3;color:#a0322b}
+  #ctabAdmin.on{background:#c0392b;color:#fff;border-color:#9c2a22}
+  #adminView .ahint{font-size:12px;color:#8a7351;margin:2px 0 8px;line-height:1.4}
+  #adminText{width:100%;min-height:90px;resize:vertical;font-family:'Baloo 2',sans-serif;font-size:13px;padding:9px 10px;
+    border-radius:8px;border:2px solid #d9a3a3;background:#fffdf9;color:#3a2c16;box-sizing:border-box}
+  #adminPost{width:100%;margin-top:8px;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:13.5px;padding:10px;
+    border-radius:9px;border:none;background:#c0392b;color:#fff;cursor:pointer}
+  #adminPost:active{transform:scale(.97)}
+  #adminCur{margin-top:10px;font-size:12px;color:#5b4715;background:#fff3c4;border:2px solid #e3b73a;border-radius:8px;padding:8px;display:none}
+  #adminCur.show{display:block}
   .conline{display:flex;align-items:center;gap:7px;padding:6px 7px;border-radius:7px;cursor:pointer;font-size:13px;color:#3a2c16}
   .conline:hover{background:#eef4ff} .conline .dot{width:9px;height:9px;border-radius:50%;background:#3ddc84;flex:none}
   .conline .adm{color:#c0392b;font-weight:800;font-size:11px}
@@ -543,17 +552,23 @@ if(location.search.indexOf("embed")>-1){
   <div class="chatTabs">
     <button id="ctabChat" class="on">💬 Chat</button>
     <button id="ctabOnline">👥 Online <span id="ctabCount">(0)</span></button>
+    <button id="ctabAdmin">🛡 Admin</button>
   </div>
   <div id="chatView">
     <div id="chatDmBar"><span id="chatDmLabel"></span><span class="x" id="chatDmClose">✕ leave DM</span></div>
     <div id="chatScroll"></div>
-    <div id="chatAdminRow"><label><input type="checkbox" id="chatPinChk"> 📌 Post as pinned announcement (admin)</label></div>
     <div id="chatInputRow">
       <input id="chatText" maxlength="300" placeholder="Say something nice…" autocomplete="off">
       <button id="chatSend">Send</button>
     </div>
   </div>
   <div id="onlineView" style="display:none"></div>
+  <div id="adminView" style="display:none">
+    <p class="ahint">📢 Post an official announcement or update. It is highlighted and <b>pinned</b> to the top of everyone's chat until you replace or unpin it.</p>
+    <textarea id="adminText" maxlength="300" placeholder="Type the announcement / update…"></textarea>
+    <button id="adminPost">📌 Post Pinned Announcement</button>
+    <div id="adminCur"></div>
+  </div>
 </div>
 
 <div class="botbar">
@@ -1990,7 +2005,7 @@ positionHuds();setTimeout(positionHuds,400);setTimeout(positionHuds,1500);
   const myHandle=()=>player?(player.handle||player.addr||"Anon"):"Anon";
   const isAdmin=()=>!!(player&&player.pk&&CHAIN.ADMINS&&CHAIN.ADMINS.indexOf(player.pk)>-1);
 
-  let since=0, unread=0, open=false, tab="chat", dmTarget=null, dmLabel="";
+  let since=0, unread=0, open=false, tab="chat", dmTarget=null, dmLabel="", lastPinned=null;
   const seen=new Set();
   const scroll=()=>document.getElementById("chatScroll");
   const badge=()=>document.getElementById("chatBadge");
@@ -2021,12 +2036,14 @@ positionHuds();setTimeout(positionHuds,400);setTimeout(positionHuds,1500);
   }
 
   function renderPinned(p){
+    lastPinned=p||null;
     const el=document.getElementById("chatPinned");if(!el)return;
     if(p&&p.body){
       const who=esc(p.handle||"Team");
       el.innerHTML=`<b class="lbl">📌 PINNED · ${who}:</b> ${esc(p.body)}`+(isAdmin()?` <span class="pinbtn" data-unpin="${p.id}" title="Unpin">✕</span>`:"");
       el.classList.add("show");
     } else el.classList.remove("show");
+    if(tab==="admin")showAdminCur();
   }
 
   async function poll(){
@@ -2065,26 +2082,44 @@ positionHuds();setTimeout(positionHuds,400);setTimeout(positionHuds,1500);
     if(!player||!player.pk){showBanner("👛 Connect your wallet to chat.","error");return;}
     if(!B()){showBanner("⚙️ Chat needs the backend online.","error");return;}
     inp.value="";
-    const pin=isAdmin()&&document.getElementById("chatPinChk")&&document.getElementById("chatPinChk").checked;
     const body={wallet:player.pk,handle:myHandle(),text:clean(raw)};
     if(dmTarget)body.to=dmTarget;
-    if(pin)body.pin=true;
     try{
       const r=await fetch(B()+"/chat/send",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)});
       const j=await r.json();
       if(!j.ok){showBanner("⚠️ "+(j.error||"couldn't send"),"error");return;}
-      if(document.getElementById("chatPinChk"))document.getElementById("chatPinChk").checked=false;
       poll();
     }catch(e){showBanner("⚠️ Chat send failed.","error");}
   }
+  /* admin: post an official, pinned announcement from the separate Admin tab */
+  async function postAnnounce(){
+    if(!isAdmin()){showBanner("🛡 Admins only.","error");return;}
+    const ta=document.getElementById("adminText");const t=ta.value.trim();
+    if(!t){showBanner("✍️ Write the announcement first.","error");return;}
+    try{
+      const r=await fetch(B()+"/chat/send",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:player.pk,handle:myHandle(),text:t,pin:true})});
+      const j=await r.json();
+      if(!j.ok){showBanner("⚠️ "+(j.error||"couldn't post"),"error");return;}
+      ta.value="";showBanner("📢 Announcement posted & pinned for everyone.","");poll();
+    }catch(e){showBanner("⚠️ Post failed.","error");}
+  }
+  function showAdminCur(){
+    const el=document.getElementById("adminCur");if(!el)return;el.classList.add("show");
+    if(lastPinned&&lastPinned.body)el.innerHTML=`<b>📌 Currently pinned:</b> ${esc(lastPinned.body)} <span class="pinbtn" data-unpin="${lastPinned.id}" style="color:#c0392b">✕ unpin</span>`;
+    else el.innerHTML="No announcement is pinned right now.";
+  }
 
   function setTab(t){
+    if(t==="admin"&&!isAdmin())t="chat";
     tab=t;
     document.getElementById("ctabChat").classList.toggle("on",t==="chat");
     document.getElementById("ctabOnline").classList.toggle("on",t==="online");
+    document.getElementById("ctabAdmin").classList.toggle("on",t==="admin");
     document.getElementById("chatView").style.display=t==="chat"?"":"none";
     document.getElementById("onlineView").style.display=t==="online"?"":"none";
+    document.getElementById("adminView").style.display=t==="admin"?"":"none";
     if(t==="online")onlinePoll();
+    if(t==="admin")showAdminCur();
   }
   function openDM(wallet,nm){
     dmTarget=wallet;dmLabel=nm;
@@ -2098,12 +2133,18 @@ positionHuds();setTimeout(positionHuds,400);setTimeout(positionHuds,1500);
   document.getElementById("btnChat").onclick=()=>{
     togglePop("chatPop");
     open=document.getElementById("chatPop").classList.contains("show");
-    if(open){clearBadge();document.getElementById("chatAdminRow").classList.toggle("show",isAdmin());setTab("chat");poll();onlinePoll();setTimeout(toBottom,60);}
+    if(open){clearBadge();document.getElementById("ctabAdmin").classList.toggle("show",isAdmin());setTab("chat");poll();onlinePoll();setTimeout(toBottom,60);}
   };
   // keep `open` in sync if the panel is closed via its ✕
   const cx=document.querySelector('#chatPop [data-close="chatPop"]'); if(cx)cx.addEventListener("click",()=>{open=false;});
   document.getElementById("ctabChat").onclick=()=>setTab("chat");
   document.getElementById("ctabOnline").onclick=()=>setTab("online");
+  document.getElementById("ctabAdmin").onclick=()=>setTab("admin");
+  document.getElementById("adminPost").onclick=postAnnounce;
+  document.getElementById("adminCur").addEventListener("click",async e=>{
+    const u=e.target.closest("[data-unpin]");
+    if(u&&isAdmin()){try{await fetch(B()+"/chat/pin",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:player.pk,id:+u.dataset.unpin,pin:false})});poll();}catch(_){}}
+  });
   document.getElementById("chatSend").onclick=send;
   document.getElementById("chatText").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();send();}});
   document.getElementById("chatDmClose").onclick=closeDM;
