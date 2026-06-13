@@ -624,6 +624,7 @@ body.pre #liveHud{display:none}
   opacity:0;pointer-events:none;transition:opacity .35s ease,transform .35s ease;max-width:82vw;text-align:center;line-height:1.35}
 #welcomeBanner.show{opacity:1;transform:translateX(-50%) translateY(0)}
 #welcomeBanner.err{background:rgba(122,31,31,.96);border-color:#ff6b6b}
+#welcomeBanner.info{background:rgba(20,58,110,.96);border-color:#74c0fc}
 </style>
 <div id="liveHud" title="Live activity in Chikoria">
   <span class="ldot"></span><span id="liveUsers">👥 —</span><span class="lsep">·</span><span id="liveChikis">🐣 —</span>
@@ -1625,6 +1626,7 @@ const inIframe=(function(){try{return window.self!==window.top;}catch(e){return 
 async function connectPhantom(){
   /* Phantom can't reliably inject/connect inside an iframe — promote to a full top-level window first */
   if(inIframe){
+    showBanner("👻 Opening the full game window so Phantom can connect…","info");
     addFeed("👻 Opening the full game window so Phantom can connect…");
     const url=location.href.replace(/\?.*$/,"")+"?connect=1";
     try{window.top.location.href=url;return;}catch(e){}
@@ -1634,28 +1636,32 @@ async function connectPhantom(){
   const phan=(window.phantom&&window.phantom.solana)||null;
   const prov=(phan&&phan.isPhantom)?phan:((window.solana&&window.solana.isPhantom)?window.solana:null);
   if(!prov){
+    let msg;
     if(/Android|iPhone|iPad|iPod/i.test(navigator.userAgent))
-      addFeed("📱 On a phone, open this site inside the <b>Phantom app's browser</b> (Phantom → Browser tab → paste the link) to connect your wallet.");
+      msg="📱 On a phone, open this site inside the <b>Phantom app's browser</b> to connect.";
     else if(window.solana||window.braveSolana)
-      addFeed("👻 Another wallet is intercepting (Brave's built-in wallet?). Install the <b>Phantom</b> extension from <b>phantom.app</b> and set it as default in <b>brave://settings/wallet</b> → Default wallet → <i>Extensions</i>, then refresh. Or open the game in Chrome with Phantom.");
+      msg="👻 Another wallet is intercepting. Install <b>Phantom</b> and set it as default (Brave: brave://settings/wallet → Default wallet → Extensions), then refresh.";
     else
-      addFeed("👻 Phantom not found — install it from <b>phantom.app</b> and refresh, or use a demo wallet meanwhile.");
+      msg="👻 Phantom not found — install it from <b>phantom.app</b> and refresh, or use the demo wallet.";
+    showBanner(msg,"error");addFeed(msg);
     return;
   }
   try{
+    showBanner("👻 Connecting… please <b>approve the request in your Phantom wallet</b>.","info");
     const res=await prov.connect();
     const pk=res.publicKey.toString();
     const short=pk.slice(0,4)+"…"+pk.slice(-4);
+    showBanner(`🔗 Connected <b>${short}</b> — checking your $CHIKI balance…`,"info");
     addFeed(`👻 Phantom connected: <b>${short}</b> — checking balance…`);
     let bal,solBal=0,serverProfile=null;
     if(CHAIN.BACKEND){
       const v=await backendVerify(pk);
       if(v){
-        if(!v.eligible){addFeed(`⚠️ <b>${short}</b> holds ${(v.balance||0).toLocaleString()} $CHIKI — below the ${MIN_HOLD.toLocaleString()} threshold. Top up to receive your Chiki!`);modal.classList.remove("show");openPop("feedPop");return;}
+        if(!v.eligible){const m=`⚠️ <b>${short}</b> holds ${(v.balance||0).toLocaleString()} $CHIKI — below the ${MIN_HOLD.toLocaleString()} threshold. Top up to get your Chiki!`;showBanner(m,"error");addFeed(m);modal.classList.remove("show");return;}
         bal=Math.max(Math.floor(v.balance||0),MIN_HOLD);
         serverProfile=v.profile||null;
         addFeed(`🔗 Verified via backend — eligible (${(v.balance||0).toLocaleString()} $CHIKI).`);
-      }else addFeed("⚠️ Backend unreachable — using a direct on-chain check.");
+      }else{showBanner("🔗 Server waking up — checking your balance on-chain…","info");addFeed("⚠️ Backend unreachable — using a direct on-chain check.");}
     }
     if(bal===undefined){
       if(CHAIN.MINT){
@@ -1672,9 +1678,9 @@ async function connectPhantom(){
     try{const lam=await rpcCall("getBalance",[pk]);solBal=(lam.value||0)/1e9;}catch(e){}
     bal=Math.floor(bal);
     if(bal<MIN_HOLD){
-      addFeed(`⚠️ <b>${short}</b> holds ${bal.toLocaleString()} $CHIKI — below the ${MIN_HOLD.toLocaleString()} threshold. Top up to receive your Chiki!`);
+      const m=`⚠️ <b>${short}</b> holds ${bal.toLocaleString()} $CHIKI — below the ${MIN_HOLD.toLocaleString()} threshold. Top up to get your Chiki!`;
+      showBanner(m,"error");addFeed(m);
       modal.classList.remove("show");
-      openPop("feedPop");
       return;
     }
     let h=holders.find(x=>x.pk===pk);
@@ -1715,15 +1721,18 @@ function connectOther(){
   addFeed(`🔗 Connected a SOL-compatible wallet <b>${h.addr}</b> — your Chiki hatched!`);
   loginAs(h);
 }
-/* pop-up banner for welcome-back / connection errors */
+/* pop-up banner for status / welcome-back / connection errors.
+   kind: "error" (red), "info" (blue, stays until replaced), default (green, auto-hides) */
 function showBanner(html,kind){
   let b=document.getElementById("welcomeBanner");
   if(!b){b=document.createElement("div");b.id="welcomeBanner";document.body.appendChild(b);}
-  b.className=(kind==="error"?"err ":"")+"";
+  b.className=kind==="error"?"err":(kind==="info"?"info":"");
   b.innerHTML=html;
   void b.offsetWidth; b.classList.add("show");
-  clearTimeout(b._t); b._t=setTimeout(()=>b.classList.remove("show"), kind==="error"?8000:5000);
+  clearTimeout(b._t);
+  if(kind!=="info")b._t=setTimeout(()=>b.classList.remove("show"), kind==="error"?8000:5000);  /* info persists until replaced */
 }
+function hideBanner(){const b=document.getElementById("welcomeBanner");if(b){clearTimeout(b._t);b.classList.remove("show");}}
 /* live activity HUD — real presence via backend heartbeat */
 function _setLive(j){if(!j||typeof j.activeUsers!=="number")return;
   const U=document.getElementById("liveUsers"),K=document.getElementById("liveChikis");
