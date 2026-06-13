@@ -521,9 +521,16 @@ if(location.search.indexOf("embed")>-1){
     <div>☁️ <b>Nimbus Isles</b> — five floating sky islands, watched by circling birds</div>
   </div>
   <h3>🎲 Tasks &amp; rewards</h3>
-  <p>12 tasks ranked from <b>highest to lowest chance</b> — the rarer the task, the bigger the payout, each paying a <b>% of the live creator-fee pool</b> (see 📋 Task Table). The pool refills continuously from <b>pump.fun creator fees</b> on $CHIKI trades. Every task is timed (4s → 20s); travelling Chikis beam a light pillar at their destination, working Chikis show their task icon and a progress bar until the SOL drops.</p>
-  <h3>⚡ Stamina &amp; sleep</h3>
-  <p>Every task costs stamina (8⚡ → 34⚡). At zero, your Chiki <b>sleeps</b> and earns nothing. Higher level = bigger stamina tank (92⚡ at Lv1 → 680⚡ at Lv50) <i>and</i> shorter sleep (64s → 10s).</p>
+  <p>12 tasks ranked from <b>highest to lowest chance</b> — the rarer the task, the bigger the payout, each paying a <b>% of the live creator-fee pool</b> (see 📋 Task Table). The pool refills continuously from <b>pump.fun creator fees</b> on $CHIKI trades. Every task is timed; travelling Chikis beam a light pillar at their destination, working Chikis show their task icon and a progress bar until the SOL drops.</p>
+  <h3>🎬 How tasks play out</h3>
+  <ul>
+    <li><b>Stations</b>: a Chiki walks up and <b>stands in front of</b> the beehive, mailbox, berry bush or other station — never on top of it — and faces it while the station animates.</li>
+    <li><b>🎣 Fishing</b>: it boards a boat, <b>sails out at normal speed</b> to its <i>own</i> fishing spot (boats never share a spot), waits there for the task duration, then sails back to the dock.</li>
+    <li><b>🥊 Arena</b>: sparring is a <b>friendly bout between two Chikis</b> — they face each other in the ring and trade jabs without overlapping.</li>
+    <li><b>💎 Crystal cave</b>: the Chiki <b>enters the cave and disappears</b> for the whole task; a floating icon and progress bar over the cave mouth show what it's doing and how long is left.</li>
+  </ul>
+  <h3>⚡ Stamina, sleep &amp; feeding</h3>
+  <p>Every task costs stamina. At zero, your Chiki <b>sleeps</b> to recover (higher level = shorter sleep). After every <b>2nd sleep cycle</b> it wakes up <b>hungry</b> and won't get up until you <b>feed it 1,000–5,000 $CHIKI</b> (more for higher levels) from the My Chiki panel.</p>
   <h3>🌟 Levels &amp; evolution (max Lv 50)</h3>
   <ul>
     <li>Buy levels with <b>$CHIKI</b> or <b>SOL</b> (SOL path costs ~15% more).</li>
@@ -793,7 +800,7 @@ const SPECIES=[
   {names:["Pyrix","Emberspin","Infernox"],type:"Flame",body:"#ff7849",accent:"#ffd166",mane:"flame",maneCols:["#d7263d","#ff7849","#ffd166"]},
   {names:["Snowclaw","Frostail","Tundrail"],type:"Ice",body:"#e8f4fb",accent:"#74c0fc",mane:"crystal",maneCols:["#d0ebff","#a5d8ff","#ffffff"]},
   {names:["Rocko","Quakeo","Stonehide"],type:"Mountain",body:"#a98e74",accent:"#6f5b46",mane:"rock",maneCols:["#8d7b62","#6f5b46","#b8a78f"]},
-  {names:["Nightbat","Shadowl","Twilight"],type:"Shadow",body:"#5f3dc4",accent:"#b197fc",mane:"shadow",maneCols:["#3b2a86","#5f3dc4","#845ef7"]},
+  {names:["Nightbat","Shadowl","Twilight"],type:"Shadow",body:"#1aa39a",accent:"#f0d060",mane:"shadow",maneCols:["#caa83a","#f0d060","#ffe79a"]},
   {names:["Crystalix","Glimmer","Starix"],type:"Crystal",body:"#faa2c1",accent:"#e599f7",mane:"crystal",maneCols:["#eebefa","#fcc2d7","#ffffff"]},
   {names:["Cloudo","Zephir","Hurricub"],type:"Wind",body:"#e9ecef",accent:"#91a7ff",mane:"fluff",maneCols:["#ffffff","#dee2e6","#c5cdd4"]},
   {names:["Lunara","Galaxi","Cometail"],type:"Cosmic",body:"#4c3a8c",accent:"#ffd43b",mane:"shadow",maneCols:["#6741d9","#9775fa","#ffd43b"]},
@@ -1127,6 +1134,7 @@ function assignTask(c,forceRare){
   if(!z){c.nextTaskIn=rng(2,6);return;}      /* every access point busy — wait a moment */
   freeSpot(c);occupied.add(z);c.spot=z;
   c.task=t;c.target={x:z.x*TILE+TILE/2+rng(-5,5),y:z.y*TILE+TILE/2+rng(-5,5)};
+  c.ap={x:z.x*TILE+TILE/2,y:z.y*TILE+TILE/2};   /* exact access-point centre (for fishing/spar/cave) */
   c.state="walking";c.stuck=0;
   if(forceRare)addFeed(`❓ <b>Mystery Chiki energy!</b> ${nameOf(c)} sensed something legendary…`,t.rarity);
 }
@@ -2994,7 +3002,12 @@ function tickCreature(c,dt){
     if(!moveWith(c,c.vx*dt,c.vy*dt))steerClear(c);                                   /* bumped a wall → pick a clear heading */
   }else if(c.state==="walking"){
     const dx=c.target.x-c.x,dy=c.target.y-c.y,d=Math.hypot(dx,dy);
-    if(d<6){c.state="working";c.workDur=c.task.dur*rng(0.9,1.1);c.workT=c.workDur;return;}
+    const STAND=(c.task&&(c.task.zone==="cave"||c.task.zone==="pond"))?6:16;  /* stop in front of the model, not on it */
+    if(d<STAND){
+      if(d>0.1){c.x=c.target.x-dx/d*STAND;c.y=c.target.y-dy/d*STAND;}
+      c.dir=Math.atan2(dx,dy);                 /* face the access point */
+      c.state="working";c.workDur=c.task.dur*rng(0.9,1.1);c.workT=c.workDur;return;
+    }
     const sp2=70;
     const moved=moveWith(c,dx/d*sp2*dt,dy/d*sp2*dt);
     if(!moved){c.stuck+=dt;if(c.stuck>0.6){moveWith(c,-dy/d*sp2*dt*1.4,dx/d*sp2*dt*1.4);c.stuck=Math.random()<.5?0:c.stuck;}}
@@ -3072,7 +3085,7 @@ mini.addEventListener("click",e=>{
 });
 
 /* ================= MAIN LOOP ================= */
-let last=performance.now(),uiT=0;
+let last=performance.now(),uiT=0,fishCounter=0;
 function frame(now){
   let dt=Math.min((now-last)/1000,.1);last=now;
   const sdt=paused?0:dt*speed;
@@ -3096,33 +3109,61 @@ function frame(now){
     if(!c.mesh)return;
     let gy=heightY(c.x,c.y);
     const fishing=c.state==="working"&&c.task&&c.task.zone==="pond";
+    const sparring=c.state==="working"&&c.task&&c.task.zone==="spar";
+    const caving=c.state==="working"&&c.task&&c.task.zone==="cave";
     if(fishing){
-      /* board the boat and sail out toward the nearest lake/sea centre, then return */
+      /* sail out at normal speed → anchor at a private fishing spot for the task → sail back */
       if(!c.sail){
+        if(c._fishId===undefined)c._fishId=fishCounter++;
         let best=LAKE_CENTERS[0],bd=1e9;
         for(const lc of LAKE_CENTERS){const d=Math.hypot(lc.x*TILE-c.x,lc.y*TILE-c.y);if(d<bd){bd=d;best=lc;}}
         const ddx=best.x*TILE-c.x,ddz=best.y*TILE-c.y,dl=Math.hypot(ddx,ddz)||1;
         const out=Math.min(dl*0.55,5.5*TILE);
-        c.sail={ax:c.x,az:c.y,ox:c.x+ddx/dl*out,oz:c.y+ddz/dl*out,dir:Math.atan2(ddx,ddz)};
+        const perp=((c._fishId%6)-2.5)*28;        /* unique spot — boats don't overlap */
+        c.sail={ax:c.x,az:c.y,
+          ox:c.x+ddx/dl*out+(-ddz/dl)*perp,
+          oz:c.y+ddz/dl*out+( ddx/dl)*perp,
+          dir:Math.atan2(ddx,ddz)};
       }
       const spr=c.workDur?Math.max(0,Math.min(1,1-c.workT/c.workDur)):0;
-      const k=Math.sin(spr*Math.PI);
+      const tf=Math.max(0.06,Math.min(0.32,2.6/(c.workDur||10)));   /* fixed-ish travel each way */
+      const ss=x=>x*x*(3-2*x);
+      let k; if(spr<tf)k=ss(spr/tf); else if(spr>1-tf)k=ss(Math.max(0,(1-spr)/tf)); else k=1;
       const bx2=c.sail.ax+(c.sail.ox-c.sail.ax)*k, bz2=c.sail.az+(c.sail.oz-c.sail.az)*k;
       const wy=8+Math.sin(t*2.2+c.bob)*1.2;
       c.fx.boat.visible=true;
       c.fx.boat.position.set(bx2,wy,bz2);
       c.fx.boat.rotation.y=c.sail.dir;
       c.fx.boat.rotation.z=Math.sin(t*1.8+c.bob)*0.05;
-      c.mesh.position.set(bx2,wy+15,bz2);  /* sit up on the deck */
+      c.mesh.visible=true;
+      c.mesh.position.set(bx2,wy+15,bz2);
       c.mesh.rotation.y=c.sail.dir;
-      c.x=bx2;c.y=bz2;          /* bar/emoji effects follow the boat */
+      c.x=bx2;c.y=bz2;
       gy=wy;
+    }else if(caving){
+      /* head into the cave and vanish for the task; bar + emoji float over the mouth as the indicator */
+      if(c.sail){c.x=c.sail.ax;c.y=c.sail.az;c.sail=null;}
+      c.fx.boat.visible=false;
+      if(c.ap){c.x=c.ap.x;c.y=c.ap.y;gy=heightY(c.x,c.y);}
+      c.mesh.visible=false;            /* gone spelunking */
     }else{
       if(c.sail){c.x=c.sail.ax;c.y=c.sail.az;c.sail=null;}  /* hop back onto the dock */
       c.fx.boat.visible=false;
+      c.mesh.visible=true;
       const bob=c.state==="sleeping"?(Math.sin(t*1.6+c.bob)*0.7+0.7):Math.abs(Math.sin(c.bob))*3;  /* gentle breathing while asleep */
       c.mesh.position.set(c.x,gy+bob,c.y);
       c.mesh.rotation.y=c.dir;
+      if(sparring){
+        /* friendly bout: face the nearest sparring partner and trade jabs without overlapping */
+        let partner=null,pd=1e9;
+        for(const o of creatures){if(o!==c&&o.state==="working"&&o.task&&o.task.zone==="spar"){const dd=Math.hypot(o.x-c.x,o.y-c.y);if(dd<pd){pd=dd;partner=o;}}}
+        if(partner&&pd<3.2*TILE){
+          const ang=Math.atan2(partner.x-c.x,partner.y-c.y);
+          const lunge=Math.max(0,Math.sin(t*6+c.bob))*5;     /* jab in, pull back */
+          c.mesh.position.set(c.x+Math.sin(ang)*lunge, gy+Math.abs(Math.sin(t*9+c.bob))*2.5, c.y+Math.cos(ang)*lunge);
+          c.mesh.rotation.y=ang;                              /* face each other */
+        }
+      }
     }
     if(c.state==="sleeping")c.mesh.rotation.z=Math.PI/2*0.85;else c.mesh.rotation.z=0;
     /* natural motion: Blender clips first, procedural rig as fallback */
