@@ -847,7 +847,7 @@ async function chikiSpend(amountChiki,label){
   const PK=s=>new w3.PublicKey(s);
   const conn=new w3.Connection(CHAIN.RPC,"confirmed");
   const owner=PK(player.pk),mint=PK(CHAIN.MINT),treas=PK(CHAIN.TREASURY),team=PK(CHAIN.TEAM);
-  const TOKEN=PK("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
+  const TOKEN=PK("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb");   /* $CHIKI is a Token-2022 mint */
   const ATAP=PK("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
   const SYS=w3.SystemProgram.programId;
   const dec=await chikiDecimals();
