@@ -1907,6 +1907,15 @@ function updateWhaleTab(){
   el.style.display="none";   /* 2 Chikis active (or not a whale) */
 }
 setInterval(updateWhaleTab,1000);
+/* keep the HUD pills just below the (scaling) tab bar, centered, so they never overlap it or each other */
+function positionHuds(){
+  const g=document.getElementById("gtabbar"),lh=document.getElementById("liveHud"),wt=document.getElementById("whaleTab");
+  let top=70; if(g){const r=g.getBoundingClientRect(); if(r.height>0)top=Math.max(70,Math.round(r.bottom)+10);}
+  if(lh)lh.style.top=top+"px";
+  if(wt)wt.style.top=(top+36)+"px";
+}
+addEventListener("resize",positionHuds);
+positionHuds();setTimeout(positionHuds,400);setTimeout(positionHuds,1500);
 
 /* ===== Live shared world: render other online players' Chikis as nameless roamers ===== */
 const ghostMap=new Map();        /* "wallet#i" -> ghost creature */
