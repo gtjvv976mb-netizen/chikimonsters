@@ -452,6 +452,44 @@
   #btnProfile{right:16px;bottom:16px;height:84px;width:auto}
   #btnMyFloat:hover,#btnProfile:hover{transform:scale(1.05)}
   #btnMyFloat:active,#btnProfile:active{transform:scale(.92)}
+  /* ===== Chat ===== */
+  #btnChat{position:fixed;right:18px;bottom:112px;z-index:31;cursor:pointer;width:64px;height:64px;border-radius:50%;
+    background:radial-gradient(circle at 30% 30%,#7fd0ff,#2a73c8);border:3px solid #fff;color:#fff;font-size:28px;
+    display:flex;align-items:center;justify-content:center;box-shadow:0 4px 10px rgba(0,0,0,.45);transition:transform .08s}
+  #btnChat:hover{transform:scale(1.06)} #btnChat:active{transform:scale(.92)}
+  #chatBadge{position:absolute;top:-4px;right:-4px;min-width:20px;height:20px;padding:0 5px;border-radius:10px;
+    background:#ff4d4d;color:#fff;font-size:12px;font-weight:800;display:none;align-items:center;justify-content:center;border:2px solid #fff}
+  #chatBadge.show{display:flex}
+  #chatPop{top:50%!important;right:calc(var(--frameW) + 14px)!important;left:auto!important;bottom:auto!important;
+    transform:translateY(-50%)!important;width:min(380px,90vw);display:flex;flex-direction:column;max-height:calc(100vh - 150px)}
+  #chatPop h2{--bA:#6fb1ff;--bB:#2456b8}
+  .chatTabs{display:flex;gap:6px;margin:6px 0}
+  .chatTabs button{flex:1;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:12px;padding:6px 4px;border-radius:8px;
+    border:2px solid #cdb585;background:#fff7e6;color:#6b4f23;cursor:pointer}
+  .chatTabs button.on{background:#2a73c8;color:#fff;border-color:#1d5aa0}
+  #chatPinned{display:none;background:#fff3c4;border:2px solid #e3b73a;border-radius:8px;padding:7px 9px;margin-bottom:6px;
+    font-size:12.5px;color:#5b4715;line-height:1.35}
+  #chatPinned.show{display:block}
+  #chatPinned b.lbl{color:#b5803a}
+  #chatScroll{flex:1;overflow-y:auto;min-height:160px;max-height:42vh;background:#fffdf6;border:2px solid #e6d2a3;border-radius:8px;padding:8px}
+  .cmsg{margin:0 0 7px;font-size:13px;line-height:1.35;color:#3a2c16;word-wrap:break-word;overflow-wrap:anywhere}
+  .cmsg .who{font-weight:800;color:#235ba8} .cmsg .who.me{color:#1f8a4c} .cmsg .who.adm{color:#c0392b}
+  .cmsg.dm{background:#efe6ff;border-left:3px solid #8a5edb;padding:4px 7px;border-radius:6px}
+  .cmsg.sys{background:#eef7ee;border-left:3px solid #5ab06a;padding:5px 8px;border-radius:6px;color:#2f5d36;font-weight:600}
+  .cmsg .pinbtn{cursor:pointer;opacity:.55;font-size:11px;margin-left:4px} .cmsg .pinbtn:hover{opacity:1}
+  .cmsg .t{color:#9a8a68;font-size:10.5px;margin-left:4px}
+  #chatDmBar{display:none;align-items:center;gap:6px;background:#efe6ff;border:2px solid #b89be6;border-radius:8px;padding:4px 8px;margin-bottom:6px;font-size:12px;color:#54309c;font-weight:700}
+  #chatDmBar.show{display:flex} #chatDmBar .x{cursor:pointer;margin-left:auto;font-weight:900}
+  #chatInputRow{display:flex;gap:6px;margin-top:7px}
+  #chatText{flex:1;font-family:'Baloo 2',sans-serif;font-size:13px;padding:8px 10px;border-radius:8px;border:2px solid #cdb585;background:#fff;color:#3a2c16}
+  #chatSend{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:13px;padding:8px 14px;border-radius:8px;border:none;background:#2a73c8;color:#fff;cursor:pointer}
+  #chatSend:active{transform:scale(.94)}
+  #chatAdminRow{display:none;align-items:center;gap:6px;margin-top:6px;font-size:11.5px;color:#8a7351}
+  #chatAdminRow.show{display:flex} #chatAdminRow input{accent-color:#c0392b}
+  .conline{display:flex;align-items:center;gap:7px;padding:6px 7px;border-radius:7px;cursor:pointer;font-size:13px;color:#3a2c16}
+  .conline:hover{background:#eef4ff} .conline .dot{width:9px;height:9px;border-radius:50%;background:#3ddc84;flex:none}
+  .conline .adm{color:#c0392b;font-weight:800;font-size:11px}
+  .conline .dm{margin-left:auto;font-size:11px;color:#2a73c8;font-weight:800}
 </style>
 </head>
 <body>
@@ -497,6 +535,26 @@ if(location.search.indexOf("embed")>-1){
 <div id="gpointer"></div>
 <img id="btnMyFloat" src="ui/track.png" alt="Track my Chiki" style="display:none">
 <img id="btnProfile" src="ui/profile.png" alt="My Profile" style="display:none">
+<div id="btnChat" title="Community chat">💬<span id="chatBadge">0</span></div>
+
+<div class="pop" id="chatPop">
+  <h2>💬 Chikoria Chat <span class="x" data-close="chatPop">✕</span></h2>
+  <div id="chatPinned"></div>
+  <div class="chatTabs">
+    <button id="ctabChat" class="on">💬 Chat</button>
+    <button id="ctabOnline">👥 Online <span id="ctabCount">(0)</span></button>
+  </div>
+  <div id="chatView">
+    <div id="chatDmBar"><span id="chatDmLabel"></span><span class="x" id="chatDmClose">✕ leave DM</span></div>
+    <div id="chatScroll"></div>
+    <div id="chatAdminRow"><label><input type="checkbox" id="chatPinChk"> 📌 Post as pinned announcement (admin)</label></div>
+    <div id="chatInputRow">
+      <input id="chatText" maxlength="300" placeholder="Say something nice…" autocomplete="off">
+      <button id="chatSend">Send</button>
+    </div>
+  </div>
+  <div id="onlineView" style="display:none"></div>
+</div>
 
 <div class="botbar">
   <span class="hint">🖱 Drag to orbit · scroll to zoom · WASD pan · click a Chiki to inspect · minimap to jump<br>
@@ -846,7 +904,8 @@ const CHAIN={
   BACKEND:"https://backend-wffd.onrender.com",   /* live verify/payout backend */
   TREASURY:"5Uyor4oi3kuKxvfWmyjvRVtwoEZmyK3BzUFbQpWoqaD7",       /* reward pool — receives 45% of $CHIKI spends */
   TEAM:"CmY2ZXVPVG2gbAHeVWHw7PQrAKtTcrWsq2raaWgg8YJ9",          /* team wallet — receives 35% */
-  ONCHAIN_SPENDS:true            /* true = level/feed are REAL on-chain $CHIKI tx (20% burn/45% pool/35% team); false = simulated */
+  ONCHAIN_SPENDS:true,           /* true = level/feed are REAL on-chain $CHIKI tx (20% burn/45% pool/35% team); false = simulated */
+  ADMINS:["CmY2ZXVPVG2gbAHeVWHw7PQrAKtTcrWsq2raaWgg8YJ9"]   /* wallets that can PIN / post official chat updates (add your own here) */
 };
 /* ===== Real on-chain $CHIKI spend: 20% burned, 45%→treasury, 35%→team (player signs in Phantom) ===== */
 let _chikiDec=null;
@@ -1821,6 +1880,7 @@ async function connectPhantom(){
       if(saved&&saved.chikis&&saved.chikis.length){
         h.earned=saved.earned||0;
         h._returning=true;
+        h._awayMs=saved._serverSavedAt?Math.max(0,Date.now()-saved._serverSavedAt):0;
         restoreChikis(h,saved);
         if(typeof ensureSpots==="function")ensureSpots();
         saveProfile(h);  /* mirror server profile back into localStorage */
@@ -1878,7 +1938,7 @@ async function pingPresence(){
   try{
     const mine=(typeof myChikis==="function")?myChikis():[];
     const r=await fetch(CHAIN.BACKEND+"/presence",{method:"POST",headers:{"content-type":"application/json"},
-      body:JSON.stringify({wallet:player.pk,chikis:mine.length,roster:mine.map(c=>({sp:SPECIES.indexOf(c.sp),level:c.level}))})});
+      body:JSON.stringify({wallet:player.pk,handle:(player.handle||player.addr||""),chikis:mine.length,roster:mine.map(c=>({sp:SPECIES.indexOf(c.sp),level:c.level}))})});
     _setLive(await r.json());
   }catch(e){pollPresence();}
 }
@@ -1917,6 +1977,176 @@ function positionHuds(){
 }
 addEventListener("resize",positionHuds);
 positionHuds();setTimeout(positionHuds,400);setTimeout(positionHuds,1500);
+
+/* ===================== COMMUNITY CHAT ===================== */
+(function(){
+  const B=()=>CHAIN.BACKEND;
+  const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  const fmtT=ts=>{const d=new Date(ts);return (""+d.getHours()).padStart(2,"0")+":"+(""+d.getMinutes()).padStart(2,"0");};
+  /* client-side profanity mirror (the server also masks; this is instant) */
+  const BAD=["fuck","shit","bitch","asshole","bastard","cunt","dick","piss","slut","whore","nigger","nigga","faggot","retard","rape","cock","pussy","motherfucker","wank","twat","prick"];
+  const norm=w=>w.toLowerCase().replace(/[1!|]/g,"i").replace(/3/g,"e").replace(/[4@]/g,"a").replace(/0/g,"o").replace(/[5$]/g,"s").replace(/7/g,"t").replace(/[^a-z]/g,"");
+  function clean(s){return String(s||"").slice(0,300).replace(/[\p{L}\p{N}@$!|*]+/gu,t=>{const n=norm(t);for(const b of BAD)if(n===b||(b.length>=4&&n.includes(b)))return"*".repeat(t.length);return t;});}
+  const myHandle=()=>player?(player.handle||player.addr||"Anon"):"Anon";
+  const isAdmin=()=>!!(player&&player.pk&&CHAIN.ADMINS&&CHAIN.ADMINS.indexOf(player.pk)>-1);
+
+  let since=0, unread=0, open=false, tab="chat", dmTarget=null, dmLabel="";
+  const seen=new Set();
+  const scroll=()=>document.getElementById("chatScroll");
+  const badge=()=>document.getElementById("chatBadge");
+
+  function bump(n){ if(open)return; unread+=n; const b=badge(); if(b){b.textContent=unread>99?"99+":unread; b.classList.toggle("show",unread>0);} }
+  function clearBadge(){ unread=0; const b=badge(); if(b)b.classList.remove("show"); }
+
+  function atBottom(){const s=scroll();return !s||(s.scrollHeight-s.scrollTop-s.clientHeight<40);}
+  function toBottom(){const s=scroll();if(s)s.scrollTop=s.scrollHeight;}
+
+  function append(html){const s=scroll();if(!s)return;const stick=atBottom();s.insertAdjacentHTML("beforeend",html);if(stick)toBottom();}
+
+  /* local-only system message (away report, reminders) */
+  function chatSystem(text){
+    append(`<div class="cmsg sys">🔔 ${esc(text)} <span class="t">${fmtT(Date.now())}</span></div>`);
+    bump(1);
+  }
+  window.chatSystem=chatSystem;
+
+  function renderMsg(m){
+    if(seen.has(m.id))return; seen.add(m.id);
+    const me=player&&m.wallet===player.pk;
+    const who=esc(m.handle|| (m.wallet?m.wallet.slice(0,4)+"…"+m.wallet.slice(-4):"Anon"));
+    const adm=CHAIN.ADMINS&&CHAIN.ADMINS.indexOf(m.wallet)>-1;
+    const dm=!!m.to_wallet;
+    const pinBtn=(isAdmin()&&!dm)?`<span class="pinbtn" data-pin="${m.id}" title="Pin this message">📌</span>`:"";
+    append(`<div class="cmsg${dm?" dm":""}">${dm?"🔒 ":""}<span class="who ${me?"me":""} ${adm?"adm":""}">${who}${adm?" 🛡":""}</span>${dm?(me?" → "+esc((m.to_wallet||"").slice(0,4)+"…"):" (DM)"):""}: ${esc(m.body)}${pinBtn}<span class="t">${fmtT(Number(m.ts))}</span></div>`);
+  }
+
+  function renderPinned(p){
+    const el=document.getElementById("chatPinned");if(!el)return;
+    if(p&&p.body){
+      const who=esc(p.handle||"Team");
+      el.innerHTML=`<b class="lbl">📌 PINNED · ${who}:</b> ${esc(p.body)}`+(isAdmin()?` <span class="pinbtn" data-unpin="${p.id}" title="Unpin">✕</span>`:"");
+      el.classList.add("show");
+    } else el.classList.remove("show");
+  }
+
+  async function poll(){
+    if(!B())return;
+    try{
+      const w=player&&player.pk?("&wallet="+encodeURIComponent(player.pk)):"";
+      const r=await fetch(B()+"/chat?since="+since+w,{cache:"no-store"});
+      const j=await r.json();
+      if(j.messages&&j.messages.length){
+        let newCount=0;
+        for(const m of j.messages){ if(!seen.has(m.id)){renderMsg(m); if(!(player&&m.wallet===player.pk))newCount++;} if(m.id>since)since=m.id; }
+        if(newCount)bump(newCount);
+      }
+      renderPinned(j.pinned);
+    }catch(e){}
+  }
+
+  async function onlinePoll(){
+    if(!B())return;
+    try{
+      const r=await fetch(B()+"/chat/online",{cache:"no-store"});const j=await r.json();
+      const c=document.getElementById("ctabCount"); if(c)c.textContent="("+(j.count||0)+")";
+      const v=document.getElementById("onlineView"); if(!v)return;
+      if(!j.users||!j.users.length){v.innerHTML=`<p style="color:#8a7351;font-size:13px;padding:8px">No one else is online right now.</p>`;return;}
+      v.innerHTML=j.users.map(u=>{
+        const me=player&&u.wallet===player.pk;
+        const nm=esc(u.handle||u.short);
+        return `<div class="conline" data-dm="${esc(u.wallet)}" data-nm="${nm}"><span class="dot"></span>${nm}${u.admin?' <span class="adm">🛡 admin</span>':""}${me?' <span style="color:#1f8a4c;font-weight:800">(you)</span>':'<span class="dm">✉ DM</span>'}</div>`;
+      }).join("");
+    }catch(e){}
+  }
+
+  async function send(){
+    const inp=document.getElementById("chatText");if(!inp)return;
+    const raw=inp.value.trim(); if(!raw)return;
+    if(!player||!player.pk){showBanner("👛 Connect your wallet to chat.","error");return;}
+    if(!B()){showBanner("⚙️ Chat needs the backend online.","error");return;}
+    inp.value="";
+    const pin=isAdmin()&&document.getElementById("chatPinChk")&&document.getElementById("chatPinChk").checked;
+    const body={wallet:player.pk,handle:myHandle(),text:clean(raw)};
+    if(dmTarget)body.to=dmTarget;
+    if(pin)body.pin=true;
+    try{
+      const r=await fetch(B()+"/chat/send",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)});
+      const j=await r.json();
+      if(!j.ok){showBanner("⚠️ "+(j.error||"couldn't send"),"error");return;}
+      if(document.getElementById("chatPinChk"))document.getElementById("chatPinChk").checked=false;
+      poll();
+    }catch(e){showBanner("⚠️ Chat send failed.","error");}
+  }
+
+  function setTab(t){
+    tab=t;
+    document.getElementById("ctabChat").classList.toggle("on",t==="chat");
+    document.getElementById("ctabOnline").classList.toggle("on",t==="online");
+    document.getElementById("chatView").style.display=t==="chat"?"":"none";
+    document.getElementById("onlineView").style.display=t==="online"?"":"none";
+    if(t==="online")onlinePoll();
+  }
+  function openDM(wallet,nm){
+    dmTarget=wallet;dmLabel=nm;
+    document.getElementById("chatDmLabel").textContent="🔒 Private message to "+nm;
+    document.getElementById("chatDmBar").classList.add("show");
+    setTab("chat");document.getElementById("chatText").focus();
+  }
+  function closeDM(){dmTarget=null;document.getElementById("chatDmBar").classList.remove("show");}
+
+  /* wire up */
+  document.getElementById("btnChat").onclick=()=>{
+    togglePop("chatPop");
+    open=document.getElementById("chatPop").classList.contains("show");
+    if(open){clearBadge();document.getElementById("chatAdminRow").classList.toggle("show",isAdmin());setTab("chat");poll();onlinePoll();setTimeout(toBottom,60);}
+  };
+  // keep `open` in sync if the panel is closed via its ✕
+  const cx=document.querySelector('#chatPop [data-close="chatPop"]'); if(cx)cx.addEventListener("click",()=>{open=false;});
+  document.getElementById("ctabChat").onclick=()=>setTab("chat");
+  document.getElementById("ctabOnline").onclick=()=>setTab("online");
+  document.getElementById("chatSend").onclick=send;
+  document.getElementById("chatText").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();send();}});
+  document.getElementById("chatDmClose").onclick=closeDM;
+  document.getElementById("onlineView").addEventListener("click",e=>{const el=e.target.closest(".conline");if(!el)return;const w=el.dataset.dm;if(player&&w===player.pk)return;openDM(w,el.dataset.nm);});
+  document.getElementById("chatScroll").addEventListener("click",async e=>{
+    const p=e.target.closest("[data-pin]"),u=e.target.closest("[data-unpin]");
+    if(p&&isAdmin()){try{await fetch(B()+"/chat/pin",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:player.pk,id:+p.dataset.pin,pin:true})});poll();}catch(_){}}
+  });
+  document.getElementById("chatPinned").addEventListener("click",async e=>{
+    const u=e.target.closest("[data-unpin]");
+    if(u&&isAdmin()){try{await fetch(B()+"/chat/pin",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:player.pk,id:+u.dataset.unpin,pin:false})});poll();}catch(_){}}
+  });
+
+  /* polling: faster while open, slower in the background to keep the unread badge alive */
+  let tick=0;
+  poll();
+  setInterval(()=>{ tick++; if(open||tick%3===0)poll(); if(open&&tab==="online")onlinePoll(); },4000);
+
+  /* ---- away report + feed / level-up reminders ---- */
+  window.chatAwayReport=function(ms){
+    if(!ms||ms<5*60*1000)return;                 // only if away 5+ minutes
+    const h=Math.floor(ms/3600000),m=Math.floor(ms%3600000/60000);
+    const away=h>0?(h+"h "+m+"m"):(m+"m");
+    const mine=(typeof myChikis==="function")?myChikis():[];
+    const hungry=mine.filter(c=>c.hungry).length;
+    const ready=mine.filter(c=>c.level<MAX_LEVEL&&xpLeft(c)===0).length;
+    let s=`Welcome back! You were away ~${away}. Your ${mine.length} Chiki${mine.length===1?"":"s"} kept working — tap “Claim SOL” to collect your earnings.`;
+    if(hungry)s+=` ${hungry} ${hungry===1?"is":"are"} hungry and need feeding.`;
+    if(ready)s+=` ${ready} ${ready===1?"is":"are"} ready to level up!`;
+    chatSystem(s);
+  };
+  const lastRemind={};   // per-chiki throttle
+  function reminders(){
+    if(!player)return;
+    const now=Date.now(),mine=(typeof myChikis==="function")?myChikis():[];
+    for(const c of mine){
+      const id=c.id||c.uid||(SPECIES.indexOf(c.sp)+":"+(c.nick||""));
+      if(c.hungry){ const k="feed:"+id; if(now-(lastRemind[k]||0)>6*60*1000){lastRemind[k]=now;chatSystem(`🍖 ${nameOf(c)} is hungry — feed it from the My Chiki panel so it can keep earning.`);} }
+      else if(c.level<MAX_LEVEL&&xpLeft(c)===0){ const k="lvl:"+id; if(now-(lastRemind[k]||0)>10*60*1000){lastRemind[k]=now;chatSystem(`⭐ ${nameOf(c)} has enough EXP — you can level it up now!`);} }
+    }
+  }
+  setInterval(reminders,90*1000);
+})();
 
 /* ===== Live shared world: render other online players' Chikis as nameless roamers ===== */
 const ghostMap=new Map();        /* "wallet#i" -> ghost creature */
@@ -2003,6 +2233,7 @@ function loginAs(h){
     if(h._returning)showBanner(`👋 Welcome back, <b>${h.handle||h.addr}</b>!`);
     else showBanner(`✅ Wallet connected successfully — <b>${h.addr}</b>`);
   }
+  if(typeof chatAwayReport==="function"&&h._returning&&h._awayMs)setTimeout(()=>chatAwayReport(h._awayMs),1200);
   startOnboarding();
 }
 function setFollow(on){
