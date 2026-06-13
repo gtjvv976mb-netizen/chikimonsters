@@ -1892,10 +1892,10 @@ function updateWhaleTab(){
   if(!player||!player.pk){el.style.display="none";return;}
   const bal=player.bal||0;
   if(bal<1_000_000){
-    el.style.display="";el.innerHTML=`🐳 Buy <b>${(1_000_000-bal).toLocaleString()}</b> more $CHIKI to unlock a 2nd Chiki`;return;
+    el.style.display="block";el.innerHTML=`🐳 Buy <b>${(1_000_000-bal).toLocaleString()}</b> more $CHIKI to unlock a 2nd Chiki`;return;
   }
   if(player._whaleUnlockAt&&Date.now()<player._whaleUnlockAt){
-    el.style.display="";el.innerHTML=`🐳 2nd Chiki unlocks in <b>${fmtCountdown(player._whaleUnlockAt-Date.now())}</b>`;return;
+    el.style.display="block";el.innerHTML=`🐳 2nd Chiki unlocks in <b>${fmtCountdown(player._whaleUnlockAt-Date.now())}</b>`;return;
   }
   /* hold time met — grant the 2nd Chiki if not already present */
   if(player._whaleUnlockAt&&myChikis().length<2&&!_whaleGranting&&CHAIN.BACKEND){
