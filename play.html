@@ -1835,7 +1835,7 @@ async function connectPhantom(){
     h._whaleUnlockAt=whaleUnlockAt||(serverChikis>=2?1:0);   /* 1 = already eligible (grant 2nd if missing) */
     loginAs(h);
     saveProfile(h);
-    if(whaleMsg)showBanner(whaleMsg,"info");
+    if(whaleMsg){showBanner(whaleMsg,"info");setTimeout(hideBanner,4000);}   /* whale-pending notice auto-dismisses after 4s */
   }catch(e){
     const code=e&&(e.code||e.errorCode);
     const msg=(e&&e.message)||String(e);
