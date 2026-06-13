@@ -1616,7 +1616,10 @@ async function connectPhantom(){
   }
   const prov=window.solana||((window.phantom||{}).solana);
   if(!prov||!prov.isPhantom){
-    addFeed("👻 Phantom not found — install it from <b>phantom.app</b>, or use a demo wallet meanwhile.");
+    if(/Android|iPhone|iPad|iPod/i.test(navigator.userAgent))
+      addFeed("📱 On a phone, open this site inside the <b>Phantom app's browser</b> (Phantom → Browser tab → paste the link) to connect your wallet.");
+    else
+      addFeed("👻 Phantom not found — install it from <b>phantom.app</b> and refresh, or use a demo wallet meanwhile.");
     return;
   }
   try{
@@ -3645,8 +3648,8 @@ function installModel(i,list){
   window.addEventListener("keydown",e=>{
     if(e.key==="Enter"&&document.body.classList.contains("pre"))enter();
   });
-  /* launched from the website's PLAY NOW: skip the splash, go straight in */
-  if(location.search.indexOf("embed")>-1)enter();
+  /* launched from PLAY NOW, or promoted out of the iframe to connect a wallet: skip the splash */
+  if(location.search.indexOf("embed")>-1||location.search.indexOf("connect")>-1)enter();
 }
 
 /* ================= IMAGE TAB BAR (gameplay) ================= */
