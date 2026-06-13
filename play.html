@@ -1806,6 +1806,7 @@ async function connectPhantom(){
     }
     try{const lam=await rpcCall("getBalance",[pk]);solBal=(lam.value||0)/1e9;}catch(e){}
     bal=Math.floor(bal);
+    showBanner("📂 Loading your profile and Chiki…","info");   /* tell the user we're restoring their saved state */
     if(bal<MIN_HOLD){
       const m=`⚠️ <b>${short}</b> holds ${bal.toLocaleString()} $CHIKI — below the ${MIN_HOLD.toLocaleString()} threshold. Top up to get your Chiki!`;
       showBanner(m,"error");addFeed(m);
@@ -3895,8 +3896,13 @@ function installModel(i,list){
 {
   document.body.classList.remove("pre");                 /* show the game immediately */
   if(window.__startMusic)window.__startMusic();          /* music starts on first interaction */
-  /* if we were promoted out of the iframe to connect, open the wallet picker right away */
-  if(/[?&]connect=1/.test(location.search)){const md=document.getElementById("walletModal");if(md)md.classList.add("show");}
+  /* if we were promoted out of the iframe to connect, resume the Phantom request automatically
+     so the user does NOT have to click "Connect" a second time after the breakout reload */
+  if(/[?&]connect=1/.test(location.search)){
+    const md=document.getElementById("walletModal");if(md)md.classList.add("show");
+    if(typeof showBanner==="function")showBanner("👻 Reopening Phantom — approve the request to finish connecting…","info");
+    setTimeout(()=>{try{if(typeof connectPhantom==="function")connectPhantom();}catch(e){}},700);
+  }
 }
 
 /* ================= IMAGE TAB BAR (gameplay) ================= */
