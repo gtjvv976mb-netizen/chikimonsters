@@ -1128,7 +1128,11 @@ function separateCreatures(){
   }
 }
 function assignTask(c,forceRare){
-  const t=rollTask(c,forceRare);
+  let t;
+  if(c.bot&&c.demoZone){                 /* showcase bot — demonstrate its assigned task */
+    const pool=TASKS.filter(x=>x.zone===c.demoZone);
+    t=pool.length?pool[ri(0,pool.length-1)]:rollTask(c,forceRare);
+  }else t=rollTask(c,forceRare);
   if(c.stamina<t.stam){startSleep(c);return;}
   const z=nearestSpot(c,t);
   if(!z){c.nextTaskIn=rng(2,6);return;}      /* every access point busy — wait a moment */
@@ -1140,6 +1144,15 @@ function assignTask(c,forceRare){
 }
 function completeTask(c){
   const t=c.task;
+  if(c.bot){                       /* showcase bot — show the payout effect but don't touch the real economy/feed */
+    const col=RARITY[t.rarity].color;
+    spawnFloat(c.x,c.y,`+${fmt(pool*(t.pct/100))} ◎`,col);
+    spawnBurst(c.x,c.y,col,RARE_SET.includes(t.rarity)?32:14);
+    c.stamina=Math.max(0,c.stamina-t.stam);c.tasksDone++;t.count++;
+    freeSpot(c);c.task=null;c.target=null;
+    if(c.stamina<=0)startSleep(c);else{c.state="wander";c.nextTaskIn=rng(3,9);}
+    return;
+  }
   let reward=pool*(t.pct/100);
   if(EVENT.active&&EVENT.kind==="storm")reward*=2;
   pool-=reward;distributed+=reward;
@@ -1207,13 +1220,17 @@ function tickEvents(t){
 function startSleep(c){
   freeSpot(c);c.state="sleeping";c.task=null;c.target=null;
   c.sleepT=sleepTimeOf(c.level);
-  addFeed(`💤 <b>${nameOf(c)}</b> is exhausted — sleeping for ${Math.round(c.sleepT)}s`);
+  if(!c.bot)addFeed(`💤 <b>${nameOf(c)}</b> is exhausted — sleeping for ${Math.round(c.sleepT)}s`);
   refreshUI();
 }
 function finishSleep(c){
   c.sleepCycles=(c.sleepCycles||0)+1;
   /* every 2nd sleep cycle the Chiki must be fed before it will wake */
   if(c.sleepCycles%2===0){
+    if(c.bot){                       /* demo bot auto-feeds so the showcase keeps running */
+      spawnFloat(c.x,c.y,"🍖 fed","#ff922b");spawnBurst(c.x,c.y,"#ff922b",14);
+      wakeUp(c);return;
+    }
     c.hungry=true;c.sleepT=0;
     addFeed(`🍖 <b>${nameOf(c)}</b> is hungry after 2 naps — feed it <b>${feedCostOf(c.level).toLocaleString()} $CHIKI</b> to wake it.`);
     if(c.holder===player)spawnFloat(c.x,c.y,"🍖 Feed me!","#ff922b");
@@ -1223,7 +1240,7 @@ function finishSleep(c){
 function wakeUp(c){
   c.stamina=maxStamOf(c.level);c.hungry=false;
   c.state="wander";c.nextTaskIn=rng(2,8);
-  addFeed(`🌅 <b>${nameOf(c)}</b> woke up — stamina restored (${c.stamina}⚡)`);
+  if(!c.bot)addFeed(`🌅 <b>${nameOf(c)}</b> woke up — stamina restored (${c.stamina}⚡)`);
   refreshUI();
 }
 function feedChiki(c){
@@ -2919,9 +2936,20 @@ function rebuildChiki(c){
   chikiRoot.add(c.mesh);
   if(c.fx){c.fx.tool=null;c.fx.toolZone=null;}  /* tool was attached to the old mesh */
 }
-/* No ambient/demo Chikis roam the world by default — creatures are spawned only for the
-   connected wallet (real Phantom, or the on-demand demo wallet). Leaderboard still lists
-   the holder community, but without live creatures unless they're actually playing. */
+/* ===== Showcase bots: one per task so visitors always see every mechanic in action.
+   They run the full task AI (stations, fishing, arena, cave, sleep, feeding) but are
+   nameless and kept OUT of the real economy/feed so they don't distort the pool. ===== */
+const demoHolder={addr:"Chikoria Demo",pk:null,bal:1200000,sol:0,eligible:true,earned:0,creature:null,bot:true};
+(function spawnDemoBots(){
+  const list=TASKS.map(t=>t.zone);
+  list.push("spar");                 /* a 2nd sparring bot so the arena always has a friendly bout */
+  list.forEach((zone,i)=>{
+    const c=spawnCreature(demoHolder,ri(8,28),i%SPECIES.length);
+    c.bot=true;c.demoZone=zone;c.named=true;c.nextTaskIn=rng(1,6);
+  });
+  demoHolder.creature=null;          /* bots aren't anyone's primary */
+  if(typeof ensureSpots==="function")ensureSpots();
+})();
 let youSprite=makeTextSprite("▼ YOU",30,"#ffd93d");youSprite.visible=false;scene.add(youSprite);
 let selSprite=makeTextSprite("🔍",22);selSprite.visible=false;scene.add(selSprite);
 
