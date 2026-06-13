@@ -462,7 +462,8 @@
     background:#ff4d4d;color:#fff;font-size:12px;font-weight:800;display:none;align-items:center;justify-content:center;border:2px solid #fff}
   #chatBadge.show{display:flex}
   #chatPop{top:50%!important;right:calc(var(--frameW) + 14px)!important;left:auto!important;bottom:auto!important;
-    transform:translateY(-50%)!important;width:min(380px,90vw);display:flex;flex-direction:column;max-height:calc(100vh - 150px)}
+    transform:translateY(-50%)!important;width:min(380px,90vw);flex-direction:column;max-height:calc(100vh - 150px)}
+  #chatPop.show{display:flex}   /* hidden by default (.pop = display:none); flex only when opened */
   #chatPop h2{--bA:#6fb1ff;--bB:#2456b8}
   .chatTabs{display:flex;gap:6px;margin:6px 0}
   .chatTabs button{flex:1;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:12px;padding:6px 4px;border-radius:8px;
