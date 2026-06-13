@@ -744,6 +744,7 @@ body.pre #audioCtrl{display:none}
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/utils/SkeletonUtils.js"></script>
 <script src="models.js"></script> <!-- built-in litematic chikimons (optional file) -->
+<script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.95.8/lib/index.iife.min.js"></script> <!-- on-chain spends/burn -->
 <script>
 "use strict";
 /* ================= GAME CONFIG (same economy as the 2D version) ================= */
@@ -825,8 +826,62 @@ const solCostOf=lv=>+(chikiCostOf(lv)*TOKEN_PRICE*1.15).toFixed(4);
 const CHAIN={
   MINT:"5A5sXRYqTaNaocjEJvpNC8Feh3eUonuBTndjnWJupump",   /* $CHIKI mint (pump.fun) — live balance check ON */
   RPC:"https://mainnet.helius-rpc.com/?api-key=52a7f521-e1f8-4cb1-8f6c-05597e88527e",  /* Helius RPC */
-  BACKEND:"https://backend-wffd.onrender.com"    /* live verify/payout backend */
+  BACKEND:"https://backend-wffd.onrender.com",   /* live verify/payout backend */
+  TREASURY:"5Uyor4oi3kuKxvfWmyjvRVtwoEZmyK3BzUFbQpWoqaD7",       /* reward pool — receives 45% of $CHIKI spends */
+  TEAM:"CmY2ZXVPVG2gbAHeVWHw7PQrAKtTcrWsq2raaWgg8YJ9",          /* team wallet — receives 35% */
+  ONCHAIN_SPENDS:true            /* true = level/feed are REAL on-chain $CHIKI tx (20% burn/45% pool/35% team); false = simulated */
 };
+/* ===== Real on-chain $CHIKI spend: 20% burned, 45%→treasury, 35%→team (player signs in Phantom) ===== */
+let _chikiDec=null;
+async function chikiDecimals(){
+  if(_chikiDec!=null)return _chikiDec;
+  try{const r=await rpcCall("getTokenSupply",[CHAIN.MINT]);_chikiDec=r.value.decimals;}catch(e){_chikiDec=6;}
+  return _chikiDec;
+}
+async function chikiSpend(amountChiki,label){
+  if(!CHAIN.ONCHAIN_SPENDS)return {ok:true,simulated:true};
+  const w3=window.solanaWeb3;
+  if(!w3)throw new Error("Solana library didn't load — refresh and try again.");
+  const prov=(window.phantom&&window.phantom.solana)||window.solana;
+  if(!prov||!player||!player.pk)throw new Error("Connect your Phantom wallet first.");
+  const PK=s=>new w3.PublicKey(s);
+  const conn=new w3.Connection(CHAIN.RPC,"confirmed");
+  const owner=PK(player.pk),mint=PK(CHAIN.MINT),treas=PK(CHAIN.TREASURY),team=PK(CHAIN.TEAM);
+  const TOKEN=PK("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
+  const ATAP=PK("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
+  const SYS=w3.SystemProgram.programId;
+  const dec=await chikiDecimals();
+  const unit=BigInt(Math.round(amountChiki*Math.pow(10,dec)));
+  const burn=unit*20n/100n, poolA=unit*45n/100n, teamA=unit-burn-poolA;   /* team gets remainder so the sum is exact */
+  const ata=own=>w3.PublicKey.findProgramAddressSync([own.toBuffer(),TOKEN.toBuffer(),mint.toBuffer()],ATAP)[0];
+  const srcATA=ata(owner),treasATA=ata(treas),teamATA=ata(team);
+  const u64=n=>{const b=new Uint8Array(8);let x=BigInt(n);for(let i=0;i<8;i++){b[i]=Number(x&0xffn);x>>=8n;}return b;};
+  const ix=(programId,keys,data)=>new w3.TransactionInstruction({programId,keys,data:Uint8Array.from(data)});
+  const mkATA=(a,own)=>ix(ATAP,[
+    {pubkey:owner,isSigner:true,isWritable:true},{pubkey:a,isSigner:false,isWritable:true},
+    {pubkey:own,isSigner:false,isWritable:false},{pubkey:mint,isSigner:false,isWritable:false},
+    {pubkey:SYS,isSigner:false,isWritable:false},{pubkey:TOKEN,isSigner:false,isWritable:false}],[1]); /* createIdempotent */
+  const burnIx=()=>ix(TOKEN,[
+    {pubkey:srcATA,isSigner:false,isWritable:true},{pubkey:mint,isSigner:false,isWritable:true},
+    {pubkey:owner,isSigner:true,isWritable:false}],[8,...u64(burn)]);                                  /* Burn */
+  const xfer=(dest,amt)=>ix(TOKEN,[
+    {pubkey:srcATA,isSigner:false,isWritable:true},{pubkey:mint,isSigner:false,isWritable:false},
+    {pubkey:dest,isSigner:false,isWritable:true},{pubkey:owner,isSigner:true,isWritable:false}],[12,...u64(amt),dec]); /* TransferChecked */
+  const tx=new w3.Transaction();
+  tx.add(mkATA(treasATA,treas),mkATA(teamATA,team));
+  if(burn>0n)tx.add(burnIx());
+  if(poolA>0n)tx.add(xfer(treasATA,poolA));
+  if(teamA>0n)tx.add(xfer(teamATA,teamA));
+  tx.feePayer=owner;
+  tx.recentBlockhash=(await conn.getLatestBlockhash()).blockhash;
+  showBanner(`✍️ Approve in Phantom — ${label}: 🔥${fmtK(amountChiki*0.2)} burn · 💰${fmtK(amountChiki*0.45)} pool · 🏦${fmtK(amountChiki*0.35)} team`,"info");
+  const sim=await conn.simulateTransaction(tx);
+  if(sim.value&&sim.value.err)throw new Error("pre-check failed "+JSON.stringify(sim.value.err));
+  const res=await prov.signAndSendTransaction(tx);
+  const sig=res.signature||res;
+  await conn.confirmTransaction(sig,"confirmed");
+  return {ok:true,signature:sig};
+}
 
 /* ================= STATE ================= */
 let pool=25.0,distributed=0,feesAccrued=25.0;
@@ -1244,10 +1299,14 @@ function wakeUp(c){
   if(!c.bot)addFeed(`🌅 <b>${nameOf(c)}</b> woke up — stamina restored (${c.stamina}⚡)`);
   refreshUI();
 }
-function feedChiki(c){
+async function feedChiki(c){
   const h=c.holder;if(!h||!c.hungry)return;
   const cost=feedCostOf(c.level);
   if(h.bal<cost||h.bal-cost<MIN_HOLD){addFeed(`⚠️ ${nameFor(h)}: needs ${cost.toLocaleString()} $CHIKI to feed ${nameOf(c)} while staying above 500k.`);refreshUI();return;}
+  if(CHAIN.ONCHAIN_SPENDS&&h.pk){                       /* real on-chain payment (burn/pool/team) */
+    try{await chikiSpend(cost,"Feed "+nameOf(c));}
+    catch(e){const m="⚠️ Feeding payment failed: "+(e.message||e);showBanner(m,"error");addFeed(m);refreshUI();return;}
+  }
   h.bal-=cost;
   const burn=cost*0.20,toPool=cost*0.45,toTeam=cost*0.35;
   burnedChiki+=burn;pool+=toPool*TOKEN_PRICE;teamChiki+=toTeam;
@@ -1258,13 +1317,17 @@ function feedChiki(c){
 }
 
 /* ================= LEVELING — 25/25/50 ================= */
-function levelUp(h,payWith,cr){
+async function levelUp(h,payWith,cr){
   const c=cr||h.creature;
   if(c.level>=MAX_LEVEL)return;
   const lvl=c.level;
   if(payWith==="chiki"){
     const cost=chikiCostOf(lvl);
     if(h.bal-cost<MIN_HOLD){addFeed(`⚠️ ${nameFor(h)}: leveling would drop balance below 500k — pay with SOL instead.`);refreshUI();return;}
+    if(CHAIN.ONCHAIN_SPENDS&&h.pk){                     /* real on-chain payment (burn/pool/team) */
+      try{await chikiSpend(cost,"Level "+nameOf(c));}
+      catch(e){const m="⚠️ Level-up payment failed: "+(e.message||e);showBanner(m,"error");addFeed(m);refreshUI();return;}
+    }
     h.bal-=cost;
     const burn=cost*0.20,toPool=cost*0.45,toTeam=cost*0.35;
     burnedChiki+=burn;pool+=toPool*TOKEN_PRICE;teamChiki+=toTeam;
