@@ -628,6 +628,12 @@ if(location.search.indexOf("embed")>-1){
 #liveHud .lsep{opacity:.45}
 @keyframes lpulse{50%{opacity:.35}}
 body.pre #liveHud{display:none}
+#welcomeBanner{position:fixed;top:118px;left:50%;transform:translateX(-50%) translateY(-14px);z-index:200;
+  background:rgba(31,139,76,.95);color:#fff;border:2px solid #3ddc84;border-radius:14px;padding:12px 22px;
+  font-family:'Baloo 2',sans-serif;font-weight:800;font-size:15px;box-shadow:0 10px 30px rgba(0,0,0,.32);
+  opacity:0;pointer-events:none;transition:opacity .35s ease,transform .35s ease;max-width:82vw;text-align:center;line-height:1.35}
+#welcomeBanner.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#welcomeBanner.err{background:rgba(122,31,31,.96);border-color:#ff6b6b}
 </style>
 <div id="liveHud" title="Live activity in Chikoria">
   <span class="ldot"></span><span id="liveUsers">👥 —</span><span class="lsep">·</span><span id="liveChikis">🐣 —</span>
@@ -1065,7 +1071,7 @@ function restoreChikis(h,saved){
     c.tasksDone=cd.tasksDone||0;
     c.sleepCycles=cd.sleepCycles||0;
     if(cd.hungry){c.hungry=true;c.state="sleeping";c.sleepT=0;}
-    if(cd.nick)c.nick=cd.nick;
+    if(cd.nick){c.nick=cd.nick;c.named=true;}   /* already named — don't re-prompt onboarding */
     const before=c.level;
     totalTasks+=offlineProgress(c,elapsed);
     lvUps+=Math.max(0,c.level-before);
@@ -1537,6 +1543,8 @@ function onbStep(){
       if(v.length<2){onbErr("Enter at least 2 characters.");return;}
       if(nameTaken(usedChikiNames,v)){onbErr("That Chiki name is taken — try another.");return;}
       c.nick=v;c.named=true;usedChikiNames.add(v.toLowerCase());saveNameDB();
+      try{localStorage.setItem("nick_"+player.addr,v);}catch(e){}
+      if(typeof saveProfile==="function"&&player&&player.pk)saveProfile(player);  /* persist the name now */
       _onbQueue.shift();onbStep();refreshUI();
     };
   }
@@ -1668,6 +1676,7 @@ async function connectPhantom(){
       const saved=(serverProfile&&serverProfile.chikis&&serverProfile.chikis.length)?serverProfile:loadProfile(pk);
       if(saved&&saved.chikis&&saved.chikis.length){
         h.earned=saved.earned||0;
+        h._returning=true;
         restoreChikis(h,saved);
         if(typeof ensureSpots==="function")ensureSpots();
         saveProfile(h);  /* mirror server profile back into localStorage */
@@ -1681,7 +1690,15 @@ async function connectPhantom(){
     loginAs(h);
     saveProfile(h);
   }catch(e){
-    addFeed("⚠️ Phantom connection failed: "+(e.message||e));
+    const code=e&&(e.code||e.errorCode);
+    const msg=(e&&e.message)||String(e);
+    let hint;
+    if(code===4001||/reject|denied|declin|cancel/i.test(msg)) hint="You declined the request in Phantom. Click Connect Phantom again and press <b>Approve</b>.";
+    else if(/lock/i.test(msg)) hint="Phantom is locked — open the Phantom extension, enter your password, then try again.";
+    else if(/not found|undefined|no provider/i.test(msg)) hint="Phantom wasn't detected. Make sure the Phantom extension is installed and enabled, then refresh.";
+    else hint="Open the Phantom extension to check for a pending request, then click Connect again. Error: "+msg;
+    addFeed("⚠️ Wallet connection failed: "+msg);
+    showBanner("⚠️ Couldn't connect — "+hint,"error");
   }
 }
 function connectOther(){
@@ -1689,6 +1706,15 @@ function connectOther(){
   holders.push(h);assignChikis(h,1);
   addFeed(`🔗 Connected a SOL-compatible wallet <b>${h.addr}</b> — your Chiki hatched!`);
   loginAs(h);
+}
+/* pop-up banner for welcome-back / connection errors */
+function showBanner(html,kind){
+  let b=document.getElementById("welcomeBanner");
+  if(!b){b=document.createElement("div");b.id="welcomeBanner";document.body.appendChild(b);}
+  b.className=(kind==="error"?"err ":"")+"";
+  b.innerHTML=html;
+  void b.offsetWidth; b.classList.add("show");
+  clearTimeout(b._t); b._t=setTimeout(()=>b.classList.remove("show"), kind==="error"?8000:5000);
 }
 /* live activity HUD — real presence via backend heartbeat */
 function _setLive(j){if(!j||typeof j.activeUsers!=="number")return;
@@ -1790,6 +1816,7 @@ function loginAs(h){
   refreshUI();
   if(typeof pingPresence==="function")pingPresence();   /* announce we're online now */
   if(typeof fetchWorld==="function")fetchWorld();        /* pull in other online players' Chikis */
+  if(h._returning&&typeof showBanner==="function")showBanner(`👋 Welcome back, <b>${h.handle||h.addr}</b>!`);
   startOnboarding();
 }
 function setFollow(on){
