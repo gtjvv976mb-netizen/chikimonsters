@@ -1182,6 +1182,7 @@ function saveProfile(h){
   try{
     const mine=creatures.filter(c=>c.holder===h);
     const data={pk:h.pk,bal:h.bal,sol:h.sol,earned:h.earned||0,savedAt:Date.now(),
+      handle:h.handle||null,renames:h.renames||0,   /* player name follows the wallet across browsers/devices */
       chikis:mine.map(c=>({sp:SPECIES.indexOf(c.sp),level:c.level,tasksDone:c.tasksDone||0,nick:c.nick||null,sleepCycles:c.sleepCycles||0,hungry:!!c.hungry,xp:Math.floor(c.xp||0)}))};
     localStorage.setItem(profileKey(h.pk),JSON.stringify(data));
     if(CHAIN.BACKEND)fetch(CHAIN.BACKEND+"/profile",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:h.pk,profile:data})}).catch(()=>{});
@@ -1729,6 +1730,7 @@ function onbStep(){
       if(nameTaken(usedHandles,v)){onbErr("That name is taken — try another.");return;}
       player.handle=v;usedHandles.add(v.toLowerCase());saveNameDB();
       try{localStorage.setItem("handle_"+player.addr,v);}catch(e){}
+      if(typeof saveProfile==="function"&&player&&player.pk)saveProfile(player);  /* push player name to server now */
       _onbQueue.shift();onbStep();refreshUI();
     };
   }else{
@@ -1897,6 +1899,7 @@ async function connectPhantom(){
         h.earned=saved.earned||0;
         h._returning=true;
         h._awayMs=saved._serverSavedAt?Math.max(0,Date.now()-saved._serverSavedAt):0;
+        if(saved.handle){h.handle=saved.handle;h.renames=saved.renames||h.renames||0;usedHandles.add(saved.handle.toLowerCase());try{localStorage.setItem("handle_"+h.addr,saved.handle);}catch(e){}}  /* player name follows the wallet */
         restoreChikis(h,saved);
         if(typeof ensureSpots==="function")ensureSpots();
         saveProfile(h);  /* mirror server profile back into localStorage */
