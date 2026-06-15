@@ -658,9 +658,9 @@ if(location.search.indexOf("embed")>-1){
 </div>
 
 <div class="pop" id="lbPop">
-  <h2>🏆 Holder Leaderboard (≥500k eligible) <span class="x" data-close="lbPop">✕</span></h2>
+  <h2>🏆 Top $CHIKI Holders (live, on-chain) <span class="x" data-close="lbPop">✕</span></h2>
   <div style="max-height:320px;overflow-y:auto"><table id="lbTable">
-    <tr><th>Wallet</th><th>Chiki</th><th class="r">Lv</th><th class="r">$CHIKI</th><th class="r">Earned ◎</th></tr>
+    <tr><th>#</th><th>Holder</th><th class="r">$CHIKI held</th><th class="r">Chikis</th></tr>
   </table></div>
 </div>
 
@@ -1314,7 +1314,7 @@ function assignTask(c,forceRare){
   c.task=t;c.target={x:z.x*TILE+TILE/2+rng(-5,5),y:z.y*TILE+TILE/2+rng(-5,5)};
   c.ap={x:z.x*TILE+TILE/2,y:z.y*TILE+TILE/2};   /* exact access-point centre (for fishing/spar/cave) */
   c.state="walking";c.stuck=0;
-  if(forceRare)addFeed(`❓ <b>Mystery Chiki energy!</b> ${nameOf(c)} sensed something legendary…`,t.rarity);
+  if(forceRare&&c.holder===player)addFeed(`❓ <b>Mystery Chiki energy!</b> ${nameOf(c)} sensed something legendary…`,t.rarity);
 }
 function completeTask(c){
   const t=c.task;
@@ -1339,7 +1339,7 @@ function completeTask(c){
   if(c.holder===player&&!wasReady&&(c.xp||0)>=xpNeed(c.level)&&c.level<MAX_LEVEL)showBanner(`⭐ ${nameOf(c)} has enough XP — ready to Level Up to Lv ${c.level+1}!`,"");
   spawnFloat(c.x,c.y,`+${fmt(reward)} ◎${EVENT.active&&EVENT.kind==="storm"?" ×2!":""}`,col);
   spawnBurst(c.x,c.y,col,RARE_SET.includes(t.rarity)?40:16);
-  addFeed(`${t.emoji} <b>${nameOf(c)}</b> completed <span style="color:${col}">${t.name}</span> → <b style="color:${col}">+${fmt(reward)} SOL</b> · +${xpGain} XP`,t.rarity);
+  if(c.holder===player)addFeed(`${t.emoji} <b>${nameOf(c)}</b> completed <span style="color:${col}">${t.name}</span> → <b style="color:${col}">+${fmt(reward)} SOL</b> · +${xpGain} XP`,t.rarity);
   checkAchievements(c,t);
   freeSpot(c);c.task=null;c.target=null;
   if(c.stamina<=0)startSleep(c);
@@ -1370,8 +1370,7 @@ function checkAchievements(c,t){
   for(const a of ACH){
     if(!h.ach.has(a.id)&&a.test(h,c,t)){
       h.ach.add(a.id);
-      addFeed(`🏅 <b>${nameFor(h)}</b> earned the achievement <b style="color:#c47f00">${a.name}</b>!`);
-      if(h===player)spawnFloat(c.x,c.y,"🏅 "+a.name,"#ffd93d");
+      if(h===player){addFeed(`🏅 <b>${nameFor(h)}</b> earned the achievement <b style="color:#c47f00">${a.name}</b>!`);spawnFloat(c.x,c.y,"🏅 "+a.name,"#ffd93d");}
     }
   }
 }
@@ -1488,13 +1487,13 @@ function applyLevel(c,fromXP){
 
 /* ================= FEES ================= */
 let tradeT=0;
+let REAL_STATS=null, REAL_LB=null, _feedSince=0;   /* live data from the backend (stats / holders / feed) */
 function tickFees(dt){
   tradeT-=dt;
   if(tradeT<=0){
     tradeT=rng(1.5,5);
     const vol=rng(0.2,4.5),fee=vol*0.01*rng(0.5,1);
     pool+=fee;feesAccrued+=fee;
-    if(Math.random()<0.3)addFeed(`🟢 Trade ${vol.toFixed(2)} ◎ → creator fee <b style="color:var(--green)">+${fee.toFixed(4)} SOL</b>`,"fee");
     refreshUI();
   }
 }
@@ -1523,15 +1522,24 @@ function staminaBarHTML(c){
 function refreshUI(){
   var _cp=document.getElementById("chipPool");if(_cp)_cp.textContent=pool.toFixed(3);
   var _cb=document.getElementById("chipBurn");if(_cb)_cb.textContent=fmtK(burnedChiki);
-  document.getElementById("statGrid").innerHTML=`
-    <div><div class="v">${pool.toFixed(3)}</div><div class="l">Reward pool ◎</div></div>
-    <div><div class="v g">${distributed.toFixed(3)}</div><div class="l">Distributed ◎</div></div>
-    <div><div class="v" style="color:#3a2c16">${feesAccrued.toFixed(2)}</div><div class="l">Fees accrued ◎</div></div>
-    <div><div class="v r">${fmtK(burnedChiki)}</div><div class="l">🔥 $CHIKI burned</div></div>
-    <div><div class="v b">${teamSol.toFixed(3)} ◎</div><div class="l">Team wallet SOL</div></div>
-    <div><div class="v b">${fmtK(teamChiki)}</div><div class="l">Team wallet $CHIKI</div></div>
-    <div><div class="v" style="color:#3a2c16">${fmtK(SUPPLY-burnedChiki)}</div><div class="l">Circulating supply</div></div>
-    <div><div class="v" style="color:#3a2c16">${creatures.length}</div><div class="l">Active Chikis</div></div>`;
+  const S=REAL_STATS;
+  document.getElementById("statGrid").innerHTML = S ? `
+    <div><div class="v">${(S.poolSol??0).toFixed(3)}</div><div class="l">Reward pool ◎ (live)</div></div>
+    <div><div class="v g">${(S.dailyPaidSol??0).toFixed(3)}</div><div class="l">SOL paid (24h)</div></div>
+    <div><div class="v b">${S.activeUsers??0}</div><div class="l">Players online</div></div>
+    <div><div class="v b">${S.chikimons??0}</div><div class="l">Chikis roaming</div></div>
+    <div><div class="v r">${fmtK(S.burned||0)}</div><div class="l">🔥 $CHIKI burned</div></div>
+    <div><div class="v" style="color:#3a2c16">${fmtK(S.supply||0)}</div><div class="l">Circulating supply</div></div>
+    <div><div class="v b">${(S.teamSol??0).toFixed(3)} ◎</div><div class="l">Team wallet SOL</div></div>
+    <div><div class="v" style="color:#3a2c16">${S.players??0}</div><div class="l">Players all-time</div></div>` : `
+    <div><div class="v">…</div><div class="l">Reward pool ◎ (live)</div></div>
+    <div><div class="v g">…</div><div class="l">SOL paid (24h)</div></div>
+    <div><div class="v b">…</div><div class="l">Players online</div></div>
+    <div><div class="v b">…</div><div class="l">Chikis roaming</div></div>
+    <div><div class="v r">…</div><div class="l">🔥 $CHIKI burned</div></div>
+    <div><div class="v" style="color:#3a2c16">…</div><div class="l">Circulating supply</div></div>
+    <div><div class="v b">…</div><div class="l">Team wallet SOL</div></div>
+    <div><div class="v" style="color:#3a2c16">…</div><div class="l">Players all-time</div></div>`;
   document.getElementById("econNote").innerHTML=
     `Token peg (demo): 1 $CHIKI = ${TOKEN_PRICE} SOL · Level costs grow 9%/level (Lv1→2: ${chikiCostOf(1).toLocaleString()} $CHIKI, Lv49→50: ${chikiCostOf(49).toLocaleString()} $CHIKI). SOL path carries a 15% premium and buy-burns $CHIKI. See 📖 Mechanics.`;
   const tt=document.getElementById("taskTable");
@@ -1547,23 +1555,20 @@ function refreshUI(){
   });
   const lb=document.getElementById("lbTable");
   while(lb.rows.length>1)lb.deleteRow(1);
-  [...holders].sort((a,b)=>b.earned-a.earned||b.bal-a.bal).forEach(h=>{
-    const r=lb.insertRow();
-    if(!h.eligible){r.className="ineligible";
-      r.innerHTML=`<td>${h.addr}</td><td>— below 500k —</td><td class="r">—</td><td class="r">${h.bal.toLocaleString()}</td><td class="r">—</td>`;
-    }else if(!h.creature){
-      const me=player===h?" 👤":"";
-      r.innerHTML=`<td>${h.addr}${me}</td><td style="color:#9a8a6a">— not roaming —</td>
-        <td class="r">—</td><td class="r">${h.bal.toLocaleString()}</td>
-        <td class="r" style="color:var(--green)">${h.earned?fmt(h.earned):"0"}</td>`;
-    }else{
-      const me=player===h?" 👤":"";
-      const cnt=creatures.filter(cc=>cc.holder===h).length;
-      r.innerHTML=`<td>${h.addr}${me}</td><td style="color:${h.creature.sp.body}">${nameOf(h.creature)}${cnt>1?" <b style='color:#c47f00'>×"+cnt+"</b>":""}${h.creature.state==="sleeping"?" 💤":""}</td>
-        <td class="r">${h.creature.level}</td><td class="r">${h.bal.toLocaleString()}</td>
-        <td class="r" style="color:var(--green)">${h.earned?fmt(h.earned):"0"}</td>`;
-    }
-  });
+  if(REAL_LB&&Array.isArray(REAL_LB.holders)){
+    if(!REAL_LB.holders.length){
+      const r=lb.insertRow(); r.innerHTML=`<td colspan="4" style="color:#8a7351;text-align:center">No holders ≥500k detected on-chain yet.</td>`;
+    } else REAL_LB.holders.forEach((h,i)=>{
+      const r=lb.insertRow();
+      const short=h.owner.slice(0,4)+"…"+h.owner.slice(-4);
+      const me=(player&&player.pk===h.owner)?" 👤":"";
+      r.innerHTML=`<td>${i+1}</td><td>${short}${me}${h.whale?" 🐳":""}</td>
+        <td class="r">${Math.floor(h.balance).toLocaleString()}</td>
+        <td class="r">${h.whale?2:1}</td>`;
+    });
+  } else {
+    const r=lb.insertRow(); r.innerHTML=`<td colspan="4" style="color:#8a7351;text-align:center">Loading live holders…</td>`;
+  }
   if(inspected)showInspect(inspected,true);
   renderMyPanel();
 }
@@ -1963,6 +1968,24 @@ async function pingPresence(){
 }
 pollPresence();
 setInterval(()=>{(player&&player.pk)?pingPresence():pollPresence();},25000);
+
+/* ===== real stats / on-chain leaderboard / live feed of real claims ===== */
+async function pollReal(){
+  if(!CHAIN.BACKEND)return;
+  try{const r=await fetch(CHAIN.BACKEND+"/stats",{cache:"no-store"});REAL_STATS=await r.json();}catch(e){}
+  try{const r=await fetch(CHAIN.BACKEND+"/leaderboard",{cache:"no-store"});REAL_LB=await r.json();}catch(e){}
+  try{
+    const r=await fetch(CHAIN.BACKEND+"/feed?since="+_feedSince,{cache:"no-store"});const j=await r.json();
+    if(j.events)for(const ev of j.events){
+      if(ev.id>_feedSince)_feedSince=ev.id;
+      if(ev.type==="claim"&&!(player&&ev.wallet===player.pk))
+        addFeed(`💰 <b>${ev.short||"A holder"}</b> claimed <b style="color:#3ddc84">${(ev.amountSol||0).toFixed(4)} SOL</b>`);
+    }
+  }catch(e){}
+  if(typeof refreshUI==="function")refreshUI();
+}
+pollReal();
+setInterval(pollReal,18000);
 
 /* ===== Whale tab: buy-more prompt, or live countdown to the 2nd Chiki ===== */
 function fmtCountdown(ms){ms=Math.max(0,ms);const h=Math.floor(ms/3600000),m=Math.floor(ms%3600000/60000),s=Math.floor(ms%60000/1000);return (h>0?h+"h ":"")+m+"m "+s+"s";}
