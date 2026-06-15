@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Chiki Monsters 3D — $CHIKI Holder World</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@600;700;800&family=Press+Start+2P&display=swap" rel="stylesheet">
@@ -573,7 +573,7 @@ if(location.search.indexOf("embed")>-1){
 </div>
 
 <div class="botbar">
-  <span class="hint">🖱 Drag to orbit · scroll to zoom · WASD pan · click a Chiki to inspect · minimap to jump<br>
+  <span class="hint">🖱 Drag to orbit · scroll to zoom · WASD pan · click a Chiki to inspect · 📱 1 finger orbit · pinch zoom · 2-finger pan · tap a Chiki<br>
 </span>
 </div>
 
@@ -2300,6 +2300,7 @@ renderer.toneMapping=THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure=1.12;
 document.getElementById("scene").appendChild(renderer.domElement);
 const cv=renderer.domElement;
+cv.style.touchAction="none";   /* the canvas owns touch gestures (orbit/pinch/pan), not the browser */
 
 const sun=new THREE.DirectionalLight(0xfff2d8,1.05);
 sun.position.set(W/2+600,900,H/2+400);
@@ -2359,6 +2360,41 @@ window.addEventListener("mousemove",e=>{
 function setFollowSoft(){/* rotating keeps follow; panning breaks it */}
 window.addEventListener("mouseup",()=>{dragging=false;cv.classList.remove("dragging");});
 cv.addEventListener("wheel",e=>{e.preventDefault();cam.dist*=e.deltaY>0?1.1:0.9;},{passive:false});
+/* ===== touchscreen controls: 1 finger = orbit · 2 fingers pinch = zoom · 2 fingers drag = pan · tap = select ===== */
+let pinchD=0, twoFinger=false, lastMidX=0, lastMidY=0;
+const _tDist=t=>Math.hypot(t[0].clientX-t[1].clientX, t[0].clientY-t[1].clientY);
+const _tMid=t=>[(t[0].clientX+t[1].clientX)/2,(t[0].clientY+t[1].clientY)/2];
+cv.addEventListener("touchstart",e=>{
+  if(e.touches.length===1){
+    dragging=true;dragMoved=false;twoFinger=false;
+    lastMx=e.touches[0].clientX;lastMy=e.touches[0].clientY;
+  }else if(e.touches.length>=2){
+    twoFinger=true;dragging=false;dragMoved=true;
+    pinchD=_tDist(e.touches);const m=_tMid(e.touches);lastMidX=m[0];lastMidY=m[1];
+  }
+},{passive:true});
+cv.addEventListener("touchmove",e=>{
+  if(twoFinger&&e.touches.length>=2){
+    const d=_tDist(e.touches);
+    if(pinchD>0)cam.dist*=pinchD/d;          /* spread fingers = zoom in */
+    pinchD=d;
+    const m=_tMid(e.touches),mdx=m[0]-lastMidX,mdy=m[1]-lastMidY;
+    const fx=Math.sin(cam.theta),fz=Math.cos(cam.theta),k=cam.dist*0.0016;
+    cam.target.x+=(-fz*mdx+fx*mdy)*k;        /* grab-pan the world */
+    cam.target.z+=( fx*mdx+fz*mdy)*k;
+    setFollow(false);lastMidX=m[0];lastMidY=m[1];
+    e.preventDefault();
+  }else if(dragging&&e.touches.length===1){
+    const dx=e.touches[0].clientX-lastMx,dy=e.touches[0].clientY-lastMy;
+    if(Math.abs(dx)+Math.abs(dy)>3)dragMoved=true;
+    if(dragMoved){cam.theta-=dx*0.005;cam.phi-=dy*0.004;lastMx=e.touches[0].clientX;lastMy=e.touches[0].clientY;}
+    e.preventDefault();
+  }
+},{passive:false});
+cv.addEventListener("touchend",e=>{
+  if(e.touches.length===0){dragging=false;twoFinger=false;pinchD=0;}
+  else if(e.touches.length===1){twoFinger=false;pinchD=0;dragging=true;dragMoved=true;lastMx=e.touches[0].clientX;lastMy=e.touches[0].clientY;}
+},{passive:true});
 const keys={};
 function isTyping(){var a=document.activeElement;return !!(a&&(/^(input|textarea|select)$/i.test(a.tagName)||a.isContentEditable));}
 window.addEventListener("keydown",e=>{if(isTyping())return;keys[e.key.toLowerCase()]=true;});
