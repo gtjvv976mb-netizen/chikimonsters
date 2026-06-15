@@ -3340,7 +3340,14 @@ function buildChikiMesh(c){
     const m=(clips.length&&THREE.SkeletonUtils)?THREE.SkeletonUtils.clone(tpl):tpl.clone(true);
     const rig={};
     m.traverse(o=>{
-      if(o.isMesh){o.userData.ci=c;o.castShadow=true;o.frustumCulled=true;}
+      if(o.isMesh){o.userData.ci=c;o.castShadow=true;o.frustumCulled=true;
+        if(spIdx===10){   /* Galador the Legendary — self-illuminate so he glows in his colour */
+          const arr=Array.isArray(o.material)?o.material:[o.material];
+          const cloned=arr.map(mm=>{const x=mm.clone();try{x.emissive=new THREE.Color("#7c4dff");x.emissiveIntensity=0.6;x.toneMapped=false;}catch(e){}return x;});
+          o.material=Array.isArray(o.material)?cloned:cloned[0];
+          c.glowMats=(c.glowMats||[]).concat(cloned);
+        }
+      }
       if(o.name&&o.name.indexOf("rig:")===0)rig[o.name.slice(4)]=o;
     });
     g.userData.rig=rig;
@@ -3829,6 +3836,7 @@ function frame(now){
       c.mesh.remove(c.fx.tool);c.fx.tool=null;c.fx.toolZone=null;
     }
     c.mesh.children.forEach(o=>{if(o.userData.wing)o.rotation.x=Math.sin(t*9+c.bob)*0.5;});
+    if(c.glowMats){const gi=Math.max(0.08,0.55+0.45*Math.sin(t*2.6+c.bob));for(const mm of c.glowMats)mm.emissiveIntensity=gi;}   /* Galador's pulsing legendary glow */
     /* beam */
     if(c.state==="walking"&&c.target){
       c.fx.beam.visible=true;
