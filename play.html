@@ -3298,6 +3298,7 @@ function buildChikiMesh(c){
       }
     }
     g.scale.setScalar((0.85+stage*0.18)*(SPECIES_SCALE[spIdx]||1));
+    c.baseScale=(0.85+stage*0.18)*(SPECIES_SCALE[spIdx]||1);
     return g;
   }
   const custom=customModels[spIdx];
@@ -3335,6 +3336,7 @@ function buildChikiMesh(c){
   }
   const s=(0.85+stage*0.18)*(SPECIES_SCALE[spIdx]||1);
   g.scale.setScalar(s);
+  c.baseScale=s;
   g.traverse(o=>{if(o.isMesh){o.userData.ci=c;}});
   return g;
 }
@@ -3630,9 +3632,36 @@ function frame(now){
       if(c.sail){c.x=c.sail.ax;c.y=c.sail.az;c.sail=null;}  /* hop back onto the dock */
       c.fx.boat.visible=false;
       c.mesh.visible=true;
-      const bob=c.state==="sleeping"?(Math.sin(t*1.6+c.bob)*0.7+0.7):Math.abs(Math.sin(c.bob))*3;  /* gentle breathing while asleep */
-      c.mesh.position.set(c.x,gy+bob,c.y);
-      c.mesh.rotation.y=c.dir;
+      if(c.mixer){
+        /* baked Blender clip drives the limbs — just place + gentle sleep breathing */
+        const bb=c.state==="sleeping"?(Math.sin(t*1.6+c.bob)*0.7+0.7):0;
+        c.mesh.position.set(c.x,gy+bb,c.y);
+        c.mesh.rotation.y=c.dir;
+      }else{
+        /* lively whole-mesh walk: hop + squash&stretch + lean, applied to the intact mesh (never tears) */
+        const spd=Math.hypot(c.vx,c.vy);
+        const moving=c.state==="walking"||(c.state==="wander"&&spd>6);
+        let hop,sx=1,sy=1,lean=0;
+        if(c.state==="sleeping"){
+          hop=Math.sin(t*1.6+c.bob)*0.7+0.7;                       /* breathing */
+        }else if(moving){
+          const ph=t*(c.state==="walking"?12:9)+c.bob, step=Math.abs(Math.sin(ph));
+          hop=step*4.2;                                            /* bounce per step */
+          sy=1+step*0.10-0.05; sx=1-step*0.07+0.035;               /* stretch up / squash on land */
+          lean=0.12+Math.sin(t*5+c.bob)*0.04;                      /* lean into the walk */
+        }else if(c.state==="working"){
+          const w=Math.sin(t*7+c.bob);
+          hop=Math.abs(w)*1.6; lean=0.14+w*0.06; sy=1+w*0.04; sx=1-w*0.03;   /* busy bobbing */
+        }else{
+          const b=Math.sin(t*2.0+c.bob);
+          hop=b*0.8+0.8; sy=1+b*0.03; sx=1-b*0.02;                 /* idle breathing */
+        }
+        c.mesh.position.set(c.x,gy+hop,c.y);
+        c.mesh.rotation.y=c.dir;
+        c.mesh.rotation.x=lean;
+        const bs=c.baseScale||1;
+        c.mesh.scale.set(bs*sx,bs*sy,bs*sx);
+      }
       if(sparring){
         /* friendly bout: face the nearest sparring partner and trade jabs without overlapping */
         let partner=null,pd=1e9;
@@ -3673,8 +3702,8 @@ function frame(now){
         if(rig.LB){rig.LB.rotation.x= Math.sin(t*2.4+c.bob+3.1)*sp;}
         if(rig.RB){rig.RB.rotation.x= Math.sin(t*2.4+c.bob+4.7)*sp;}
       }else{
-        const ph=c.bob*(moving?1.9:0.55);
-        const amp=sleeping2?0:(moving?0.38:0.04);   /* gentler leg swing */
+        const ph=t*(moving?9:3)+c.bob;             /* time-driven so the legs actually swing */
+        const amp=sleeping2?0:(moving?0.40:0.10);   /* leg swing (visible idle + clear walk) */
         if(rig.LF)rig.LF.rotation.x= Math.sin(ph)*amp;
         if(rig.RB)rig.RB.rotation.x= Math.sin(ph)*amp;
         if(rig.RF)rig.RF.rotation.x=-Math.sin(ph)*amp;
