@@ -3519,6 +3519,14 @@ scene.add(new THREE.Points(aGeo,new THREE.PointsMaterial({size:5,vertexColors:tr
 /* ================= SIM ================= */
 function tickCreature(c,dt){
   c.bob+=dt*5;
+  /* universal anti-stuck: never sit in the river/obstacle; recover if no progress is being made */
+  if(c.state!=="sleeping"&&c.state!=="working"){
+    if(!walkable(c.x,c.y))ejectToLand(c);
+    const mv=Math.hypot(c.x-(c._lx==null?c.x:c._lx),c.y-(c._ly==null?c.y:c._ly));
+    c._lx=c.x;c._ly=c.y;
+    c._noMove=mv<0.4?(c._noMove||0)+dt:0;
+    if(c._noMove>2.5){c._noMove=0;steerClear(c);if(!walkable(c.x,c.y))ejectToLand(c);}
+  }
   if(c.ghost){                       /* other players' Chikis — cosmetic roaming, no economy/feed */
     if((c.vx===0&&c.vy===0)||Math.random()<dt*0.6)steerClear(c);
     if(!wanderClear(c.x+c.vx*dt*5,c.y+c.vy*dt*5)||creatureAhead(c))steerClear(c);
@@ -3548,9 +3556,9 @@ function tickCreature(c,dt){
     }
     const sp2=70;
     const moved=moveWith(c,dx/d*sp2*dt,dy/d*sp2*dt);
-    if(!moved){c.stuck+=dt;if(c.stuck>0.6){moveWith(c,-dy/d*sp2*dt*1.4,dx/d*sp2*dt*1.4);c.stuck=Math.random()<.5?0:c.stuck;}}
+    if(!moved){c.stuck+=dt;if(c.stuck>0.5){moveWith(c,-dy/d*sp2*dt*1.4,dx/d*sp2*dt*1.4);c.stuck=Math.random()<.5?0:c.stuck;}}
     else c.stuck=0;
-    if(c.stuck>5){c.x=c.target.x;c.y=c.target.y;c.stuck=0;}
+    if(c.stuck>3){c.x=c.target.x;c.y=c.target.y;c.stuck=0;}   /* blocked by river/obstacle too long → warp to the destination */
   }else if(c.state==="working"){
     c.workT-=dt;
     if(Math.random()<dt*2.5)spawnBurst(c.x,c.y,RARITY[c.task.rarity].color,1);
@@ -3565,6 +3573,16 @@ function moveWith(c,dx,dy){
   c.y=Math.max(14,Math.min(H-8,c.y));
   if(ok&&(Math.abs(dx)>0.01||Math.abs(dy)>0.01))c.dir=Math.atan2(dx,dy);
   return ok;
+}
+/* push a Chiki that ended up on water/an obstacle out to the nearest walkable ground */
+function ejectToLand(c){
+  if(walkable(c.x,c.y))return;
+  for(let r=1;r<=12;r++){
+    for(let a=0;a<12;a++){
+      const ang=a/12*6.283, tx=c.x+Math.cos(ang)*r*TILE, ty=c.y+Math.sin(ang)*r*TILE;
+      if(walkable(tx,ty)){c.x=tx;c.y=ty;c.vx=0;c.vy=0;return;}
+    }
+  }
 }
 /* ---- roaming obstacle avoidance: steer around water, trees, buildings, mountains, peers ---- */
 function wanderClear(px,py){
