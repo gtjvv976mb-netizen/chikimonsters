@@ -1993,6 +1993,7 @@ let _whaleGranting=false;
 function updateWhaleTab(){
   const el=document.getElementById("whaleTab");if(!el)return;
   if(!player||!player.pk){el.style.display="none";return;}
+  if((typeof myChikis==="function"?myChikis().length:0)>=2){el.style.display="none";return;}   /* already at the 2-Chiki cap — nothing more to claim */
   const bal=player.bal||0;
   if(bal<1_000_000){
     el.style.display="block";el.innerHTML=`🐳 Buy <b>${(1_000_000-bal).toLocaleString()}</b> more $CHIKI to unlock a 2nd Chiki`;return;
@@ -2004,7 +2005,7 @@ function updateWhaleTab(){
   if(player._whaleUnlockAt&&myChikis().length<2&&!_whaleGranting&&CHAIN.BACKEND){
     _whaleGranting=true;
     backendVerify(player.pk).then(v=>{_whaleGranting=false;
-      if(v&&v.chikis>=2&&myChikis().length<2){assignChikis(player,1);saveProfile(player);showBanner("🎉 Whale perk unlocked — your 2nd Chiki has hatched!","");refreshUI();}
+      if(v&&v.chikis>=2&&myChikis().length<2){assignChikis(player,1);player._whaleUnlockAt=0;saveProfile(player);showBanner("🎉 Whale perk unlocked — your 2nd Chiki has hatched!","");refreshUI();}
     }).catch(()=>{_whaleGranting=false;});
   }
   el.style.display="none";   /* 2 Chikis active (or not a whale) */
@@ -3577,11 +3578,17 @@ function moveWith(c,dx,dy){
 /* push a Chiki that ended up on water/an obstacle out to the nearest walkable ground */
 function ejectToLand(c){
   if(walkable(c.x,c.y))return;
-  for(let r=1;r<=12;r++){
-    for(let a=0;a<12;a++){
-      const ang=a/12*6.283, tx=c.x+Math.cos(ang)*r*TILE, ty=c.y+Math.sin(ang)*r*TILE;
+  for(let r=1;r<=16;r++){
+    for(let a=0;a<16;a++){
+      const ang=a/16*6.283, tx=c.x+Math.cos(ang)*r*TILE, ty=c.y+Math.sin(ang)*r*TILE;
       if(walkable(tx,ty)){c.x=tx;c.y=ty;c.vx=0;c.vy=0;return;}
     }
+  }
+  /* deep water (open sea) — step toward the map centre until back on solid ground */
+  const cx=W/2, cy=H/2;
+  for(let s=1;s<=60;s++){
+    const tx=c.x+(cx-c.x)*s/60, ty=c.y+(cy-c.y)*s/60;
+    if(walkable(tx,ty)){c.x=tx;c.y=ty;c.vx=0;c.vy=0;return;}
   }
 }
 /* ---- roaming obstacle avoidance: steer around water, trees, buildings, mountains, peers ---- */
