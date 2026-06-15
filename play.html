@@ -3702,8 +3702,8 @@ function frame(now){
         if(rig.LB){rig.LB.rotation.x= Math.sin(t*2.4+c.bob+3.1)*sp;}
         if(rig.RB){rig.RB.rotation.x= Math.sin(t*2.4+c.bob+4.7)*sp;}
       }else{
-        const ph=t*(moving?9:3)+c.bob;             /* time-driven so the legs actually swing */
-        const amp=sleeping2?0:(moving?0.40:0.10);   /* leg swing (visible idle + clear walk) */
+        const ph=c.bob*(moving?1.9:0.55);
+        const amp=sleeping2?0:(moving?0.38:0.04);   /* gentler leg swing */
         if(rig.LF)rig.LF.rotation.x= Math.sin(ph)*amp;
         if(rig.RB)rig.RB.rotation.x= Math.sin(ph)*amp;
         if(rig.RF)rig.RF.rotation.x=-Math.sin(ph)*amp;
