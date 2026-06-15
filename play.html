@@ -635,7 +635,7 @@ if(location.search.indexOf("embed")>-1){
     <li>Level costs grow 9%/level (Lv1→2 ≈ 2,725 $CHIKI; Lv49→50 ≈ 170k). Maxing one Chiki burns ≈ <b>509k $CHIKI</b>.</li>
     <li>$CHIKI payments are blocked if they'd drop you below the 500k threshold.</li>
   </ul>
-  <p style="margin-top:8px;color:#8a7351"><i>Demo simulation with original creatures — wallet login, fees, and payouts are simulated. Not affiliated with Pokémon or Minecraft.</i></p>
+  <p style="margin-top:8px;color:#8a7351"><i>Original creatures — not affiliated with Pokémon or Minecraft.</i></p>
 </div>
 
 <div class="pop" id="statsPop">
@@ -1527,21 +1527,21 @@ function refreshUI(){
     <div><div class="v">${(S.poolSol??0).toFixed(3)}</div><div class="l">Reward pool ◎ (live)</div></div>
     <div><div class="v g">${(S.dailyPaidSol??0).toFixed(3)}</div><div class="l">SOL paid (24h)</div></div>
     <div><div class="v b">${S.activeUsers??0}</div><div class="l">Players online</div></div>
-    <div><div class="v b">${S.chikimons??0}</div><div class="l">Chikis roaming</div></div>
+    <div><div class="v b">${S.claimedChikis??0}</div><div class="l">Chikis claimed</div></div>
     <div><div class="v r">${fmtK(S.burned||0)}</div><div class="l">🔥 $CHIKI burned</div></div>
     <div><div class="v" style="color:#3a2c16">${fmtK(S.supply||0)}</div><div class="l">Circulating supply</div></div>
     <div><div class="v b">${(S.teamSol??0).toFixed(3)} ◎</div><div class="l">Team wallet SOL</div></div>
-    <div><div class="v" style="color:#3a2c16">${S.players??0}</div><div class="l">Players all-time</div></div>` : `
+    <div><div class="v" style="color:#3a2c16">${S.holders??0}</div><div class="l">Trainers</div></div>` : `
     <div><div class="v">…</div><div class="l">Reward pool ◎ (live)</div></div>
     <div><div class="v g">…</div><div class="l">SOL paid (24h)</div></div>
     <div><div class="v b">…</div><div class="l">Players online</div></div>
-    <div><div class="v b">…</div><div class="l">Chikis roaming</div></div>
+    <div><div class="v b">…</div><div class="l">Chikis claimed</div></div>
     <div><div class="v r">…</div><div class="l">🔥 $CHIKI burned</div></div>
     <div><div class="v" style="color:#3a2c16">…</div><div class="l">Circulating supply</div></div>
     <div><div class="v b">…</div><div class="l">Team wallet SOL</div></div>
-    <div><div class="v" style="color:#3a2c16">…</div><div class="l">Players all-time</div></div>`;
+    <div><div class="v" style="color:#3a2c16">…</div><div class="l">Trainers</div></div>`;
   document.getElementById("econNote").innerHTML=
-    `Token peg (demo): 1 $CHIKI = ${TOKEN_PRICE} SOL · Level costs grow 9%/level (Lv1→2: ${chikiCostOf(1).toLocaleString()} $CHIKI, Lv49→50: ${chikiCostOf(49).toLocaleString()} $CHIKI). SOL path carries a 15% premium and buy-burns $CHIKI. See 📖 Mechanics.`;
+    `Token peg: 1 $CHIKI = ${TOKEN_PRICE} SOL · Level costs grow 9%/level (Lv1→2: ${chikiCostOf(1).toLocaleString()} $CHIKI, Lv49→50: ${chikiCostOf(49).toLocaleString()} $CHIKI). SOL path carries a 15% premium and buy-burns $CHIKI. See 📖 Mechanics.`;
   const tt=document.getElementById("taskTable");
   while(tt.rows.length>1)tt.deleteRow(1);
   TASKS.forEach(t=>{
@@ -2235,9 +2235,9 @@ function despawnGhost(c){
 }
 function clearGhosts(){for(const c of ghostMap.values())despawnGhost(c);ghostMap.clear();}
 async function fetchWorld(){
-  if(!CHAIN.BACKEND||!player)return;
+  if(!CHAIN.BACKEND)return;
   try{
-    const r=await fetch(CHAIN.BACKEND+"/world?cap=40&exclude="+encodeURIComponent(player.pk||""),{cache:"no-store"});
+    const r=await fetch(CHAIN.BACKEND+"/allchikis?cap=120&exclude="+encodeURIComponent((player&&player.pk)||""),{cache:"no-store"});
     const j=await r.json();const list=(j&&j.chikis)||[];
     const desired=new Map(),perW={};
     list.forEach(e=>{const i=(perW[e.wallet]=(perW[e.wallet]||0));perW[e.wallet]++;desired.set(e.wallet+"#"+i,e);});
@@ -2246,7 +2246,7 @@ async function fetchWorld(){
     for(const [key,e] of desired){
       if(ghostMap.has(key)){const c=ghostMap.get(key);const want=Math.max(1,e.level||1);
         if(c.level!==want){const st=stageOf(c.level);c.level=want;if(stageOf(want)!==st&&typeof rebuildChiki==="function")rebuildChiki(c);}continue;}
-      if(count>=40)break;
+      if(count>=120)break;
       const c=spawnCreature(ghostHolder(e.wallet),Math.max(1,e.level||1),(e.sp|0)%SPECIES.length);
       c.ghost=true;ghostMap.set(key,c);count++;
     }
