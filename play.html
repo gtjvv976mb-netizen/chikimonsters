@@ -461,6 +461,12 @@
   #chatBadge{position:absolute;top:-5px;right:-5px;min-width:20px;height:20px;padding:0 5px;border-radius:10px;
     background:#ff4d4d;color:#fff;font-size:12px;font-weight:800;display:none;align-items:center;justify-content:center;border:2px solid #fff}
   #chatBadge.show{display:flex}
+  /* graphics quality toggle (below the chat tab) */
+  #btnQuality{position:fixed;left:12px;top:174px;z-index:60;cursor:pointer;width:46px;height:46px;border-radius:50%;
+    background:#1f2430;border:2px solid #ffd166;color:#ffd166;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:13px;line-height:1;
+    display:flex;align-items:center;justify-content:center;box-shadow:0 3px 0 #b88a2a,0 4px 10px rgba(0,0,0,.2)}
+  #btnQuality:active{transform:translateY(2px);box-shadow:0 1px 0 #b88a2a}
+  body.pre #btnQuality{display:none}
   #chatPop{top:50%!important;right:calc(var(--frameW) + 14px)!important;left:auto!important;bottom:auto!important;
     transform:translateY(-50%)!important;width:min(380px,90vw);flex-direction:column;max-height:calc(100vh - 150px)}
   #chatPop.show{display:flex}   /* hidden by default (.pop = display:none); flex only when opened */
@@ -546,6 +552,7 @@ if(location.search.indexOf("embed")>-1){
 <img id="btnMyFloat" src="ui/track.png" alt="Track my Chiki" style="display:none">
 <img id="btnProfile" src="ui/profile.png" alt="My Profile" style="display:none">
 <div id="btnChat" title="Community chat">💬<span id="chatBadge">0</span></div>
+<div id="btnQuality" title="Graphics quality — tap to switch Low/High">HD</div>
 
 <div class="pop" id="chatPop">
   <h2>💬 Chikoria Chat <span class="x" data-close="chatPop">✕</span></h2>
@@ -2238,7 +2245,7 @@ function clearGhosts(){for(const c of ghostMap.values())despawnGhost(c);ghostMap
 async function fetchWorld(){
   if(!CHAIN.BACKEND)return;
   try{
-    const r=await fetch(CHAIN.BACKEND+"/allchikis?cap=120&exclude="+encodeURIComponent((player&&player.pk)||""),{cache:"no-store"});
+    const r=await fetch(CHAIN.BACKEND+"/allchikis?cap=60&exclude="+encodeURIComponent((player&&player.pk)||""),{cache:"no-store"});
     const j=await r.json();const list=(j&&j.chikis)||[];
     const desired=new Map(),perW={};
     list.forEach(e=>{const i=(perW[e.wallet]=(perW[e.wallet]||0));perW[e.wallet]++;desired.set(e.wallet+"#"+i,e);});
@@ -2247,7 +2254,7 @@ async function fetchWorld(){
     for(const [key,e] of desired){
       if(ghostMap.has(key)){const c=ghostMap.get(key);const want=Math.max(1,e.level||1);
         if(c.level!==want){const st=stageOf(c.level);c.level=want;if(stageOf(want)!==st&&typeof rebuildChiki==="function")rebuildChiki(c);}continue;}
-      if(count>=120)break;
+      if(count>=60)break;
       const c=spawnCreature(ghostHolder(e.wallet),Math.max(1,e.level||1),(e.sp|0)%SPECIES.length);
       c.ghost=true;ghostMap.set(key,c);count++;
     }
@@ -2316,22 +2323,23 @@ scene.fog=new THREE.Fog(0x87b8e8,2100,7200);
 const camera=new THREE.PerspectiveCamera(55,innerWidth/innerHeight,1,12000);
 const renderer=new THREE.WebGLRenderer({antialias:true});
 renderer.setSize(innerWidth,innerHeight);
-renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));   /* cap resolution on high-DPI screens — big GPU win */
 renderer.shadowMap.enabled=true;
-renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.shadowMap.type=THREE.PCFShadowMap;               /* cheaper than soft shadows */
 renderer.outputEncoding=THREE.sRGBEncoding;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure=1.12;
 document.getElementById("scene").appendChild(renderer.domElement);
 const cv=renderer.domElement;
 cv.style.touchAction="none";   /* the canvas owns touch gestures (orbit/pinch/pan), not the browser */
+let _miniTick=0;   /* throttles the minimap redraw */
 
 const sun=new THREE.DirectionalLight(0xfff2d8,1.05);
 sun.position.set(W/2+600,900,H/2+400);
 sun.target.position.set(W/2,0,H/2);
 scene.add(sun.target);
 sun.castShadow=true;
-sun.shadow.mapSize.set(2048,2048);
+sun.shadow.mapSize.set(1024,1024);   /* half-res shadow map — much cheaper, barely noticeable */
 sun.shadow.camera.left=-2700;sun.shadow.camera.right=2700;
 sun.shadow.camera.top=2700;sun.shadow.camera.bottom=-2700;
 sun.shadow.camera.near=100;sun.shadow.camera.far=6600;
@@ -3330,7 +3338,7 @@ function buildChikiMesh(c){
     const m=(clips.length&&THREE.SkeletonUtils)?THREE.SkeletonUtils.clone(tpl):tpl.clone(true);
     const rig={};
     m.traverse(o=>{
-      if(o.isMesh){o.userData.ci=c;o.castShadow=true;o.frustumCulled=false;}
+      if(o.isMesh){o.userData.ci=c;o.castShadow=true;o.frustumCulled=true;}
       if(o.name&&o.name.indexOf("rig:")===0)rig[o.name.slice(4)]=o;
     });
     g.userData.rig=rig;
@@ -3460,6 +3468,28 @@ const demoHolder={addr:"Chikoria Demo",pk:null,bal:1200000,sol:0,eligible:true,e
   });
   demoHolder.creature=null;          /* bots aren't anyone's primary */
   if(typeof ensureSpots==="function")ensureSpots();
+})();
+
+/* ===== graphics quality toggle (Low/High) — big perf lever for weaker devices ===== */
+function applyQuality(q){
+  const low=q==="low";
+  renderer.setPixelRatio(low?1:Math.min(devicePixelRatio,1.5));
+  renderer.setSize(innerWidth,innerHeight);              /* re-apply so the new pixel ratio takes effect now */
+  renderer.shadowMap.enabled=!low; renderer.shadowMap.needsUpdate=true;
+  if(typeof clouds!=="undefined")clouds.visible=!low;    /* drop clouds on low */
+  window._chikiQ=q;
+  try{localStorage.setItem("chikiQuality",q);}catch(e){}
+  const b=document.getElementById("btnQuality");
+  if(b){b.textContent=low?"LO":"HD";b.style.color=low?"#9fb0c9":"#ffd166";b.style.borderColor=low?"#5b6b86":"#ffd166";
+    b.title="Graphics: "+(low?"Low (faster)":"High")+" — tap to switch";}
+}
+(function(){
+  let q;
+  try{q=localStorage.getItem("chikiQuality");}catch(e){}
+  if(!q)q=/(Android|iPhone|iPad|iPod|Mobile)/i.test(navigator.userAgent)?"low":"high";   /* phones default to Low */
+  applyQuality(q);
+  const b=document.getElementById("btnQuality");
+  if(b)b.onclick=()=>applyQuality(window._chikiQ==="low"?"high":"low");
 })();
 let youSprite=makeTextSprite("▼ YOU",30,"#ffd93d");youSprite.visible=false;scene.add(youSprite);
 let selSprite=makeTextSprite("🔍",22);selSprite.visible=false;scene.add(selSprite);
@@ -3985,7 +4015,7 @@ function frame(now){
   renderer.render(scene,camera);
   animMailboxes(t);
   animAccessDeco(t);
-  drawMini();
+  if((_miniTick++%3)===0)drawMini();   /* minimap at ~20fps instead of every frame — cheaper */
   requestAnimationFrame(frame);
 }
 
