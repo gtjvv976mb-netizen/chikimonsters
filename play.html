@@ -3259,10 +3259,46 @@ function voxModel(c){
   }
   return [...cells.values()];
 }
+/* ===== procedural animated face: big visible eyes (white + pupil + glint) and a mouth =====
+   Sized from the model's bounding box and placed on the front (+Z), so it fits every species. */
+function addChikiFace(c,g,refObj){
+  let box;
+  try{ refObj.updateMatrixWorld&&refObj.updateMatrixWorld(true); box=new THREE.Box3().setFromObject(refObj); }catch(e){ return null; }
+  if(!box||!isFinite(box.max.y)||!isFinite(box.min.y)) return null;
+  const size=new THREE.Vector3(); box.getSize(size);
+  if(!(size.x>0)||!(size.y>0)) return null;
+  const eyeR=Math.max(0.9, Math.min(size.x,size.y)*0.12);
+  const eyeY=box.min.y+size.y*0.72;
+  const eyeX=size.x*0.21;
+  const faceZ=box.max.z;                    /* front surface (+Z is forward) */
+  const white=new THREE.MeshLambertMaterial({color:0xffffff,emissive:0x333333});
+  const black=new THREE.MeshBasicMaterial({color:0x0d0d12});
+  const glint=new THREE.MeshBasicMaterial({color:0xffffff});
+  const face=new THREE.Group(); const eyes=[];
+  for(const sx of [-1,1]){
+    const eye=new THREE.Group();
+    eye.add(new THREE.Mesh(new THREE.SphereGeometry(eyeR,16,16),white));
+    const pupil=new THREE.Mesh(new THREE.SphereGeometry(eyeR*0.56,14,14),black); pupil.position.z=eyeR*0.55; eye.add(pupil);
+    const hi=new THREE.Mesh(new THREE.SphereGeometry(eyeR*0.2,8,8),glint); hi.position.set(-sx*eyeR*0.22,eyeR*0.28,eyeR*0.78); eye.add(hi);
+    eye.position.set(sx*eyeX,eyeY,faceZ+eyeR*0.12);
+    eye.traverse(o=>{if(o.isMesh){o.userData.ci=c;o.frustumCulled=false;}});
+    face.add(eye); eyes.push(eye);
+  }
+  /* smile-ish mouth: a slim dark bar that opens/closes (scale.y) */
+  const mouth=new THREE.Mesh(new THREE.BoxGeometry(size.x*0.34,Math.max(0.7,eyeR*0.8),Math.max(0.6,eyeR*0.5)),black);
+  mouth.position.set(0,eyeY-eyeR*2.05,faceZ+eyeR*0.02);
+  mouth.traverse(o=>{if(o.isMesh){o.userData.ci=c;o.frustumCulled=false;}});
+  face.add(mouth);
+  g.add(face);
+  c.face={group:face,eyes,mouth};
+  c.blinkTimer=rng(1,4);
+  return c.face;
+}
 function buildChikiMesh(c){
   const g=new THREE.Group();
   const stage=stageOf(c.level);
   const spIdx=SPECIES.indexOf(c.sp);
+  c.face=null;
   /* GLB template takes precedence */
   if(typeof glbCache!=="undefined"&&glbCache[spIdx]){
     const tpl=glbCache[spIdx];
@@ -3296,6 +3332,7 @@ function buildChikiMesh(c){
         wing.userData.ci=c;g.add(wing);
       }
     }
+    addChikiFace(c,g,m);
     g.scale.setScalar((0.85+stage*0.18)*(SPECIES_SCALE[spIdx]||1));
     return g;
   }
@@ -3332,6 +3369,7 @@ function buildChikiMesh(c){
       g.add(wing);
     }
   }
+  addChikiFace(c,g,im);
   const s=(0.85+stage*0.18)*(SPECIES_SCALE[spIdx]||1);
   g.scale.setScalar(s);
   g.traverse(o=>{if(o.isMesh){o.userData.ci=c;}});
@@ -3723,6 +3761,24 @@ function frame(now){
       c.mesh.remove(c.fx.tool);c.fx.tool=null;c.fx.toolZone=null;
     }
     c.mesh.children.forEach(o=>{if(o.userData.wing)o.rotation.x=Math.sin(t*9+c.bob)*0.5;});
+    /* animated face: blink, talk/work mouth, eyes shut while asleep */
+    if(c.face){
+      let ey=1;
+      if(c.state==="sleeping"){ ey=0.1; }
+      else{
+        c.blinkTimer=(c.blinkTimer==null?rng(2,5):c.blinkTimer)-dt;
+        if(c.blinkTimer<0){ ey=0.12; if(c.blinkTimer<-0.11)c.blinkTimer=rng(2.4,6); }
+      }
+      for(const e of c.face.eyes)e.scale.y=ey;
+      if(c.face.mouth){
+        let open;
+        if(c.state==="sleeping")open=0.22;
+        else if(c.state==="working")open=0.45+0.55*Math.abs(Math.sin(t*9+c.bob));
+        else if(c.say&&t<c.sayUntil)open=0.4+0.6*Math.abs(Math.sin(t*13));
+        else open=0.7+0.3*Math.abs(Math.sin(t*2.2+c.bob));
+        c.face.mouth.scale.y=Math.max(0.12,open);
+      }
+    }
     /* beam */
     if(c.state==="walking"&&c.target){
       c.fx.beam.visible=true;
