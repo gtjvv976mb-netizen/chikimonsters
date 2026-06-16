@@ -1058,7 +1058,7 @@ function assignChikis(h,n){const pool=[...Array(SPECIES.length).keys()];const ou
 const HATCH_NEED=15;
 function pickHatchSpecies(taps){
   const extra=Math.max(0,taps-HATCH_NEED);
-  const pGal=Math.min(0.01, extra/200);               /* Legendary (Galador) capped at 1% */
+  const pGal=Math.min(0.035, extra/200);              /* Legendary (Galador) capped at 3.5% */
   if(Math.random()<pGal) return SPECIES.length-1;     /* Galador */
   return ri(0, SPECIES.length-2);                      /* a normal species */
 }
@@ -1080,7 +1080,7 @@ function hatchEgg(){
         btn.style.display="";
         const extra=taps-HATCH_NEED;
         egg.style.filter="drop-shadow(0 0 "+(10+extra*1.4)+"px #ffd93d)";
-        tapsEl.textContent="⚡ "+taps+" taps · 🌟 Legendary chance "+(Math.min(0.01,extra/200)*100).toFixed(1)+"%";
+        tapsEl.textContent="⚡ "+taps+" taps · 🌟 Legendary chance "+(Math.min(0.035,extra/200)*100).toFixed(1)+"%";
       }else tapsEl.textContent="⚡ "+taps+" / "+HATCH_NEED;
     }
     function hatch(){ if(hatched)return; hatched=true;
