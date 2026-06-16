@@ -1864,20 +1864,34 @@ function renderMyPanel(){
 function showInspect(c,soft){
   inspected=c;
   if(!soft)openPop("inspectPop");
-  const col=c.task?RARITY[c.task.rarity].color:"#8a7351";
   const stage=stageOf(c.level);
+  const clean=s=>String(s==null?"":s).replace(/[<>&"]/g,"");
+  const legendTag=c.isLegend?' <span class="tag" style="background:#ffd16633;color:#ffd166">👑 Legendary</span>':'';
+  const ownerVal=(c.holder.handle?("<b>"+clean(c.holder.handle)+"</b> · "):"")+c.holder.addr+(c.holder===player?" 👤 you":"");
+  if(c.ghost){   /* another player's Chiki — show their REAL data only (no fabricated stats) */
+    const st=c.hungry?"🍖 Hungry":"🌍 Exploring Chikoria";
+    document.getElementById("inspectBody").innerHTML=`
+      <div class="big" style="color:${c.sp.body}">${nameOf(c)}${legendTag}
+        <span style="font-size:11px;color:#8fa6c9">(${c.sp.type} · Stage ${stage} · Lv ${c.level})</span></div>
+      <div class="row"><span>Owner</span><span>${ownerVal}</span></div>
+      <div class="row"><span>Status</span><span>${st}</span></div>
+      <div class="row"><span>Owner $CHIKI</span><span>${c.holder.bal?c.holder.bal.toLocaleString():"—"}</span></div>
+      <div class="row"><span>Tasks completed</span><span style="color:var(--green)">${c.tasksDone||0}</span></div>
+      <div class="row"><span>Rare-task boost</span><span style="color:var(--blue)">+${Math.round((rareBoostOf(c)-1)*100)}% on Epic+</span></div>`;
+    return;
+  }
+  const col=c.task?RARITY[c.task.rarity].color:"#8fa6c9";
   document.getElementById("inspectBody").innerHTML=`
-    <div class="big" style="color:${c.sp.body}">${nameOf(c)}
+    <div class="big" style="color:${c.sp.body}">${nameOf(c)}${legendTag}
       <span style="font-size:11px;color:#8fa6c9">(${c.sp.type} · Stage ${stage} · Lv ${c.level})</span></div>
     ${staminaBarHTML(c)}
-    <div class="row"><span>Holder wallet</span><span>${c.holder.addr}${c.holder===player?" 👤 you":""}</span></div>
+    <div class="row"><span>${c.holder===player?"Your wallet":"Owner"}</span><span>${ownerVal}</span></div>
     <div class="row"><span>$CHIKI balance</span><span>${c.holder.bal.toLocaleString()}</span></div>
     <div class="row"><span>Rare-task boost</span><span style="color:var(--blue)">+${Math.round((rareBoostOf(c)-1)*100)}% on Epic+</span></div>
     <div class="row"><span>Status</span><span style="color:${col}">${c.hungry?"🍖 Hungry — needs feeding":c.state==="sleeping"?"💤 Sleeping — wakes in "+fmtSleep(c.sleepT):c.task?(c.state==="working"?"Doing: "+c.task.name+" ⏱"+fmtDur(c.workT):"Heading to: "+c.task.name):"Wandering"}</span></div>
     <div class="row"><span>Tasks completed</span><span>${c.tasksDone}</span></div>
-    <div class="row"><span>EXP to reach Lv ${c.level>=MAX_LEVEL?"MAX":c.level+1}</span><span style="color:${c.level>=MAX_LEVEL?'#8a7351':(xpLeft(c)===0?'#2e9e5b':'#7c5cd6')}">${c.level>=MAX_LEVEL?"—":(xpLeft(c)===0?"✓ ready to level up":Math.floor(c.xp||0)+" / "+xpNeed(c.level)+" XP ("+xpLeft(c)+" to go)")}</span></div>
-    <div class="row"><span>Last reward</span><span>${c.lastReward?fmt(c.lastReward)+" SOL":"—"}</span></div>
-    <div class="row"><span>Total earned</span><span style="color:var(--green)">${c.holder.earned?fmt(c.holder.earned):"0"} SOL</span></div>`;
+    <div class="row"><span>EXP to reach Lv ${c.level>=MAX_LEVEL?"MAX":c.level+1}</span><span style="color:${c.level>=MAX_LEVEL?'#8fa6c9':(xpLeft(c)===0?'#2e9e5b':'#7c5cd6')}">${c.level>=MAX_LEVEL?"—":(xpLeft(c)===0?"✓ ready to level up":Math.floor(c.xp||0)+" / "+xpNeed(c.level)+" XP ("+xpLeft(c)+" to go)")}</span></div>
+    <div class="row"><span>Last reward</span><span>${c.lastReward?fmt(c.lastReward)+" SOL":"—"}</span></div>`;
 }
 /* pull the player's REAL on-chain SOL + $CHIKI balances so the profile shows authentic numbers */
 async function refreshChainBalances(){
@@ -2779,10 +2793,17 @@ async function fetchWorld(){
     let count=ghostMap.size;
     for(const [key,e] of desired){
       if(ghostMap.has(key)){const c=ghostMap.get(key);const want=Math.max(1,e.level||1);
-        if(c.level!==want){const st=stageOf(c.level);c.level=want;if(stageOf(want)!==st&&typeof rebuildChiki==="function")rebuildChiki(c);}continue;}
+        if(c.level!==want){const st=stageOf(c.level);c.level=want;if(stageOf(want)!==st&&typeof rebuildChiki==="function")rebuildChiki(c);}
+        /* keep the real data fresh */
+        c.nick=e.nick||c.nick; if(c.nick)c.named=true; c.tasksDone=e.tasksDone||0; c.hungry=!!e.hungry; c.isLegend=!!e.isLegend;
+        const h=c.holder; if(h){h.handle=e.handle||h.handle; if(e.bal)h.bal=e.bal;}
+        continue;}
       if(count>=60)break;
-      const c=spawnCreature(ghostHolder(e.wallet),Math.max(1,e.level||1),(e.sp|0)%SPECIES.length);
-      c.ghost=true;ghostMap.set(key,c);count++;
+      const h=ghostHolder(e.wallet); h.handle=e.handle||h.handle; if(e.bal)h.bal=e.bal;
+      const c=spawnCreature(h,Math.max(1,e.level||1),(e.sp|0)%SPECIES.length);
+      c.ghost=true; c.nick=e.nick||null; if(c.nick)c.named=true;
+      c.tasksDone=e.tasksDone||0; c.hungry=!!e.hungry; c.isLegend=!!e.isLegend;
+      ghostMap.set(key,c);count++;
     }
   }catch(e){}
 }
