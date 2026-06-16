@@ -2821,18 +2821,43 @@ setInterval(()=>{if(player&&player.pk)saveProfile(player);},8000);
 addEventListener("beforeunload",()=>{if(player&&player.pk)saveProfile(player);});
 addEventListener("visibilitychange",()=>{if(document.hidden&&player&&player.pk)saveProfile(player);});
 document.getElementById("phantomBtn").onclick=connectPhantom;
-document.getElementById("btnWallet").onclick=()=>{
-  if(player){
-    addFeed(`👛 ${player.addr} disconnected.`);
-    player=null;followMode=false;
-    if(typeof clearGhosts==="function")clearGhosts();
-    const bw=document.getElementById("btnWallet");
-    bw.textContent="👛 Connect Wallet";bw.classList.add("primary");
-    document.getElementById("btnMyFloat").style.display="none";
-    document.getElementById("btnProfile").style.display="none";
-    document.getElementById("btnMy").style.display="none";
-    closePop("myPop");refreshUI();return;
+function doDisconnect(){
+  if(!player)return;
+  const who=player.addr;
+  if(player.pk&&typeof saveProfile==="function")saveProfile(player);   /* save before leaving */
+  addFeed(`👛 ${who} disconnected.`);
+  player=null;followMode=false;
+  if(typeof clearGhosts==="function")clearGhosts();
+  const bw=document.getElementById("btnWallet");
+  bw.textContent="👛 Connect Wallet";bw.classList.add("primary");
+  document.getElementById("btnMyFloat").style.display="none";
+  document.getElementById("btnProfile").style.display="none";
+  document.getElementById("btnMy").style.display="none";
+  closePop("myPop");refreshUI();
+}
+/* styled confirm shown when an already-connected user taps Connect Wallet again */
+function showDisconnectConfirm(){
+  let ov=document.getElementById("dcOverlay");
+  if(!ov){
+    ov=document.createElement("div");ov.id="dcOverlay";
+    ov.style.cssText="position:fixed;inset:0;z-index:2000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55);font-family:'Baloo 2',sans-serif";
+    ov.innerHTML=`<div style="width:min(90vw,340px);background:rgba(8,14,28,.98);border:1px solid #2c4470;border-radius:16px;padding:20px;text-align:center;box-shadow:0 18px 50px rgba(0,0,0,.6);color:#dce8fa">
+      <div style="font-size:34px;margin-bottom:6px">👛</div>
+      <div style="font-size:16px;font-weight:800;margin-bottom:4px">You're connected</div>
+      <div id="dcWho" style="font-size:12px;color:#8fa6c9;margin-bottom:16px"></div>
+      <button id="dcYes" style="width:100%;font-family:'Baloo 2';font-weight:800;font-size:15px;padding:12px;border:none;border-radius:12px;background:linear-gradient(180deg,#ff7a6e,#d72631);color:#fff;cursor:pointer;box-shadow:0 4px 0 #5e0a10">🔌 Disconnect Wallet</button>
+      <button id="dcNo" style="width:100%;margin-top:10px;font-family:'Baloo 2';font-weight:800;font-size:15px;padding:12px;border:none;border-radius:12px;background:#1b2740;color:#dce8fa;cursor:pointer;box-shadow:0 4px 0 #0c1426">Cancel</button>
+    </div>`;
+    document.body.appendChild(ov);
+    ov.addEventListener("click",e=>{if(e.target===ov)ov.style.display="none";});   /* tap backdrop to cancel */
+    ov.querySelector("#dcNo").onclick=()=>ov.style.display="none";
+    ov.querySelector("#dcYes").onclick=()=>{ov.style.display="none";doDisconnect();};
   }
+  ov.querySelector("#dcWho").textContent=(player.handle?player.handle+" · ":"")+player.addr;
+  ov.style.display="flex";
+}
+document.getElementById("btnWallet").onclick=()=>{
+  if(player){ showDisconnectConfirm(); return; }   /* connected → ask first (Disconnect / Cancel) */
   modal.classList.add("show");
 };
 document.getElementById("closeModal").onclick=()=>modal.classList.remove("show");
