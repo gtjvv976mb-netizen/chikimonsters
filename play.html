@@ -108,6 +108,9 @@
   .statgrid .v{font-size:16px;font-weight:800;color:var(--gold)}
   .statgrid .v.g{color:var(--green)} .statgrid .v.r{color:var(--red)} .statgrid .v.b{color:var(--blue)}
   .statgrid .l{font-size:9.5px;color:#8a7351;text-transform:uppercase;letter-spacing:.6px;margin-top:2px}
+  .statgrid a.statLink{text-decoration:none;display:block}
+  .statgrid a.statLink:hover .v{text-decoration:underline;filter:brightness(1.12)}
+  .statgrid a.statLink .l u{color:#6fb1ff}
   .mech h3{font-size:13px;color:#c47f00;margin:12px 0 5px;font-family:'Baloo 2',sans-serif}
   .mech h3:first-child{margin-top:0}
   .mech p,.mech li{font-size:12px;line-height:1.55;color:#3a2c16}
@@ -508,7 +511,7 @@
   #chatSend:active{transform:scale(.94)}
   #ctabAdmin{display:none} #ctabAdmin.show{display:block;background:#fbeaea;border-color:#d9a3a3;color:#a0322b}
   #ctabAdmin.on{background:#c0392b;color:#fff;border-color:#9c2a22}
-  #adminView .ahint{font-size:12px;color:#8a7351;margin:2px 0 8px;line-height:1.4}
+  #adminView .ahint{font-size:12px;color:#8fa6c9;margin:2px 0 8px;line-height:1.4}
   #adminText{width:100%;min-height:90px;resize:vertical;font-family:'Baloo 2',sans-serif;font-size:13px;padding:9px 10px;
     border-radius:8px;border:2px solid #d9a3a3;background:#fffdf9;color:#3a2c16;box-sizing:border-box}
   #adminPost{width:100%;margin-top:8px;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:13.5px;padding:10px;
@@ -520,6 +523,8 @@
   .conline:hover{background:#eef4ff} .conline .dot{width:9px;height:9px;border-radius:50%;background:#3ddc84;flex:none}
   .conline .adm{color:#c0392b;font-weight:800;font-size:11px}
   .conline .dm{margin-left:auto;font-size:11px;color:#2a73c8;font-weight:800}
+  #onlineView{background:#fffdf6;border:2px solid #e6d2a3;border-radius:8px;padding:8px;min-height:160px;max-height:42vh;overflow-y:auto}
+  #onlineView .empty{color:#8a7351;font-size:12.5px;text-align:center;padding:14px 0}
 </style>
 </head>
 <body>
@@ -780,7 +785,7 @@ if(location.search.indexOf("embed")>-1){
     <li>Level costs grow 9%/level (Lv1→2 ≈ 2,725 $CHIKI; Lv49→50 ≈ 170k). Maxing one Chiki burns ≈ <b>509k $CHIKI</b>.</li>
     <li>$CHIKI payments are blocked if they'd drop you below the 500k threshold.</li>
   </ul>
-  <p style="margin-top:8px;color:#8a7351"><i>Original creatures — not affiliated with Pokémon or Minecraft.</i></p>
+  <p style="margin-top:8px;color:#8fa6c9"><i>Original creatures — not affiliated with Pokémon or Minecraft.</i></p>
 </div>
 
 <div class="pop" id="statsPop">
@@ -792,7 +797,7 @@ if(location.search.indexOf("embed")>-1){
     <div style="border-color:#3ddc8466"><b style="color:var(--green)">45%</b>💰 Reward pool</div>
     <div style="border-color:#4dabf766"><b style="color:var(--blue)">35%</b>🏦 Team wallet</div>
   </div>
-  <div style="font-size:11px;color:#8a7351;margin-top:10px" id="econNote"></div>
+  <div style="font-size:11px;color:#8fa6c9;margin-top:10px" id="econNote"></div>
 </div>
 
 <div class="pop" id="tasksPop">
@@ -948,10 +953,10 @@ body.pre #audioCtrl{display:none}
   open a <span style="background:#ffe9b8;border:1px solid #d9bd85;border-radius:4px;padding:0 4px">.bbmodel</span> from the
   <b>Chiki starter pack</b>, move/add cubes and repaint the palette texture, save, then load the file here —
   that species transforms in-game instantly and is remembered by your browser.</p>
-  <div style="font-size:11px;color:#8a7351;margin:6px 0 10px">
+  <div style="font-size:11px;color:#8fa6c9;margin:6px 0 10px">
   Rules: keep cubes axis-aligned (no rotations), face the model toward <b>+Z (south)</b>, feet at <b>Y = 0</b>.
   Each cube's colour is sampled from its texture face.</div>
-  <p style="font-size:11px;color:#8a7351;margin-bottom:8px"><b>.glb also works</b> (Blender, Meshy, Tripo…):
+  <p style="font-size:11px;color:#8fa6c9;margin-bottom:8px"><b>.glb also works</b> (Blender, Meshy, Tripo…):
   models are auto-scaled, centred and grounded — face them toward <b>+Z</b> and keep them low-poly (&lt;10k tris).</p>
   <table id="modelTable"><tr><th>Species line</th><th>Model</th><th class="r">Load .bbmodel / .glb</th></tr></table>
   <div style="display:flex;gap:8px;margin-top:10px">
@@ -1756,33 +1761,33 @@ function staminaBarHTML(c){
   const cls=c.state==="sleeping"?"sleep":p<25?"low":"";
   const barW=c.hungry?100:c.state==="sleeping"?Math.round((1-c.sleepT/sleepTimeOf(c.level))*100):p;
   return `<div class="stam"><i class="${cls}" style="width:${barW}%"></i></div>
-    <div style="font-size:11px;color:#8a7351">${c.hungry
+    <div style="font-size:11px;color:#8fa6c9">${c.hungry
       ?`🍖 Hungry — feed ${feedCostOf(c.level).toLocaleString()} $CHIKI to wake`
       :c.state==="sleeping"
       ?`💤 Sleeping — wakes in ${fmtSleep(c.sleepT)} (Lv${c.level} nap: ${fmtSleep(sleepTimeOf(c.level))})`
       :`⚡ ${Math.round(c.stamina)} / ${max} stamina`}</div>`;
 }
 function refreshUI(){
-  var _cp=document.getElementById("chipPool");if(_cp)_cp.textContent=pool.toFixed(3);
-  var _cb=document.getElementById("chipBurn");if(_cb)_cb.textContent=fmtK(burnedChiki);
   const S=REAL_STATS;
+  var _cp=document.getElementById("chipPool");if(_cp)_cp.textContent=((S&&S.poolSol!=null)?S.poolSol:pool).toFixed(3);            /* live on-chain reward pool */
+  var _cb=document.getElementById("chipBurn");if(_cb)_cb.textContent=fmtK((S&&S.burned!=null)?S.burned:burnedChiki);              /* live on-chain burned total */
   document.getElementById("statGrid").innerHTML = S ? `
-    <div><div class="v">${(S.poolSol??0).toFixed(3)}</div><div class="l">Reward pool ◎ (live)</div></div>
+    <div><a class="statLink" href="https://solscan.io/account/${CHAIN.TREASURY}" target="_blank" rel="noopener" title="Verify the Reward Pool wallet on Solscan"><div class="v">${(S.poolSol??0).toFixed(3)}</div><div class="l">Reward pool ◎ (live) · <u>verify ↗</u></div></a></div>
     <div><div class="v g">${(S.dailyPaidSol??0).toFixed(3)}</div><div class="l">SOL paid (24h)</div></div>
     <div><div class="v b">${S.activeUsers??0}</div><div class="l">Players online</div></div>
     <div><div class="v b">${S.claimedChikis??0}</div><div class="l">Chikis claimed</div></div>
-    <div><div class="v r">${fmtK(S.burned||0)}</div><div class="l">🔥 $CHIKI burned</div></div>
-    <div><div class="v" style="color:#3a2c16">${fmtK(S.supply||0)}</div><div class="l">Circulating supply</div></div>
+    <div><a class="statLink" href="https://solscan.io/token/${CHAIN.MINT}" target="_blank" rel="noopener" title="Verify burns &amp; supply on Solscan"><div class="v r">${fmtK(S.burned||0)}</div><div class="l">🔥 $CHIKI burned · <u>verify ↗</u></div></a></div>
+    <div><a class="statLink" href="https://solscan.io/token/${CHAIN.MINT}" target="_blank" rel="noopener" title="Verify circulating supply on Solscan"><div class="v" style="color:#dce8fa">${fmtK(S.supply||0)}</div><div class="l">Circulating supply · <u>verify ↗</u></div></a></div>
     <div><div class="v b">${(S.teamSol??0).toFixed(3)} ◎</div><div class="l">Team wallet SOL</div></div>
-    <div><div class="v" style="color:#3a2c16">${S.holders??0}</div><div class="l">Trainers</div></div>` : `
+    <div><div class="v" style="color:#dce8fa">${S.holders??0}</div><div class="l">Trainers</div></div>` : `
     <div><div class="v">…</div><div class="l">Reward pool ◎ (live)</div></div>
     <div><div class="v g">…</div><div class="l">SOL paid (24h)</div></div>
     <div><div class="v b">…</div><div class="l">Players online</div></div>
     <div><div class="v b">…</div><div class="l">Chikis claimed</div></div>
     <div><div class="v r">…</div><div class="l">🔥 $CHIKI burned</div></div>
-    <div><div class="v" style="color:#3a2c16">…</div><div class="l">Circulating supply</div></div>
+    <div><div class="v" style="color:#dce8fa">…</div><div class="l">Circulating supply</div></div>
     <div><div class="v b">…</div><div class="l">Team wallet SOL</div></div>
-    <div><div class="v" style="color:#3a2c16">…</div><div class="l">Trainers</div></div>`;
+    <div><div class="v" style="color:#dce8fa">…</div><div class="l">Trainers</div></div>`;
   document.getElementById("econNote").innerHTML=
     `Token peg: 1 $CHIKI = ${TOKEN_PRICE} SOL · Level costs grow 9%/level (Lv1→2: ${chikiCostOf(1).toLocaleString()} $CHIKI, Lv49→50: ${chikiCostOf(49).toLocaleString()} $CHIKI). SOL path carries a 15% premium and buy-burns $CHIKI. See 📖 Mechanics.`;
   const tt=document.getElementById("taskTable");
@@ -1800,7 +1805,7 @@ function refreshUI(){
   while(lb.rows.length>1)lb.deleteRow(1);
   if(REAL_LB&&Array.isArray(REAL_LB.holders)){
     if(!REAL_LB.holders.length){
-      const r=lb.insertRow(); r.innerHTML=`<td colspan="4" style="color:#8a7351;text-align:center">No holders ≥500k detected on-chain yet.</td>`;
+      const r=lb.insertRow(); r.innerHTML=`<td colspan="4" style="color:#8fa6c9;text-align:center">No holders ≥500k detected on-chain yet.</td>`;
     } else REAL_LB.holders.forEach((h,i)=>{
       const r=lb.insertRow();
       const short=h.owner.slice(0,4)+"…"+h.owner.slice(-4);
@@ -1810,7 +1815,7 @@ function refreshUI(){
         <td class="r">${h.whale?2:1}</td>`;
     });
   } else {
-    const r=lb.insertRow(); r.innerHTML=`<td colspan="4" style="color:#8a7351;text-align:center">Loading live holders…</td>`;
+    const r=lb.insertRow(); r.innerHTML=`<td colspan="4" style="color:#8fa6c9;text-align:center">Loading live holders…</td>`;
   }
   if(inspected)showInspect(inspected,true);
   renderMyPanel();
@@ -1818,7 +1823,7 @@ function refreshUI(){
 function renderMyPanel(){
   if(!player)return;
   const chikis=myChikis();
-  let html=`<div style="font-size:12px;color:#8a7351;margin-bottom:9px">Tap <b>🎯 Track</b> to follow a Chiki with the camera. Level them up with $CHIKI or SOL.</div>`;
+  let html=`<div style="font-size:12px;color:#8fa6c9;margin-bottom:9px">Tap <b>🎯 Track</b> to follow a Chiki with the camera. Level them up with $CHIKI or SOL.</div>`;
   chikis.forEach(c=>{
     const atMax=c.level>=MAX_LEVEL,i=creatures.indexOf(c);
     const cCost=chikiCostOf(c.level),sCost=solCostOf(c.level);
@@ -1860,7 +1865,7 @@ function showInspect(c,soft){
   const stage=stageOf(c.level);
   document.getElementById("inspectBody").innerHTML=`
     <div class="big" style="color:${c.sp.body}">${nameOf(c)}
-      <span style="font-size:11px;color:#8a7351">(${c.sp.type} · Stage ${stage} · Lv ${c.level})</span></div>
+      <span style="font-size:11px;color:#8fa6c9">(${c.sp.type} · Stage ${stage} · Lv ${c.level})</span></div>
     ${staminaBarHTML(c)}
     <div class="row"><span>Holder wallet</span><span>${c.holder.addr}${c.holder===player?" 👤 you":""}</span></div>
     <div class="row"><span>$CHIKI balance</span><span>${c.holder.bal.toLocaleString()}</span></div>
@@ -1871,7 +1876,24 @@ function showInspect(c,soft){
     <div class="row"><span>Last reward</span><span>${c.lastReward?fmt(c.lastReward)+" SOL":"—"}</span></div>
     <div class="row"><span>Total earned</span><span style="color:var(--green)">${c.holder.earned?fmt(c.holder.earned):"0"} SOL</span></div>`;
 }
-function openProfile(){if(!player){addFeed("👛 Connect your wallet first to open your profile.");return;}openPop("profilePop");renderProfile();}
+/* pull the player's REAL on-chain SOL + $CHIKI balances so the profile shows authentic numbers */
+async function refreshChainBalances(){
+  try{
+    if(!player||!player.pk)return;
+    const w3=window.solanaWeb3; if(!w3)return;
+    const conn=new w3.Connection(CHAIN.RPC,"confirmed");
+    const owner=new w3.PublicKey(player.pk);
+    const lam=await conn.getBalance(owner); player._chainSol=+(lam/1e9).toFixed(4);
+    const TOKEN=new w3.PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb");
+    const ATAP=new w3.PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
+    const mint=new w3.PublicKey(CHAIN.MINT);
+    const ata=w3.PublicKey.findProgramAddressSync([owner.toBuffer(),TOKEN.toBuffer(),mint.toBuffer()],ATAP)[0];
+    try{const r=await conn.getTokenAccountBalance(ata); if(r&&r.value&&r.value.uiAmount!=null)player.bal=Math.floor(r.value.uiAmount);}catch(e){}
+    player._chainAt=Date.now();
+  }catch(e){}
+}
+function openProfile(){if(!player){addFeed("👛 Connect your wallet first to open your profile.");return;}openPop("profilePop");renderProfile();
+  if(player.pk)refreshChainBalances().then(()=>{const p=document.getElementById("profilePop");if(p&&p.classList.contains("show"))renderProfile();});}
 function renderProfile(){
   if(!player)return;
   const chikis=myChikis();
@@ -1888,9 +1910,9 @@ function renderProfile(){
     <h3 style="font-family:'Baloo 2';color:#b5803a;margin:12px 0 5px;font-size:13px">🐣 Your Chiki${chikis.length>1?"s":""}</h3>
     ${cards}
     <h3 style="font-family:'Baloo 2';color:#b5803a;margin:12px 0 5px;font-size:13px">📊 Player statistics</h3>
-    <div class="row"><span>💰 Total SOL earned</span><span style="color:var(--green)">${player.earned?fmt(player.earned):"0"} ◎</span></div>
-    <div class="row"><span>$CHIKI balance</span><span>${player.bal.toLocaleString()}</span></div>
-    <div class="row"><span>SOL balance</span><span>${player.sol} ◎</span></div>
+    <div class="row"><span>💰 SOL earned in-game</span><span style="color:var(--green)">${player.earned?fmt(player.earned):"0"} ◎</span></div>
+    <div class="row"><span>$CHIKI balance ${player.pk?'<span style="font-size:9px;color:#3ddc84">on-chain</span>':''}</span><span><a href="https://solscan.io/account/${player.pk||player.addr}" target="_blank" rel="noopener" style="color:#6fb1ff;text-decoration:none">${player.bal.toLocaleString()} ↗</a></span></div>
+    <div class="row"><span>Wallet SOL ${player.pk?'<span style="font-size:9px;color:#3ddc84">on-chain</span>':''}</span><span>${(player._chainSol!=null?player._chainSol:player.sol)} ◎</span></div>
     <div class="row"><span>🏅 Achievements</span><span>${(player.ach&&player.ach.size)||0}</span></div>
     ${CHAIN.BACKEND&&player.pk?`<button id="claimBtn" style="width:100%;margin-top:11px;font-size:12px;padding:8px 10px">💰 Claim SOL rewards</button>`:""}`;
   const ln=document.getElementById("changeNameLink");
@@ -1907,9 +1929,9 @@ function renderRename(){
   document.getElementById("renameBody").innerHTML=`
     <h3 style="font-family:'Baloo 2';color:#b5803a;margin:2px 0 5px;font-size:13px">🪪 Player name</h3>
     <div style="display:flex;gap:6px"><input id="handleInp" maxlength="16" placeholder="Your name" value="${player.handle||""}" style="flex:1;border:2px solid #d9bd85;border-radius:8px;padding:6px 8px;font-family:inherit;font-size:12px;background:#fff;color:#3a2c16"><button id="handleBtn" style="font-size:11px;padding:5px 10px">Set</button></div>
-    <h3 style="font-family:'Baloo 2';color:#b5803a;margin:12px 0 5px;font-size:13px">🐣 Chiki name <span style="color:#8a7351;font-weight:400">(${nameOf(c)})</span></h3>
+    <h3 style="font-family:'Baloo 2';color:#b5803a;margin:12px 0 5px;font-size:13px">🐣 Chiki name <span style="color:#8fa6c9;font-weight:400">(${nameOf(c)})</span></h3>
     <div style="display:flex;gap:6px"><input id="cnameInp" maxlength="14" placeholder="Name your Chiki" value="${c.nick||""}" ${canR?"":"disabled"} style="flex:1;border:2px solid #d9bd85;border-radius:8px;padding:6px 8px;font-family:inherit;font-size:12px;background:#fff;color:#3a2c16"><button id="cnameBtn" ${canR?"":"disabled"} style="font-size:11px;padding:5px 10px">${rLabel}</button></div>
-    <div style="font-size:10.5px;color:#8a7351;margin-top:6px">Unique names only · first Chiki rename free · a second costs 50,000 $CHIKI · then locked.</div>`;
+    <div style="font-size:10.5px;color:#8fa6c9;margin-top:6px">Unique names only · first Chiki rename free · a second costs 50,000 $CHIKI · then locked.</div>`;
   const hb=document.getElementById("handleBtn");
   if(hb)hb.onclick=()=>{
     const v=document.getElementById("handleInp").value.trim().slice(0,16);
@@ -4738,8 +4760,8 @@ function installModel(i,list){
   const mt=document.getElementById("modelTable");
   SPECIES.forEach((sp,i)=>{
     const r=mt.insertRow();
-    r.insertCell().innerHTML=`<b style="color:${sp.body};text-shadow:0 1px 1px rgba(0,0,0,.25)">${sp.names[0]}</b> <span style="color:#8a7351;font-size:10px">${sp.type}</span>`;
-    r.insertCell().innerHTML=`<span id="mstat${i}" style="font-size:10px;color:#8a7351">${customModels[i]?"<b style='color:#2e9e5b'>custom ✓</b>":"default"}</span>`;
+    r.insertCell().innerHTML=`<b style="color:${sp.body};text-shadow:0 1px 1px rgba(0,0,0,.25)">${sp.names[0]}</b> <span style="color:#8fa6c9;font-size:10px">${sp.type}</span>`;
+    r.insertCell().innerHTML=`<span id="mstat${i}" style="font-size:10px;color:#8fa6c9">${customModels[i]?"<b style='color:#3ddc84'>custom ✓</b>":"default"}</span>`;
     const cell=r.insertCell();cell.className="r";
     const inp=document.createElement("input");
     inp.type="file";inp.accept=".bbmodel,.glb,application/json,model/gltf-binary";
