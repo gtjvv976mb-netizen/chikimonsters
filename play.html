@@ -1054,37 +1054,33 @@ function nameTaken(set,v){return set.has(String(v).trim().toLowerCase());}
 function saveNameDB(){try{localStorage.setItem("chikiNameDB",JSON.stringify([...usedChikiNames]));localStorage.setItem("handleDB",JSON.stringify([...usedHandles]));}catch(e){}}
 (function(){try{JSON.parse(localStorage.getItem("chikiNameDB")||"[]").forEach(n=>usedChikiNames.add(String(n).toLowerCase()));}catch(e){}try{JSON.parse(localStorage.getItem("handleDB")||"[]").forEach(n=>usedHandles.add(String(n).toLowerCase()));}catch(e){}})();
 function assignChikis(h,n){const pool=[...Array(SPECIES.length).keys()];const out=[];for(let i=0;i<n;i++){let idx=pool.length?pool.splice(ri(0,pool.length-1),1)[0]:ri(0,SPECIES.length-1);out.push(spawnCreature(h,1,idx));}if(typeof ensureSpots==="function")ensureSpots();return out;}
-/* ===== egg hatching: more taps = rarer; Galador (last index) is the legendary jackpot ===== */
-const HATCH_NEED=15;
-function pickHatchSpecies(taps){
-  const extra=Math.max(0,taps-HATCH_NEED);
-  const pGal=Math.min(0.035, extra/200);              /* Legendary (Galador) capped at 3.5% */
-  if(Math.random()<pGal) return SPECIES.length-1;     /* Galador */
-  return ri(0, SPECIES.length-2);                      /* a normal species */
-}
+/* ===== egg hatching: each egg secretly picks 2 winning tap-counts in 1..100.
+   Hatch on exactly one of them = Legendary (Galador). 2 winners / 100 = 2% chance. ===== */
+const HATCH_MAX=100;
 function hatchEgg(){
   return new Promise(resolve=>{
     const g=id=>document.getElementById(id);
     const ov=g("hatchOverlay"),egg=g("hatchEgg"),meter=g("hatchMeter"),btn=g("hatchBtn"),hint=g("hatchHint"),title=g("hatchTitle"),tapsEl=g("hatchTaps"),rev=g("hatchReveal"),mw=g("hatchMeterWrap");
     let taps=0,hatched=false;
+    const a=ri(1,HATCH_MAX); let b=ri(1,HATCH_MAX); while(b===a)b=ri(1,HATCH_MAX);  /* 2 hidden lucky numbers = 2% */
+    const lucky=[a,b];
     ov.style.display="flex";btn.style.display="none";meter.style.width="0%";egg.style.filter="";egg.className="";
     egg.style.display="block";rev.style.display="none";rev.className="";mw.style.display="";tapsEl.style.display="";
     title.textContent="🥚 A Chiki Egg appeared!";hint.textContent="👆 Tap the egg to hatch your Chiki!";tapsEl.textContent="";
     function tap(e){ if(e&&e.preventDefault)e.preventDefault(); if(hatched)return;
       taps++;
       egg.classList.remove("shake");void egg.offsetWidth;egg.classList.add("shake");
-      meter.style.width=Math.min(100,taps/HATCH_NEED*100)+"%";
+      meter.style.width=Math.min(100,taps)+"%";
       if(window.playSfx)window.playSfx("click");
-      if(taps>=HATCH_NEED){
-        hint.innerHTML="✨ Cracking! <b>Keep tapping for rarer odds</b> — or Hatch now!";
-        btn.style.display="";
-        const extra=taps-HATCH_NEED;
-        egg.style.filter="drop-shadow(0 0 "+(10+extra*1.4)+"px #ffd93d)";
-        tapsEl.textContent="⚡ "+taps+" taps · 🌟 Legendary chance "+(Math.min(0.035,extra/200)*100).toFixed(1)+"%";
-      }else tapsEl.textContent="⚡ "+taps+" / "+HATCH_NEED;
+      btn.style.display="";
+      egg.style.filter="drop-shadow(0 0 "+Math.min(26,6+taps*0.25)+"px #ffd93d)";
+      hint.innerHTML="✨ Keep tapping, then <b>Hatch</b> when you feel lucky — a hidden number wins the Legendary!";
+      tapsEl.textContent="⚡ "+taps+" taps";
+      if(taps>=HATCH_MAX)hatch();      /* auto-hatch at 100 */
     }
     function hatch(){ if(hatched)return; hatched=true;
-      const sp=pickHatchSpecies(taps), legend=(sp===SPECIES.length-1);
+      const legend=lucky.indexOf(taps)>-1;
+      const sp=legend?(SPECIES.length-1):ri(0,SPECIES.length-2);
       egg.classList.add("pop");btn.style.display="none";hint.textContent="";tapsEl.style.display="none";mw.style.display="none";
       if(window.playSfx)window.playSfx("reward");
       setTimeout(()=>{                                   /* transition: egg → the actual Chiki */
