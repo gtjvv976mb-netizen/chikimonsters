@@ -803,7 +803,7 @@ if(location.search.indexOf("embed")>-1){
 <div class="pop" id="tasksPop">
   <h2>📋 Task Table — ranked by chance · reward = % of fee pool <span class="x" data-close="tasksPop">✕</span></h2>
   <table id="taskTable">
-    <tr><th>Task</th><th>Rarity</th><th>Where</th><th class="r">Base chance</th><th class="r">Reward</th><th class="r">EXP</th><th class="r">⚡</th><th class="r">⏱</th><th class="r">Done</th></tr>
+    <tr><th>Task</th><th>Rarity</th><th>Where</th><th class="r">Base chance</th><th class="r">Reward</th><th class="r">EXP</th><th class="r">⚡</th><th class="r">⏱</th><th class="r" title="Times YOUR Chikis have completed this task">Done (you)</th></tr>
   </table>
 </div>
 
@@ -1427,6 +1427,7 @@ function saveProfile(h){
     const data={pk:h.pk,bal:h.bal,sol:h.sol,earned:h.earned||0,savedAt:Date.now(),
       handle:h.handle||null,renames:h.renames||0,   /* player name follows the wallet across browsers/devices */
       ancientEgg:h.ancientEgg||null,                /* Sorceress: legendary egg incubation state */
+      taskCounts:h.taskCounts||null,                /* per-task completions by this player's Chikis (Done column) */
       chikis:mine.map(c=>({sp:SPECIES.indexOf(c.sp),level:c.level,tasksDone:c.tasksDone||0,nick:c.nick||null,sleepCycles:c.sleepCycles||0,hungry:!!c.hungry,xp:Math.floor(c.xp||0),isLegend:!!c.isLegend,arenaSkills:c.arenaSkills||null}))};
     localStorage.setItem(profileKey(h.pk),JSON.stringify(data));
     if(CHAIN.BACKEND)fetch(CHAIN.BACKEND+"/profile",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:h.pk,profile:data})}).catch(()=>{});
@@ -1478,6 +1479,7 @@ function restoreChikis(h,saved){
   });
   /* Sorceress: restore the Ancient Egg and fast-forward its care for the time away */
   if(saved.ancientEgg){ h.ancientEgg=saved.ancientEgg; if(typeof tickCare==="function")tickCare(h); }
+  if(saved.taskCounts)h.taskCounts=saved.taskCounts;   /* restore the player's per-task Done tally */
   if(elapsed>120&&(totalTasks>0||anyHungry)){
     const away=elapsed>=3600?(Math.round(elapsed/360)/10)+"h":Math.max(1,Math.round(elapsed/60))+"m";
     addFeed(`🌙 While you were away (${away}), your Chikis finished <b>${totalTasks}</b> task${totalTasks===1?"":"s"}${lvUps?` and gained <b>${lvUps}</b> level${lvUps>1?"s":""}`:""}.${anyHungry?" One is <b>hungry</b> 🍖 — feed it to wake it up!":""}`);
@@ -1579,6 +1581,7 @@ function completeTask(c){
   if(EVENT.active&&EVENT.kind==="storm")reward*=2;
   pool-=reward;distributed+=reward;
   c.holder.earned+=reward;c.tasksDone++;c.lastReward=reward;t.count++;
+  if(c.holder===player){player.taskCounts=player.taskCounts||{};player.taskCounts[t.name]=(player.taskCounts[t.name]||0)+1;}  /* per-task tally of YOUR Chikis (shown in the Done column) */
   c.stamina=Math.max(0,c.stamina-t.stam);
   const wasReady=(c.xp||0)>=xpNeed(c.level);
   const xpGain=xpForTask(t);gainXP(c,xpGain);
@@ -1799,7 +1802,7 @@ function refreshUI(){
       <td>${t.where}</td>
       <td class="r">${t.chance}%</td><td class="r" style="color:${col}">${t.pct}% of pool</td>
       <td class="r" style="color:#7c5cd6">+${xpForTask(t)}</td>
-      <td class="r">${t.stam}</td><td class="r">${fmtDur(t.dur)}</td><td class="r">${t.count}</td>`;
+      <td class="r">${t.stam}</td><td class="r">${fmtDur(t.dur)}</td><td class="r" style="font-weight:800;color:#3ddc84">${(player&&player.taskCounts&&player.taskCounts[t.name])||0}</td>`;
   });
   const lb=document.getElementById("lbTable");
   while(lb.rows.length>1)lb.deleteRow(1);
@@ -1831,10 +1834,10 @@ function renderMyPanel(){
     const canChiki=ready&&player.bal-cCost>=MIN_HOLD,canSol=ready&&player.sol>=sCost;
     const isT=(tracked&&tracked.holder===player?tracked:player.creature)===c;
     const pct=atMax?100:Math.min(100,Math.round(have/need*100));
-    html+=`<div style="border:2px solid ${c.sp.body}66;border-radius:11px;padding:11px;margin-bottom:11px;background:#ffffffaa">
+    html+=`<div style="border:2px solid ${c.sp.body}66;border-radius:11px;padding:11px;margin-bottom:11px;background:rgba(13,29,60,.72)">
       <div class="big" style="color:${c.sp.body};margin-bottom:4px">${nameOf(c)}
         <span class="tag" style="background:${c.sp.body}22;color:${c.sp.body}">${c.sp.type}</span>
-        <span class="tag" style="background:#ffd16622;color:#c47f00">Lv ${c.level}${atMax?" MAX":""}</span></div>
+        <span class="tag" style="background:#ffd16633;color:#ffd166">Lv ${c.level}${atMax?" MAX":""}</span></div>
       ${staminaBarHTML(c)}
       ${c.hungry?`<button class="feedBtn" data-i="${i}" style="width:100%;margin:7px 0;background:#ff922b;color:#fff;border-color:#e8590c">🍖 Feed ${feedCostOf(c.level).toLocaleString()} $CHIKI to wake</button>`:""}
       <div class="row"><span>Status</span><span>${statusText(c)}</span></div>
@@ -1889,6 +1892,7 @@ async function refreshChainBalances(){
     const mint=new w3.PublicKey(CHAIN.MINT);
     const ata=w3.PublicKey.findProgramAddressSync([owner.toBuffer(),TOKEN.toBuffer(),mint.toBuffer()],ATAP)[0];
     try{const r=await conn.getTokenAccountBalance(ata); if(r&&r.value&&r.value.uiAmount!=null)player.bal=Math.floor(r.value.uiAmount);}catch(e){}
+    try{if(CHAIN.BACKEND){const er=await fetch(CHAIN.BACKEND+"/earned?wallet="+player.pk,{cache:"no-store"});const ej=await er.json();if(ej&&ej.lifetimePaid!=null)player._paidSol=+Number(ej.lifetimePaid).toFixed(4);}}catch(e){}   /* real SOL paid out */
     player._chainAt=Date.now();
   }catch(e){}
 }
@@ -1897,7 +1901,7 @@ function openProfile(){if(!player){addFeed("👛 Connect your wallet first to op
 function renderProfile(){
   if(!player)return;
   const chikis=myChikis();
-  const cards=chikis.map(c=>`<div style="border:1px solid ${c.sp.body}55;border-radius:9px;padding:9px;margin-bottom:8px;background:#ffffffaa">
+  const cards=chikis.map(c=>`<div style="border:1px solid ${c.sp.body}55;border-radius:9px;padding:9px;margin-bottom:8px;background:rgba(13,29,60,.72)">
       <div class="big" style="color:${c.sp.body};font-size:14px">${nameOf(c)} <span class="tag" style="background:${c.sp.body}22;color:${c.sp.body}">${c.sp.type}</span></div>
       <div class="row"><span>Stage · Level</span><span>${stageOf(c.level)} · ${c.level}</span></div>
       <div class="row"><span>Status</span><span>${statusText(c)}</span></div>
@@ -1910,7 +1914,7 @@ function renderProfile(){
     <h3 style="font-family:'Baloo 2';color:#b5803a;margin:12px 0 5px;font-size:13px">🐣 Your Chiki${chikis.length>1?"s":""}</h3>
     ${cards}
     <h3 style="font-family:'Baloo 2';color:#b5803a;margin:12px 0 5px;font-size:13px">📊 Player statistics</h3>
-    <div class="row"><span>💰 SOL earned in-game</span><span style="color:var(--green)">${player.earned?fmt(player.earned):"0"} ◎</span></div>
+    <div class="row"><span>💰 SOL earned (paid out) ${player.pk?'<span style="font-size:9px;color:#3ddc84">on-chain</span>':''}</span><span style="color:var(--green)">${player.pk?(player._paidSol!=null?player._paidSol:"…"):"0"} ◎</span></div>
     <div class="row"><span>$CHIKI balance ${player.pk?'<span style="font-size:9px;color:#3ddc84">on-chain</span>':''}</span><span><a href="https://solscan.io/account/${player.pk||player.addr}" target="_blank" rel="noopener" style="color:#6fb1ff;text-decoration:none">${player.bal.toLocaleString()} ↗</a></span></div>
     <div class="row"><span>Wallet SOL ${player.pk?'<span style="font-size:9px;color:#3ddc84">on-chain</span>':''}</span><span>${(player._chainSol!=null?player._chainSol:player.sol)} ◎</span></div>
     <div class="row"><span>🏅 Achievements</span><span>${(player.ach&&player.ach.size)||0}</span></div>
