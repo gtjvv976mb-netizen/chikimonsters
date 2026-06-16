@@ -1045,8 +1045,9 @@ const SPECIES=[
   {names:["Cloudo","Zephir","Hurricub"],type:"Wind",body:"#e9ecef",accent:"#91a7ff",mane:"fluff",maneCols:["#ffffff","#dee2e6","#c5cdd4"]},
   {names:["Lunara","Galaxi","Cometail"],type:"Cosmic",body:"#4c3a8c",accent:"#ffd43b",mane:"shadow",maneCols:["#6741d9","#9775fa","#ffd43b"]},
   {names:["Galador","Galadrix","Galadeon"],type:"Legendary",body:"#1f3fb5",accent:"#ffd43b",mane:"shadow",maneCols:["#4f7cff","#1f3fb5","#ffd43b"]},
+  {names:["Adalor","Adalor","Adalor"],type:"Legendary",body:"#e0a800",accent:"#fff3b0",mane:"shadow",maneCols:["#ffd43b","#ffae00","#fff3b0"],aura:"gold"},   /* next Legendary — golden Super-Saiyan fire aura, wings-only animation */
 ];
-const DEX_IMG=["mushrow","electrox","jellox","firix","owzard","forestle","drolax","healix","solarix","scorplex","galador"];  /* species idx -> chikidex png */
+const DEX_IMG=["mushrow","electrox","jellox","firix","owzard","forestle","drolax","healix","solarix","scorplex","galador","adalor"];  /* species idx -> chikidex png */
 /* shared Chi-skill names per species (emoji,name) + descriptions — used by the Arena and Ancient-Egg hatch */
 const CHI_DESC=["Reliable hit","Big hit · blocked by Guard","Ignores Guard","Block 60% + reflect","Next hit +70%","Heal 60% of dmg","Huge hit · 7 recoil"];
 const CHI_PN=[
@@ -1060,7 +1061,8 @@ const CHI_PN=[
  [["💎","Shard Jab"],["🔆","Prism Beam"],["✨","Gleam Dash"],["💠","Crystal Wall"],["🔮","Refraction"],["💎","Gem Drain"],["🌟","Shard Nova"]],
  [["💨","Gust Jab"],["🌪️","Cyclone"],["💨","Wind Dash"],["🌬️","Air Barrier"],["🍃","Updraft"],["🌬️","Breeze Drain"],["🌀","Hurricane"]],
  [["⭐","Star Jab"],["☄️","Meteor"],["🛸","Warp Dash"],["🌌","Nebula Shield"],["✨","Cosmic Charge"],["🪐","Gravity Drain"],["🌌","Galaxy Burst"]],
- [["👑","Royal Strike"],["👑","Sovereign Blast"],["💨","Regal Dash"],["🛡️","Aegis"],["✨","Ascend"],["💜","Majesty Drain"],["💥","Cataclysm"]]
+ [["👑","Royal Strike"],["👑","Sovereign Blast"],["💨","Regal Dash"],["🛡️","Aegis"],["✨","Ascend"],["💜","Majesty Drain"],["💥","Cataclysm"]],
+ [["☀️","Solar Strike"],["🌟","Golden Flare"],["💨","Blaze Dash"],["🛡️","Radiant Aegis"],["🔥","Super Charge"],["✨","Aurora Drain"],["💥","Supernova"]]
 ];
 const LEGEND_IDXS=SPECIES.map((s,i)=>s.type==="Legendary"?i:-1).filter(i=>i>=0);   /* legendary species indices */
 const ANCIENT_EGG_COST=100000;   /* $CHIKI to buy an Ancient Egg from the Sorceress (20% burn/45% pool/35% team) */
@@ -3941,6 +3943,50 @@ function voxModel(c){
   }
   return [...cells.values()];
 }
+/* ===== Super-Saiyan style golden FIRE aura (rising flames, not a glow shell) ===== */
+let _auraTex=null;
+function auraTex(){
+  if(_auraTex)return _auraTex;
+  const cv2=document.createElement("canvas");cv2.width=cv2.height=64;const x=cv2.getContext("2d");
+  const gr=x.createRadialGradient(32,30,1,32,32,30);
+  gr.addColorStop(0,"rgba(255,255,225,0.98)");
+  gr.addColorStop(0.45,"rgba(255,210,70,0.72)");
+  gr.addColorStop(1,"rgba(255,120,0,0)");
+  x.fillStyle=gr;x.beginPath();x.arc(32,32,30,0,6.283);x.fill();
+  _auraTex=new THREE.CanvasTexture(cv2);return _auraTex;
+}
+function buildAura(){
+  const grp=new THREE.Group();const tex=auraTex();const flames=[];
+  for(let i=0;i<16;i++){
+    const mat=new THREE.SpriteMaterial({map:tex,color:0xffd24d,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false});
+    const s=new THREE.Sprite(mat);
+    const ang=Math.random()*6.283, rad=4+Math.random()*7;
+    s.userData={ang,rad,ph:Math.random()*6.283,sp:0.7+Math.random()*1.0};
+    s.position.set(Math.cos(ang)*rad,Math.random()*36,Math.sin(ang)*rad);
+    grp.add(s);flames.push(s);
+  }
+  const disk=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,color:0xffca3a,transparent:true,opacity:0.45,blending:THREE.AdditiveBlending,depthWrite:false}));
+  disk.scale.set(40,40,1);disk.position.y=2;grp.add(disk);
+  grp.userData={flames,disk};
+  return grp;
+}
+function animateAura(aura,t,dt){
+  const fl=aura.userData.flames;
+  for(const s of fl){
+    const u=s.userData;
+    s.position.y+=dt*26*u.sp;
+    if(s.position.y>38){s.position.y=0;u.ph=Math.random()*6.283;}
+    const k=s.position.y/38;                       /* 0 base → 1 tip */
+    const flick=0.55+0.45*Math.sin(t*13+u.ph);
+    s.material.opacity=(1-k)*0.9*flick;            /* fade as it rises + flicker */
+    const sc=(11+Math.sin(t*9+u.ph)*2.5)*(1-k*0.55);
+    s.scale.set(sc*0.8,sc*1.9,1);                  /* tall = flame tongue */
+    const rr=u.rad*(1-k*0.45);                      /* taper inward toward the tip */
+    s.position.x=Math.cos(u.ang)*rr;s.position.z=Math.sin(u.ang)*rr;
+  }
+  if(aura.userData.disk)aura.userData.disk.material.opacity=0.32+0.18*Math.sin(t*8);
+}
+function addAura(c,g){ if(c.sp&&c.sp.aura==="gold"){const a=buildAura();g.add(a);g.userData.aura=a;} }
 function buildChikiMesh(c){
   const g=new THREE.Group();
   const stage=stageOf(c.level);
@@ -3979,6 +4025,7 @@ function buildChikiMesh(c){
       }
     }
     g.scale.setScalar((0.85+stage*0.18)*(SPECIES_SCALE[spIdx]||1));
+    addAura(c,g);
     return g;
   }
   const custom=customModels[spIdx];
@@ -4017,6 +4064,7 @@ function buildChikiMesh(c){
   const s=(0.85+stage*0.18)*(SPECIES_SCALE[spIdx]||1);
   g.scale.setScalar(s);
   g.traverse(o=>{if(o.isMesh){o.userData.ci=c;}});
+  addAura(c,g);
   return g;
 }
 /* held voxel tools per task */
@@ -4371,8 +4419,10 @@ function frame(now){
       /* keep the BODY grounded — only the limbs/tail/wings animate. A tiny breathing
          motion when idle/asleep; no vertical bounce while walking, so the body stays intact. */
       const movingNow=c.state==="walking"||(c.state==="wander"&&(Math.abs(c.vx)+Math.abs(c.vy))>6);
-      const bob=c.state==="sleeping"?(Math.sin(t*1.6+c.bob)*0.7+0.7):(movingNow?0:Math.abs(Math.sin(c.bob))*0.6);
+      const noBob=(c.sp&&c.sp.aura==="gold");   /* aura legendaries: body stays perfectly still (only wings move) */
+      const bob=c.state==="sleeping"?(Math.sin(t*1.6+c.bob)*0.7+0.7):((movingNow||noBob)?0:Math.abs(Math.sin(c.bob))*0.6);
       c.mesh.position.set(c.x,gy+bob,c.y);
+      if(c.mesh.userData&&c.mesh.userData.aura)animateAura(c.mesh.userData.aura,t,dt);   /* rising golden fire */
       c.mesh.rotation.y=c.dir;
       if(sparring){
         /* friendly bout: face the nearest sparring partner and trade jabs without overlapping */
@@ -4406,7 +4456,13 @@ function frame(now){
     if(!c.mixer&&rig){
       const moving=c.state==="walking"||(c.state==="wander"&&(Math.abs(c.vx)+Math.abs(c.vy))>6);
       const sleeping2=c.state==="sleeping";
-      if(rigMode==="tentacles"){
+      if(rigMode==="wingsonly"){
+        /* Adalor & co: ONLY the wings flap — body, head, legs and tail stay perfectly still */
+        const flap=sleeping2?0.06:(moving?0.85:0.55);
+        const wp=Math.sin(t*(moving?9:5.5)+c.bob)*flap;
+        if(rig.LW)rig.LW.rotation.z= wp;
+        if(rig.RW)rig.RW.rotation.z=-wp;
+      }else if(rigMode==="tentacles"){
         /* jellox: ONLY the tentacles drift — the bell/head is one rigid piece */
         const sp=sleeping2?0.05:(moving?0.34:0.20);
         if(rig.LF){rig.LF.rotation.x= Math.sin(t*2.4+c.bob)*sp;     rig.LF.rotation.z= Math.sin(t*2.4+c.bob)*sp*0.5;}
@@ -4681,7 +4737,11 @@ function segmentMesh(mesh,mode){
     const cy=(pos.getY(i0)+pos.getY(i0+1)+pos.getY(i0+2))/3;
     const cz=(pos.getZ(i0)+pos.getZ(i0+1)+pos.getZ(i0+2))/3;
     let r;
-    if(mode==="wings"){
+    if(mode==="wingsonly"){
+      /* ONLY the wings move — the entire rest of the body (legs, tail, head, torso) is ONE rigid piece */
+      if(Math.abs(cx-midX)>wingX&&cy>wingY)r=(cx<midX?"L":"R")+"W";
+      else r="body";
+    }else if(mode==="wings"){
       /* winged species: legs walk, wings flap, tail sways — HEAD + TORSO stay ONE rigid piece */
       if(cy<legY)r=(cx<midX?"L":"R")+(cz>midZ?"F":"B");
       else if(Math.abs(cx-midX)>wingX&&cy>wingY)r=(cx<midX?"L":"R")+"W";
