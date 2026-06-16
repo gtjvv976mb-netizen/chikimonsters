@@ -611,10 +611,18 @@ if(location.search.indexOf("embed")>-1){
   border-radius:12px;background:linear-gradient(180deg,#ffd93d,#f5a623);color:#4a2f00;cursor:pointer;box-shadow:0 5px 0 #b97e10;animation:hbpulse 1s infinite}
 #hatchBtn:active{transform:translateY(3px);box-shadow:0 2px 0 #b97e10}
 @keyframes hbpulse{50%{transform:scale(1.05)}}
+#hatchReveal{display:none;width:min(52vw,280px);height:auto;margin:0 auto;filter:drop-shadow(0 0 26px #ffd93d)}
+#hatchReveal.revealIn{animation:revealPop .9s cubic-bezier(.2,1.4,.4,1)}
+@keyframes revealPop{0%{transform:scale(0) rotate(-20deg);opacity:0}60%{transform:scale(1.12) rotate(4deg);opacity:1}100%{transform:scale(1) rotate(0)}}
+#hatchReveal.legendary{filter:drop-shadow(0 0 34px #b388ff)}
+.whaleEgg{height:22px;vertical-align:middle;margin-right:5px;animation:whaleEggWobble 1.3s ease-in-out infinite}
+.whaleEgg.ready{animation:whaleEggWobble .34s ease-in-out infinite;filter:drop-shadow(0 0 6px #ffd93d)}
+@keyframes whaleEggWobble{0%,100%{transform:rotate(-9deg)}50%{transform:rotate(9deg)}}
 </style>
 <div id="hatchOverlay"><div id="hatchInner">
   <div id="hatchTitle">🥚 A Chiki Egg appeared!</div>
   <div id="hatchEggWrap"><img id="hatchEgg" src="egg.png" alt="Chiki Egg" draggable="false"></div>
+  <img id="hatchReveal" alt="" draggable="false">
   <div id="hatchHint">👆 Tap the egg to hatch your Chiki!</div>
   <div id="hatchMeterWrap"><div id="hatchMeter"></div></div>
   <div id="hatchTaps"></div>
@@ -938,6 +946,7 @@ const SPECIES=[
   {names:["Lunara","Galaxi","Cometail"],type:"Cosmic",body:"#4c3a8c",accent:"#ffd43b",mane:"shadow",maneCols:["#6741d9","#9775fa","#ffd43b"]},
   {names:["Galador","Galadrix","Galadeon"],type:"Legendary",body:"#7c4dff",accent:"#ffd43b",mane:"shadow",maneCols:["#9775fa","#7c4dff","#ffd43b"]},
 ];
+const DEX_IMG=["mushrow","electrox","jellox","firix","owzard","forestle","drolax","healix","solarix","scorplex","galador"];  /* species idx -> chikidex png */
 /* custom Blockbench models per species (restored from browser storage) */
 const customModels={};
 const glbCache={};   /* spIdx -> prepared GLB template (loader wired further down) */
@@ -1049,16 +1058,17 @@ function assignChikis(h,n){const pool=[...Array(SPECIES.length).keys()];const ou
 const HATCH_NEED=15;
 function pickHatchSpecies(taps){
   const extra=Math.max(0,taps-HATCH_NEED);
-  const pGal=Math.min(0.7, extra/60);                 /* lots of taps → up to 70% Legendary */
+  const pGal=Math.min(0.01, extra/200);               /* Legendary (Galador) capped at 1% */
   if(Math.random()<pGal) return SPECIES.length-1;     /* Galador */
   return ri(0, SPECIES.length-2);                      /* a normal species */
 }
 function hatchEgg(){
   return new Promise(resolve=>{
     const g=id=>document.getElementById(id);
-    const ov=g("hatchOverlay"),egg=g("hatchEgg"),meter=g("hatchMeter"),btn=g("hatchBtn"),hint=g("hatchHint"),title=g("hatchTitle"),tapsEl=g("hatchTaps");
+    const ov=g("hatchOverlay"),egg=g("hatchEgg"),meter=g("hatchMeter"),btn=g("hatchBtn"),hint=g("hatchHint"),title=g("hatchTitle"),tapsEl=g("hatchTaps"),rev=g("hatchReveal"),mw=g("hatchMeterWrap");
     let taps=0,hatched=false;
     ov.style.display="flex";btn.style.display="none";meter.style.width="0%";egg.style.filter="";egg.className="";
+    egg.style.display="block";rev.style.display="none";rev.className="";mw.style.display="";tapsEl.style.display="";
     title.textContent="🥚 A Chiki Egg appeared!";hint.textContent="👆 Tap the egg to hatch your Chiki!";tapsEl.textContent="";
     function tap(e){ if(e&&e.preventDefault)e.preventDefault(); if(hatched)return;
       taps++;
@@ -1070,14 +1080,21 @@ function hatchEgg(){
         btn.style.display="";
         const extra=taps-HATCH_NEED;
         egg.style.filter="drop-shadow(0 0 "+(10+extra*1.4)+"px #ffd93d)";
-        tapsEl.textContent="⚡ "+taps+" taps · ✨ rare luck "+Math.round(Math.min(0.7,extra/60)*100)+"%";
+        tapsEl.textContent="⚡ "+taps+" taps · 🌟 Legendary chance "+(Math.min(0.01,extra/200)*100).toFixed(1)+"%";
       }else tapsEl.textContent="⚡ "+taps+" / "+HATCH_NEED;
     }
     function hatch(){ if(hatched)return; hatched=true;
-      const sp=pickHatchSpecies(taps);
-      egg.classList.add("pop");title.textContent="🎉 It hatched!";btn.style.display="none";
+      const sp=pickHatchSpecies(taps), legend=(sp===SPECIES.length-1);
+      egg.classList.add("pop");btn.style.display="none";hint.textContent="";tapsEl.style.display="none";mw.style.display="none";
       if(window.playSfx)window.playSfx("reward");
-      setTimeout(()=>{ ov.style.display="none";egg.onclick=null;egg.ontouchstart=null;btn.onclick=null;egg.style.filter="";resolve(sp); },680);
+      setTimeout(()=>{                                   /* transition: egg → the actual Chiki */
+        egg.style.display="none";
+        rev.src="chikidex/"+(DEX_IMG[sp]||"mushrow")+".png";
+        rev.className="revealIn"+(legend?" legendary":"");rev.style.display="block";
+        title.innerHTML="🎉 You hatched <b style='color:"+SPECIES[sp].body+"'>"+SPECIES[sp].names[0]+"</b>!"+(legend?" 🌟 LEGENDARY!":"");
+        hint.textContent=SPECIES[sp].type+" type";
+        setTimeout(()=>{ ov.style.display="none";egg.onclick=null;egg.ontouchstart=null;btn.onclick=null;egg.style.filter="";resolve(sp); }, 1700);
+      },650);
     }
     egg.onclick=tap; egg.ontouchstart=tap; btn.onclick=hatch;
   });
@@ -1089,6 +1106,30 @@ async function hatchChikis(h,n){
     if(!h.creature)h.creature=c;
   }
   if(typeof ensureSpots==="function")ensureSpots();
+}
+/* ask the player's name BEFORE the egg hatches */
+function promptName(holder){
+  return new Promise(resolve=>{
+    if(holder.handle){resolve();return;}
+    const box=document.getElementById("onbBox"),md=document.getElementById("onbModal");
+    box.innerHTML=`<h3>🪪 Welcome! Choose your Player Name</h3>
+      <div class="hint2">Shown in the Live Feed & chat. Pick a unique name to begin.</div>
+      <input id="pnInp" class="onbInp" maxlength="16" placeholder="Your name…">
+      <div id="pnErr" class="onbErr"></div>
+      <button class="wopt onbBtn" id="pnGo"><b>Confirm name</b></button>`;
+    md.classList.add("show");
+    setTimeout(()=>{const i=document.getElementById("pnInp");if(i)i.focus();},60);
+    const go=()=>{
+      const v=document.getElementById("pnInp").value.trim().slice(0,16),err=document.getElementById("pnErr");
+      if(v.length<2){err.textContent="Enter at least 2 characters.";return;}
+      if(nameTaken(usedHandles,v)){err.textContent="That name is taken — try another.";return;}
+      holder.handle=v;usedHandles.add(v.toLowerCase());saveNameDB();
+      try{localStorage.setItem("handle_"+holder.addr,v);}catch(e){}
+      md.classList.remove("show");resolve();
+    };
+    document.getElementById("pnGo").onclick=go;
+    document.getElementById("pnInp").addEventListener("keydown",e=>{if(e.key==="Enter")go();});
+  });
 }
 const rng=(a,b)=>a+Math.random()*(b-a), ri=(a,b)=>Math.floor(rng(a,b+1));
 const B58="123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
@@ -1998,11 +2039,11 @@ async function connectPhantom(){
         saveProfile(h);  /* mirror server profile back into localStorage */
         addFeed(`🔁 Welcome back <b>${short}</b> — your ${saved.chikis.length>1?"Chikis":"Chiki"} and progress were restored.`);
       }else{
-        const n=(serverChikis!=null?serverChikis:(bal>=1_000_000?2:1))||1;
-        modal.classList.remove("show");          /* close the wallet popup so the egg is front & centre */
-        await hatchChikis(h, n);                  /* tap-to-hatch: more taps = rarer Chiki */
+        modal.classList.remove("show");          /* close the wallet popup */
+        await promptName(h);                      /* 1) ask the player's name first */
+        await hatchChikis(h, 1);                  /* 2) hatch ONLY the first egg (whale's 2nd unlocks after 6h via the whale tab) */
         saveProfile(h);
-        addFeed(`🎉 <b>${short}</b> hatched ${n>1?"TWO Chikis":"a Chiki"} from the egg!`);
+        addFeed(`🎉 <b>${h.handle||short}</b> hatched their first Chiki from the egg!`);
       }
     }else h.bal=bal;
     h._whaleUnlockAt=whaleUnlockAt||(serverChikis>=2?1:0);   /* 1 = already eligible (grant 2nd if missing) */
@@ -2078,26 +2119,37 @@ setInterval(pollReal,18000);
 
 /* ===== Whale tab: buy-more prompt, or live countdown to the 2nd Chiki ===== */
 function fmtCountdown(ms){ms=Math.max(0,ms);const h=Math.floor(ms/3600000),m=Math.floor(ms%3600000/60000),s=Math.floor(ms%60000/1000);return (h>0?h+"h ":"")+m+"m "+s+"s";}
-let _whaleGranting=false;
+let _whaleHatching=false;
 function updateWhaleTab(){
   const el=document.getElementById("whaleTab");if(!el)return;
-  if(!player||!player.pk){el.style.display="none";return;}
-  if((typeof myChikis==="function"?myChikis().length:0)>=2){el.style.display="none";return;}   /* already at the 2-Chiki cap — nothing more to claim */
+  if(!player||!player.pk){el.style.display="none";el.onclick=null;return;}
+  if((typeof myChikis==="function"?myChikis().length:0)>=2){el.style.display="none";el.onclick=null;return;}   /* at the 2-Chiki cap */
   const bal=player.bal||0;
   if(bal<1_000_000){
-    el.style.display="block";el.innerHTML=`🐳 Buy <b>${(1_000_000-bal).toLocaleString()}</b> more $CHIKI to unlock a 2nd Chiki`;return;
+    el.style.display="block";el.style.cursor="default";el.onclick=null;
+    el.innerHTML=`🐳 Buy <b>${(1_000_000-bal).toLocaleString()}</b> more $CHIKI to unlock a 2nd Chiki`;return;
   }
-  if(player._whaleUnlockAt&&Date.now()<player._whaleUnlockAt){
-    el.style.display="block";el.innerHTML=`🐳 2nd Chiki unlocks in <b>${fmtCountdown(player._whaleUnlockAt-Date.now())}</b>`;return;
+  if(player._whaleUnlockAt&&Date.now()<player._whaleUnlockAt){          /* still waiting — show the shaking egg + countdown */
+    el.style.display="block";el.style.cursor="default";el.onclick=null;
+    el.innerHTML=`<img class="whaleEgg" src="egg.png"> 2nd Chiki egg hatches in <b>${fmtCountdown(player._whaleUnlockAt-Date.now())}</b>`;return;
   }
-  /* hold time met — grant the 2nd Chiki if not already present */
-  if(player._whaleUnlockAt&&myChikis().length<2&&!_whaleGranting&&CHAIN.BACKEND){
-    _whaleGranting=true;
-    backendVerify(player.pk).then(v=>{_whaleGranting=false;
-      if(v&&v.chikis>=2&&myChikis().length<2){assignChikis(player,1);player._whaleUnlockAt=0;saveProfile(player);showBanner("🎉 Whale perk unlocked — your 2nd Chiki has hatched!","");refreshUI();}
-    }).catch(()=>{_whaleGranting=false;});
+  if(player._whaleUnlockAt){                                            /* 6h met — tap the egg to hatch the 2nd */
+    el.style.display="block";el.style.cursor="pointer";
+    el.innerHTML=`<img class="whaleEgg ready" src="egg.png"> 🐣 <b>Tap to hatch your 2nd Chiki!</b>`;
+    el.onclick=async ()=>{
+      if(_whaleHatching||myChikis().length>=2)return;_whaleHatching=true;
+      let ok=true;
+      if(CHAIN.BACKEND){try{const v=await backendVerify(player.pk);ok=!!(v&&v.chikis>=2);}catch(e){ok=true;}}
+      if(!ok){_whaleHatching=false;showBanner("🐳 Not ready yet — keep holding 1,000,000 $CHIKI for the full 6 hours.","error");return;}
+      el.onclick=null;
+      const sp=await hatchEgg();
+      const c=spawnCreature(player,1,sp);
+      player._whaleUnlockAt=0;_whaleHatching=false;
+      saveProfile(player);showBanner("🎉 Your 2nd Chiki has hatched!","");refreshUI();
+    };
+    return;
   }
-  el.style.display="none";   /* 2 Chikis active (or not a whale) */
+  el.style.display="none";el.onclick=null;
 }
 setInterval(updateWhaleTab,1000);
 /* keep the HUD pills just below the (scaling) tab bar, centered, so they never overlap it or each other */
@@ -2369,8 +2421,10 @@ document.getElementById("newWallet").onclick=async ()=>{
   const h={addr:wallet(),bal:1200000,sol:5,eligible:true,earned:0,creature:null};
   holders.push(h);
   modal.classList.remove("show");
-  await hatchChikis(h,2);   /* 1.2M ≥ 1M whale perk: hatch TWO eggs */
-  addFeed(`🎉 New holder ${h.addr} hatched <b>TWO</b> Chikis from eggs (1M+ whale perk)!`);
+  await promptName(h);                  /* name first */
+  await hatchChikis(h,1);               /* hatch the first egg now */
+  h._whaleUnlockAt=Date.now()+20000;    /* demo: 2nd egg becomes tappable in the whale tab in ~20s */
+  addFeed(`🎉 ${h.handle||h.addr} hatched their first Chiki — a 2nd egg unlocks shortly!`);
   loginAs(h);
 };
 function loginAs(h){
