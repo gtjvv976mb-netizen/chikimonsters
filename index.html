@@ -59,6 +59,18 @@
   #tokimg{width:100%;border-radius:12px;border:1px solid #29476f;margin-top:6px;display:block}
 
   .fading{opacity:0 !important;pointer-events:none}
+  /* hero teaser: NEW LEGENDARY pill */
+  #newLegend{position:absolute;top:16px;left:50%;transform:translateX(-50%);z-index:6;
+    display:flex;align-items:center;gap:8px;cursor:pointer;white-space:nowrap;
+    background:linear-gradient(180deg,#fff3b0,#e0a800);color:#3a2a00;
+    font-family:'Baloo 2',system-ui,sans-serif;font-weight:800;font-size:14px;letter-spacing:.4px;
+    padding:8px 16px;border-radius:999px;border:2px solid #fff;
+    box-shadow:0 4px 16px rgba(224,168,0,.55),0 0 0 2px rgba(224,168,0,.35);
+    animation:legPulse 1.8s ease-in-out infinite}
+  #newLegend b{color:#7a1f00}
+  #newLegend .fire{font-size:18px;filter:drop-shadow(0 0 4px rgba(255,120,0,.7))}
+  @keyframes legPulse{0%,100%{transform:translateX(-50%) scale(1)}50%{transform:translateX(-50%) scale(1.06)}}
+  @media(max-width:520px){#newLegend{font-size:12px;padding:6px 12px}}
   body.intro #hero,body.intro #tabbar,body.intro .panel,body.intro #pointer{opacity:0;pointer-events:none}
   #introVid{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;background:#000;display:none;z-index:50}
   body.intro #introVid{display:block}
@@ -83,6 +95,9 @@
 </head>
 <body>
 <div id="hero">
+  <div id="newLegend" title="Meet Adalor in the ChikiDex" onclick="var t=document.querySelector('[data-tab=chikis]');if(t)t.click();">
+    <span class="fire">🔥</span> NEW LEGENDARY: <b>Adalor</b> <span class="fire">🔥</span>
+  </div>
   <img id="playBtn" src="play-now.png" alt="PLAY NOW" onerror="this.style.display='none'">
 </div>
 
