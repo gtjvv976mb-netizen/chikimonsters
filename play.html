@@ -4918,7 +4918,7 @@ setTimeout(()=>{
     }
   }
   /* large built-in models kept as separate files (out of models.js to stay light) */
-  const EXTERNAL_GLB={11:"adalor.glb"};
+  const EXTERNAL_GLB={11:"adalor_voxel.glb"};   /* in-game = blocky voxel Adalor (from litematic); ChikiDex uses the sculpt adalor.glb */
   for(const i in EXTERNAL_GLB){
     const idx=+i;
     if(glbCache[idx]||customModels[idx])continue;
