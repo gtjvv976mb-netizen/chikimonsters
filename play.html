@@ -4305,7 +4305,10 @@ function frame(now){
       if(c.sail){c.x=c.sail.ax;c.y=c.sail.az;c.sail=null;}  /* hop back onto the dock */
       c.fx.boat.visible=false;
       c.mesh.visible=true;
-      const bob=c.state==="sleeping"?(Math.sin(t*1.6+c.bob)*0.7+0.7):Math.abs(Math.sin(c.bob))*3;  /* gentle breathing while asleep */
+      /* keep the BODY grounded — only the limbs/tail/wings animate. A tiny breathing
+         motion when idle/asleep; no vertical bounce while walking, so the body stays intact. */
+      const movingNow=c.state==="walking"||(c.state==="wander"&&(Math.abs(c.vx)+Math.abs(c.vy))>6);
+      const bob=c.state==="sleeping"?(Math.sin(t*1.6+c.bob)*0.7+0.7):(movingNow?0:Math.abs(Math.sin(c.bob))*0.6);
       c.mesh.position.set(c.x,gy+bob,c.y);
       c.mesh.rotation.y=c.dir;
       if(sparring){
@@ -4601,7 +4604,7 @@ function segmentMesh(mesh,mode){
   const bb=geo.boundingBox,size=new THREE.Vector3();bb.getSize(size);
   const min=bb.min;
   const pos=geo.attributes.position;
-  const legY=min.y+size.y*0.34;          /* below = legs */
+  const legY=min.y+size.y*0.30;          /* below = legs (kept low so the body never deforms) */
   const tailZ=min.z+size.z*0.26;         /* rear band  = tail  */
   const headZ=min.z+size.z*0.60;         /* front+high = head  */
   const headY=min.y+size.y*0.42;
@@ -4616,20 +4619,17 @@ function segmentMesh(mesh,mode){
     const cz=(pos.getZ(i0)+pos.getZ(i0+1)+pos.getZ(i0+2))/3;
     let r;
     if(mode==="wings"){
-      /* flap wings only — legs stay part of the still body */
-      if(Math.abs(cx-midX)>wingX&&cy>wingY)r=(cx<midX?"L":"R")+"W";
-      else if(cz<tailZ)r="tail";
-      else if(cz>headZ&&cy>headY)r="head";
-      else r="body";
-    }else if(mode==="legs"||mode==="tentacles"){
-      /* only the bottom limbs/tentacles split off — head & body stay ONE rigid
-         piece so the head never separates while moving */
+      /* winged species: legs walk, wings flap, tail sways — HEAD + TORSO stay ONE rigid piece */
       if(cy<legY)r=(cx<midX?"L":"R")+(cz>midZ?"F":"B");
+      else if(Math.abs(cx-midX)>wingX&&cy>wingY)r=(cx<midX?"L":"R")+"W";
+      else if(cz<tailZ&&cy<headY)r="tail";
       else r="body";
     }else{
+      /* legs / tentacles / default: ONLY the bottom limbs + the tail move.
+         The head and the whole torso stay welded as ONE rigid piece — the body
+         never deforms and the head never separates while walking. */
       if(cy<legY)r=(cx<midX?"L":"R")+(cz>midZ?"F":"B");
-      else if(cz<tailZ)r="tail";
-      else if(cz>headZ&&cy>headY)r="head";
+      else if(cz<tailZ&&cy<headY)r="tail";
       else r="body";
     }
     (buckets[r]=buckets[r]||[]).push(t2);
