@@ -1064,6 +1064,7 @@ const CHI_PN=[
 ];
 const LEGEND_IDXS=SPECIES.map((s,i)=>s.type==="Legendary"?i:-1).filter(i=>i>=0);   /* legendary species indices */
 const ANCIENT_EGG_COST=100000;   /* $CHIKI to buy an Ancient Egg from the Sorceress (20% burn/45% pool/35% team) */
+const ANCIENT_EGG_ENABLED=false; /* master switch — set true to re-open the Immortal Sorceress / Ancient Eggs */
 const CARE_NEED_MIN=1440;        /* 24h of care-minutes to hatch */
 /* custom Blockbench models per species (restored from browser storage) */
 const customModels={};
@@ -2458,6 +2459,7 @@ setInterval(updateWhaleTab,1000);
   function rollSkills(){const p=[0,1,2,3,4,5,6],o=[];for(let i=0;i<3;i++)o.push(p.splice(ri(0,p.length-1),1)[0]);return o.sort((a,b)=>a-b);}
 
   async function buyEgg(){
+    if(!ANCIENT_EGG_ENABLED){showBanner("🔮 The Immortal Sorceress is away — Ancient Eggs aren't available yet.","info");return;}
     if(!player){showBanner("Connect your wallet first.","error");return;}
     if(player.ancientEgg){renderSorc();return;}
     if(!carers(player).length){showBanner("🔮 You need at least one elemental Chiki to care for an Ancient Egg.","error");return;}
@@ -2509,6 +2511,7 @@ setInterval(updateWhaleTab,1000);
 
   function renderSorc(){
     const body=g("sorcBody"); if(!body||revealing)return;
+    if(!ANCIENT_EGG_ENABLED){ body.innerHTML=`<div class="sEgg">🔮</div><div id="sorcLore">The Immortal Sorceress is away on a journey beyond Chikoria.<br><b>Ancient Eggs are not available yet</b> — they will return soon. 🥚✨</div>`; return; }
     if(!player){ body.innerHTML=`<div id="sorcLore">Only legendary Chikimons — descendants of the ancient royal bloodlines — can wield the power of Chi and enter the Arena.</div><div class="sStat">Connect your wallet to visit the Sorceress.</div>`; return; }
     tickCare(player);
     const e=player.ancientEgg;
@@ -2554,9 +2557,13 @@ setInterval(updateWhaleTab,1000);
     btn.classList.toggle("alert",ready);
   }
 
-  const sb=g("btnSorc"); if(sb)sb.onclick=()=>{ open=true; g("sorcOverlay").style.display="flex"; renderSorc(); };
+  const sb=g("btnSorc");
+  if(sb){
+    if(!ANCIENT_EGG_ENABLED){ sb.style.display="none"; }   /* Sorceress deactivated — hide the tab entirely */
+    else sb.onclick=()=>{ open=true; g("sorcOverlay").style.display="flex"; renderSorc(); };
+  }
   const sc=g("sorcClose"); if(sc)sc.onclick=()=>{ open=false; revealing=false; g("sorcOverlay").style.display="none"; };
-  setInterval(()=>{ if(player)tickCare(player); updateSorcBtn(); if(open&&!revealing)renderSorc(); }, 12000);
+  if(ANCIENT_EGG_ENABLED)setInterval(()=>{ if(player)tickCare(player); updateSorcBtn(); if(open&&!revealing)renderSorc(); }, 12000);
 })();
 /* keep the HUD pills just below the (scaling) tab bar, centered, so they never overlap it or each other */
 function positionHuds(){
