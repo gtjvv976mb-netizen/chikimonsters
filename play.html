@@ -3344,7 +3344,7 @@ function loadPropURL(url,zone,target,spots,flat){
           const inner=src.clone(true);
           inner.scale.setScalar(k);
           inner.position.set(-ctr.x*k,-b.min.y*k,-ctr.z*k); /* center on XZ, sit bottom on the ground */
-          inner.traverse(o=>{if(o.isMesh)o.castShadow=true;});
+          inner.traverse(o=>{if(o.isMesh){o.castShadow=true; if(o.geometry&&o.geometry.attributes&&o.geometry.attributes.color&&o.material){o.material=o.material.clone();o.material.vertexColors=true;if(o.material.color)o.material.color.setRGB(1,1,1);o.material.needsUpdate=true;}}});
           const wrap=new THREE.Group();wrap.add(inner);
           wrap.position.set(sp.x,sp.gy,sp.z);
           if(!flat)wrap.rotation.y=(Math.random()-0.5)*0.7;
@@ -4876,7 +4876,7 @@ function prepGlb(root,hasAnims,mode){
   root.position.set(-center.x,-box.min.y,-center.z);
   const inner=new THREE.Group();inner.add(root);inner.scale.setScalar(k);
   const wrap=new THREE.Group();wrap.add(inner);
-  wrap.traverse(o=>{if(o.isMesh)o.castShadow=true;});
+  wrap.traverse(o=>{if(o.isMesh){o.castShadow=true; if(o.geometry&&o.geometry.attributes&&o.geometry.attributes.color&&o.material){o.material.vertexColors=true;if(o.material.color)o.material.color.setRGB(1,1,1);o.material.needsUpdate=true;}}});  /* show voxel vertex colors */
   return wrap;
 }
 function installGlb(i,buf,fromStorage){

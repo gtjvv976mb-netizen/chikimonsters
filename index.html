@@ -262,11 +262,12 @@
   }
   function resize(){if(!renderer)return;const cv=renderer.domElement,w=cv.clientWidth||320,h=cv.clientHeight||260;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
   function setModel(m){if(current)scene.remove(current);current=m;curGlow=m&&m.userData?m.userData.glowMats||null:null;scene.add(m);}
-  const EXTERNAL_GLB={11:"adalor.glb",12:"tyrannos.glb"};   /* large models served as files (not embedded in models.js) */
+  const EXTERNAL_GLB={11:"adalor_voxel.glb",12:"tyrannos.glb"};   /* large models served as files (not embedded in models.js) */
   function buildFromGltf(i,gltf){
     const root=gltf.scene,box=new THREE.Box3().setFromObject(root),sz=new THREE.Vector3();box.getSize(sz);
     const ctr=new THREE.Vector3();box.getCenter(ctr),k=40/Math.max(0.001,sz.y);
     root.position.set(-ctr.x,-box.min.y,-ctr.z);
+    root.traverse(o=>{if(o.isMesh&&o.geometry&&o.geometry.attributes&&o.geometry.attributes.color&&o.material){o.material.vertexColors=true;if(o.material.color)o.material.color.setRGB(1,1,1);o.material.needsUpdate=true;}});  /* show voxel colors */
     const w=new THREE.Group();w.add(root);w.scale.setScalar(k);
     cache[i]=w;setModel(w);
   }
