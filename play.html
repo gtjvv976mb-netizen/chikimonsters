@@ -3326,6 +3326,32 @@ function loadVoxelDeco(b64,zone,target,spots,flat){
     }catch(e){}
   },function(){});}catch(e){}
 }
+/* load a real (textured) GLB prop from a FILE and place it at each zone spot, preserving its materials */
+function loadPropURL(url,zone,target,spots,flat){
+  if(typeof THREE==="undefined"||!THREE.GLTFLoader||!spots||!spots.length)return;
+  fetch(url,{cache:"force-cache"}).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer();}).then(buf=>{
+    new THREE.GLTFLoader().parse(buf,"",function(gltf){
+      try{
+        const src=gltf.scene;src.updateMatrixWorld(true);
+        const b=new THREE.Box3().setFromObject(src),sz=new THREE.Vector3();b.getSize(sz);
+        const ctr=new THREE.Vector3();b.getCenter(ctr);
+        const k=flat?target/Math.max(0.001,Math.max(sz.x,sz.z)):target/Math.max(0.001,sz.y);
+        spots.forEach(sp=>{
+          if(sp.proc)sp.proc.visible=false;                 /* hide the procedural placeholder */
+          const inner=src.clone(true);
+          inner.scale.setScalar(k);
+          inner.position.set(-ctr.x*k,-b.min.y*k,-ctr.z*k); /* center on XZ, sit bottom on the ground */
+          inner.traverse(o=>{if(o.isMesh)o.castShadow=true;});
+          const wrap=new THREE.Group();wrap.add(inner);
+          wrap.position.set(sp.x,sp.gy,sp.z);
+          if(!flat)wrap.rotation.y=(Math.random()-0.5)*0.7;
+          structGroup.add(wrap);
+          accessDeco.push({mesh:wrap,x:sp.x,z:sp.z,base:sp.gy,ph:Math.random()*6.28,zone,flat});
+        });
+      }catch(e){}
+    },function(){});
+  }).catch(()=>{});
+}
 function animAccessDeco(t){
   for(const d of accessDeco){
     let on=false;
@@ -3406,6 +3432,7 @@ function buildZoneProps(){
   });
   setTimeout(()=>loadVoxelDeco(window.BERRY_GLB,"berry",18,berrySpots),100);
   /* flower fields */
+  const flowerSpots=[];
   ZONES.flowers.forEach(z=>{
     const g=new THREE.Group(),gy=topY(z.x,z.y);
     g.position.set(z.x*TILE+TILE/2,gy,z.y*TILE+TILE/2);
@@ -3417,7 +3444,9 @@ function buildZoneProps(){
     }
     structGroup.add(g);
     addBeacon("🦋",z.x*TILE+TILE/2,z.y*TILE+TILE/2,gy+26,14,1.1);
+    flowerSpots.push({proc:g,x:z.x*TILE+TILE/2,z:z.y*TILE+TILE/2,gy});
   });
+  setTimeout(()=>loadPropURL("flower.glb","flowers",24,flowerSpots),115);
   /* fishing docks pointing at the water */
   ZONES.pond.forEach(z=>{
     let best=LAKE_CENTERS[0],bd=1e9;
@@ -3473,6 +3502,7 @@ function buildZoneProps(){
     lakeShorePoints(e[0],e[1],e[2],e[3], isSea?6:1).forEach(placeShoreBoat);
   });
   /* log piles & stumps */
+  const woodSpots=[];
   ZONES.wood.forEach(z=>{
     const g=new THREE.Group(),gy=topY(z.x,z.y);
     g.position.set(z.x*TILE+TILE/2,gy,z.y*TILE+TILE/2);
@@ -3481,7 +3511,9 @@ function buildZoneProps(){
     box(g,7,6,7,0x9a6a35,-9,3,-6);
     box(g,6,1.5,6,0xcaa06a,-9,6.7,-6);
     structGroup.add(g);
+    woodSpots.push({proc:g,x:z.x*TILE+TILE/2,z:z.y*TILE+TILE/2,gy});
   });
+  setTimeout(()=>loadPropURL("firewood.glb","wood",34,woodSpots),120);
   /* mailboxes — procedural placeholder, swapped for mailbox.glb once loaded */
   const postBoxes=[];
   ZONES.post.forEach(z=>{
@@ -3551,7 +3583,7 @@ function buildZoneProps(){
     for(let b=0;b<3;b++)addBeacon("🐝",z.x*TILE+TILE/2+6,z.y*TILE+TILE/2,gy+24,11+b*3,2+b*0.5);
     hiveSpots.push({proc:g,x:z.x*TILE+TILE/2,z:z.y*TILE+TILE/2,gy});
   });
-  setTimeout(()=>loadVoxelDeco(window.HIVE_GLB,"hive",42,hiveSpots),110);
+  setTimeout(()=>loadPropURL("beehive.glb","hive",42,hiveSpots),110);
   /* grand cave mouths: deep tunnel, torches with real light, gem glints */
   ZONES.cave.forEach(z=>{
     const g=new THREE.Group(),gy=topY(z.x,z.y);
@@ -4518,7 +4550,18 @@ function frame(now){
         c.mesh.add(c.fx.tool);
         c.fx.toolZone=c.task.zone;
       }
-      if(c.fx.tool)c.fx.tool.rotation.z=c.state==="working"?Math.sin(t*8+c.bob)*0.7:Math.sin(t*3+c.bob)*0.15;
+      if(c.fx.tool){
+        if(c.task.zone==="wood"&&c.state==="working"){
+          /* chopping swing: raise the axe overhead, then strike down — repeats */
+          const sw=Math.sin(t*7+c.bob);
+          c.fx.tool.rotation.x=sw>0?-sw*1.5:sw*0.4;   /* big lift, quick chop */
+          c.fx.tool.rotation.z=0;
+          c.fx.tool.position.y=16+Math.max(0,sw)*4;    /* lift up on the backswing */
+        }else{
+          c.fx.tool.rotation.x=0;c.fx.tool.position.y=16;
+          c.fx.tool.rotation.z=c.state==="working"?Math.sin(t*8+c.bob)*0.7:Math.sin(t*3+c.bob)*0.15;
+        }
+      }
     }else if(c.fx.tool){
       c.mesh.remove(c.fx.tool);c.fx.tool=null;c.fx.toolZone=null;
     }
