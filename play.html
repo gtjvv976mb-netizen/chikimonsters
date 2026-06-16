@@ -808,9 +808,9 @@ if(location.search.indexOf("embed")>-1){
 </div>
 
 <div class="pop" id="lbPop">
-  <h2>🏆 Top $CHIKI Holders (live, on-chain) <span class="x" data-close="lbPop">✕</span></h2>
+  <h2>🏆 Top SOL Earners (live) <span class="x" data-close="lbPop">✕</span></h2>
   <div style="max-height:320px;overflow-y:auto"><table id="lbTable">
-    <tr><th>#</th><th>Holder</th><th class="r">$CHIKI held</th><th class="r">Chikis</th></tr>
+    <tr><th>#</th><th>Trainer</th><th class="r">SOL earned ◎</th></tr>
   </table></div>
 </div>
 
@@ -1807,19 +1807,20 @@ function refreshUI(){
   });
   const lb=document.getElementById("lbTable");
   while(lb.rows.length>1)lb.deleteRow(1);
-  if(REAL_LB&&Array.isArray(REAL_LB.holders)){
-    if(!REAL_LB.holders.length){
-      const r=lb.insertRow(); r.innerHTML=`<td colspan="4" style="color:#8fa6c9;text-align:center">No holders ≥500k detected on-chain yet.</td>`;
-    } else REAL_LB.holders.forEach((h,i)=>{
+  if(REAL_LB&&Array.isArray(REAL_LB.earners)){
+    const esc=s=>String(s==null?"":s).replace(/[<>&"]/g,"");
+    const medal=i=>i===0?"🥇":i===1?"🥈":i===2?"🥉":(i+1);
+    if(!REAL_LB.earners.length){
+      const r=lb.insertRow(); r.innerHTML=`<td colspan="3" style="color:#8fa6c9;text-align:center">No SOL rewards claimed yet — be the first! 💰</td>`;
+    } else REAL_LB.earners.forEach((e,i)=>{
       const r=lb.insertRow();
-      const short=h.owner.slice(0,4)+"…"+h.owner.slice(-4);
-      const me=(player&&player.pk===h.owner)?" 👤":"";
-      r.innerHTML=`<td>${i+1}</td><td>${short}${me}${h.whale?" 🐳":""}</td>
-        <td class="r">${Math.floor(h.balance).toLocaleString()}</td>
-        <td class="r">${h.whale?2:1}</td>`;
+      const name=e.handle?esc(e.handle):(e.wallet.slice(0,4)+"…"+e.wallet.slice(-4));   /* profile name, not the wallet */
+      const me=(player&&player.pk===e.wallet)?" 👤":"";
+      r.innerHTML=`<td>${medal(i)}</td><td>${name}${me}</td>
+        <td class="r" style="color:var(--green);font-weight:800">${(+e.earnedSol||0).toFixed(4)} ◎</td>`;
     });
   } else {
-    const r=lb.insertRow(); r.innerHTML=`<td colspan="4" style="color:#8fa6c9;text-align:center">Loading live holders…</td>`;
+    const r=lb.insertRow(); r.innerHTML=`<td colspan="3" style="color:#8fa6c9;text-align:center">Loading top earners…</td>`;
   }
   if(inspected)showInspect(inspected,true);
   renderMyPanel();
