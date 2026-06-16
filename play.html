@@ -586,6 +586,41 @@ if(location.search.indexOf("embed")>-1){
 
 <div id="miniWrap"><canvas id="mini" width="200" height="160"></canvas></div>
 
+<!-- ===== Egg hatching mini-game ===== -->
+<style>
+#hatchOverlay{position:fixed;inset:0;z-index:2000;display:none;align-items:center;justify-content:center;
+  background:radial-gradient(circle at 50% 42%,rgba(60,30,110,.6),rgba(0,0,0,.85));font-family:'Baloo 2',sans-serif}
+#hatchInner{text-align:center;color:#fff;user-select:none;-webkit-user-select:none}
+#hatchTitle{font-weight:800;font-size:22px;text-shadow:0 2px 6px rgba(0,0,0,.6);margin-bottom:4px}
+#hatchEggWrap{position:relative;display:inline-block;cursor:pointer;padding:10px}
+#hatchEgg{width:min(46vw,240px);height:auto;display:block;-webkit-user-drag:none;
+  filter:drop-shadow(0 8px 18px rgba(0,0,0,.5));animation:eggIdle 2.2s ease-in-out infinite;transition:filter .15s}
+#hatchEgg.shake{animation:eggShake .34s}
+#hatchEgg.pop{animation:eggPop .65s forwards}
+@keyframes eggIdle{0%,100%{transform:rotate(-2deg)}50%{transform:rotate(2deg)}}
+@keyframes eggShake{0%{transform:translate(0,0) rotate(0)}20%{transform:translate(-7px,2px) rotate(-7deg)}
+  40%{transform:translate(7px,-2px) rotate(7deg)}60%{transform:translate(-5px,1px) rotate(-4deg)}
+  80%{transform:translate(5px,-1px) rotate(4deg)}100%{transform:translate(0,0) rotate(0)}}
+@keyframes eggPop{0%{transform:scale(1)}45%{transform:scale(1.28) rotate(8deg)}100%{transform:scale(0) rotate(22deg);opacity:0}}
+#hatchHint{margin-top:12px;font-size:15px;color:#ffe9b8}
+#hatchMeterWrap{margin:12px auto 0;width:min(60vw,260px);height:14px;background:rgba(255,255,255,.18);
+  border-radius:8px;overflow:hidden;border:2px solid rgba(255,255,255,.35)}
+#hatchMeter{height:100%;width:0;background:linear-gradient(90deg,#7ee08a,#ffd93d,#ff7849);transition:width .12s}
+#hatchTaps{margin-top:6px;font-size:13px;color:#cdbff0;min-height:16px}
+#hatchBtn{margin-top:16px;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:17px;padding:12px 28px;border:none;
+  border-radius:12px;background:linear-gradient(180deg,#ffd93d,#f5a623);color:#4a2f00;cursor:pointer;box-shadow:0 5px 0 #b97e10;animation:hbpulse 1s infinite}
+#hatchBtn:active{transform:translateY(3px);box-shadow:0 2px 0 #b97e10}
+@keyframes hbpulse{50%{transform:scale(1.05)}}
+</style>
+<div id="hatchOverlay"><div id="hatchInner">
+  <div id="hatchTitle">🥚 A Chiki Egg appeared!</div>
+  <div id="hatchEggWrap"><img id="hatchEgg" src="egg.png" alt="Chiki Egg" draggable="false"></div>
+  <div id="hatchHint">👆 Tap the egg to hatch your Chiki!</div>
+  <div id="hatchMeterWrap"><div id="hatchMeter"></div></div>
+  <div id="hatchTaps"></div>
+  <button id="hatchBtn" style="display:none">🐣 Hatch!</button>
+</div></div>
+
 <div class="pop mech" id="mechPop">
   <h2>📖 Game Mechanics &amp; Economy <span class="x" data-close="mechPop">✕</span></h2>
   <h3>🌍 What is Chiki Monsters?</h3>
@@ -1010,6 +1045,51 @@ function nameTaken(set,v){return set.has(String(v).trim().toLowerCase());}
 function saveNameDB(){try{localStorage.setItem("chikiNameDB",JSON.stringify([...usedChikiNames]));localStorage.setItem("handleDB",JSON.stringify([...usedHandles]));}catch(e){}}
 (function(){try{JSON.parse(localStorage.getItem("chikiNameDB")||"[]").forEach(n=>usedChikiNames.add(String(n).toLowerCase()));}catch(e){}try{JSON.parse(localStorage.getItem("handleDB")||"[]").forEach(n=>usedHandles.add(String(n).toLowerCase()));}catch(e){}})();
 function assignChikis(h,n){const pool=[...Array(SPECIES.length).keys()];const out=[];for(let i=0;i<n;i++){let idx=pool.length?pool.splice(ri(0,pool.length-1),1)[0]:ri(0,SPECIES.length-1);out.push(spawnCreature(h,1,idx));}if(typeof ensureSpots==="function")ensureSpots();return out;}
+/* ===== egg hatching: more taps = rarer; Galador (last index) is the legendary jackpot ===== */
+const HATCH_NEED=15;
+function pickHatchSpecies(taps){
+  const extra=Math.max(0,taps-HATCH_NEED);
+  const pGal=Math.min(0.7, extra/60);                 /* lots of taps → up to 70% Legendary */
+  if(Math.random()<pGal) return SPECIES.length-1;     /* Galador */
+  return ri(0, SPECIES.length-2);                      /* a normal species */
+}
+function hatchEgg(){
+  return new Promise(resolve=>{
+    const g=id=>document.getElementById(id);
+    const ov=g("hatchOverlay"),egg=g("hatchEgg"),meter=g("hatchMeter"),btn=g("hatchBtn"),hint=g("hatchHint"),title=g("hatchTitle"),tapsEl=g("hatchTaps");
+    let taps=0,hatched=false;
+    ov.style.display="flex";btn.style.display="none";meter.style.width="0%";egg.style.filter="";egg.className="";
+    title.textContent="🥚 A Chiki Egg appeared!";hint.textContent="👆 Tap the egg to hatch your Chiki!";tapsEl.textContent="";
+    function tap(e){ if(e&&e.preventDefault)e.preventDefault(); if(hatched)return;
+      taps++;
+      egg.classList.remove("shake");void egg.offsetWidth;egg.classList.add("shake");
+      meter.style.width=Math.min(100,taps/HATCH_NEED*100)+"%";
+      if(window.playSfx)window.playSfx("click");
+      if(taps>=HATCH_NEED){
+        hint.innerHTML="✨ Cracking! <b>Keep tapping for rarer odds</b> — or Hatch now!";
+        btn.style.display="";
+        const extra=taps-HATCH_NEED;
+        egg.style.filter="drop-shadow(0 0 "+(10+extra*1.4)+"px #ffd93d)";
+        tapsEl.textContent="⚡ "+taps+" taps · ✨ rare luck "+Math.round(Math.min(0.7,extra/60)*100)+"%";
+      }else tapsEl.textContent="⚡ "+taps+" / "+HATCH_NEED;
+    }
+    function hatch(){ if(hatched)return; hatched=true;
+      const sp=pickHatchSpecies(taps);
+      egg.classList.add("pop");title.textContent="🎉 It hatched!";btn.style.display="none";
+      if(window.playSfx)window.playSfx("reward");
+      setTimeout(()=>{ ov.style.display="none";egg.onclick=null;egg.ontouchstart=null;btn.onclick=null;egg.style.filter="";resolve(sp); },680);
+    }
+    egg.onclick=tap; egg.ontouchstart=tap; btn.onclick=hatch;
+  });
+}
+async function hatchChikis(h,n){
+  for(let k=0;k<n;k++){
+    const sp=await hatchEgg();
+    const c=spawnCreature(h,1,sp);
+    if(!h.creature)h.creature=c;
+  }
+  if(typeof ensureSpots==="function")ensureSpots();
+}
 const rng=(a,b)=>a+Math.random()*(b-a), ri=(a,b)=>Math.floor(rng(a,b+1));
 const B58="123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 const wallet=()=>{let s="";for(let i=0;i<8;i++)s+=B58[ri(0,B58.length-1)];return s.slice(0,4)+"…"+s.slice(4)};
@@ -1919,9 +1999,10 @@ async function connectPhantom(){
         addFeed(`🔁 Welcome back <b>${short}</b> — your ${saved.chikis.length>1?"Chikis":"Chiki"} and progress were restored.`);
       }else{
         const n=(serverChikis!=null?serverChikis:(bal>=1_000_000?2:1))||1;
-        assignChikis(h, n);
+        modal.classList.remove("show");          /* close the wallet popup so the egg is front & centre */
+        await hatchChikis(h, n);                  /* tap-to-hatch: more taps = rarer Chiki */
         saveProfile(h);
-        addFeed(`🎉 <b>${short}</b> entered Chikoria with ${bal.toLocaleString()} $CHIKI${n>1?" — whale perk: TWO Chikis!":""}`);
+        addFeed(`🎉 <b>${short}</b> hatched ${n>1?"TWO Chikis":"a Chiki"} from the egg!`);
       }
     }else h.bal=bal;
     h._whaleUnlockAt=whaleUnlockAt||(serverChikis>=2?1:0);   /* 1 = already eligible (grant 2nd if missing) */
@@ -2284,11 +2365,12 @@ document.getElementById("btnWallet").onclick=()=>{
 };
 document.getElementById("closeModal").onclick=()=>modal.classList.remove("show");
 document.getElementById("walletX").onclick=()=>modal.classList.remove("show");
-document.getElementById("newWallet").onclick=()=>{
+document.getElementById("newWallet").onclick=async ()=>{
   const h={addr:wallet(),bal:1200000,sol:5,eligible:true,earned:0,creature:null};
   holders.push(h);
-  assignChikis(h,2);   /* 1.2M ≥ 1M: whale perk, two DIFFERENT-type chikis */
-  addFeed(`🎉 New holder ${h.addr} joined with 1,200,000 $CHIKI — <b>TWO</b> fresh Chikis hatched (1M+ whale perk)!`);
+  modal.classList.remove("show");
+  await hatchChikis(h,2);   /* 1.2M ≥ 1M whale perk: hatch TWO eggs */
+  addFeed(`🎉 New holder ${h.addr} hatched <b>TWO</b> Chikis from eggs (1M+ whale perk)!`);
   loginAs(h);
 };
 function loginAs(h){
