@@ -4091,17 +4091,20 @@ scene.add(new THREE.Points(aGeo,new THREE.PointsMaterial({size:5,vertexColors:tr
 /* ================= SIM ================= */
 function tickCreature(c,dt){
   c.bob+=dt*5;
-  /* universal anti-stuck: never sit in water/obstacle; recover FAST, anywhere, in any state */
+  /* universal anti-stuck: tracks NET progress from an anchor, so a Chiki jittering in a corner
+     still counts as stuck. Turn away fast, then relocate to open ground if still wedged. */
   if(c.state!=="sleeping"&&c.state!=="working"){
     if(!walkable(c.x,c.y))ejectToLand(c);
-    const mv=Math.hypot(c.x-(c._lx==null?c.x:c._lx),c.y-(c._ly==null?c.y:c._ly));
-    c._lx=c.x;c._ly=c.y;
-    c._noMove=mv<0.5?(c._noMove||0)+dt:0;
-    if(c._noMove>0.9){steerClear(c);if(!walkable(c.x,c.y))ejectToLand(c);}   /* barely moving → pick a fresh heading */
-    if(c._noMove>1.8){                                                       /* still stuck → free it for real */
+    if(c._anchorX==null){c._anchorX=c.x;c._anchorY=c.y;c._anchorT=0;c._steered=false;}
+    c._anchorT+=dt;
+    if(Math.hypot(c.x-c._anchorX,c.y-c._anchorY)>TILE*1.1){      /* moved a real distance → not stuck, reset */
+      c._anchorX=c.x;c._anchorY=c.y;c._anchorT=0;c._steered=false;
+    }else if(c._anchorT>2.2){                                    /* corner/obstacle: still in the same spot → free it */
       if(c.state==="walking"&&c.target&&walkable(c.target.x,c.target.y)){c.x=c.target.x;c.y=c.target.y;}
-      else{const s=findOpenSpot(c); if(s){c.x=s.x;c.y=s.y;} else {freeSpot(c);c.task=null;c.target=null;c.state="wander";c.nextTaskIn=rng(1,3);}}
-      c.vx=0;c.vy=0;c._noMove=0;c.stuck=0;
+      else{const s=findOpenSpot(c); if(s){c.x=s.x;c.y=s.y;} else {if(typeof freeSpot==="function")freeSpot(c);c.task=null;c.target=null;c.state="wander";c.nextTaskIn=rng(1,3);}}
+      c.vx=0;c.vy=0;c.stuck=0;c._anchorX=c.x;c._anchorY=c.y;c._anchorT=0;c._steered=false;
+    }else if(c._anchorT>1.0&&!c._steered){                       /* first try: turn away from the wall/corner */
+      steerClear(c);if(!walkable(c.x,c.y))ejectToLand(c);c._steered=true;
     }
   }
   if(c.ghost){                       /* other players' Chikis — cosmetic roaming, no economy/feed */
