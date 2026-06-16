@@ -1123,8 +1123,8 @@ function promptName(holder){
       const v=document.getElementById("pnInp").value.trim().slice(0,16),err=document.getElementById("pnErr");
       if(v.length<2){err.textContent="Enter at least 2 characters.";return;}
       if(nameTaken(usedHandles,v)){err.textContent="That name is taken — try another.";return;}
-      holder.handle=v;usedHandles.add(v.toLowerCase());saveNameDB();
-      try{localStorage.setItem("handle_"+holder.addr,v);}catch(e){}
+      holder.handle=v;
+      if(holder.pk){usedHandles.add(v.toLowerCase());saveNameDB();try{localStorage.setItem("handle_"+holder.addr,v);}catch(e){}}  /* persist only for REAL wallets */
       md.classList.remove("show");resolve();
     };
     document.getElementById("pnGo").onclick=go;
@@ -1801,9 +1801,9 @@ function renderRename(){
     const v=document.getElementById("handleInp").value.trim().slice(0,16);
     if(v.length<2){addFeed("Enter at least 2 characters for your name.");return;}
     if(!(player.handle&&player.handle.toLowerCase()===v.toLowerCase())&&nameTaken(usedHandles,v)){addFeed(`⚠️ The name "${v}" is taken.`);return;}
-    if(player.handle)usedHandles.delete(player.handle.toLowerCase());
-    player.handle=v;usedHandles.add(v.toLowerCase());saveNameDB();
-    try{localStorage.setItem("handle_"+player.addr,v);}catch(e){}
+    if(player.handle&&player.pk)usedHandles.delete(player.handle.toLowerCase());
+    player.handle=v;
+    if(player.pk){usedHandles.add(v.toLowerCase());saveNameDB();try{localStorage.setItem("handle_"+player.addr,v);}catch(e){}}  /* persist only for REAL wallets */
     addFeed(`🪪 You'll now appear as <b>${v}</b> in the Live Feed.`);renderRename();renderProfile();refreshUI();
   };
   const cb=document.getElementById("cnameBtn");
@@ -1817,10 +1817,10 @@ function renderRename(){
       player.bal-=50000;burnedChiki+=50000*0.20;pool+=50000*0.45*TOKEN_PRICE;teamChiki+=50000*0.35;
       addFeed(`🛒 ${nameFor(player)} paid <b>50,000 $CHIKI</b> to rename a Chiki.`);
     }
-    if(c.nick)usedChikiNames.delete(c.nick.toLowerCase());
-    c.nick=v;usedChikiNames.add(v.toLowerCase());saveNameDB();
+    if(c.nick&&player.pk)usedChikiNames.delete(c.nick.toLowerCase());
+    c.nick=v;
     player.renames=(player.renames||0)+1;
-    try{localStorage.setItem("renames_"+player.addr,player.renames);}catch(e){}
+    if(player.pk){usedChikiNames.add(v.toLowerCase());saveNameDB();try{localStorage.setItem("renames_"+player.addr,player.renames);}catch(e){}}  /* persist only for REAL wallets */
     addFeed(`✏️ Your Chiki is now called <b style="color:${c.sp.body}">${v}</b>!`);renderRename();renderProfile();refreshUI();
   };
 }
@@ -1862,9 +1862,8 @@ function onbStep(){
       const v=document.getElementById("onbInp").value.trim().slice(0,16);
       if(v.length<2){onbErr("Enter at least 2 characters.");return;}
       if(nameTaken(usedHandles,v)){onbErr("That name is taken — try another.");return;}
-      player.handle=v;usedHandles.add(v.toLowerCase());saveNameDB();
-      try{localStorage.setItem("handle_"+player.addr,v);}catch(e){}
-      if(typeof saveProfile==="function"&&player&&player.pk)saveProfile(player);  /* push player name to server now */
+      player.handle=v;
+      if(player.pk){usedHandles.add(v.toLowerCase());saveNameDB();try{localStorage.setItem("handle_"+player.addr,v);}catch(e){}saveProfile(player);}  /* persist only for REAL wallets */
       _onbQueue.shift();onbStep();refreshUI();
     };
   }else{
@@ -1880,9 +1879,8 @@ function onbStep(){
       const v=document.getElementById("onbInp").value.trim().slice(0,14);
       if(v.length<2){onbErr("Enter at least 2 characters.");return;}
       if(nameTaken(usedChikiNames,v)){onbErr("That Chiki name is taken — try another.");return;}
-      c.nick=v;c.named=true;usedChikiNames.add(v.toLowerCase());saveNameDB();
-      try{localStorage.setItem("nick_"+player.addr,v);}catch(e){}
-      if(typeof saveProfile==="function"&&player&&player.pk)saveProfile(player);  /* persist the name now */
+      c.nick=v;c.named=true;
+      if(player.pk){usedChikiNames.add(v.toLowerCase());saveNameDB();try{localStorage.setItem("nick_"+player.addr,v);}catch(e){}saveProfile(player);}  /* persist only for REAL wallets */
       _onbQueue.shift();onbStep();refreshUI();
     };
   }
