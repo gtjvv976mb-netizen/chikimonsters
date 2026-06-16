@@ -2114,6 +2114,32 @@ async function backendClaim(){
   }catch(e){console.error("claim error:",e);showBanner("⚠️ Claim failed: "+(e.message||e),"error");addFeed("⚠️ Claim failed: "+(e.message||e));}
 }
 const inIframe=(function(){try{return window.self!==window.top;}catch(e){return true;}})();
+/* CREATOR / DEV MODE: the admin wallet gets every Chikimon (incl. Galador) at MAX level,
+   arena-ready, plenty of $CHIKI — so the game can be tweaked & tested end-to-end. */
+function isCreator(pk){return !!(pk&&CHAIN.ADMINS&&CHAIN.ADMINS.indexOf(pk)>-1);}
+function grantCreatorLoadout(h){
+  if(!h)return;
+  const max=(typeof MAX_LEVEL!=="undefined")?MAX_LEVEL:50;
+  /* upgrade any existing Chikis to max */
+  creatures.filter(c=>c.holder===h).forEach(c=>{ c.level=max;c.xp=0;c.stamina=maxStamOf(max);c.hungry=false;if(c.state==="sleeping")c.state="wander";c.sleepCycles=0; });
+  /* add any missing species at max level */
+  const have=new Set(creatures.filter(c=>c.holder===h).map(c=>SPECIES.indexOf(c.sp)));
+  for(let i=0;i<SPECIES.length;i++){
+    if(have.has(i))continue;
+    const c=spawnCreature(h,max,i);
+    c.nick=SPECIES[i].names[stageOf(max)-1];c.named=true;
+    c.xp=0;c.stamina=maxStamOf(max);c.hungry=false;
+  }
+  /* every Legendary is arena-ready with ALL 7 Chi skills (so all powers can be tested) */
+  creatures.filter(c=>c.holder===h&&c.sp.type==="Legendary").forEach(c=>{c.isLegend=true;c.arenaSkills=[0,1,2,3,4,5,6];});
+  h.bal=Math.max(h.bal||0,5000000);            /* plenty for testing UI/spends */
+  h._creator=true;
+  if(typeof ensureSpots==="function")ensureSpots();
+  if(h.pk&&typeof saveProfile==="function")saveProfile(h);
+  if(typeof refreshUI==="function")refreshUI();
+  if(typeof showBanner==="function")showBanner("🛠️ Creator mode — all Chikimons granted at MAX level for tweaking.","info");
+  if(typeof addFeed==="function")addFeed("🛠️ <b>Creator mode</b> active: every Chikimon (incl. 👑 Galador) unlocked at max level, arena-ready.");
+}
 async function connectPhantom(){
   /* Phantom can't reliably inject/connect inside an iframe — promote to a full top-level window first */
   if(inIframe){
@@ -2200,6 +2226,7 @@ async function connectPhantom(){
       }
     }else h.bal=bal;
     h._whaleUnlockAt=whaleUnlockAt||(serverChikis>=2?1:0);   /* 1 = already eligible (grant 2nd if missing) */
+    if(isCreator(pk))grantCreatorLoadout(h);                  /* admin/creator → full max-level loadout for tweaking */
     loginAs(h);
     saveProfile(h);
     if(whaleMsg){showBanner(whaleMsg,"info");setTimeout(hideBanner,4000);}   /* whale-pending notice auto-dismisses after 4s */
