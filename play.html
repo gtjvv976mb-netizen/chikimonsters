@@ -4070,13 +4070,18 @@ scene.add(new THREE.Points(aGeo,new THREE.PointsMaterial({size:5,vertexColors:tr
 /* ================= SIM ================= */
 function tickCreature(c,dt){
   c.bob+=dt*5;
-  /* universal anti-stuck: never sit in the river/obstacle; recover if no progress is being made */
+  /* universal anti-stuck: never sit in water/obstacle; recover FAST, anywhere, in any state */
   if(c.state!=="sleeping"&&c.state!=="working"){
     if(!walkable(c.x,c.y))ejectToLand(c);
     const mv=Math.hypot(c.x-(c._lx==null?c.x:c._lx),c.y-(c._ly==null?c.y:c._ly));
     c._lx=c.x;c._ly=c.y;
-    c._noMove=mv<0.4?(c._noMove||0)+dt:0;
-    if(c._noMove>2.5){c._noMove=0;steerClear(c);if(!walkable(c.x,c.y))ejectToLand(c);}
+    c._noMove=mv<0.5?(c._noMove||0)+dt:0;
+    if(c._noMove>0.9){steerClear(c);if(!walkable(c.x,c.y))ejectToLand(c);}   /* barely moving → pick a fresh heading */
+    if(c._noMove>1.8){                                                       /* still stuck → free it for real */
+      if(c.state==="walking"&&c.target&&walkable(c.target.x,c.target.y)){c.x=c.target.x;c.y=c.target.y;}
+      else{const s=findOpenSpot(c); if(s){c.x=s.x;c.y=s.y;} else {freeSpot(c);c.task=null;c.target=null;c.state="wander";c.nextTaskIn=rng(1,3);}}
+      c.vx=0;c.vy=0;c._noMove=0;c.stuck=0;
+    }
   }
   if(c.ghost){                       /* other players' Chikis — cosmetic roaming, no economy/feed */
     if((c.vx===0&&c.vy===0)||Math.random()<dt*0.6)steerClear(c);
@@ -4109,7 +4114,7 @@ function tickCreature(c,dt){
     const moved=moveWith(c,dx/d*sp2*dt,dy/d*sp2*dt);
     if(!moved){c.stuck+=dt;if(c.stuck>0.5){moveWith(c,-dy/d*sp2*dt*1.4,dx/d*sp2*dt*1.4);c.stuck=Math.random()<.5?0:c.stuck;}}
     else c.stuck=0;
-    if(c.stuck>3){c.x=c.target.x;c.y=c.target.y;c.stuck=0;}   /* blocked by river/obstacle too long → warp to the destination */
+    if(c.stuck>1.5){c.x=c.target.x;c.y=c.target.y;c.stuck=0;}   /* blocked by river/obstacle → warp to the destination quickly */
   }else if(c.state==="working"){
     c.workT-=dt;
     if(Math.random()<dt*2.5)spawnBurst(c.x,c.y,RARITY[c.task.rarity].color,1);
@@ -4140,6 +4145,19 @@ function ejectToLand(c){
     const tx=c.x+(cx-c.x)*s/60, ty=c.y+(cy-c.y)*s/60;
     if(walkable(tx,ty)){c.x=tx;c.y=ty;c.vx=0;c.vy=0;return;}
   }
+}
+/* find the nearest open, roamable tile (walkable, not water/mountain, in-bounds) to relocate a stuck Chiki */
+function findOpenSpot(c){
+  for(let r=1;r<=22;r++){
+    for(let a=0;a<24;a++){
+      const ang=a/24*6.283, tx=c.x+Math.cos(ang)*r*TILE, ty=c.y+Math.sin(ang)*r*TILE;
+      if(tx<12||ty<16||tx>W-12||ty>H-12)continue;
+      if(wanderClear(tx,ty))return {x:tx,y:ty};
+    }
+  }
+  /* nothing roamable nearby — fall back to solid ground toward map centre */
+  for(let s=1;s<=60;s++){const tx=c.x+(W/2-c.x)*s/60, ty=c.y+(H/2-c.y)*s/60; if(walkable(tx,ty))return {x:tx,y:ty};}
+  return null;
 }
 /* ---- roaming obstacle avoidance: steer around water, trees, buildings, mountains, peers ---- */
 function wanderClear(px,py){
