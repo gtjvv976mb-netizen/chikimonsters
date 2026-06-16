@@ -2126,9 +2126,11 @@ function grantCreatorLoadout(h){
   const have=new Set(creatures.filter(c=>c.holder===h).map(c=>SPECIES.indexOf(c.sp)));
   for(let i=0;i<SPECIES.length;i++){
     if(have.has(i))continue;
-    const c=spawnCreature(h,max,i);
-    c.nick=SPECIES[i].names[stageOf(max)-1];c.named=true;
-    c.xp=0;c.stamina=maxStamOf(max);c.hungry=false;
+    try{
+      const c=spawnCreature(h,max,i);
+      c.nick=SPECIES[i].names[stageOf(max)-1];c.named=true;
+      c.xp=0;c.stamina=maxStamOf(max);c.hungry=false;
+    }catch(e){console.error("creator spawn sp"+i,e);}
   }
   /* every Legendary is arena-ready with ALL 7 Chi skills (so all powers can be tested) */
   creatures.filter(c=>c.holder===h&&c.sp.type==="Legendary").forEach(c=>{c.isLegend=true;c.arenaSkills=[0,1,2,3,4,5,6];});
@@ -2174,7 +2176,7 @@ async function connectPhantom(){
     if(CHAIN.BACKEND){
       const v=await backendVerify(pk);
       if(v){
-        if(!v.eligible){const m=`⚠️ <b>${short}</b> holds ${(v.balance||0).toLocaleString()} $CHIKI — below the ${MIN_HOLD.toLocaleString()} threshold. Your Chikis, names & progress are <b>saved</b> — buy back to 500,000 to resume earning.`;showBanner(m,"error");addFeed(m);modal.classList.remove("show");return;}
+        if(!v.eligible&&!isCreator(pk)){const m=`⚠️ <b>${short}</b> holds ${(v.balance||0).toLocaleString()} $CHIKI — below the ${MIN_HOLD.toLocaleString()} threshold. Your Chikis, names & progress are <b>saved</b> — buy back to 500,000 to resume earning.`;showBanner(m,"error");addFeed(m);modal.classList.remove("show");return;}
         bal=Math.max(Math.floor(v.balance||0),MIN_HOLD);
         serverProfile=v.profile||null;
         serverChikis=v.chikis;
@@ -2197,12 +2199,13 @@ async function connectPhantom(){
     try{const lam=await rpcCall("getBalance",[pk]);solBal=(lam.value||0)/1e9;}catch(e){}
     bal=Math.floor(bal);
     showBanner("📂 Loading your profile and Chiki…","info");   /* tell the user we're restoring their saved state */
-    if(bal<MIN_HOLD){
+    if(bal<MIN_HOLD&&!isCreator(pk)){
       const m=`⚠️ <b>${short}</b> holds ${bal.toLocaleString()} $CHIKI — below the ${MIN_HOLD.toLocaleString()} threshold. Top up to get your Chiki!`;
       showBanner(m,"error");addFeed(m);
       modal.classList.remove("show");
       return;
     }
+    if(isCreator(pk))bal=Math.max(bal,MIN_HOLD);   /* creator always passes gating for testing */
     let h=holders.find(x=>x.pk===pk);
     if(!h){
       h={addr:short,pk,bal,sol:+solBal.toFixed(3),eligible:true,earned:0,creature:null,live:true};
@@ -2226,8 +2229,8 @@ async function connectPhantom(){
       }
     }else h.bal=bal;
     h._whaleUnlockAt=whaleUnlockAt||(serverChikis>=2?1:0);   /* 1 = already eligible (grant 2nd if missing) */
-    if(isCreator(pk))grantCreatorLoadout(h);                  /* admin/creator → full max-level loadout for tweaking */
     loginAs(h);
+    if(isCreator(pk))setTimeout(()=>{try{grantCreatorLoadout(h);}catch(e){console.error("creator loadout:",e);}},800);  /* admin → full max-level loadout (non-blocking) */
     saveProfile(h);
     if(whaleMsg){showBanner(whaleMsg,"info");setTimeout(hideBanner,4000);}   /* whale-pending notice auto-dismisses after 4s */
   }catch(e){
