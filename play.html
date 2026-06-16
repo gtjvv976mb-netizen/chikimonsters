@@ -4872,6 +4872,14 @@ setTimeout(()=>{
       }
     }
   }
+  /* large built-in models kept as separate files (out of models.js to stay light) */
+  const EXTERNAL_GLB={11:"adalor.glb"};
+  for(const i in EXTERNAL_GLB){
+    const idx=+i;
+    if(glbCache[idx]||customModels[idx])continue;
+    fetch(EXTERNAL_GLB[i],{cache:"force-cache"}).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer();})
+      .then(buf=>{try{installGlb(idx,buf,true);}catch(e){}}).catch(()=>{});
+  }
   if(window.BOAT_GLB){try{installBoatGlb(b64decode(window.BOAT_GLB));}catch(e){}}
 },0);
 function parseBB(json,done){
