@@ -614,7 +614,7 @@ if(location.search.indexOf("embed")>-1){
 #hatchReveal{display:none;width:min(52vw,280px);height:auto;margin:0 auto;filter:drop-shadow(0 0 26px #ffd93d)}
 #hatchReveal.revealIn{animation:revealPop .9s cubic-bezier(.2,1.4,.4,1)}
 @keyframes revealPop{0%{transform:scale(0) rotate(-20deg);opacity:0}60%{transform:scale(1.12) rotate(4deg);opacity:1}100%{transform:scale(1) rotate(0)}}
-#hatchReveal.legendary{filter:drop-shadow(0 0 34px #b388ff)}
+#hatchReveal.legendary{filter:drop-shadow(0 0 34px #4f7cff)}
 .whaleEgg{height:22px;vertical-align:middle;margin-right:5px;animation:whaleEggWobble 1.3s ease-in-out infinite}
 .whaleEgg.ready{animation:whaleEggWobble .34s ease-in-out infinite;filter:drop-shadow(0 0 6px #ffd93d)}
 @keyframes whaleEggWobble{0%,100%{transform:rotate(-9deg)}50%{transform:rotate(9deg)}}
@@ -944,7 +944,7 @@ const SPECIES=[
   {names:["Crystalix","Glimmer","Starix"],type:"Crystal",body:"#faa2c1",accent:"#e599f7",mane:"crystal",maneCols:["#eebefa","#fcc2d7","#ffffff"]},
   {names:["Cloudo","Zephir","Hurricub"],type:"Wind",body:"#e9ecef",accent:"#91a7ff",mane:"fluff",maneCols:["#ffffff","#dee2e6","#c5cdd4"]},
   {names:["Lunara","Galaxi","Cometail"],type:"Cosmic",body:"#4c3a8c",accent:"#ffd43b",mane:"shadow",maneCols:["#6741d9","#9775fa","#ffd43b"]},
-  {names:["Galador","Galadrix","Galadeon"],type:"Legendary",body:"#7c4dff",accent:"#ffd43b",mane:"shadow",maneCols:["#9775fa","#7c4dff","#ffd43b"]},
+  {names:["Galador","Galadrix","Galadeon"],type:"Legendary",body:"#1f3fb5",accent:"#ffd43b",mane:"shadow",maneCols:["#4f7cff","#1f3fb5","#ffd43b"]},
 ];
 const DEX_IMG=["mushrow","electrox","jellox","firix","owzard","forestle","drolax","healix","solarix","scorplex","galador"];  /* species idx -> chikidex png */
 /* custom Blockbench models per species (restored from browser storage) */
@@ -3470,14 +3470,7 @@ function buildChikiMesh(c){
     const m=(clips.length&&THREE.SkeletonUtils)?THREE.SkeletonUtils.clone(tpl):tpl.clone(true);
     const rig={};
     m.traverse(o=>{
-      if(o.isMesh){o.userData.ci=c;o.castShadow=true;o.frustumCulled=true;
-        if(spIdx===10){   /* Galador the Legendary — self-illuminate so he glows in his colour */
-          const arr=Array.isArray(o.material)?o.material:[o.material];
-          const cloned=arr.map(mm=>{const x=mm.clone();try{x.emissive=new THREE.Color("#7c4dff");x.emissiveIntensity=0.6;x.toneMapped=false;}catch(e){}return x;});
-          o.material=Array.isArray(o.material)?cloned:cloned[0];
-          c.glowMats=(c.glowMats||[]).concat(cloned);
-        }
-      }
+      if(o.isMesh){o.userData.ci=c;o.castShadow=true;o.frustumCulled=true;}
       if(o.name&&o.name.indexOf("rig:")===0)rig[o.name.slice(4)]=o;
     });
     g.userData.rig=rig;
@@ -3966,7 +3959,6 @@ function frame(now){
       c.mesh.remove(c.fx.tool);c.fx.tool=null;c.fx.toolZone=null;
     }
     c.mesh.children.forEach(o=>{if(o.userData.wing)o.rotation.x=Math.sin(t*9+c.bob)*0.5;});
-    if(c.glowMats){const gi=Math.max(0.08,0.55+0.45*Math.sin(t*2.6+c.bob));for(const mm of c.glowMats)mm.emissiveIntensity=gi;}   /* Galador's pulsing legendary glow */
     /* beam */
     if(c.state==="walking"&&c.target){
       c.fx.beam.visible=true;

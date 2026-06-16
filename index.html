@@ -265,7 +265,6 @@
       const ctr=new THREE.Vector3();box.getCenter(ctr),k=40/Math.max(0.001,sz.y);
       root.position.set(-ctr.x,-box.min.y,-ctr.z);
       const w=new THREE.Group();w.add(root);w.scale.setScalar(k);
-      if(i===10){const gm=[];root.traverse(o=>{if(o.isMesh){const arr=Array.isArray(o.material)?o.material:[o.material];const cl=arr.map(mm=>{const x=mm.clone();try{x.emissive=new THREE.Color("#7c4dff");x.emissiveIntensity=0.6;x.toneMapped=false;}catch(e){}return x;});o.material=Array.isArray(o.material)?cl:cl[0];gm.push(...cl);}});w.userData.glowMats=gm;}
       cache[i]=w;setModel(w);
     },()=>{});}catch(e){}
   }
