@@ -470,9 +470,10 @@
     display:flex;align-items:center;justify-content:center;box-shadow:0 3px 0 #b88a2a,0 4px 10px rgba(0,0,0,.2)}
   #btnQuality:active{transform:translateY(2px);box-shadow:0 1px 0 #b88a2a}
   body.pre #btnQuality{display:none}
-  #btnArena{position:fixed;left:12px;top:228px;z-index:60;cursor:pointer;width:46px;height:46px;border-radius:50%;
+  #btnArena{position:fixed;left:12px;top:228px;z-index:60;cursor:pointer;width:46px;height:46px;border-radius:50%;overflow:hidden;padding:0;
     background:radial-gradient(circle at 30% 30%,#ff8a8a,#c0392b);border:2px solid #fff;color:#fff;font-size:22px;line-height:1;
     display:flex;align-items:center;justify-content:center;box-shadow:0 3px 0 #8c2a22,0 4px 10px rgba(0,0,0,.2)}
+  #btnArena img{width:100%;height:100%;object-fit:cover;display:block}
   #btnArena:active{transform:translateY(2px);box-shadow:0 1px 0 #8c2a22}
   body.pre #btnArena{display:none}
   /* Immortal Sorceress — Ancient Eggs (below the arena tab) */
@@ -572,7 +573,7 @@ if(location.search.indexOf("embed")>-1){
 <img id="btnProfile" src="ui/profile.png" alt="My Profile" style="display:none">
 <div id="btnChat" title="Community chat">💬<span id="chatBadge">0</span></div>
 <div id="btnQuality" title="Graphics quality — tap to switch Low/High">HD</div>
-<div id="btnArena" title="Chiki Arena — battle!">⚔️</div>
+<div id="btnArena" title="Chikiseum — the Arena"><img src="ui/chikiseum.png" alt="Chikiseum"></div>
 <div id="btnSorc" title="Immortal Sorceress — Ancient Eggs">🔮<span class="eggdot"></span></div>
 
 <div class="pop" id="chatPop">
@@ -686,7 +687,7 @@ if(location.search.indexOf("embed")>-1){
 .aBtn.ghost{background:#1b2740;box-shadow:0 4px 0 #0c1426}
 </style>
 <div id="arenaOverlay"><div id="arenaBox">
-  <div id="arenaHead">⚔️ Chiki Arena <span class="x" id="arenaClose">✕</span></div>
+  <div id="arenaHead">⚔️ The Chikiseum <span class="x" id="arenaClose">✕</span></div>
   <div id="arenaFoe"></div>
   <div id="arenaVS">— VS —</div>
   <div id="arenaYou"></div>
