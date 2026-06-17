@@ -759,6 +759,7 @@ if(location.search.indexOf("embed")>-1){
     <li><b>🎣 Fishing</b>: it boards a boat, <b>sails out at normal speed</b> to its <i>own</i> fishing spot (boats never share a spot), waits there for the task duration, then sails back to the dock.</li>
     <li><b>🥊 Arena</b>: sparring is a <b>friendly bout between two Chikis</b> — they face each other in the ring and trade jabs without overlapping.</li>
     <li><b>💎 Crystal cave</b>: the Chiki <b>enters the cave and disappears</b> for the whole task; a floating icon and progress bar over the cave mouth show what it's doing and how long is left.</li>
+    <li><b>🤝 Owner presence matters</b>: while you're <b>online</b>, your Chikis are motivated and work <b>20% faster</b>; while you're <b>away</b>, they grow lonely and work <b>30% slower</b> — so check in often!</li>
   </ul>
   <h3>⚡ Stamina, sleep &amp; feeding</h3>
   <p>Every task costs stamina. At zero, your Chiki <b>sleeps</b> to recover (higher level = shorter sleep). After every <b>2nd sleep cycle</b> it wakes up <b>hungry</b> and won't get up until you <b>feed it 1,000–5,000 $CHIKI</b> (more for higher levels) from the My Chiki panel.</p>
@@ -769,6 +770,12 @@ if(location.search.indexOf("embed")>-1){
     <li>EXP needed grows each level (60 for Lv 2, scaling up to ~2,220 for Lv 50), so higher levels reward hunting rare tasks.</li>
     <li><b>Evolution at Lv 15 and Lv 35</b> — bigger voxel forms with wings, then a crown.</li>
     <li>Each stage adds <b>+35%</b> odds on Epic+ tasks; every level adds +1.5% more.</li>
+  </ul>
+  <h3>👑 Legendaries &amp; the Chikoria Cup</h3>
+  <ul>
+    <li><b>Legendary Chikimons</b> — Galador (blue), Adalor (gold) &amp; Tyrannos (green) — descend from the ancient royal bloodlines and wield the power of <b>Chi</b>, each blazing with its own aura.</li>
+    <li>Only Legendaries can battle in the <b>⚔️ Chikoria Cup</b>, using <b>3 of their 7</b> unique Chi skills with elemental strengths &amp; weaknesses.</li>
+    <li><b>Ancient Eggs</b> from the <b>🔮 Immortal Sorceress</b> hatch Legendaries. They're <b>currently paused</b> while the Chikoria Cup patch is being built — returning (with any already purchased) once it's done.</li>
   </ul>
   <h3>📈 XP, events &amp; achievements</h3>
   <p>Chikis <b>earn XP from every task</b> (a growth stat), but leveling itself is earned by completing tasks and then paying — see above.
@@ -791,12 +798,13 @@ if(location.search.indexOf("embed")>-1){
 <div class="pop" id="statsPop">
   <h2>📊 World Statistics <span class="x" data-close="statsPop">✕</span></h2>
   <div class="statgrid" id="statGrid"></div>
-  <h2 style="margin-top:4px">Upgrade Payment Split</h2>
+  <h2 style="margin-top:4px">In-Game Spend Split (Feed · Level · Rename)</h2>
   <div class="split">
-    <div style="border-color:#ff6b6b66"><b style="color:var(--red)">20%</b>🔥 Burned</div>
-    <div style="border-color:#3ddc8466"><b style="color:var(--green)">45%</b>💰 Reward pool</div>
-    <div style="border-color:#4dabf766"><b style="color:var(--blue)">35%</b>🏦 Team wallet</div>
+    <div style="border-color:#ff6b6b66"><b style="color:var(--red)">1%</b>🔥 Burned</div>
+    <div style="border-color:#3ddc8466"><b style="color:var(--green)">49.5%</b>💰 Reward pool</div>
+    <div style="border-color:#4dabf766"><b style="color:var(--blue)">49.5%</b>🏦 Team wallet</div>
   </div>
+  <div style="font-size:11px;color:#8fa6c9;margin-top:6px">🥚 <b>Legendary Eggs</b> split differently: 🔥 1% burned · 💰 40% pool · 🏦 59% team.</div>
   <div style="font-size:11px;color:#8fa6c9;margin-top:10px" id="econNote"></div>
 </div>
 
@@ -3332,7 +3340,7 @@ function loadVoxelDeco(b64,zone,target,spots,flat){
   },function(){});}catch(e){}
 }
 /* load a real (textured) GLB prop from a FILE and place it at each zone spot, preserving its materials */
-function loadPropURL(url,zone,target,spots,flat){
+function loadPropURL(url,zone,target,spots,flat,tint){
   if(typeof THREE==="undefined"||!THREE.GLTFLoader||!spots||!spots.length)return;
   fetch(url,{cache:"force-cache"}).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer();}).then(buf=>{
     new THREE.GLTFLoader().parse(buf,"",function(gltf){
@@ -3346,7 +3354,10 @@ function loadPropURL(url,zone,target,spots,flat){
           const inner=src.clone(true);
           inner.scale.setScalar(k);
           inner.position.set(-ctr.x*k,-b.min.y*k,-ctr.z*k); /* center on XZ, sit bottom on the ground */
-          inner.traverse(o=>{if(o.isMesh){o.castShadow=true; if(o.geometry&&o.geometry.attributes&&o.geometry.attributes.color&&o.material){o.material=o.material.clone();o.material.vertexColors=true;if(o.material.color)o.material.color.setRGB(1,1,1);o.material.needsUpdate=true;}}});
+          inner.traverse(o=>{if(o.isMesh){o.castShadow=true;
+            if(o.geometry&&o.geometry.attributes&&o.geometry.attributes.color&&o.material){o.material=o.material.clone();o.material.vertexColors=true;if(o.material.color)o.material.color.setRGB(1,1,1);o.material.needsUpdate=true;}
+            if(tint!=null&&o.material){o.material=o.material.clone();if(o.material.color)o.material.color.set(tint);if("emissive" in o.material){o.material.emissive=new THREE.Color(tint).multiplyScalar(0.18);}o.material.needsUpdate=true;}   /* recolor prop (e.g. bright yellow hive) */
+          }});
           const wrap=new THREE.Group();wrap.add(inner);
           wrap.position.set(sp.x,sp.gy,sp.z);
           if(!flat)wrap.rotation.y=(Math.random()-0.5)*0.7;
@@ -3361,12 +3372,14 @@ function loadPropURL(url,zone,target,spots,flat){
 const beeSwarm=[];
 function buildBee(){
   const g=new THREE.Group();
-  box(g,3,2.2,4,0xf2c33a,0,0,0);        /* body */
-  box(g,3.1,2.3,1.1,0x2a2118,0,0,1.0);  /* stripe */
-  box(g,3.1,2.3,1.1,0x2a2118,0,0,-1.0); /* stripe */
-  box(g,4.4,0.4,2.4,0xfdfdff,2.4,1.2,0);/* wing R (child 3) */
-  box(g,4.4,0.4,2.4,0xfdfdff,-2.4,1.2,0);/* wing L (child 4) */
-  g.scale.setScalar(0.9);
+  const body=box(g,3.4,2.6,4.6,0xffd400,0,0,0);   /* bright yellow body */
+  if(body.material){body.material.emissive=new THREE.Color(0xffcf00).multiplyScalar(0.35);}  /* slight glow so it pops */
+  box(g,3.6,2.8,1.2,0x111111,0,0,1.1);  /* black stripe */
+  box(g,3.6,2.8,1.2,0x111111,0,0,-1.1); /* black stripe */
+  box(g,3.6,2.8,1.0,0x111111,0,0,0);    /* black stripe (center) */
+  box(g,4.8,0.4,2.6,0xffffff,2.6,1.4,0);/* wing R (child 4) */
+  box(g,4.8,0.4,2.6,0xffffff,-2.6,1.4,0);/* wing L (child 5) */
+  g.scale.setScalar(1.05);
   g.traverse(o=>{if(o.isMesh)o.castShadow=true;});
   return g;
 }
@@ -3382,8 +3395,8 @@ function animBees(t){
     b.mesh.position.set(b.cx+Math.cos(a)*b.r, b.baseY+b.h+Math.sin(t*3+b.wob)*4, b.cz+Math.sin(a)*b.r);
     b.mesh.rotation.y=-a+Math.PI/2;
     const fl=0.5+Math.sin(t*30+b.ph)*0.5;
-    if(b.mesh.children[3])b.mesh.children[3].rotation.z=-fl;
-    if(b.mesh.children[4])b.mesh.children[4].rotation.z= fl;
+    if(b.mesh.children[4])b.mesh.children[4].rotation.z=-fl;
+    if(b.mesh.children[5])b.mesh.children[5].rotation.z= fl;
   }
 }
 function animAccessDeco(t){
@@ -3617,7 +3630,7 @@ function buildZoneProps(){
     spawnBees(z.x*TILE+TILE/2, z.y*TILE+TILE/2, gy+28, 3);   /* animated 3D bees orbit the hive (no emoji bees) */
     hiveSpots.push({proc:g,x:z.x*TILE+TILE/2,z:z.y*TILE+TILE/2,gy});
   });
-  setTimeout(()=>loadPropURL("beehive.glb","hive",42,hiveSpots),110);
+  setTimeout(()=>loadPropURL("beehive.glb","hive",42,hiveSpots,false,0xffd400),110);   /* bright stand-out yellow hive */
   /* grand cave mouths: deep tunnel, torches with real light, gem glints */
   ZONES.cave.forEach(z=>{
     const g=new THREE.Group(),gy=topY(z.x,z.y);
