@@ -2083,6 +2083,7 @@ function openPop(id){
   document.getElementById(id).classList.add("show");dockPop(id);syncPopBtns();
 }
 function closePop(id){document.getElementById(id).classList.remove("show");syncPopBtns();}
+function closeAllPops(){document.querySelectorAll(".pop.show").forEach(p=>{if(p.id!=="chatPop")p.classList.remove("show");});syncPopBtns();}  /* chat stays persistent */
 function togglePop(id){var el=document.getElementById(id);var was=el.classList.contains("show");document.querySelectorAll(".pop.show").forEach(function(p){p.classList.remove("show");});if(!was){el.classList.add("show");dockPop(id);}syncPopBtns();}
 function syncPopBtns(){
   document.querySelectorAll("[data-pop]").forEach(b=>{
@@ -2098,6 +2099,13 @@ document.querySelectorAll("[data-pop]").forEach(b=>b.onclick=()=>{
   syncPopBtns();
 });
 document.querySelectorAll("[data-close]").forEach(x=>x.onclick=()=>closePop(x.dataset.close));
+/* click outside an open panel to minimize it (smoother play). Tab buttons + the 3D canvas manage themselves. */
+document.addEventListener("click",e=>{
+  if(!document.querySelector(".pop.show"))return;
+  if(e.target.closest(".pop"))return;                                 /* clicking inside a panel */
+  if(e.target.closest("[data-pop],[data-proxy],.gtab,#btnMyFloat,#btnProfile,#btnChat,#btnArena,#btnSorc,#btnQuality,#btnWallet,#audioToggle,canvas,#scene"))return;  /* controls/3D handle themselves */
+  closeAllPops();
+});
 
 /* ================= WALLET ================= */
 const modal=document.getElementById("walletModal");
@@ -4240,6 +4248,7 @@ cv.addEventListener("click",e=>{
   raycaster.setFromCamera(mouseV,camera);
   const hits=raycaster.intersectObjects(chikiRoot.children,true);
   if(hits.length){const c=hits[0].object.userData.ci;if(c)showInspect(c);}
+  else if(typeof closeAllPops==="function")closeAllPops();   /* tap empty world to minimize open panels */
 });
 
 /* ================= EFFECTS ================= */
@@ -5110,7 +5119,7 @@ function installModel(i,list){
   const mf=document.getElementById("btnMyFloat"),mb=document.getElementById("btnMy");
   if(mf&&mb){
     mf.onclick=()=>{togglePop("myPop");if(document.getElementById("myPop").classList.contains("show"))renderMyPanel();};
-    const pf=document.getElementById("btnProfile");if(pf)pf.onclick=openProfile;
+    const pf=document.getElementById("btnProfile");if(pf)pf.onclick=()=>{const p=document.getElementById("profilePop");if(p&&p.classList.contains("show"))closePop("profilePop");else openProfile();};   /* toggle */
     /* reveal the float when the hidden btnMy is revealed (after wallet connect) */
     const _pf=document.getElementById("btnProfile");const obs=new MutationObserver(()=>{});
     obs.observe(mb,{attributes:true,attributeFilter:["style"]});
