@@ -781,7 +781,7 @@ if(location.search.indexOf("embed")>-1){
   <ul>
     <li><b>Inflow</b>: creator fees from every $CHIKI trade stream into the reward pool.</li>
     <li><b>Outflow</b>: task payouts (a % of pool, so it can never fully drain).</li>
-    <li><b>Every upgrade &amp; purchase splits 20 / 45 / 35</b>: 🔥 20% burned, 💰 45% into the reward pool, 🏦 35% to the team wallet.</li>
+    <li><b>Every upgrade &amp; purchase splits 1 / 49.5 / 49.5</b>: 🔥 1% burned, 💰 49.5% into the reward pool, 🏦 49.5% to the team wallet.</li>
     <li>Level costs grow 9%/level (Lv1→2 ≈ 2,725 $CHIKI; Lv49→50 ≈ 170k). Maxing one Chiki burns ≈ <b>509k $CHIKI</b>.</li>
     <li>$CHIKI payments are blocked if they'd drop you below the 500k threshold.</li>
   </ul>
@@ -1106,8 +1106,9 @@ async function chikiDecimals(){
   try{const r=await rpcCall("getTokenSupply",[CHAIN.MINT]);_chikiDec=r.value.decimals;}catch(e){_chikiDec=6;}
   return _chikiDec;
 }
-async function chikiSpend(amountChiki,label){
+async function chikiSpend(amountChiki,label,split){
   if(!CHAIN.ONCHAIN_SPENDS)return {ok:true,simulated:true};
+  const SP=split||{burn:100,pool:4950,team:4950};   /* default in-game split in BASIS POINTS (/10000): 1% / 49.5% / 49.5% */
   const w3=window.solanaWeb3;
   if(!w3)throw new Error("Solana library didn't load — refresh and try again.");
   const prov=(window.phantom&&window.phantom.solana)||window.solana;
@@ -1120,7 +1121,7 @@ async function chikiSpend(amountChiki,label){
   const SYS=w3.SystemProgram.programId;
   const dec=await chikiDecimals();
   const unit=BigInt(Math.round(amountChiki*Math.pow(10,dec)));
-  const burn=unit*20n/100n, poolA=unit*45n/100n, teamA=unit-burn-poolA;   /* team gets remainder so the sum is exact */
+  const burn=unit*BigInt(SP.burn)/10000n, poolA=unit*BigInt(SP.pool)/10000n, teamA=unit-burn-poolA;   /* basis points; team gets remainder so the sum is exact */
   const ata=own=>w3.PublicKey.findProgramAddressSync([own.toBuffer(),TOKEN.toBuffer(),mint.toBuffer()],ATAP)[0];
   const srcATA=ata(owner),treasATA=ata(treas),teamATA=ata(team);
   const u64=n=>{const b=new Uint8Array(8);let x=BigInt(n);for(let i=0;i<8;i++){b[i]=Number(x&0xffn);x>>=8n;}return b;};
@@ -1142,7 +1143,7 @@ async function chikiSpend(amountChiki,label){
   if(teamA>0n)tx.add(xfer(teamATA,teamA));
   tx.feePayer=owner;
   tx.recentBlockhash=(await conn.getLatestBlockhash()).blockhash;
-  showBanner(`✍️ Approve in Phantom — ${label}: 🔥${fmtK(amountChiki*0.2)} burn · 💰${fmtK(amountChiki*0.45)} pool · 🏦${fmtK(amountChiki*0.35)} team`,"info");
+  showBanner(`✍️ Approve in Phantom — ${label}: 🔥${fmtK(amountChiki*SP.burn/10000)} burn · 💰${fmtK(amountChiki*SP.pool/10000)} pool · 🏦${fmtK(amountChiki*SP.team/10000)} team`,"info");
   try{const sim=await conn.simulateTransaction(tx);if(sim&&sim.value&&sim.value.err)throw new Error("pre-check failed "+JSON.stringify(sim.value.err));}catch(e){if(/pre-check/.test(e.message))throw e;/* ignore transient simulate errors */}
   let sig;
   try{
@@ -1444,7 +1445,7 @@ function loadProfile(pk){try{const s=localStorage.getItem(profileKey(pk));return
 function offlineProgress(c,elapsedSec){
   let t=Math.min(Math.max(0,elapsedSec),72*3600);   /* cap a long absence at 72h */
   if(t<30)return 0;
-  let did=0,guard=0;const AVG=45,COST=16,stage0=stageOf(c.level);
+  let did=0,guard=0;const AVG=Math.round(45*1.3),COST=16,stage0=stageOf(c.level);   /* owner OFFLINE/away: Chikis work 30% slower (saddened by their absence) */
   while(t>0&&guard++<6000){
     if(c.hungry)break;                                /* stuck asleep until fed — no progress */
     if(c.stamina>=COST){                              /* working a task */
@@ -1683,7 +1684,7 @@ async function feedChiki(c){
     catch(e){console.error("feed spend error:",e);const m="⚠️ Feeding payment failed: "+(e.message||e);showBanner(m,"error");addFeed(m);refreshUI();return;}
   }
   h.bal-=cost;
-  const burn=cost*0.20,toPool=cost*0.45,toTeam=cost*0.35;
+  const burn=cost*0.01,toPool=cost*0.495,toTeam=cost*0.495;
   burnedChiki+=burn;pool+=toPool*TOKEN_PRICE;teamChiki+=toTeam;
   addFeed(`🍖 ${nameFor(h)} fed <b>${nameOf(c)}</b> ${cost.toLocaleString()} $CHIKI → 🔥${fmtK(burn)} burned · 💰${fmtK(toPool)}→pool · 🏦${fmtK(toTeam)}→team`);
   spawnBurst(c.x,c.y,"#ff922b",24);spawnFloat(c.x,c.y,"🍖 Yum!","#ff922b");
@@ -1709,14 +1710,14 @@ async function levelUp(h,payWith,cr){
       catch(e){console.error("levelUp spend error:",e);const m="⚠️ Level-up payment failed: "+(e.message||e);showBanner(m,"error");addFeed(m);refreshUI();return;}
     }
     h.bal-=cost;
-    const burn=cost*0.20,toPool=cost*0.45,toTeam=cost*0.35;
+    const burn=cost*0.01,toPool=cost*0.495,toTeam=cost*0.495;
     burnedChiki+=burn;pool+=toPool*TOKEN_PRICE;teamChiki+=toTeam;
     addFeed(`🛒 ${nameFor(h)} paid <b>${cost.toLocaleString()} $CHIKI</b> → 🔥 ${fmtK(burn)} burned · 💰 ${fmtK(toPool)} → pool · 🏦 ${fmtK(toTeam)} → team`);
   }else{
     const cost=solCostOf(lvl);
     if(h.sol<cost){addFeed(`⚠️ ${nameFor(h)}: not enough SOL (need ${cost}).`);refreshUI();return;}
     h.sol=+(h.sol-cost).toFixed(4);
-    const burnSol=cost*0.20,toPool=cost*0.45,toTeam=cost*0.35;
+    const burnSol=cost*0.01,toPool=cost*0.495,toTeam=cost*0.495;
     burnedChiki+=burnSol/TOKEN_PRICE;pool+=toPool;teamSol+=toTeam;
     addFeed(`🛒 ${nameFor(h)} paid <b>${cost} SOL</b> → 🔥 buy-burn ${fmtK(burnSol/TOKEN_PRICE)} $CHIKI · 💰 +${toPool.toFixed(4)} ◎ pool · 🏦 +${toTeam.toFixed(4)} ◎ team`);
   }
@@ -1975,7 +1976,7 @@ function renderRename(){
     if(!(c.nick&&c.nick.toLowerCase()===v.toLowerCase())&&nameTaken(usedChikiNames,v)){addFeed(`⚠️ The Chiki name "${v}" is taken.`);return;}
     if((player.renames||0)===1){
       if(player.bal-50000<MIN_HOLD){addFeed("⚠️ Not enough $CHIKI for a paid rename (50,000, keeping ≥500k).");return;}
-      player.bal-=50000;burnedChiki+=50000*0.20;pool+=50000*0.45*TOKEN_PRICE;teamChiki+=50000*0.35;
+      player.bal-=50000;burnedChiki+=50000*0.01;pool+=50000*0.495*TOKEN_PRICE;teamChiki+=50000*0.495;
       addFeed(`🛒 ${nameFor(player)} paid <b>50,000 $CHIKI</b> to rename a Chiki.`);
     }
     if(c.nick&&player.pk)usedChikiNames.delete(c.nick.toLowerCase());
@@ -2502,12 +2503,13 @@ setInterval(updateWhaleTab,1000);
     const cost=ANCIENT_EGG_COST;
     if((player.bal||0)-cost<MIN_HOLD){showBanner(`🔮 An Ancient Egg costs ${cost.toLocaleString()} $CHIKI (must keep ≥${MIN_HOLD.toLocaleString()}).`,"error");return;}
     const btn=g("sorcBuyBtn"); if(btn){btn.disabled=true;btn.textContent="✍️ Approve in Phantom…";}
+    const EGG_SPLIT={burn:100,pool:4000,team:5900};   /* Legendary Egg split (basis points): 1% burn · 40% reward pool · 59% team */
     if(CHAIN.ONCHAIN_SPENDS&&player.pk){
-      try{await chikiSpend(cost,"Ancient Egg");}
+      try{await chikiSpend(cost,"Ancient Egg",EGG_SPLIT);}
       catch(e){console.error("egg spend error:",e);const m="⚠️ Ancient Egg purchase failed: "+(e.message||e);showBanner(m,"error");addFeed(m);renderSorc();return;}
     }
     player.bal-=cost;
-    const burn=cost*0.20,toPool=cost*0.45,toTeam=cost*0.35;
+    const burn=cost*EGG_SPLIT.burn/10000,toPool=cost*EGG_SPLIT.pool/10000,toTeam=cost*EGG_SPLIT.team/10000;
     burnedChiki+=burn;pool+=toPool*TOKEN_PRICE;teamChiki+=toTeam;
     player.ancientEgg={careMin:0,lastAt:Date.now(),hatched:false};
     addFeed(`🔮 ${nameFor(player)} obtained an <b>Ancient Egg</b> from the Immortal Sorceress → 🔥${fmtK(burn)} burned · 💰${fmtK(toPool)}→pool · 🏦${fmtK(toTeam)}→team. Your Chikis begin caring for it…`);
@@ -2556,7 +2558,7 @@ setInterval(updateWhaleTab,1000);
       body.innerHTML=`<div id="sorcLore">“Having descended from the royal bloodlines of the ancient Chikis, only <b>legendary</b> Chikimons can possess the power of Chi.”<br>Buy an <b>Ancient Egg</b> — your elemental Chikis will tend it until a random Legendary awakens.</div>
         <div class="sEgg">🥚</div>
         <div class="sCost">Ancient Egg — ${ANCIENT_EGG_COST.toLocaleString()} $CHIKI</div>
-        <div class="sStat">🔥 20% burn · 💰 45% pool · 🏦 35% team</div>
+        <div class="sStat">🔥 1% burn · 💰 40% pool · 🏦 59% team</div>
         <button class="sBtn" id="sorcBuyBtn" ${has?"":"disabled"}>🔮 Buy Ancient Egg</button>
         <div class="sNote">${has?"You may only hold <b>1</b> Ancient Egg at a time. Up to 2 Chikis care for it; higher level = faster (≈24h base).":"⚠️ You need at least one elemental Chiki to care for the egg first."}</div>`;
       const b=g("sorcBuyBtn"); if(b)b.onclick=buyEgg;
@@ -3355,6 +3357,35 @@ function loadPropURL(url,zone,target,spots,flat){
     },function(){});
   }).catch(()=>{});
 }
+/* ===== little 3D bees that orbit the beehives ===== */
+const beeSwarm=[];
+function buildBee(){
+  const g=new THREE.Group();
+  box(g,3,2.2,4,0xf2c33a,0,0,0);        /* body */
+  box(g,3.1,2.3,1.1,0x2a2118,0,0,1.0);  /* stripe */
+  box(g,3.1,2.3,1.1,0x2a2118,0,0,-1.0); /* stripe */
+  box(g,4.4,0.4,2.4,0xfdfdff,2.4,1.2,0);/* wing R (child 3) */
+  box(g,4.4,0.4,2.4,0xfdfdff,-2.4,1.2,0);/* wing L (child 4) */
+  g.scale.setScalar(0.9);
+  g.traverse(o=>{if(o.isMesh)o.castShadow=true;});
+  return g;
+}
+function spawnBees(cx,cz,baseY,n){
+  for(let i=0;i<n;i++){
+    const m=buildBee(); structGroup.add(m);
+    beeSwarm.push({mesh:m,cx,cz,baseY,ph:Math.random()*6.28,r:13+Math.random()*11,h:Math.random()*9,sp:0.7+Math.random()*0.7,wob:Math.random()*6.28});
+  }
+}
+function animBees(t){
+  for(const b of beeSwarm){
+    const a=t*b.sp+b.ph;
+    b.mesh.position.set(b.cx+Math.cos(a)*b.r, b.baseY+b.h+Math.sin(t*3+b.wob)*4, b.cz+Math.sin(a)*b.r);
+    b.mesh.rotation.y=-a+Math.PI/2;
+    const fl=0.5+Math.sin(t*30+b.ph)*0.5;
+    if(b.mesh.children[3])b.mesh.children[3].rotation.z=-fl;
+    if(b.mesh.children[4])b.mesh.children[4].rotation.z= fl;
+  }
+}
 function animAccessDeco(t){
   for(const d of accessDeco){
     let on=false;
@@ -3583,7 +3614,7 @@ function buildZoneProps(){
     box(g,12,2,12,0x9a6b00,6,18.5,0);
     box(g,3,3,1.5,0x3a2c16,6,20,6);
     structGroup.add(g);
-    for(let b=0;b<3;b++)addBeacon("🐝",z.x*TILE+TILE/2+6,z.y*TILE+TILE/2,gy+24,11+b*3,2+b*0.5);
+    spawnBees(z.x*TILE+TILE/2, z.y*TILE+TILE/2, gy+28, 3);   /* animated 3D bees orbit the hive (no emoji bees) */
     hiveSpots.push({proc:g,x:z.x*TILE+TILE/2,z:z.y*TILE+TILE/2,gy});
   });
   setTimeout(()=>loadPropURL("beehive.glb","hive",42,hiveSpots),110);
@@ -4280,7 +4311,7 @@ function tickCreature(c,dt){
     if(d<STAND){
       if(d>0.1){c.x=c.target.x-dx/d*STAND;c.y=c.target.y-dy/d*STAND;}
       c.dir=Math.atan2(dx,dy);                 /* face the access point */
-      c.state="working";c.workDur=c.task.dur*rng(0.9,1.1);c.workT=c.workDur;return;
+      c.state="working";c.workDur=c.task.dur*rng(0.9,1.1)*0.8;c.workT=c.workDur;return;   /* owner ONLINE: Chikis work 20% faster (motivated by their presence) */
     }
     const sp2=70;
     const moved=moveWith(c,dx/d*sp2*dt,dy/d*sp2*dt);
@@ -4742,6 +4773,7 @@ function frame(now){
   renderer.render(scene,camera);
   animMailboxes(t);
   animAccessDeco(t);
+  animBees(t);
   /* minimap removed */
   requestAnimationFrame(frame);
 }
