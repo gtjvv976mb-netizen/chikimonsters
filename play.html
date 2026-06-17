@@ -1006,6 +1006,15 @@ const RARITY={
   mythic:{label:"Mythic",color:"#ff8787"},shiny:{label:"Shiny",color:"#ffd166"},
   legend:{label:"Legendary",color:"#ff9f43"},
 };
+/* ===== SEEDED earnings (mirror of the server) — the rares you SEE are the rares the server pays =====
+   Defaults match the backend; refreshed from /claimable so they always agree. */
+let SEED_CFG={raritySol:{common:0.00002,uncommon:0.00004,rare:0.00009,epic:0.0002,mythic:0.0005,shiny:0.001,legend:0.0025},taskSec:30,mult:1,accrualCap:60};
+const SEED_DIST=[["common",45],["uncommon",27],["rare",15],["epic",7],["mythic",3.5],["shiny",1.7],["legend",0.8]];
+const SEED_TOTAL=SEED_DIST.reduce((s,r)=>s+r[1],0);
+function chikiHash(str){let h=1779033703^str.length;for(let i=0;i<str.length;i++){h=Math.imul(h^str.charCodeAt(i),3432918353);h=(h<<13)|(h>>>19);}h=Math.imul(h^(h>>>16),2246822507);h=Math.imul(h^(h>>>13),3266489909);return ((h^(h>>>16))>>>0)/4294967296;}
+function slotRarity(wallet,lastClaim,ci,slot){let x=chikiHash(wallet+"|"+lastClaim+"|"+ci+"|"+slot)*SEED_TOTAL;for(const [name,w] of SEED_DIST){x-=w;if(x<=0)return name;}return "common";}
+function seededEarn(wallet,lastClaim,chikis,minutes){const slots=Math.min(4000,Math.floor(minutes*60/SEED_CFG.taskSec));let sol=0;for(let ci=0;ci<chikis;ci++)for(let s=0;s<slots;s++)sol+=SEED_CFG.raritySol[slotRarity(wallet,lastClaim,ci,s)];return sol*SEED_CFG.mult;}
+function localPouch(){if(!player||!player.pk||player._lastClaim==null)return null;const minutes=Math.min(SEED_CFG.accrualCap,(Date.now()-player._lastClaim)/60000);return seededEarn(player.pk,player._lastClaim,player._earnChikis||1,minutes);}
 const TASKS=[
   {id:0,name:"Berry Foraging",rarity:"common",chance:22,pct:0.04,zone:"berry",emoji:"🍓",stam:8,dur:4,count:0,where:"🌸🍂"},
   {id:1,name:"Flower Picking",rarity:"common",chance:16,pct:0.05,zone:"flowers",emoji:"💐",stam:9,dur:5,count:0,where:"🌸☀️"},
@@ -1922,7 +1931,16 @@ async function refreshChainBalances(){
     const mint=new w3.PublicKey(CHAIN.MINT);
     const ata=w3.PublicKey.findProgramAddressSync([owner.toBuffer(),TOKEN.toBuffer(),mint.toBuffer()],ATAP)[0];
     try{const r=await conn.getTokenAccountBalance(ata); if(r&&r.value&&r.value.uiAmount!=null)player.bal=Math.floor(r.value.uiAmount);}catch(e){}
-    try{if(CHAIN.BACKEND){const er=await fetch(CHAIN.BACKEND+"/claimable?wallet="+player.pk,{cache:"no-store"});const ej=await er.json();if(ej){if(ej.lifetimePaid!=null)player._paidSol=+Number(ej.lifetimePaid).toFixed(4);if(ej.claimableSol!=null)player._pouchSol=+Number(ej.claimableSol).toFixed(4);}}}catch(e){}   /* real paid + Chiki Pouch (unclaimed) */
+    try{if(CHAIN.BACKEND){const er=await fetch(CHAIN.BACKEND+"/claimable?wallet="+player.pk,{cache:"no-store"});const ej=await er.json();if(ej){
+      if(ej.lifetimePaid!=null)player._paidSol=+Number(ej.lifetimePaid).toFixed(4);
+      if(ej.claimableSol!=null)player._pouchSol=+Number(ej.claimableSol).toFixed(6);
+      if(ej.lastClaim!=null)player._lastClaim=ej.lastClaim;
+      if(ej.chikis!=null)player._earnChikis=ej.chikis;
+      if(ej.raritySol)SEED_CFG.raritySol=ej.raritySol;          /* keep client seed math identical to server */
+      if(ej.taskSec)SEED_CFG.taskSec=ej.taskSec;
+      if(ej.mult!=null)SEED_CFG.mult=ej.mult;
+      if(ej.accrualCap)SEED_CFG.accrualCap=ej.accrualCap;
+    }}}catch(e){}   /* real paid + Chiki Pouch (seed-synced) */
     player._chainAt=Date.now();
   }catch(e){}
 }
@@ -1950,7 +1968,7 @@ function renderProfile(){
     <div class="row"><span>🏅 Achievements</span><span>${(player.ach&&player.ach.size)||0}</span></div>
     ${player.pk?`<div style="margin-top:11px;background:linear-gradient(180deg,#142a18,#0d1f12);border:2px solid #3ddc8466;border-radius:11px;padding:11px 12px;text-align:center">
       <div style="font-size:12px;color:#8fa6c9">🪙 Chiki Pouch <span style="font-size:9px;color:#3ddc84">unclaimed</span></div>
-      <div style="font-size:22px;font-weight:800;color:#3ddc84;margin:2px 0">${player._pouchSol!=null?player._pouchSol:"…"} ◎</div>
+      <div id="pouchVal" style="font-size:22px;font-weight:800;color:#3ddc84;margin:2px 0">${(function(){const lp=localPouch();return lp!=null?lp.toFixed(5):(player._pouchSol!=null?player._pouchSol:"…");})()} ◎</div>
       <div style="font-size:10.5px;color:#8fa6c9">SOL your Chiki has collected, waiting to be claimed</div>
     </div>`:""}
     ${CHAIN.BACKEND&&player.pk?`<button id="claimBtn" style="width:100%;margin-top:9px;font-size:12px;padding:8px 10px">💰 Claim Chiki Pouch</button>`:""}`;
@@ -2134,6 +2152,8 @@ async function backendClaim(){
       if(window.playSfx)window.playSfx("reward");
       showBanner(`💰 Claimed <b>${j.amountSol} SOL</b> to your wallet!`,"");
       addFeed(`💰 Claimed <b>${j.amountSol} SOL</b> — <a href="${j.explorer}" target="_blank" style="color:#3ddc84">view tx</a>`);
+      player._pouchSol=0;player._lastClaim=Date.now();              /* pouch empties; seed window restarts */
+      if(typeof refreshChainBalances==="function")setTimeout(refreshChainBalances,1500);  /* sync exact new last_claim from server */
       refreshUI();
     }else{
       const msg=j.error||"nothing to claim yet";
@@ -2874,6 +2894,30 @@ async function fetchWorld(){
   }catch(e){}
 }
 setInterval(fetchWorld,12000);
+
+/* live Chiki Pouch + reveal the SAME seeded rares the server is crediting (synced earnings) */
+setInterval(()=>{
+  if(!player||!player.pk||player._lastClaim==null)return;
+  /* live pouch number in the profile */
+  const pv=document.getElementById("pouchVal"); if(pv){const lp=localPouch(); if(lp!=null)pv.textContent=lp.toFixed(5)+" ◎";}
+  /* reveal newly-due rarity slots as floats over the earning Chikis */
+  const elapsedMin=Math.min(SEED_CFG.accrualCap,(Date.now()-player._lastClaim)/60000);
+  const dueSlots=Math.min(4000,Math.floor(elapsedMin*60/SEED_CFG.taskSec));
+  const mine=myChikis().slice(0,player._earnChikis||1);
+  mine.forEach((c,ci)=>{
+    if(c._revAnchor!==player._lastClaim){c._revAnchor=player._lastClaim;c._revealed=Math.max(0,dueSlots-1);}  /* start at "now", don't replay history */
+    let shown=0;
+    while(c._revealed<dueSlots && shown<2){
+      const rar=slotRarity(player.pk,player._lastClaim,ci,c._revealed);
+      const val=(SEED_CFG.raritySol[rar]||0)*SEED_CFG.mult;
+      if(c.mesh&&c.state!=="sleeping"&&typeof spawnFloat==="function"){
+        spawnFloat(c.x,c.y,`${RARITY[rar].label} +${val.toFixed(5)} ◎`,RARITY[rar].color);
+        if(typeof spawnBurst==="function"&&["epic","mythic","shiny","legend"].includes(rar))spawnBurst(c.x,c.y,RARITY[rar].color,18);
+      }
+      c._revealed++; shown++;
+    }
+  });
+}, 2000);
 
 /* autosave the connected wallet's Chikis + progress so a refresh never resets them */
 setInterval(()=>{if(player&&player.pk)saveProfile(player);},8000);
