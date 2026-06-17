@@ -782,12 +782,12 @@ if(location.search.indexOf("embed")>-1){
     <li><b>🤝 Owner presence matters</b>: while you're <b>online</b>, your Chikis are motivated and work <b>20% faster</b>; while you're <b>away</b>, they grow lonely and work <b>60% slower</b> — so check in often!</li>
   </ul>
   <h3>⚡ Stamina, sleep &amp; feeding</h3>
-  <p>Every task costs stamina. At zero, your Chiki <b>sleeps</b> to recover (higher level = shorter sleep). After every <b>2nd sleep cycle</b> it wakes up <b>hungry</b> and won't get up until you <b>feed it 1,000–5,000 $CHIKI</b> (more for higher levels) from the My Chiki panel.</p>
+  <p>Every task costs stamina. At zero, your Chiki <b>sleeps</b> to recover (higher level = shorter sleep), then wakes up <b>hungry</b> — it won't work again until you <b>feed it 1,000–5,000 $CHIKI</b> (more for higher levels) from the My Chiki panel. Feeding happens <b>every sleep cycle</b>: it's what keeps your Chiki earning, and every feed burns $CHIKI and tops up the reward pool.</p>
   <h3>🌟 Levels &amp; evolution (max Lv 50)</h3>
   <ul>
-    <li><b>Levels are earned with EXP</b>: every completed task grants EXP, and <b>rarer tasks give much more</b> — Common +12, Uncommon +20, Rare +34, Epic +55, Mythic +90, Shiny +140, Legendary +240. The My Chiki and details panels show an EXP bar to the next level.</li>
+    <li><b>Levels are earned with EXP</b>: every completed task grants EXP, and <b>rarer tasks give much more</b> — Common +5, Uncommon +8, Rare +14, Epic +24, Mythic +40, Shiny +65, Legendary +110. The My Chiki and details panels show an EXP bar to the next level.</li>
     <li>Once a Chiki has enough EXP, <b>pay to level up</b> with <b>$CHIKI</b> or <b>SOL</b> (SOL ~15% more). <b>Excess EXP carries over</b> to the next level, so nothing is wasted.</li>
-    <li>EXP needed grows each level (60 for Lv 2, scaling up to ~2,220 for Lv 50), so higher levels reward hunting rare tasks.</li>
+    <li>EXP needed grows each level (~140 for Lv 2, scaling up to ~6,600 for Lv 50), so higher levels reward hunting rare tasks.</li>
     <li><b>Evolution at Lv 15 and Lv 35</b> — bigger voxel forms with wings, then a crown.</li>
     <li>Each stage adds <b>+35%</b> odds on Epic+ tasks; every level adds +1.5% more.</li>
   </ul>
@@ -1492,14 +1492,12 @@ function offlineProgress(c,elapsedSec){
     if(c.stamina>=COST){                              /* working a task */
       if(t<AVG)break;
       t-=AVG;c.stamina-=COST;c.tasksDone++;did++;
-      c.xp=(c.xp||0)+COST*2;
-      while(c.level<MAX_LEVEL&&c.xp>=xpNeed(c.level)){c.xp-=xpNeed(c.level);c.level++;}
-    }else{                                            /* napping */
+      c.xp=Math.min((c.xp||0)+COST*2, xpNeed(c.level));   /* XP fills toward "ready" — leveling is ALWAYS a paid action, never automatic */
+    }else{                                            /* stamina spent → naps, then needs feeding before it can work again */
       const dur=sleepTimeOf(c.level);
       if(t<dur){c.state="sleeping";c.sleepT=dur-t;break;}
       t-=dur;c.sleepCycles=(c.sleepCycles||0)+1;
-      if(c.sleepCycles%2===0){c.hungry=true;c.state="sleeping";c.sleepT=0;break;}
-      c.stamina=maxStamOf(c.level);
+      c.hungry=true;c.state="sleeping";c.sleepT=0;break;   /* will NOT refill stamina on its own — owner must feed it ($CHIKI sink) */
     }
   }
   c.stamina=Math.min(c.stamina,maxStamOf(c.level));
@@ -1647,7 +1645,7 @@ function completeTask(c){
         excess XP carries over to the next level. ---- */
 const XP_BY_RARITY={common:5,uncommon:8,rare:14,epic:24,mythic:40,shiny:65,legend:110};
 const xpForTask=t=>XP_BY_RARITY[t&&t.rarity]||12;
-const xpNeed=lv=>Math.round(60+(Math.max(1,lv)-1)*45);   /* L1→2:60, L2→3:105, … L49→50:2220 */
+const xpNeed=lv=>Math.round(140+(Math.max(1,lv)-1)*95+Math.pow(Math.max(1,lv),2)*0.8);   /* steeper: L1→2:141, L10→11:~1075, L49→50:~6620 — leveling is a real grind + paid */
 const xpLeft=c=>Math.max(0,xpNeed(c.level)-(c.xp||0));
 function gainXP(c,amt){ c.xp=(c.xp||0)+amt; }   /* leveling is a deliberate paid action once XP is enough */
 /* ---- achievements ---- */
@@ -1696,17 +1694,15 @@ function startSleep(c){
 }
 function finishSleep(c){
   c.sleepCycles=(c.sleepCycles||0)+1;
-  /* every 2nd sleep cycle the Chiki must be fed before it will wake */
-  if(c.sleepCycles%2===0){
-    if(c.bot){                       /* demo bot auto-feeds so the showcase keeps running */
-      spawnFloat(c.x,c.y,"🍖 fed","#ff922b");spawnBurst(c.x,c.y,"#ff922b",14);
-      wakeUp(c);return;
-    }
-    c.hungry=true;c.sleepT=0;
-    addFeed(`🍖 <b>${nameOf(c)}</b> is hungry after 2 naps — feed it <b>${feedCostOf(c.level).toLocaleString()} $CHIKI</b> to wake it.`);
-    if(c.holder===player)spawnFloat(c.x,c.y,"🍖 Feed me!","#ff922b");
-    refreshUI();
-  }else wakeUp(c);
+  /* a Chiki ALWAYS wakes hungry — it must be fed ($CHIKI) before it can work again. This is the core economy gate. */
+  if(c.bot){                         /* demo bot auto-feeds so the showcase keeps running */
+    spawnFloat(c.x,c.y,"🍖 fed","#ff922b");spawnBurst(c.x,c.y,"#ff922b",14);
+    wakeUp(c);return;
+  }
+  c.hungry=true;c.sleepT=0;
+  addFeed(`🍖 <b>${nameOf(c)}</b> woke up hungry — feed it <b>${feedCostOf(c.level).toLocaleString()} $CHIKI</b> to send it back to work.`);
+  if(c.holder===player)spawnFloat(c.x,c.y,"🍖 Feed me!","#ff922b");
+  refreshUI();
 }
 function wakeUp(c){
   c.stamina=maxStamOf(c.level);c.hungry=false;
