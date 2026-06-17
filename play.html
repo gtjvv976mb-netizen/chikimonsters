@@ -1113,7 +1113,7 @@ const LEGEND_SCALE_ADJ={13:0.82};                                               
 const legendScale=spIdx=>LEGEND_IDXS.indexOf(spIdx)>=0?LEGEND_SCALE*(LEGEND_SCALE_ADJ[spIdx]||1):1;
 /* limb rigs for the legendaries (segmentation maps body→head→tail→wings, then animates) */
 window.RIG_MODE=window.RIG_MODE||{};
-Object.assign(window.RIG_MODE,{11:"wingsonly",12:"soft",13:"legs",14:"dragon"});   /* Adalor wings-only · Tyrannos smooth (textured model) · Grovador walk + tail · Dragonos wings + tail */
+Object.assign(window.RIG_MODE,{11:"wingsonly",12:"legs",13:"legs",14:"dragon"});   /* Adalor wings-only · Tyrannos/Grovador walk + tail · Dragonos wings + tail */
 const NONLEGEND_IDXS=SPECIES.map((s,i)=>s.type!=="Legendary"?i:-1).filter(i=>i>=0); /* normal (non-legendary) species indices */
 const ANCIENT_EGG_COST=100000;   /* $CHIKI to buy an Ancient Egg from the Sorceress (20% burn/45% pool/35% team) */
 const ANCIENT_EGG_ENABLED=false; /* master switch — set true to re-open the Immortal Sorceress / Ancient Eggs */
@@ -5085,7 +5085,7 @@ setTimeout(()=>{
     }
   }
   /* large built-in models kept as separate files (out of models.js to stay light) */
-  const EXTERNAL_GLB={11:"adalor_voxel.glb",12:"tyrannos.glb",13:"grovador_voxel.glb",14:"dragonos_voxel.glb"};   /* in-game legendaries — procedural limb rigs (see RIG_MODE above) */
+  const EXTERNAL_GLB={11:"adalor_voxel.glb",12:"tyrannos_voxel.glb",13:"grovador_voxel.glb",14:"dragonos_voxel.glb"};   /* in-game legendaries — voxel models, procedural limb rigs (see RIG_MODE above) */
   for(const i in EXTERNAL_GLB){
     const idx=+i;
     if(glbCache[idx]||customModels[idx])continue;
