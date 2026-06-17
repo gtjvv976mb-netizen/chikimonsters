@@ -786,7 +786,7 @@ if(location.search.indexOf("embed")>-1){
   <h3>🌟 Levels &amp; evolution (max Lv 50)</h3>
   <ul>
     <li><b>Levels are earned with EXP</b>: every completed task grants EXP, and <b>rarer tasks give much more</b> — Common +5, Uncommon +8, Rare +14, Epic +24, Mythic +40, Shiny +65, Legendary +110. The My Chiki and details panels show an EXP bar to the next level.</li>
-    <li>Once a Chiki has enough EXP, <b>pay to level up</b> with <b>$CHIKI</b> or <b>SOL</b> (SOL ~15% more). <b>Excess EXP carries over</b> to the next level, so nothing is wasted.</li>
+    <li>Once a Chiki has enough EXP, <b>pay to level up</b> with <b>$CHIKI</b> — the sole in-game utility token. <b>Excess EXP carries over</b> to the next level, so nothing is wasted.</li>
     <li>EXP needed grows each level (~140 for Lv 2, scaling up to ~6,600 for Lv 50), so higher levels reward hunting rare tasks.</li>
     <li><b>Evolution at Lv 15 and Lv 35</b> — bigger voxel forms with wings, then a crown.</li>
     <li>Each stage adds <b>+35%</b> odds on Epic+ tasks; every level adds +1.5% more.</li>
@@ -1737,25 +1737,17 @@ async function levelUp(h,payWith,cr){
     showBanner(m,"error");addFeed(m);refreshUI();return;
   }
   const lvl=c.level;
-  if(payWith==="chiki"){
-    const cost=chikiCostOf(lvl);
-    if(h.bal-cost<MIN_HOLD){addFeed(`⚠️ ${nameFor(h)}: leveling would drop balance below 500k — pay with SOL instead.`);refreshUI();return;}
-    if(CHAIN.ONCHAIN_SPENDS&&h.pk){                     /* real on-chain payment (burn/pool/team) */
-      try{await chikiSpend(cost,"Level Up "+nameOf(c));}
-      catch(e){console.error("levelUp spend error:",e);const m="⚠️ Level-up payment failed: "+(e.message||e);showBanner(m,"error");addFeed(m);refreshUI();return;}
-    }
-    h.bal-=cost;
-    const burn=cost*0.01,toPool=cost*0.495,toTeam=cost*0.495;
-    burnedChiki+=burn;pool+=toPool*TOKEN_PRICE;teamChiki+=toTeam;
-    addFeed(`🛒 ${nameFor(h)} paid <b>${cost.toLocaleString()} $CHIKI</b> → 🔥 ${fmtK(burn)} burned · 💰 ${fmtK(toPool)} → pool · 🏦 ${fmtK(toTeam)} → team`);
-  }else{
-    const cost=solCostOf(lvl);
-    if(h.sol<cost){addFeed(`⚠️ ${nameFor(h)}: not enough SOL (need ${cost}).`);refreshUI();return;}
-    h.sol=+(h.sol-cost).toFixed(4);
-    const burnSol=cost*0.01,toPool=cost*0.495,toTeam=cost*0.495;
-    burnedChiki+=burnSol/TOKEN_PRICE;pool+=toPool;teamSol+=toTeam;
-    addFeed(`🛒 ${nameFor(h)} paid <b>${cost} SOL</b> → 🔥 buy-burn ${fmtK(burnSol/TOKEN_PRICE)} $CHIKI · 💰 +${toPool.toFixed(4)} ◎ pool · 🏦 +${toTeam.toFixed(4)} ◎ team`);
+  /* $CHIKI is the SOLE in-game utility token — leveling is paid in $CHIKI only */
+  const cost=chikiCostOf(lvl);
+  if(h.bal-cost<MIN_HOLD){addFeed(`⚠️ ${nameFor(h)}: leveling would drop your balance below the 500k minimum hold — top up $CHIKI to level ${nameOf(c)}.`);refreshUI();return;}
+  if(CHAIN.ONCHAIN_SPENDS&&h.pk){                     /* real on-chain payment (burn/pool/team) */
+    try{await chikiSpend(cost,"Level Up "+nameOf(c));}
+    catch(e){console.error("levelUp spend error:",e);const m="⚠️ Level-up payment failed: "+(e.message||e);showBanner(m,"error");addFeed(m);refreshUI();return;}
   }
+  h.bal-=cost;
+  const burn=cost*0.01,toPool=cost*0.495,toTeam=cost*0.495;
+  burnedChiki+=burn;pool+=toPool*TOKEN_PRICE;teamChiki+=toTeam;
+  addFeed(`🛒 ${nameFor(h)} paid <b>${cost.toLocaleString()} $CHIKI</b> → 🔥 ${fmtK(burn)} burned · 💰 ${fmtK(toPool)} → pool · 🏦 ${fmtK(toTeam)} → team`);
   applyLevel(c,false);
   refreshUI();
 }
@@ -1834,7 +1826,7 @@ function refreshUI(){
     <div><div class="v b">…</div><div class="l">Team wallet SOL</div></div>
     <div><div class="v" style="color:#dce8fa">…</div><div class="l">Trainers</div></div>`;
   document.getElementById("econNote").innerHTML=
-    `Token peg: 1 $CHIKI = ${TOKEN_PRICE} SOL · Level costs grow 9%/level (Lv1→2: ${chikiCostOf(1).toLocaleString()} $CHIKI, Lv49→50: ${chikiCostOf(49).toLocaleString()} $CHIKI). SOL path carries a 15% premium and buy-burns $CHIKI. See 📖 Mechanics.`;
+    `Level costs grow 9%/level (Lv1→2: ${chikiCostOf(1).toLocaleString()} $CHIKI, Lv49→50: ${chikiCostOf(49).toLocaleString()} $CHIKI). $CHIKI is the sole in-game token — every spend burns 1%, funds the reward pool, and supports the team. See 📖 Mechanics.`;
   const tt=document.getElementById("taskTable");
   while(tt.rows.length>1)tt.deleteRow(1);
   TASKS.forEach(t=>{
@@ -1869,12 +1861,12 @@ function refreshUI(){
 function renderMyPanel(){
   if(!player)return;
   const chikis=myChikis();
-  let html=`<div style="font-size:12px;color:#8fa6c9;margin-bottom:9px">Tap <b>🎯 Track</b> to follow a Chiki with the camera. Level them up with $CHIKI or SOL.</div>`;
+  let html=`<div style="font-size:12px;color:#8fa6c9;margin-bottom:9px">Tap <b>🎯 Track</b> to follow a Chiki with the camera. Level them up with <b>$CHIKI</b> — the only in-game token.</div>`;
   chikis.forEach(c=>{
     const atMax=c.level>=MAX_LEVEL,i=creatures.indexOf(c);
-    const cCost=chikiCostOf(c.level),sCost=solCostOf(c.level);
+    const cCost=chikiCostOf(c.level);
     const need=xpNeed(c.level),have=Math.floor(c.xp||0),xpRemain=Math.max(0,need-have),ready=!atMax&&have>=need;
-    const canChiki=ready&&player.bal-cCost>=MIN_HOLD,canSol=ready&&player.sol>=sCost;
+    const canChiki=ready&&player.bal-cCost>=MIN_HOLD;
     const isT=(tracked&&tracked.holder===player?tracked:player.creature)===c;
     const pct=atMax?100:Math.min(100,Math.round(have/need*100));
     html+=`<div style="border:2px solid ${c.sp.body}66;border-radius:11px;padding:11px;margin-bottom:11px;background:rgba(13,29,60,.72)">
@@ -1888,21 +1880,19 @@ function renderMyPanel(){
       <div class="row"><span>EXP to Lv ${atMax?"MAX":c.level+1}</span><span style="color:${ready?'#2e9e5b':'#7c5cd6'}">${atMax?"—":have+" / "+need+" XP"+(ready?" ✓ ready!":"")}</span></div>
       ${atMax?"":`<div class="stam" style="margin:2px 0 6px"><i style="width:${pct}%;background:linear-gradient(90deg,#b197fc,#7048e8)"></i></div>`}
       <button class="tBtn" data-i="${i}" style="width:100%;margin:7px 0;${isT?'background:#3ddc84;color:#fff;border-color:#2bb673':''}">${isT?"🎯 Tracking this Chiki":"🎯 Track this Chiki"}</button>
-      <div class="lvlbtns">
-        <button class="lvC" data-i="${i}" ${canChiki?"":"disabled"}>⬆️ Level<br>${atMax?"—":(ready?cCost.toLocaleString()+" $CHIKI":"🔒 "+xpRemain+" XP to go")}</button>
-        <button class="lvS" data-i="${i}" ${canSol?"":"disabled"}>⬆️ Level<br>${atMax?"—":(ready?sCost+" SOL":"🔒 "+xpRemain+" XP to go")}</button>
-      </div></div>`;
+      <button class="lvC" data-i="${i}" ${canChiki?"":"disabled"} style="width:100%;margin:2px 0">⬆️ ${atMax?"Max level":(ready?"Level Up — "+cCost.toLocaleString()+" $CHIKI":"🔒 "+xpRemain+" XP to go")}</button>
+      </div>`;
   });
-  html+=`<div class="split">
-      <div style="border-color:#ff6b6b66"><b style="color:var(--red)">20%</b>🔥 burn</div>
-      <div style="border-color:#3ddc8466"><b style="color:var(--green)">45%</b>💰 pool</div>
-      <div style="border-color:#4dabf766"><b style="color:var(--blue)">35%</b>🏦 team</div>
+  html+=`<div style="font-size:11px;color:#8fa6c9;margin:2px 0 6px">Every $CHIKI spent in-game splits:</div>
+    <div class="split">
+      <div style="border-color:#ff6b6b66"><b style="color:var(--red)">1%</b>🔥 burn</div>
+      <div style="border-color:#3ddc8466"><b style="color:var(--green)">49.5%</b>💰 pool</div>
+      <div style="border-color:#4dabf766"><b style="color:var(--blue)">49.5%</b>🏦 team</div>
     </div>`;
   document.getElementById("myBody").innerHTML=html;
   document.querySelectorAll("#myBody .feedBtn").forEach(b=>b.onclick=()=>feedChiki(creatures[+b.dataset.i]));
   document.querySelectorAll("#myBody .tBtn").forEach(b=>b.onclick=()=>{tracked=creatures[+b.dataset.i];setFollow(true);renderMyPanel();});
   document.querySelectorAll("#myBody .lvC").forEach(b=>{if(!b.disabled)b.onclick=()=>levelUp(player,"chiki",creatures[+b.dataset.i]);});
-  document.querySelectorAll("#myBody .lvS").forEach(b=>{if(!b.disabled)b.onclick=()=>levelUp(player,"sol",creatures[+b.dataset.i]);});
 }
 function showInspect(c,soft){
   inspected=c;
