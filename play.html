@@ -1081,9 +1081,9 @@ const SPECIES=[
   {names:["Crystalix","Glimmer","Starix"],type:"Crystal",body:"#faa2c1",accent:"#e599f7",mane:"crystal",maneCols:["#eebefa","#fcc2d7","#ffffff"]},
   {names:["Cloudo","Zephir","Hurricub"],type:"Wind",body:"#e9ecef",accent:"#91a7ff",mane:"fluff",maneCols:["#ffffff","#dee2e6","#c5cdd4"]},
   {names:["Lunara","Galaxi","Cometail"],type:"Cosmic",body:"#4c3a8c",accent:"#ffd43b",mane:"shadow",maneCols:["#6741d9","#9775fa","#ffd43b"]},
-  {names:["Galador","Galadrix","Galadeon"],type:"Legendary",body:"#1f3fb5",accent:"#ffd43b",mane:"shadow",maneCols:["#4f7cff","#1f3fb5","#ffd43b"],aura:"blue"},
-  {names:["Adalor","Adalor","Adalor"],type:"Legendary",body:"#e0a800",accent:"#fff3b0",mane:"shadow",maneCols:["#ffd43b","#ffae00","#fff3b0"],aura:"gold"},   /* next Legendary — golden Super-Saiyan fire aura, wings-only animation */
-  {names:["Tyrannos","Tyrannos","Tyrannos"],type:"Legendary",body:"#5b7a3a",accent:"#c4d97a",mane:"shadow",maneCols:["#5b7a3a","#3d4f28","#c4d97a"],aura:"green"},   /* Tyrannos — Legendary apex predator, green fire aura */
+  {names:["Galador","Galadrix","Galadeon"],type:"Legendary",body:"#1f3fb5",accent:"#ffd43b",mane:"shadow",maneCols:["#4f7cff","#1f3fb5","#ffd43b"],aura:"blue",auraBig:true},
+  {names:["Adalor","Adalor","Adalor"],type:"Legendary",body:"#e0a800",accent:"#fff3b0",mane:"shadow",maneCols:["#ffd43b","#ffae00","#fff3b0"],aura:"gold",auraBig:true},   /* next Legendary — golden Super-Saiyan fire aura, wings-only animation */
+  {names:["Tyrannos","Tyrannos","Tyrannos"],type:"Legendary",body:"#5b7a3a",accent:"#c4d97a",mane:"shadow",maneCols:["#5b7a3a","#3d4f28","#c4d97a"],aura:"green",auraBig:true},   /* Tyrannos — Legendary apex predator, green fire aura */
   {names:["Grovador","Grovador","Grovador"],type:"Legendary",body:"#2e8b57",accent:"#9be38f",mane:"shadow",maneCols:["#2e8b57","#1f5e3a","#9be38f"],aura:"emerald",auraBig:true},   /* Grovador — Legendary grove guardian, BIG emerald aura */
   {names:["Dragonos","Dragonos","Dragonos"],type:"Legendary",body:"#c0392b",accent:"#ff9f43",mane:"shadow",maneCols:["#c0392b","#7a1f12","#ff9f43"],aura:"fire",auraBig:true},   /* Dragonos — final Legendary, fire dragon, big fire aura */
 ];
@@ -1108,6 +1108,11 @@ const CHI_PN=[
  [["🔥","Fire Whip"],["🐉","Breath of Fire"],["💨","Fire Dash"],["🛡️","Scale Guard"],["🔥","Blaze Charge"],["🔥","Ember Drain"],["💥","Inferno"]]
 ];
 const LEGEND_IDXS=SPECIES.map((s,i)=>s.type==="Legendary"?i:-1).filter(i=>i>=0);   /* legendary species indices */
+const LEGEND_SCALE=1.5;                                                            /* legendaries tower 1.5x over normal Chikis */
+const legendScale=spIdx=>LEGEND_IDXS.indexOf(spIdx)>=0?LEGEND_SCALE:1;
+/* limb rigs for the legendaries (segmentation maps body→head→tail→wings, then animates) */
+window.RIG_MODE=window.RIG_MODE||{};
+Object.assign(window.RIG_MODE,{11:"wingsonly",12:"soft",13:"soft",14:"dragon"});   /* Adalor wings-only · Dragonos wings + head (oriented) · Tyrannos/Grovador smooth until their per-model orientation pass */
 const NONLEGEND_IDXS=SPECIES.map((s,i)=>s.type!=="Legendary"?i:-1).filter(i=>i>=0); /* normal (non-legendary) species indices */
 const ANCIENT_EGG_COST=100000;   /* $CHIKI to buy an Ancient Egg from the Sorceress (20% burn/45% pool/35% team) */
 const ANCIENT_EGG_ENABLED=false; /* master switch — set true to re-open the Immortal Sorceress / Ancient Eggs */
@@ -4121,7 +4126,7 @@ function auraTex(){
 const AURA_COLORS={gold:{flame:0xffcf4d,disk:0xffca3a},blue:{flame:0x4f9cff,disk:0x6fb1ff},green:{flame:0x8ae65c,disk:0x6bd43a},emerald:{flame:0x2ee68a,disk:0x10c878},fire:{flame:0xff5a1a,disk:0xff7a2a}};
 function buildAura(kind,big){
   const col=AURA_COLORS[kind]||AURA_COLORS.gold;
-  const N=big?32:16, TOP=big?64:38, RMIN=big?5:4, RMAX=big?18:11, SCL=big?17:11, RISE=big?34:26, TAPER=big?0.22:0.45, DISK=big?72:40;
+  const N=big?46:16, TOP=big?82:38, RMIN=big?5:4, RMAX=big?23:11, SCL=big?22:11, RISE=big?38:26, TAPER=big?0.20:0.45, DISK=big?96:40;
   const grp=new THREE.Group();const tex=auraTex();const flames=[];
   for(let i=0;i<N;i++){
     const mat=new THREE.SpriteMaterial({map:tex,color:col.flame,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false});
@@ -4144,14 +4149,14 @@ function animateAura(aura,t,dt){
     s.position.y+=dt*RISE*u.sp;
     if(s.position.y>TOP){s.position.y=0;u.ph=Math.random()*6.283;}
     const k=s.position.y/TOP;                       /* 0 base → 1 tip */
-    const flick=0.55+0.45*Math.sin(t*13+u.ph);
-    s.material.opacity=(1-k)*0.9*flick;            /* fade as it rises + flicker */
+    const flick=0.6+0.4*Math.sin(t*13+u.ph);
+    s.material.opacity=(1-k)*1.15*flick;            /* brighter flame, fades as it rises + flickers */
     const sc=(SCL+Math.sin(t*9+u.ph)*2.5)*(1-k*0.55);
     s.scale.set(sc*0.8,sc*1.9,1);                  /* tall = flame tongue */
     const rr=u.rad*(1-k*TAPER);                     /* less taper = stays wrapped around the body */
     s.position.x=Math.cos(u.ang)*rr;s.position.z=Math.sin(u.ang)*rr;
   }
-  if(aura.userData.disk)aura.userData.disk.material.opacity=0.32+0.18*Math.sin(t*8);
+  if(aura.userData.disk)aura.userData.disk.material.opacity=0.44+0.22*Math.sin(t*8);
 }
 function addAura(c,g){ if(c.sp&&c.sp.aura){const a=buildAura(c.sp.aura,c.sp.auraBig);g.add(a);g.userData.aura=a;} }
 function buildChikiMesh(c){
@@ -4183,7 +4188,7 @@ function buildChikiMesh(c){
       c.curAnim=null;
     }else{c.mixer=null;c.anims=null;c.curAnim=null;}
     g.add(m);
-    if(stage>=2){
+    if(stage>=2&&LEGEND_IDXS.indexOf(spIdx)<0){   /* generic evolution wings — NOT for legendaries (they have their own) */
       for(const sx of [-1,1]){
         const wing=new THREE.Mesh(new THREE.BoxGeometry(2,11,15),
           new THREE.MeshLambertMaterial({color:c.sp.accent}));
@@ -4191,7 +4196,7 @@ function buildChikiMesh(c){
         wing.userData.ci=c;g.add(wing);
       }
     }
-    g.scale.setScalar((0.85+stage*0.18)*(SPECIES_SCALE[spIdx]||1));
+    g.scale.setScalar((0.85+stage*0.18)*(SPECIES_SCALE[spIdx]||1)*legendScale(spIdx));
     addAura(c,g);
     return g;
   }
@@ -4220,7 +4225,7 @@ function buildChikiMesh(c){
   if(im.instanceColor)im.instanceColor.needsUpdate=true;
   im.castShadow=true;
   g.add(im);
-  if(stage>=2){
+  if(stage>=2&&LEGEND_IDXS.indexOf(spIdx)<0){   /* generic evolution wings — NOT for legendaries */
     for(const sx of [-1,1]){
       const wing=new THREE.Mesh(new THREE.BoxGeometry(2,11,15),
         new THREE.MeshLambertMaterial({color:c.sp.accent}));
@@ -4228,7 +4233,7 @@ function buildChikiMesh(c){
       g.add(wing);
     }
   }
-  const s=(0.85+stage*0.18)*(SPECIES_SCALE[spIdx]||1);
+  const s=(0.85+stage*0.18)*(SPECIES_SCALE[spIdx]||1)*legendScale(spIdx);
   g.scale.setScalar(s);
   g.traverse(o=>{if(o.isMesh){o.userData.ci=c;}});
   addAura(c,g);
@@ -4637,6 +4642,26 @@ function frame(now){
         if(rig.RF){rig.RF.rotation.x= Math.sin(t*2.4+c.bob+1.6)*sp; rig.RF.rotation.z=-Math.sin(t*2.4+c.bob)*sp*0.5;}
         if(rig.LB){rig.LB.rotation.x= Math.sin(t*2.4+c.bob+3.1)*sp;}
         if(rig.RB){rig.RB.rotation.x= Math.sin(t*2.4+c.bob+4.7)*sp;}
+      }else if(rigMode==="dragon"){
+        /* DRAGONOS: the WINGS flap (big) and the HEAD moves on its own; tail sways, legs walk subtly. Body intact. */
+        const ph=c.bob*(moving?1.8:0.5);
+        const lamp=sleeping2?0:(moving?0.30:0.03);          /* subtle ground stride */
+        if(rig.LF)rig.LF.rotation.x= Math.sin(ph)*lamp;
+        if(rig.RB)rig.RB.rotation.x= Math.sin(ph)*lamp;
+        if(rig.RF)rig.RF.rotation.x=-Math.sin(ph)*lamp;
+        if(rig.LB)rig.LB.rotation.x=-Math.sin(ph)*lamp;
+        const flap=sleeping2?0.10:(moving?0.95:0.6);          /* big, powerful wingbeat */
+        const wp=Math.sin(t*(moving?3.4:2.1)+c.bob)*flap;
+        if(rig.LW)rig.LW.rotation.z= wp;
+        if(rig.RW)rig.RW.rotation.z=-wp;
+        if(rig.head){                                         /* head: rise/dip + look side to side */
+          rig.head.rotation.x=Math.sin(t*1.9+c.bob*0.6)*0.13+(sleeping2?0.20:0);
+          rig.head.rotation.y=Math.sin(t*1.15+c.bob)*0.17;
+        }
+        if(rig.tail){
+          rig.tail.rotation.y=Math.sin(t*2.4+c.bob)*(sleeping2?0.06:moving?0.34:0.24);
+          rig.tail.rotation.x=Math.sin(t*1.6+c.bob*0.7)*0.10;
+        }
       }else{
         const ph=c.bob*(moving?1.9:0.55);
         const amp=sleeping2?0:(moving?0.38:0.04);   /* gentler leg swing */
@@ -4927,6 +4952,14 @@ function segmentMesh(mesh,mode){
       else if(Math.abs(cx-midX)>wingX&&cy>wingY)r=(cx<midX?"L":"R")+"W";
       else if(cz<tailZ&&cy<headY)r="tail";
       else r="body";
+    }else if(mode==="dragon"){
+      /* DRAGON (Dragonos): legs walk, WINGS flap, tail sways, and the HEAD (front+high) moves on its own.
+         Mapped in order so each body part is isolated cleanly: legs → wings → tail → head → body. */
+      if(cy<legY)r=(cx<midX?"L":"R")+(cz>midZ?"F":"B");                 /* 1. limbs (bottom) */
+      else if(Math.abs(cx-midX)>wingX&&cy>wingY)r=(cx<midX?"L":"R")+"W"; /* 2. wings (far-out + upper) */
+      else if(cz<tailZ&&cy<headY)r="tail";                              /* 3. tail (rear-low) */
+      else if(cz>headZ&&cy>headY)r="head";                             /* 4. head (front + high) */
+      else r="body";                                                    /* 5. torso stays welded */
     }else{
       /* legs / tentacles / default: ONLY the bottom limbs + the tail move.
          The head and the whole torso stay welded as ONE rigid piece — the body
@@ -5053,7 +5086,7 @@ setTimeout(()=>{
     }
   }
   /* large built-in models kept as separate files (out of models.js to stay light) */
-  const EXTERNAL_GLB={11:"adalor_voxel.glb",12:"tyrannos.glb",13:"grovador_voxel.glb",14:"dragonos_voxel_anim.glb"};   /* in-game legendaries (Dragonos has a baked Idle) */
+  const EXTERNAL_GLB={11:"adalor_voxel.glb",12:"tyrannos.glb",13:"grovador_voxel.glb",14:"dragonos_voxel.glb"};   /* in-game legendaries — procedural limb rigs (see RIG_MODE above) */
   for(const i in EXTERNAL_GLB){
     const idx=+i;
     if(glbCache[idx]||customModels[idx])continue;
