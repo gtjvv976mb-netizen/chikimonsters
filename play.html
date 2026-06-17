@@ -1112,7 +1112,7 @@ const LEGEND_SCALE=1.5;                                                         
 const legendScale=spIdx=>LEGEND_IDXS.indexOf(spIdx)>=0?LEGEND_SCALE:1;
 /* limb rigs for the legendaries (segmentation maps body→head→tail→wings, then animates) */
 window.RIG_MODE=window.RIG_MODE||{};
-Object.assign(window.RIG_MODE,{11:"wingsonly",12:"soft",13:"soft",14:"dragon"});   /* Adalor wings-only · Dragonos wings + head (oriented) · Tyrannos/Grovador smooth until their per-model orientation pass */
+Object.assign(window.RIG_MODE,{11:"wingsonly",12:"legs",13:"legs",14:"dragon"});   /* Adalor wings-only · Tyrannos/Grovador walk + tail (oriented) · Dragonos wings + head */
 const NONLEGEND_IDXS=SPECIES.map((s,i)=>s.type!=="Legendary"?i:-1).filter(i=>i>=0); /* normal (non-legendary) species indices */
 const ANCIENT_EGG_COST=100000;   /* $CHIKI to buy an Ancient Egg from the Sorceress (20% burn/45% pool/35% team) */
 const ANCIENT_EGG_ENABLED=false; /* master switch — set true to re-open the Immortal Sorceress / Ancient Eggs */
@@ -4654,13 +4654,13 @@ function frame(now){
         const wp=Math.sin(t*(moving?3.4:2.1)+c.bob)*flap;
         if(rig.LW)rig.LW.rotation.z= wp;
         if(rig.RW)rig.RW.rotation.z=-wp;
-        if(rig.head){                                         /* head: rise/dip + look side to side */
-          rig.head.rotation.x=Math.sin(t*1.9+c.bob*0.6)*0.13+(sleeping2?0.20:0);
-          rig.head.rotation.y=Math.sin(t*1.15+c.bob)*0.17;
+        if(rig.head){                                         /* head: SMALL rise/dip + gentle look (keep tiny so the neck seam never opens) */
+          rig.head.rotation.x=Math.sin(t*1.9+c.bob*0.6)*0.045+(sleeping2?0.08:0);
+          rig.head.rotation.y=Math.sin(t*1.15+c.bob)*0.05;
         }
-        if(rig.tail){
-          rig.tail.rotation.y=Math.sin(t*2.4+c.bob)*(sleeping2?0.06:moving?0.34:0.24);
-          rig.tail.rotation.x=Math.sin(t*1.6+c.bob*0.7)*0.10;
+        if(rig.tail){                                         /* tail: minimal sway so the base seam stays closed */
+          rig.tail.rotation.y=Math.sin(t*2.4+c.bob)*(sleeping2?0.03:moving?0.10:0.07);
+          rig.tail.rotation.x=Math.sin(t*1.6+c.bob*0.7)*0.035;
         }
       }else{
         const ph=c.bob*(moving?1.9:0.55);
@@ -4676,16 +4676,16 @@ function frame(now){
           if(rig.LW)rig.LW.rotation.z= wp;
           if(rig.RW)rig.RW.rotation.z=-wp;
         }
-        if(rig.tail){
-          rig.tail.rotation.y=Math.sin(t*2.6+c.bob)* (sleeping2?0.05:moving?0.3:0.22);
-          rig.tail.rotation.x=Math.sin(t*1.7+c.bob*0.7)*0.08;
+        if(rig.tail){                                                 /* minimal sway — keep the tail seam closed */
+          rig.tail.rotation.y=Math.sin(t*2.6+c.bob)* (sleeping2?0.03:moving?0.11:0.07);
+          rig.tail.rotation.x=Math.sin(t*1.7+c.bob*0.7)*0.035;
         }
-        if(rig.head){
-          if(sleeping2)rig.head.rotation.x=0.22;                       /* dozing */
-          else if(c.state==="working")rig.head.rotation.x=Math.sin(t*7+c.bob)*0.16; /* busy nodding */
-          else rig.head.rotation.x=Math.sin(t*1.9+c.bob*0.5)*0.07
-                +(moving?0.06:0),
-               rig.head.rotation.y=Math.sin(t*1.1+c.bob)*0.1;          /* looking around */
+        if(rig.head){                                                 /* tiny head motion only — never open the neck seam */
+          if(sleeping2)rig.head.rotation.x=0.09;                       /* dozing */
+          else if(c.state==="working")rig.head.rotation.x=Math.sin(t*7+c.bob)*0.06; /* busy nodding */
+          else rig.head.rotation.x=Math.sin(t*1.9+c.bob*0.5)*0.035
+                +(moving?0.03:0),
+               rig.head.rotation.y=Math.sin(t*1.1+c.bob)*0.045;        /* looking around */
         }
       }
       /* legs/tentacles rigs have NO head joint — so for "working" tasks we lean
@@ -4986,13 +4986,14 @@ function segmentMesh(mesh,mode){
     let cx=0,cy=0,cz=0;
     for(const name of attrs){
       const src=geo.attributes[name];
-      const arr=new Float32Array(tris.length*3*src.itemSize);
+      const AT=src.array.constructor;                 /* keep the ORIGINAL array type (e.g. Uint8 for COLOR_0) */
+      const arr=new AT(tris.length*3*src.itemSize);
       let o=0;
       for(const t2 of tris)for(let v=0;v<3;v++){
         const idx=t2*3+v;
         for(let j=0;j<src.itemSize;j++)arr[o++]=src.array[idx*src.itemSize+j];
       }
-      g2.setAttribute(name,new THREE.BufferAttribute(arr,src.itemSize));
+      g2.setAttribute(name,new THREE.BufferAttribute(arr,src.itemSize,src.normalized));   /* preserve normalized flag so vertex colors aren't blown to white */
     }
     for(const t2 of tris){
       const i0=t2*3;
