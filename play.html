@@ -574,7 +574,7 @@ if(location.search.indexOf("embed")>-1){
 <div id="btnChat" title="Community chat">💬<span id="chatBadge">0</span></div>
 <div id="btnQuality" title="Graphics quality — tap to switch Low/High">HD</div>
 <div id="btnArena" title="Chikiseum — the Arena"><img src="ui/chikiseum.png" alt="Chikiseum"></div>
-<div id="btnSorc" title="Immortal Sorceress — Ancient Eggs">🔮<span class="eggdot"></span></div>
+<div id="btnSorc" title="Mithra's Mystic Market">🔮<span class="eggdot"></span></div>
 
 <div class="pop" id="chatPop">
   <h2>💬 Chikoria Chat <span class="x" data-close="chatPop">✕</span></h2>
@@ -745,7 +745,7 @@ if(location.search.indexOf("embed")>-1){
 .sSkill{display:inline-block;background:#2a1f44;border:1px solid #6a4fb0;border-radius:8px;padding:5px 9px;margin:3px;font-size:12.5px;color:#e7dcff;font-weight:700}
 </style>
 <div id="sorcOverlay"><div id="sorcBox">
-  <div id="sorcHead">🔮 Immortal Sorceress <span class="x" id="sorcClose">✕</span></div>
+  <div id="sorcHead">🔮 Mithra's Mystic Market <span class="x" id="sorcClose">✕</span></div>
   <div id="sorcBody"></div>
 </div></div>
 
@@ -1028,13 +1028,13 @@ const RARITY={
 };
 /* ===== SEEDED earnings (mirror of the server) — the rares you SEE are the rares the server pays =====
    Defaults match the backend; refreshed from /claimable so they always agree. */
-let SEED_CFG={raritySol:{common:0.000004,uncommon:0.000008,rare:0.000018,epic:0.00004,mythic:0.0001,shiny:0.0002,legend:0.0005},taskSec:30,mult:1,accrualCap:60};
+let SEED_CFG={raritySol:{common:0.000004,uncommon:0.000008,rare:0.000018,epic:0.00004,mythic:0.0001,shiny:0.0002,legend:0.0005},taskSec:30,mult:1,accrualCap:60,claimTax:0.20};   /* claimTax: SOL claim tax withheld (stays in treasury) */
 const SEED_DIST=[["common",45],["uncommon",27],["rare",15],["epic",7],["mythic",3.5],["shiny",1.7],["legend",0.8]];
 const SEED_TOTAL=SEED_DIST.reduce((s,r)=>s+r[1],0);
 function chikiHash(str){let h=1779033703^str.length;for(let i=0;i<str.length;i++){h=Math.imul(h^str.charCodeAt(i),3432918353);h=(h<<13)|(h>>>19);}h=Math.imul(h^(h>>>16),2246822507);h=Math.imul(h^(h>>>13),3266489909);return ((h^(h>>>16))>>>0)/4294967296;}
 function slotRarity(wallet,lastClaim,ci,slot){let x=chikiHash(wallet+"|"+lastClaim+"|"+ci+"|"+slot)*SEED_TOTAL;for(const [name,w] of SEED_DIST){x-=w;if(x<=0)return name;}return "common";}
 function seededEarn(wallet,lastClaim,chikis,minutes){const slots=Math.min(4000,Math.floor(minutes*60/SEED_CFG.taskSec));let sol=0;for(let ci=0;ci<chikis;ci++)for(let s=0;s<slots;s++)sol+=SEED_CFG.raritySol[slotRarity(wallet,lastClaim,ci,s)];return sol*SEED_CFG.mult;}
-function localPouch(){if(!player||!player.pk||player._lastClaim==null)return null;const minutes=Math.min(SEED_CFG.accrualCap,(Date.now()-player._lastClaim)/60000);return seededEarn(player.pk,player._lastClaim,player._earnChikis||1,minutes);}
+function localPouch(){if(!player||!player.pk||player._lastClaim==null)return null;const minutes=Math.min(SEED_CFG.accrualCap,(Date.now()-player._lastClaim)/60000);return seededEarn(player.pk,player._lastClaim,player._earnChikis||1,minutes)*(1-(SEED_CFG.claimTax||0));}   /* net after claim tax */
 const TASKS=[
   {id:0,name:"Berry Foraging",rarity:"common",chance:22,pct:0.0002,zone:"berry",emoji:"🍓",stam:8,dur:300,count:0,where:"🌸🍂"},
   {id:1,name:"Flower Picking",rarity:"common",chance:16,pct:0.0004,zone:"flowers",emoji:"💐",stam:9,dur:300,count:0,where:"🌸☀️"},
@@ -1115,9 +1115,13 @@ const legendScale=spIdx=>LEGEND_IDXS.indexOf(spIdx)>=0?LEGEND_SCALE*(LEGEND_SCAL
 window.RIG_MODE=window.RIG_MODE||{};
 Object.assign(window.RIG_MODE,{11:"wingsonly",12:"legs",13:"legs",14:"dragon"});   /* Adalor wings-only · Tyrannos/Grovador walk + tail · Dragonos wings + tail */
 const NONLEGEND_IDXS=SPECIES.map((s,i)=>s.type!=="Legendary"?i:-1).filter(i=>i>=0); /* normal (non-legendary) species indices */
-const ANCIENT_EGG_COST=100000;   /* $CHIKI to buy an Ancient Egg from the Sorceress (20% burn/45% pool/35% team) */
-const ANCIENT_EGG_ENABLED=false; /* master switch — set true to re-open the Immortal Sorceress / Ancient Eggs */
-const CARE_NEED_MIN=1440;        /* 24h of care-minutes to hatch */
+const ANCIENT_EGG_ENABLED=true;  /* Mithra's Mystic Market is OPEN */
+const LEGEND_EGG_COST=1000000;   /* Legendary Egg from Mithra (cared for 24h, 12h with 2 Chikis) */
+const REROLL_COST=200000;        /* release a Chiki to the jungle & have Mithra grant a fresh egg */
+const ANCIENT_EGG_COST=LEGEND_EGG_COST;   /* legacy alias */
+const CARE_NEED_24H=1440, CARE_NEED_12H=720;   /* legendary-egg care time: 24h (1 carer) / 12h (2 carers) */
+const CARE_NEED_MIN=CARE_NEED_24H;        /* legacy */
+const REROLL_SPLIT={burn:100,pool:3900,team:6000};   /* release/reroll split (bp): 1% burn · 39% pool · 60% team */
 /* custom Blockbench models per species (restored from browser storage) */
 const customModels={};
 const glbCache={};   /* spIdx -> prepared GLB template (loader wired further down) */
@@ -1556,7 +1560,12 @@ function restoreChikis(h,saved){
     if(c.hungry)anyHungry=true;
   });
   /* Sorceress: restore the Ancient Egg and fast-forward its care for the time away */
-  if(saved.ancientEgg){ h.ancientEgg=saved.ancientEgg; if(typeof tickCare==="function")tickCare(h); }
+  if(saved.ancientEgg){ h.ancientEgg=saved.ancientEgg; if(typeof tickCare==="function")tickCare(h);
+    const e=h.ancientEgg; if(e&&!e.hatched){ const need=e.need||1440, ready=(e.careMin||0)>=need;
+      addFeed(ready?`🔮 <b>Mithra:</b> your <b>Legendary Egg is ready to hatch!</b> Visit the Mystic Market to claim it. 👑`
+                   :`🔮 <b>Mithra:</b> you have a <b>Legendary Egg incubating</b> — check the Mystic Market for its progress.`);
+    }
+  }
   if(saved.taskCounts)h.taskCounts=saved.taskCounts;   /* restore the player's per-task Done tally */
   if(elapsed>120&&(totalTasks>0||anyHungry)){
     const away=elapsed>=3600?(Math.round(elapsed/360)/10)+"h":Math.max(1,Math.round(elapsed/60))+"m";
@@ -2561,7 +2570,7 @@ setInterval(updateWhaleTab,1000);
     const legs=myLegends();
     if(!player||!legs.length){B=null;renderTeams();
       g("arenaResult").innerHTML="<span style='color:#ffd93d'>👑 Legendaries only</span>";
-      g("arenaLog").innerHTML="Only <b>Legendary</b> Chikimons can wield the power of Chi and enter the Arena. Buy an Ancient Egg from the 🔮 <b>Immortal Sorceress</b> to awaken one!";
+      g("arenaLog").innerHTML="Only <b>Legendary</b> Chikimons can wield the power of Chi and enter the Arena. Buy a Legendary Egg from 🔮 <b>Mithra's Mystic Market</b> to awaken one!";
       g("arenaCenter").innerHTML="";return;}
     B=null;renderTeams();log("");
     g("arenaCenter").innerHTML="<div style='font-size:14px;color:#cdd8ee'>🔎 Searching for an opponent…</div>";
@@ -2584,44 +2593,83 @@ setInterval(updateWhaleTab,1000);
 (function(){
   const g=id=>document.getElementById(id);
   let open=false, revealing=false;
-  /* the (up to 2) elemental Chikis that tend the egg — highest level care fastest */
-  function carers(h){return creatures.filter(c=>c.holder===h&&!c.isLegend).sort((a,b)=>(b.level||1)-(a.level||1)).slice(0,2);}
-  /* care-minutes accrued per real minute (1 stamina ≈ 1 min; scales with carer level; two carers stack) */
-  function careRate(h){return carers(h).reduce((s,c)=>s+(0.6+(c.level||1)*0.04),0);}
+  /* the normal Chikis that tend the egg (all of them — they pour their stamina & food into it) */
+  function carers(h){return creatures.filter(c=>c.holder===h&&!c.isLegend);}
+  function careNeed(h){return carers(h).length>=2?CARE_NEED_12H:CARE_NEED_24H;}   /* 24h with 1 Chiki, 12h with 2 */
   function tickCare(h){
     const e=h&&h.ancientEgg; if(!e||e.hatched)return;
+    const need=e.need||careNeed(h);
     const now=Date.now(), mins=(now-(e.lastAt||now))/60000;
-    if(mins>0){ e.careMin=Math.min(CARE_NEED_MIN,(e.careMin||0)+mins*careRate(h)); e.lastAt=now; }
+    if(mins>0){ e.careMin=Math.min(need,(e.careMin||0)+mins); e.lastAt=now;   /* real-time care */
+      /* the carer Chikis spend all their stamina & food tending the egg; they sleep when drained */
+      carers(h).forEach(c=>{ c.food=Math.max(0,(c.food||0)-mins*60); c.stamina=Math.max(0,(c.stamina||0)-mins*4);
+        if((c.stamina<=0||c.food<=0)&&c.state!=="sleeping"){c.hungry=c.food<=0;c.state="sleeping";c.sleepT=c.food<=0?0:sleepTimeOf(c.level);} });
+    }
   }
   window.tickCare=tickCare;  /* used by profile restore for offline care */
   function fmtDur(min){ if(min<=0)return "ready"; if(min<60)return Math.ceil(min)+"m"; const h=Math.floor(min/60),m=Math.round(min%60); return h+"h"+(m?(" "+m+"m"):""); }
   function rollSkills(){const p=[0,1,2,3,4,5,6],o=[];for(let i=0;i<3;i++)o.push(p.splice(ri(0,p.length-1),1)[0]);return o.sort((a,b)=>a-b);}
 
-  async function buyEgg(){
-    if(!ANCIENT_EGG_ENABLED){showBanner("🔮 The Immortal Sorceress is away — Ancient Eggs aren't available yet.","info");return;}
+  function removeCreature(c){
+    if(!c)return;
+    if(typeof freeSpot==="function")freeSpot(c);
+    if(c.mesh&&typeof chikiRoot!=="undefined"){chikiRoot.remove(c.mesh);}
+    if(c.fx){for(const k in c.fx){const o=c.fx[k];if(o&&o.parent)o.parent.remove(o);}}
+    const i=creatures.indexOf(c); if(i>-1)creatures.splice(i,1);
+    if(c.holder&&c.holder.creature===c)c.holder.creature=creatures.find(x=>x.holder===c.holder)||null;
+  }
+  /* RELEASE & REROLL: send a normal Chiki back to the jungle (200,000 $CHIKI) and Mithra grants a fresh egg — repeatable */
+  async function releaseRehatch(){
     if(!player){showBanner("Connect your wallet first.","error");return;}
-    if(player.ancientEgg){renderSorc();return;}
-    if(!carers(player).length){showBanner("🔮 You need at least one elemental Chiki to care for an Ancient Egg.","error");return;}
-    const cost=ANCIENT_EGG_COST;
-    if((player.bal||0)-cost<MIN_HOLD){showBanner(`🔮 An Ancient Egg costs ${cost.toLocaleString()} $CHIKI (must keep ≥${MIN_HOLD.toLocaleString()}).`,"error");return;}
-    const btn=g("sorcBuyBtn"); if(btn){btn.disabled=true;btn.textContent="✍️ Approve in Phantom…";}
-    const EGG_SPLIT={burn:100,pool:4000,team:5900};   /* Legendary Egg split (basis points): 1% burn · 40% reward pool · 59% team */
+    const norms=creatures.filter(c=>c.holder===player&&!c.isLegend);
+    if(!norms.length){showBanner("You have no normal Chiki to release.","error");return;}
+    const cost=REROLL_COST;
+    if((player.bal||0)-cost<MIN_HOLD){showBanner(`Releasing costs ${cost.toLocaleString()} $CHIKI (keep ≥${MIN_HOLD.toLocaleString()}).`,"error");return;}
+    const btn=g("mithReroll"); if(btn){btn.disabled=true;btn.textContent="✍️ Approve in Phantom…";}
     if(CHAIN.ONCHAIN_SPENDS&&player.pk){
-      try{await chikiSpend(cost,"Ancient Egg",EGG_SPLIT);}
-      catch(e){console.error("egg spend error:",e);const m="⚠️ Ancient Egg purchase failed: "+(e.message||e);showBanner(m,"error");addFeed(m);renderSorc();return;}
+      try{await chikiSpend(cost,"Release Chiki",REROLL_SPLIT);}
+      catch(e){console.error("reroll spend error:",e);const m="⚠️ Release failed: "+(e.message||e);showBanner(m,"error");addFeed(m);renderSorc();return;}
+    }
+    player.bal-=cost;
+    const burn=cost*0.01,toPool=cost*0.39,toTeam=cost*0.60;
+    burnedChiki+=burn;pool+=toPool*TOKEN_PRICE;teamChiki+=toTeam;
+    const victim=norms[norms.length-1];                       /* release the newest normal Chiki */
+    const vname=(typeof nameOf==="function"?nameOf(victim):victim.sp.names[0]);
+    removeCreature(victim);
+    addFeed(`🌿 ${nameFor(player)} released <b>${vname}</b> to the jungle for ${cost.toLocaleString()} $CHIKI → 🔥${fmtK(burn)} burned · 💰${fmtK(toPool)}→pool · 🏦${fmtK(toTeam)}→team. Mithra grants a fresh egg…`);
+    await hatchChikis(player,1,{noLegend:true});               /* fresh NORMAL egg, from scratch (Lv 1) */
+    if(player.pk&&typeof saveProfile==="function")saveProfile(player);
+    if(typeof refreshUI==="function")refreshUI();
+    renderSorc();
+  }
+  async function buyEgg(){    /* buy a LEGENDARY egg (1,000,000 $CHIKI) — cared for 24h / 12h with 2 Chikis */
+    if(!ANCIENT_EGG_ENABLED){showBanner("🔮 Mithra's Mystic Market is closed right now.","info");return;}
+    if(!player){showBanner("Connect your wallet first.","error");return;}
+    if(player.ancientEgg&&!player.ancientEgg.hatched){renderSorc();return;}
+    if(!isCreator(player.pk)&&holderCounts(player).legend>=MAX_LEGEND){showBanner("You already have a Legendary Chikimon (max 1).","error");return;}
+    if(!carers(player).length){showBanner("🔮 You need at least one normal Chiki to care for a Legendary Egg.","error");return;}
+    const cost=LEGEND_EGG_COST;
+    if((player.bal||0)-cost<MIN_HOLD){showBanner(`🔮 A Legendary Egg costs ${cost.toLocaleString()} $CHIKI (must keep ≥${MIN_HOLD.toLocaleString()}).`,"error");return;}
+    const btn=g("sorcBuyBtn"); if(btn){btn.disabled=true;btn.textContent="✍️ Approve in Phantom…";}
+    const EGG_SPLIT={burn:100,pool:4000,team:5900};   /* Legendary Egg split (bp): 1% burn · 40% pool · 59% team */
+    if(CHAIN.ONCHAIN_SPENDS&&player.pk){
+      try{await chikiSpend(cost,"Legendary Egg",EGG_SPLIT);}
+      catch(e){console.error("egg spend error:",e);const m="⚠️ Legendary Egg purchase failed: "+(e.message||e);showBanner(m,"error");addFeed(m);renderSorc();return;}
     }
     player.bal-=cost;
     const burn=cost*EGG_SPLIT.burn/10000,toPool=cost*EGG_SPLIT.pool/10000,toTeam=cost*EGG_SPLIT.team/10000;
     burnedChiki+=burn;pool+=toPool*TOKEN_PRICE;teamChiki+=toTeam;
-    player.ancientEgg={careMin:0,lastAt:Date.now(),hatched:false};
-    addFeed(`🔮 ${nameFor(player)} obtained an <b>Ancient Egg</b> from the Immortal Sorceress → 🔥${fmtK(burn)} burned · 💰${fmtK(toPool)}→pool · 🏦${fmtK(toTeam)}→team. Your Chikis begin caring for it…`);
+    const need=careNeed(player);
+    player.ancientEgg={careMin:0,lastAt:Date.now(),hatched:false,need};
+    addFeed(`🥚 ${nameFor(player)} bought a <b>Legendary Egg</b> from Mithra → 🔥${fmtK(burn)} burned · 💰${fmtK(toPool)}→pool · 🏦${fmtK(toTeam)}→team. Your Chiki(s) will tend it for ${Math.round(need/60)}h…`);
     if(player.pk&&typeof saveProfile==="function")saveProfile(player);
     if(typeof refreshUI==="function")refreshUI();
     renderSorc();
   }
 
   function hatchAncient(){
-    const e=player&&player.ancientEgg; if(!e||(e.careMin||0)<CARE_NEED_MIN||revealing)return;
+    const e=player&&player.ancientEgg; if(!e||(e.careMin||0)<(e.need||careNeed(player))||revealing)return;
+    if(!isCreator(player.pk)&&holderCounts(player).legend>=MAX_LEGEND){showBanner("You already have a Legendary (max 1) — cannot hatch another.","error");return;}
     revealing=true;
     const idx=LEGEND_IDXS[ri(0,LEGEND_IDXS.length-1)];
     const c=spawnCreature(player,10,idx);
@@ -2651,49 +2699,56 @@ setInterval(updateWhaleTab,1000);
 
   function renderSorc(){
     const body=g("sorcBody"); if(!body||revealing)return;
-    if(!ANCIENT_EGG_ENABLED){ body.innerHTML=`<div class="sEgg">🔮</div><div id="sorcLore">The Immortal Sorceress is away on a journey beyond Chikoria.<br><b>Ancient Eggs are not available yet</b> — they will return soon. 🥚✨</div>`; return; }
-    if(!player){ body.innerHTML=`<div id="sorcLore">Only legendary Chikimons — descendants of the ancient royal bloodlines — can wield the power of Chi and enter the Arena.</div><div class="sStat">Connect your wallet to visit the Sorceress.</div>`; return; }
+    if(!player){ body.innerHTML=`<div class="sEgg">🔮</div><div id="sorcLore">Mithra, the Immortal Sorceress, guards Chikoria and tends the Mystic Market.</div><div class="sStat">Connect your wallet to meet Mithra.</div>`; return; }
     tickCare(player);
     const e=player.ancientEgg;
-    if(!e){
-      const has=carers(player).length;
-      body.innerHTML=`<div id="sorcLore">“Having descended from the royal bloodlines of the ancient Chikis, only <b>legendary</b> Chikimons can possess the power of Chi.”<br>Buy an <b>Ancient Egg</b> — your elemental Chikis will tend it until a random Legendary awakens.</div>
-        <div class="sEgg">🥚</div>
-        <div class="sCost">Ancient Egg — ${ANCIENT_EGG_COST.toLocaleString()} $CHIKI</div>
-        <div class="sStat">🔥 1% burn · 💰 40% pool · 🏦 59% team</div>
-        <button class="sBtn" id="sorcBuyBtn" ${has?"":"disabled"}>🔮 Buy Ancient Egg</button>
-        <div class="sNote">${has?"You may only hold <b>1</b> Ancient Egg at a time. Up to 2 Chikis care for it; higher level = faster (≈24h base).":"⚠️ You need at least one elemental Chiki to care for the egg first."}</div>`;
-      const b=g("sorcBuyBtn"); if(b)b.onclick=buyEgg;
+    /* ---- a Legendary Egg is incubating / ready ---- */
+    if(e&&!e.hatched){
+      const need=e.need||careNeed(player), done=Math.min(need,e.careMin||0), pct=Math.round(done/need*100), ready=done>=need;
+      const left=Math.max(0,need-done);
+      if(ready){
+        body.innerHTML=`<div id="sorcLore">The Legendary Egg trembles with power — it is ready to hatch! ✨</div>
+          <div class="sEgg shake">🥚</div><div class="sCareWrap"><div class="sCare" style="width:100%"></div></div>
+          <div class="sStat"><b>Ready to hatch!</b></div>
+          <button class="sBtn gold" id="sorcHatchBtn">✨ Hatch your Legendary</button>`;
+        const hb=g("sorcHatchBtn"); if(hb)hb.onclick=hatchAncient;
+        return;
+      }
+      body.innerHTML=`<div id="sorcLore">Your Chiki(s) are caring for the <b>Legendary Egg</b> — pouring all their stamina &amp; food into it. They rest when drained.</div>
+        <div class="sEgg shake">🥚</div><div class="sCareWrap"><div class="sCare" style="width:${pct}%"></div></div>
+        <div class="sStat">Care progress: <b>${pct}%</b></div>
+        <div class="sStat">⏳ Time left: <b>${fmtDur(left)}</b> (${Math.round(need/60)}h total${carers(player).length>=2?", sped up by 2 Chikis":""})</div>
+        <div class="sNote">Care continues while you're away. Keep their food topped to avoid long rests.</div>`;
       return;
     }
-    const need=CARE_NEED_MIN, done=Math.min(need,e.careMin||0), pct=Math.round(done/need*100);
-    const ready=done>=need;
-    const cs=carers(player);
-    const rate=careRate(player);
-    const left=ready?0:(rate>0?(need-done)/rate:Infinity);
-    if(ready){
-      body.innerHTML=`<div id="sorcLore">The Ancient Egg trembles with power — it is ready to hatch!</div>
-        <div class="sEgg shake">🥚</div>
-        <div class="sCareWrap"><div class="sCare" style="width:100%"></div></div>
-        <div class="sStat"><b>Ready to hatch!</b> ✨</div>
-        <button class="sBtn gold" id="sorcHatchBtn">✨ Hatch the Ancient Egg</button>`;
-      const hb=g("sorcHatchBtn"); if(hb)hb.onclick=hatchAncient;
-      return;
-    }
-    body.innerHTML=`<div id="sorcLore">Your Chikis are caring for the Ancient Egg. It hatches once it has received enough care.</div>
-      <div class="sEgg shake">🥚</div>
-      <div class="sCareWrap"><div class="sCare" style="width:${pct}%"></div></div>
-      <div class="sStat">Care progress: <b>${pct}%</b> (${Math.floor(done)}/${need} care-min)</div>
-      <div class="sStat">⏳ Est. time left: <b>${rate>0?fmtDur(left):"need a carer Chiki"}</b></div>
-      <div class="sCarers">🐣 Caring (50% energy each): ${cs.length?cs.map(c=>`${(typeof nameOf==="function"?nameOf(c):c.sp.names[0])} <span style="opacity:.7">Lv${c.level||1}</span>`).join(" · "):"—"}</div>
-      <div class="sNote">Tip: higher-level carers and two Chikis caring at once speed it up. Progress continues while you're away.</div>`;
+    /* ---- market: release/reroll + buy a Legendary Egg ---- */
+    const norms=creatures.filter(c=>c.holder===player&&!c.isLegend).length;
+    const legs=holderCounts(player).legend, atLegCap=!isCreator(player.pk)&&legs>=MAX_LEGEND;
+    body.innerHTML=`<div id="sorcLore">“Welcome, traveler. I am <b>Mithra</b>, guardian of Chikoria.” Trade with the Mystic Market below.</div>
+      <div class="sEgg">🔮</div>
+      <div style="border:1px solid #2c4470;border-radius:12px;padding:10px;margin:8px 0;text-align:left">
+        <div style="font-weight:800;color:#dce8fa">🌿 Release &amp; Reroll</div>
+        <div class="sNote" style="margin:3px 0">Release a Chiki back to the jungle and Mithra grants a fresh egg (a new <b>normal</b> Chiki from Lv 1). Repeat until you're happy.</div>
+        <div class="sStat">${REROLL_COST.toLocaleString()} $CHIKI · 🔥1% · 💰39% pool · 🏦60% team</div>
+        <button class="sBtn" id="mithReroll" ${norms?"":"disabled"} style="margin-top:6px">🌿 Release &amp; hatch a new egg</button>
+        ${norms?"":`<div class="sNote">⚠️ You have no normal Chiki to release.</div>`}
+      </div>
+      <div style="border:1px solid #6b4ea0;border-radius:12px;padding:10px;margin:8px 0;text-align:left">
+        <div style="font-weight:800;color:#c79bff">👑 Legendary Egg</div>
+        <div class="sNote" style="margin:3px 0">A guaranteed Legendary. Your Chiki(s) care for it <b>24h</b> (<b>12h</b> with 2 Chikis), spending all stamina &amp; food until it hatches.</div>
+        <div class="sStat">${LEGEND_EGG_COST.toLocaleString()} $CHIKI · 🔥1% · 💰40% pool · 🏦59% team</div>
+        <button class="sBtn gold" id="sorcBuyBtn" ${(!atLegCap&&norms)?"":"disabled"} style="margin-top:6px">👑 Buy Legendary Egg</button>
+        ${atLegCap?`<div class="sNote">You already hold a Legendary (max 1).</div>`:(norms?"":`<div class="sNote">⚠️ Need a normal Chiki to care for it.</div>`)}
+      </div>`;
+    const rb=g("mithReroll"); if(rb)rb.onclick=releaseRehatch;
+    const bb=g("sorcBuyBtn"); if(bb)bb.onclick=buyEgg;
   }
 
   /* button alert dot when an egg is ready to hatch */
   function updateSorcBtn(){
     const btn=g("btnSorc"); if(!btn||!player)return;
     tickCare(player);
-    const e=player.ancientEgg, ready=!!(e&&(e.careMin||0)>=CARE_NEED_MIN);
+    const e=player.ancientEgg, ready=!!(e&&!e.hatched&&(e.careMin||0)>=(e.need||CARE_NEED_24H));
     btn.classList.toggle("alert",ready);
   }
 
@@ -4020,6 +4075,34 @@ for(let i=0;i<4;i++){
 
 /* ================= CHIKI MESHES ================= */
 const chikiRoot=new THREE.Group();scene.add(chikiRoot);
+/* ===== Mithra the Immortal Sorceress — a static 3D NPC standing in Chikoria (guardian of the Mystic Market) ===== */
+let mithraNPC=null, mithraSpot=null;
+function loadMithra(){
+  if(typeof THREE==="undefined"||!THREE.GLTFLoader)return;
+  let tx=86,ty=70,found=null;
+  for(let r=0;r<44&&!found;r++)for(let dx=-r;dx<=r&&!found;dx++)for(let dy=-r;dy<=r&&!found;dy++){
+    const nx=tx+dx,ny=ty+dy; if(nx<4||ny<4||nx>COLS-4||ny>ROWS-4)continue;
+    if(walkable(nx*TILE+TILE/2,ny*TILE+TILE/2))found={x:nx,y:ny};
+  }
+  if(!found)found={x:tx,y:ty};
+  const wx=found.x*TILE+TILE/2, wz=found.y*TILE+TILE/2, gy=heightY(wx,wz);
+  mithraSpot={x:wx,z:wz,gy};
+  fetch("mithra.glb",{cache:"force-cache"}).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer();}).then(buf=>{
+    new THREE.GLTFLoader().parse(buf,"",function(gltf){
+      const src=gltf.scene;src.updateMatrixWorld(true);
+      const b=new THREE.Box3().setFromObject(src),sz=new THREE.Vector3();b.getSize(sz);
+      const ctr=new THREE.Vector3();b.getCenter(ctr);
+      const k=66/Math.max(0.001,sz.y);                         /* a tall sorceress, slightly above the Chikis */
+      src.scale.setScalar(k);
+      src.position.set(wx-ctr.x*k, gy-b.min.y*k, wz-ctr.z*k);
+      src.traverse(o=>{if(o.isMesh){o.castShadow=true; if(o.geometry&&o.geometry.attributes&&o.geometry.attributes.color&&o.material){o.material=o.material.clone();o.material.vertexColors=true;if(o.material.color)o.material.color.setRGB(1,1,1);o.material.needsUpdate=true;}}});
+      src.rotation.y=Math.PI;
+      scene.add(src);mithraNPC=src;
+      try{const lbl=makeTextSprite("🔮 Mithra",30);lbl.position.set(wx,gy+82,wz);lbl.userData.noScale=1;scene.add(lbl);}catch(e){}
+    },function(){});
+  }).catch(()=>{});
+}
+setTimeout(loadMithra,500);
 function makeTextSprite(txt,scalePx,color){
   const c2v=document.createElement("canvas");c2v.width=256;c2v.height=64;
   const c2=c2v.getContext("2d");
