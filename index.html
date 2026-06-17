@@ -135,6 +135,7 @@
     <div class="legend"><img class="e" src="chikidex/galador.png" alt="Galador"><strong>Galador</strong><span>Legendary</span></div>
     <div class="legend"><img class="e" src="chikidex/adalor.png" alt="Adalor" onerror="this.onerror=null;this.outerHTML='&lt;div class=\'e\' style=\'display:flex;align-items:center;justify-content:center;font-size:38px;background:radial-gradient(circle at 50% 35%,#fff3b0,#e0a800);border-radius:10px\'&gt;🔥&lt;/div&gt;'"><strong>Adalor</strong><span>Legendary</span></div>
     <div class="legend"><img class="e" src="chikidex/tyrannos.png" alt="Tyrannos" onerror="this.style.display='none'"><strong>Tyrannos</strong><span>Legendary</span></div>
+    <div class="legend"><img class="e" src="chikidex/grovador.png" alt="Grovador" onerror="this.style.display='none'"><strong>Grovador</strong><span>Legendary</span></div>
   </div>
 </div>
 
@@ -242,7 +243,7 @@
 <script>
 /* ChikiDex 3D viewer — rotate each Chiki */
 (function(){
-  const NAMES=["Mushrow","Electrox","Jellox","Firix","Owzard","Forestle","Drolax","Healix","Solarix","Scorplex","Galador","Adalor","Tyrannos"];
+  const NAMES=["Mushrow","Electrox","Jellox","Firix","Owzard","Forestle","Drolax","Healix","Solarix","Scorplex","Galador","Adalor","Tyrannos","Grovador"];
   let curGlow=null;
   let renderer,scene,camera,current,rot=0,drag=false,lastX=0,inited=false;const cache={};
   function b64(s){const b=atob(s),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u.buffer;}
@@ -262,7 +263,7 @@
   }
   function resize(){if(!renderer)return;const cv=renderer.domElement,w=cv.clientWidth||320,h=cv.clientHeight||260;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
   function setModel(m){if(current)scene.remove(current);current=m;curGlow=m&&m.userData?m.userData.glowMats||null:null;scene.add(m);}
-  const EXTERNAL_GLB={11:"adalor_voxel.glb",12:"tyrannos.glb"};   /* large models served as files (not embedded in models.js) */
+  const EXTERNAL_GLB={11:"adalor_voxel.glb",12:"tyrannos.glb",13:"grovador_voxel.glb"};   /* large models served as files (not embedded in models.js) */
   function buildFromGltf(i,gltf){
     const root=gltf.scene,box=new THREE.Box3().setFromObject(root),sz=new THREE.Vector3();box.getSize(sz);
     const ctr=new THREE.Vector3();box.getCenter(ctr),k=40/Math.max(0.001,sz.y);
