@@ -1085,8 +1085,9 @@ const SPECIES=[
   {names:["Adalor","Adalor","Adalor"],type:"Legendary",body:"#e0a800",accent:"#fff3b0",mane:"shadow",maneCols:["#ffd43b","#ffae00","#fff3b0"],aura:"gold"},   /* next Legendary — golden Super-Saiyan fire aura, wings-only animation */
   {names:["Tyrannos","Tyrannos","Tyrannos"],type:"Legendary",body:"#5b7a3a",accent:"#c4d97a",mane:"shadow",maneCols:["#5b7a3a","#3d4f28","#c4d97a"],aura:"green"},   /* Tyrannos — Legendary apex predator, green fire aura */
   {names:["Grovador","Grovador","Grovador"],type:"Legendary",body:"#2e8b57",accent:"#9be38f",mane:"shadow",maneCols:["#2e8b57","#1f5e3a","#9be38f"],aura:"emerald",auraBig:true},   /* Grovador — Legendary grove guardian, BIG emerald aura */
+  {names:["Dragonos","Dragonos","Dragonos"],type:"Legendary",body:"#c0392b",accent:"#ff9f43",mane:"shadow",maneCols:["#c0392b","#7a1f12","#ff9f43"],aura:"fire",auraBig:true},   /* Dragonos — final Legendary, fire dragon, big fire aura */
 ];
-const DEX_IMG=["mushrow","electrox","jellox","firix","owzard","forestle","drolax","healix","solarix","scorplex","galador","adalor","tyrannos","grovador"];  /* species idx -> chikidex png */
+const DEX_IMG=["mushrow","electrox","jellox","firix","owzard","forestle","drolax","healix","solarix","scorplex","galador","adalor","tyrannos","grovador","dragonos"];  /* species idx -> chikidex png */
 /* shared Chi-skill names per species (emoji,name) + descriptions — used by the Arena and Ancient-Egg hatch */
 const CHI_DESC=["Reliable hit","Big hit · blocked by Guard","Ignores Guard","Block 60% + reflect","Next hit +70%","Heal 60% of dmg","Huge hit · 7 recoil"];
 const CHI_PN=[
@@ -1103,7 +1104,8 @@ const CHI_PN=[
  [["💧","Water Shot"],["🌊","Water Blast"],["🐟","Fish Attack"],["⚓","Shipwreck"],["💦","Water Sprout"],["🦈","Shark Attack"],["🌊","Giant Wave"]],
  [["✨","Holy Smite"],["♨️","Intense Heat"],["🌟","Blinding Light"],["🛡️","Radiant Shield"],["☀️","Solar Charge"],["💖","Divine Heal"],["💥","Sunburst"]],
  [["🦷","Bite"],["🦶","Trample"],["💨","Tail Whip"],["😱","Fear"],["🗣️","Savage Roar"],["🩸","Devour"],["💥","Apex Crush"]],
- [["🌑","Ambush"],["⚡","Roar of Thunder"],["🐺","Pack Attack"],["🛡️","Howl"],["🔋","Storm Surge"],["🩸","Thunder Fang"],["🌩️","Thunderstorm"]]
+ [["🌑","Ambush"],["⚡","Roar of Thunder"],["🐺","Pack Attack"],["🛡️","Howl"],["🔋","Storm Surge"],["🩸","Thunder Fang"],["🌩️","Thunderstorm"]],
+ [["🔥","Fire Whip"],["🐉","Breath of Fire"],["💨","Fire Dash"],["🛡️","Scale Guard"],["🔥","Blaze Charge"],["🔥","Ember Drain"],["💥","Inferno"]]
 ];
 const LEGEND_IDXS=SPECIES.map((s,i)=>s.type==="Legendary"?i:-1).filter(i=>i>=0);   /* legendary species indices */
 const NONLEGEND_IDXS=SPECIES.map((s,i)=>s.type!=="Legendary"?i:-1).filter(i=>i>=0); /* normal (non-legendary) species indices */
@@ -4130,7 +4132,7 @@ function auraTex(){
   x.fillStyle=gr;x.beginPath();x.arc(32,32,30,0,6.283);x.fill();
   _auraTex=new THREE.CanvasTexture(cv2);return _auraTex;
 }
-const AURA_COLORS={gold:{flame:0xffcf4d,disk:0xffca3a},blue:{flame:0x4f9cff,disk:0x6fb1ff},green:{flame:0x8ae65c,disk:0x6bd43a},emerald:{flame:0x2ee68a,disk:0x10c878}};
+const AURA_COLORS={gold:{flame:0xffcf4d,disk:0xffca3a},blue:{flame:0x4f9cff,disk:0x6fb1ff},green:{flame:0x8ae65c,disk:0x6bd43a},emerald:{flame:0x2ee68a,disk:0x10c878},fire:{flame:0xff5a1a,disk:0xff7a2a}};
 function buildAura(kind,big){
   const col=AURA_COLORS[kind]||AURA_COLORS.gold;
   const N=big?32:16, TOP=big?64:38, RMIN=big?5:4, RMAX=big?18:11, SCL=big?17:11, RISE=big?34:26, TAPER=big?0.22:0.45, DISK=big?72:40;
@@ -5065,7 +5067,7 @@ setTimeout(()=>{
     }
   }
   /* large built-in models kept as separate files (out of models.js to stay light) */
-  const EXTERNAL_GLB={11:"adalor_voxel.glb",12:"tyrannos.glb",13:"grovador_voxel.glb"};   /* in-game: voxel Adalor + Tyrannos sculpt + voxel Grovador */
+  const EXTERNAL_GLB={11:"adalor_voxel.glb",12:"tyrannos.glb",13:"grovador_voxel.glb",14:"dragonos_voxel_anim.glb"};   /* in-game legendaries (Dragonos has a baked Idle) */
   for(const i in EXTERNAL_GLB){
     const idx=+i;
     if(glbCache[idx]||customModels[idx])continue;
