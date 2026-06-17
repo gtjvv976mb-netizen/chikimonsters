@@ -743,6 +743,19 @@ if(location.search.indexOf("embed")>-1){
 .sReveal{font-size:88px;line-height:1;margin:6px 0;animation:sPop .6s ease}
 @keyframes sPop{0%{transform:scale(.2);opacity:0}60%{transform:scale(1.2)}100%{transform:scale(1)}}
 .sSkill{display:inline-block;background:#2a1f44;border:1px solid #6a4fb0;border-radius:8px;padding:5px 9px;margin:3px;font-size:12.5px;color:#e7dcff;font-weight:700}
+/* Mithra portrait + market cards */
+.mPortraitWrap{position:relative;display:inline-block;margin:2px auto 6px}
+.mPortrait{width:148px;height:148px;object-fit:contain;border-radius:14px;border:2px solid #6a4fb0;
+  background:radial-gradient(circle at 50% 35%,#3a2a66,#1a1230);box-shadow:0 8px 26px rgba(120,80,200,.45);position:relative;z-index:1}
+.mGlow{position:absolute;inset:-10px;border-radius:20px;z-index:0;
+  background:radial-gradient(circle,rgba(167,121,255,.55),rgba(167,121,255,0) 70%);animation:mPulse 2.6s ease-in-out infinite}
+@keyframes mPulse{0%,100%{opacity:.45;transform:scale(.98)}50%{opacity:.9;transform:scale(1.06)}}
+.mCard{text-align:left;border:1px solid #3a2c5e;border-radius:14px;padding:12px 13px;margin:9px 0;
+  background:linear-gradient(180deg,rgba(40,28,72,.6),rgba(20,14,38,.6))}
+.mCard.legend{border-color:#7a5ad0;background:linear-gradient(180deg,rgba(60,40,110,.55),rgba(28,18,52,.6));box-shadow:inset 0 0 18px rgba(140,90,230,.18)}
+.mCardHead{display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:15px;color:#efe6ff;margin-bottom:4px;gap:8px}
+.mPrice{font-size:12.5px;font-weight:800;color:#ffd93d;background:#2a1f44;border:1px solid #6a4fb0;border-radius:8px;padding:3px 8px;white-space:nowrap}
+.mCard .sBtn{width:100%;margin-top:9px;font-size:14.5px;padding:11px 16px}
 </style>
 <div id="sorcOverlay"><div id="sorcBox">
   <div id="sorcHead">🔮 Mithra's Mystic Market <span class="x" id="sorcClose">✕</span></div>
@@ -2697,9 +2710,10 @@ setInterval(updateWhaleTab,1000);
     },900);
   }
 
+  const PORTRAIT=`<div class="mPortraitWrap"><img class="mPortrait" src="ui/mithra.png" alt="Mithra" onerror="this.style.display='none'"><div class="mGlow"></div></div>`;
   function renderSorc(){
     const body=g("sorcBody"); if(!body||revealing)return;
-    if(!player){ body.innerHTML=`<div class="sEgg">🔮</div><div id="sorcLore">Mithra, the Immortal Sorceress, guards Chikoria and tends the Mystic Market.</div><div class="sStat">Connect your wallet to meet Mithra.</div>`; return; }
+    if(!player){ body.innerHTML=`${PORTRAIT}<div id="sorcLore">Mithra, the Immortal Sorceress, guards Chikoria and tends the Mystic Market.</div><div class="sStat">Connect your wallet to meet Mithra.</div>`; return; }
     tickCare(player);
     const e=player.ancientEgg;
     /* ---- a Legendary Egg is incubating / ready ---- */
@@ -2707,37 +2721,34 @@ setInterval(updateWhaleTab,1000);
       const need=e.need||careNeed(player), done=Math.min(need,e.careMin||0), pct=Math.round(done/need*100), ready=done>=need;
       const left=Math.max(0,need-done);
       if(ready){
-        body.innerHTML=`<div id="sorcLore">The Legendary Egg trembles with power — it is ready to hatch! ✨</div>
+        body.innerHTML=`${PORTRAIT}<div id="sorcLore">“The Legendary Egg trembles with power — it is ready.” ✨</div>
           <div class="sEgg shake">🥚</div><div class="sCareWrap"><div class="sCare" style="width:100%"></div></div>
           <div class="sStat"><b>Ready to hatch!</b></div>
           <button class="sBtn gold" id="sorcHatchBtn">✨ Hatch your Legendary</button>`;
         const hb=g("sorcHatchBtn"); if(hb)hb.onclick=hatchAncient;
         return;
       }
-      body.innerHTML=`<div id="sorcLore">Your Chiki(s) are caring for the <b>Legendary Egg</b> — pouring all their stamina &amp; food into it. They rest when drained.</div>
+      body.innerHTML=`${PORTRAIT}<div id="sorcLore">Your Chiki(s) are caring for the <b>Legendary Egg</b> — pouring all their stamina &amp; food into it. They rest when drained.</div>
         <div class="sEgg shake">🥚</div><div class="sCareWrap"><div class="sCare" style="width:${pct}%"></div></div>
-        <div class="sStat">Care progress: <b>${pct}%</b></div>
-        <div class="sStat">⏳ Time left: <b>${fmtDur(left)}</b> (${Math.round(need/60)}h total${carers(player).length>=2?", sped up by 2 Chikis":""})</div>
-        <div class="sNote">Care continues while you're away. Keep their food topped to avoid long rests.</div>`;
+        <div class="sStat">Care progress: <b>${pct}%</b> · ⏳ <b>${fmtDur(left)}</b> left</div>
+        <div class="sNote">${Math.round(need/60)}h total${carers(player).length>=2?" — sped up by your 2 Chikis":""}. Care continues while you're away.</div>`;
       return;
     }
     /* ---- market: release/reroll + buy a Legendary Egg ---- */
     const norms=creatures.filter(c=>c.holder===player&&!c.isLegend).length;
     const legs=holderCounts(player).legend, atLegCap=!isCreator(player.pk)&&legs>=MAX_LEGEND;
-    body.innerHTML=`<div id="sorcLore">“Welcome, traveler. I am <b>Mithra</b>, guardian of Chikoria.” Trade with the Mystic Market below.</div>
-      <div class="sEgg">🔮</div>
-      <div style="border:1px solid #2c4470;border-radius:12px;padding:10px;margin:8px 0;text-align:left">
-        <div style="font-weight:800;color:#dce8fa">🌿 Release &amp; Reroll</div>
-        <div class="sNote" style="margin:3px 0">Release a Chiki back to the jungle and Mithra grants a fresh egg (a new <b>normal</b> Chiki from Lv 1). Repeat until you're happy.</div>
-        <div class="sStat">${REROLL_COST.toLocaleString()} $CHIKI · 🔥1% · 💰39% pool · 🏦60% team</div>
-        <button class="sBtn" id="mithReroll" ${norms?"":"disabled"} style="margin-top:6px">🌿 Release &amp; hatch a new egg</button>
+    body.innerHTML=`${PORTRAIT}
+      <div id="sorcLore">“Welcome, traveler. I am <b>Mithra</b>, guardian of Chikoria — let us trade.”</div>
+      <div class="mCard">
+        <div class="mCardHead">🌿 Release &amp; Reroll <span class="mPrice">${REROLL_COST.toLocaleString()} $CHIKI</span></div>
+        <div class="sNote">Release a Chiki to the jungle and I'll grant a fresh egg — a new <b>normal</b> Chiki from Lv 1. Reroll as many times as you wish.</div>
+        <button class="sBtn" id="mithReroll" ${norms?"":"disabled"}>🌿 Release &amp; hatch a new egg</button>
         ${norms?"":`<div class="sNote">⚠️ You have no normal Chiki to release.</div>`}
       </div>
-      <div style="border:1px solid #6b4ea0;border-radius:12px;padding:10px;margin:8px 0;text-align:left">
-        <div style="font-weight:800;color:#c79bff">👑 Legendary Egg</div>
-        <div class="sNote" style="margin:3px 0">A guaranteed Legendary. Your Chiki(s) care for it <b>24h</b> (<b>12h</b> with 2 Chikis), spending all stamina &amp; food until it hatches.</div>
-        <div class="sStat">${LEGEND_EGG_COST.toLocaleString()} $CHIKI · 🔥1% · 💰40% pool · 🏦59% team</div>
-        <button class="sBtn gold" id="sorcBuyBtn" ${(!atLegCap&&norms)?"":"disabled"} style="margin-top:6px">👑 Buy Legendary Egg</button>
+      <div class="mCard legend">
+        <div class="mCardHead">👑 Legendary Egg <span class="mPrice">${LEGEND_EGG_COST.toLocaleString()} $CHIKI</span></div>
+        <div class="sNote">A <b>guaranteed Legendary</b>. Your Chiki(s) will care for it <b>24h</b> (<b>12h</b> with 2 Chikis), spending all their stamina &amp; food until it hatches.</div>
+        <button class="sBtn gold" id="sorcBuyBtn" ${(!atLegCap&&norms)?"":"disabled"}>👑 Buy Legendary Egg</button>
         ${atLegCap?`<div class="sNote">You already hold a Legendary (max 1).</div>`:(norms?"":`<div class="sNote">⚠️ Need a normal Chiki to care for it.</div>`)}
       </div>`;
     const rb=g("mithReroll"); if(rb)rb.onclick=releaseRehatch;
@@ -2752,10 +2763,11 @@ setInterval(updateWhaleTab,1000);
     btn.classList.toggle("alert",ready);
   }
 
+  window.openMystic=function(){ if(!ANCIENT_EGG_ENABLED)return; open=true; g("sorcOverlay").style.display="flex"; renderSorc(); if(typeof focusOnMithra==="function")focusOnMithra(); };
   const sb=g("btnSorc");
   if(sb){
-    if(!ANCIENT_EGG_ENABLED){ sb.style.display="none"; }   /* Sorceress deactivated — hide the tab entirely */
-    else sb.onclick=()=>{ open=true; g("sorcOverlay").style.display="flex"; renderSorc(); };
+    if(!ANCIENT_EGG_ENABLED){ sb.style.display="none"; }
+    else sb.onclick=()=>window.openMystic();   /* open the market AND swing the camera to Mithra */
   }
   const sc=g("sorcClose"); if(sc)sc.onclick=()=>{ open=false; revealing=false; g("sorcOverlay").style.display="none"; };
   if(ANCIENT_EGG_ENABLED)setInterval(()=>{ if(player)tickCare(player); updateSorcBtn(); if(open&&!revealing)renderSorc(); }, 12000);
@@ -3182,6 +3194,15 @@ function updateCamera(){
   camera.position.set(cam.target.x+sx*cam.dist,cam.target.y+sy*cam.dist,cam.target.z+sz*cam.dist);
   camera.lookAt(cam.target);
 }
+/* swing the camera over to Mithra (used when opening the Mystic Market or clicking her) */
+function focusOnMithra(){
+  if(typeof mithraSpot==="undefined"||!mithraSpot)return;
+  followMode=false;
+  cam.target.set(mithraSpot.x,(mithraSpot.gy||0)+34,mithraSpot.z);
+  cam.dist=Math.min(cam.dist,560); cam.theta=-0.6; cam.phi=0.92;
+  updateCamera();
+}
+window.focusOnMithra=focusOnMithra;
 let dragging=false,dragMoved=false,lastMx=0,lastMy=0;
 cv.addEventListener("mousedown",e=>{dragging=true;dragMoved=false;lastMx=e.clientX;lastMy=e.clientY;cv.classList.add("dragging");});
 window.addEventListener("mousemove",e=>{
@@ -4439,6 +4460,7 @@ cv.addEventListener("click",e=>{
   if(dragMoved)return;
   mouseV.x=(e.clientX/innerWidth)*2-1;mouseV.y=-(e.clientY/innerHeight)*2+1;
   raycaster.setFromCamera(mouseV,camera);
+  if(typeof mithraNPC!=="undefined"&&mithraNPC){const mh=raycaster.intersectObject(mithraNPC,true);if(mh.length){if(window.openMystic)window.openMystic();return;}}   /* click Mithra → open the Mystic Market */
   const hits=raycaster.intersectObjects(chikiRoot.children,true);
   if(hits.length){const c=hits[0].object.userData.ci;if(c)showInspect(c);}
   else if(typeof closeAllPops==="function")closeAllPops();   /* tap empty world to minimize open panels */
