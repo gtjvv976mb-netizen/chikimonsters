@@ -271,9 +271,10 @@
       .then(buf=>{new THREE.GLTFLoader().parse(buf,"",gltf=>buildFromGltf(i,gltf),()=>tryLoad(i,list,n+1));})
       .catch(()=>tryLoad(i,list,n+1));
   }
+  const DEX_SCALE={13:0.72};   /* per-model size tweak so each Chiki looks proportionate */
   function buildFromGltf(i,gltf){
     const root=gltf.scene,box=new THREE.Box3().setFromObject(root),sz=new THREE.Vector3();box.getSize(sz);
-    const ctr=new THREE.Vector3();box.getCenter(ctr),k=40/Math.max(0.001,sz.y);
+    const ctr=new THREE.Vector3();box.getCenter(ctr),k=40/Math.max(0.001,sz.y)*(DEX_SCALE[i]||1);
     root.position.set(-ctr.x,-box.min.y,-ctr.z);
     root.traverse(o=>{if(o.isMesh&&o.geometry&&o.geometry.attributes&&o.geometry.attributes.color&&o.material){o.material.vertexColors=true;if(o.material.color)o.material.color.setRGB(1,1,1);o.material.needsUpdate=true;}});  /* show voxel colors */
     const w=new THREE.Group();w.add(root);w.scale.setScalar(k);
