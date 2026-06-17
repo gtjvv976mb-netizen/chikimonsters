@@ -1028,7 +1028,7 @@ const RARITY={
 };
 /* ===== SEEDED earnings (mirror of the server) — the rares you SEE are the rares the server pays =====
    Defaults match the backend; refreshed from /claimable so they always agree. */
-let SEED_CFG={raritySol:{common:0.00002,uncommon:0.00004,rare:0.00009,epic:0.0002,mythic:0.0005,shiny:0.001,legend:0.0025},taskSec:30,mult:1,accrualCap:60};
+let SEED_CFG={raritySol:{common:0.000004,uncommon:0.000008,rare:0.000018,epic:0.00004,mythic:0.0001,shiny:0.0002,legend:0.0005},taskSec:30,mult:1,accrualCap:60};
 const SEED_DIST=[["common",45],["uncommon",27],["rare",15],["epic",7],["mythic",3.5],["shiny",1.7],["legend",0.8]];
 const SEED_TOTAL=SEED_DIST.reduce((s,r)=>s+r[1],0);
 function chikiHash(str){let h=1779033703^str.length;for(let i=0;i<str.length;i++){h=Math.imul(h^str.charCodeAt(i),3432918353);h=(h<<13)|(h>>>19);}h=Math.imul(h^(h>>>16),2246822507);h=Math.imul(h^(h>>>13),3266489909);return ((h^(h>>>16))>>>0)/4294967296;}
@@ -1036,18 +1036,18 @@ function slotRarity(wallet,lastClaim,ci,slot){let x=chikiHash(wallet+"|"+lastCla
 function seededEarn(wallet,lastClaim,chikis,minutes){const slots=Math.min(4000,Math.floor(minutes*60/SEED_CFG.taskSec));let sol=0;for(let ci=0;ci<chikis;ci++)for(let s=0;s<slots;s++)sol+=SEED_CFG.raritySol[slotRarity(wallet,lastClaim,ci,s)];return sol*SEED_CFG.mult;}
 function localPouch(){if(!player||!player.pk||player._lastClaim==null)return null;const minutes=Math.min(SEED_CFG.accrualCap,(Date.now()-player._lastClaim)/60000);return seededEarn(player.pk,player._lastClaim,player._earnChikis||1,minutes);}
 const TASKS=[
-  {id:0,name:"Berry Foraging",rarity:"common",chance:22,pct:0.04,zone:"berry",emoji:"🍓",stam:8,dur:4,count:0,where:"🌸🍂"},
-  {id:1,name:"Flower Picking",rarity:"common",chance:16,pct:0.05,zone:"flowers",emoji:"💐",stam:9,dur:5,count:0,where:"🌸☀️"},
-  {id:2,name:"Pond Fishing",rarity:"uncommon",chance:14,pct:0.12,zone:"pond",emoji:"🎣",stam:12,dur:6,count:0,where:"🌸☀️❄️"},
-  {id:3,name:"Firewood Chopping",rarity:"uncommon",chance:12,pct:0.15,zone:"wood",emoji:"🪓",stam:14,dur:7,count:0,where:"🌸🍂☀️"},
-  {id:4,name:"Courier Run",rarity:"uncommon",chance:8.5,pct:0.18,zone:"post",emoji:"📦",stam:15,dur:8,count:0,where:"🗺"},
-  {id:5,name:"Friendly Sparring",rarity:"rare",chance:8,pct:0.30,zone:"spar",emoji:"⚔️",stam:16,dur:8,count:0,where:"🌸☀️"},
-  {id:6,name:"Honey Harvest",rarity:"rare",chance:6,pct:0.45,zone:"hive",emoji:"🍯",stam:18,dur:9,count:0,where:"🌸🍂"},
-  {id:7,name:"Cave Treasure Hunt",rarity:"epic",chance:5,pct:0.80,zone:"cave",emoji:"💎",stam:20,dur:10,count:0,where:"🍂❄️"},
-  {id:8,name:"Ancient Relic Dig",rarity:"mythic",chance:3.5,pct:2.00,zone:"dig",emoji:"🏺",stam:24,dur:13,count:0,where:"☀️🍂"},
-  {id:9,name:"Ice Sculpting",rarity:"mythic",chance:2.5,pct:2.50,zone:"iceart",emoji:"🧊",stam:26,dur:14,count:0,where:"❄️"},
-  {id:10,name:"Shiny Encounter",rarity:"shiny",chance:1.5,pct:5.00,zone:"meadow",emoji:"✨",stam:28,dur:16,count:0,where:"🌸❄️"},
-  {id:11,name:"Legendary Summit Trial",rarity:"legend",chance:1,pct:12.0,zone:"summit",emoji:"🏔️",stam:34,dur:20,count:0,where:"☀️"},
+  {id:0,name:"Berry Foraging",rarity:"common",chance:22,pct:0.0002,zone:"berry",emoji:"🍓",stam:8,dur:4,count:0,where:"🌸🍂"},
+  {id:1,name:"Flower Picking",rarity:"common",chance:16,pct:0.0004,zone:"flowers",emoji:"💐",stam:9,dur:5,count:0,where:"🌸☀️"},
+  {id:2,name:"Pond Fishing",rarity:"uncommon",chance:14,pct:0.002,zone:"pond",emoji:"🎣",stam:12,dur:6,count:0,where:"🌸☀️❄️"},
+  {id:3,name:"Firewood Chopping",rarity:"uncommon",chance:12,pct:0.003,zone:"wood",emoji:"🪓",stam:14,dur:7,count:0,where:"🌸🍂☀️"},
+  {id:4,name:"Courier Run",rarity:"uncommon",chance:8.5,pct:0.004,zone:"post",emoji:"📦",stam:15,dur:8,count:0,where:"🗺"},
+  {id:5,name:"Friendly Sparring",rarity:"rare",chance:8,pct:0.02,zone:"spar",emoji:"⚔️",stam:16,dur:8,count:0,where:"🌸☀️"},
+  {id:6,name:"Honey Harvest",rarity:"rare",chance:6,pct:0.04,zone:"hive",emoji:"🍯",stam:18,dur:9,count:0,where:"🌸🍂"},
+  {id:7,name:"Cave Treasure Hunt",rarity:"epic",chance:5,pct:0.2,zone:"cave",emoji:"💎",stam:20,dur:10,count:0,where:"🍂❄️"},
+  {id:8,name:"Ancient Relic Dig",rarity:"mythic",chance:3.5,pct:0.8,zone:"dig",emoji:"🏺",stam:24,dur:13,count:0,where:"☀️🍂"},
+  {id:9,name:"Ice Sculpting",rarity:"mythic",chance:2.5,pct:1.2,zone:"iceart",emoji:"🧊",stam:26,dur:14,count:0,where:"❄️"},
+  {id:10,name:"Shiny Encounter",rarity:"shiny",chance:1.5,pct:2.5,zone:"meadow",emoji:"✨",stam:28,dur:16,count:0,where:"🌸❄️"},
+  {id:11,name:"Legendary Summit Trial",rarity:"legend",chance:1,pct:4.0,zone:"summit",emoji:"🏔️",stam:34,dur:20,count:0,where:"☀️"},
 ];
 const RARE_SET=["epic","mythic","shiny","legend"];
 /* task durations scale with rarity: 1 min (common) up to 30 min (legendary) */
@@ -1100,10 +1100,10 @@ const CHI_PN=[
  [["💎","Shard Jab"],["🔆","Prism Beam"],["✨","Gleam Dash"],["💠","Crystal Wall"],["🔮","Refraction"],["💎","Gem Drain"],["🌟","Shard Nova"]],
  [["💨","Gust Jab"],["🌪️","Cyclone"],["💨","Wind Dash"],["🌬️","Air Barrier"],["🍃","Updraft"],["🌬️","Breeze Drain"],["🌀","Hurricane"]],
  [["⭐","Star Jab"],["☄️","Meteor"],["🛸","Warp Dash"],["🌌","Nebula Shield"],["✨","Cosmic Charge"],["🪐","Gravity Drain"],["🌌","Galaxy Burst"]],
- [["👑","Royal Strike"],["👑","Sovereign Blast"],["💨","Regal Dash"],["🛡️","Aegis"],["✨","Ascend"],["💜","Majesty Drain"],["💥","Cataclysm"]],
- [["☀️","Solar Strike"],["🌟","Golden Flare"],["💨","Blaze Dash"],["🛡️","Radiant Aegis"],["🔥","Super Charge"],["✨","Aurora Drain"],["💥","Supernova"]],
- [["🦖","Tyrant Bite"],["💥","Savage Roar"],["💨","Rampage"],["🛡️","Iron Hide"],["⚡","Primal Fury"],["🩸","Feral Drain"],["☄️","Extinction"]],
- [["🌿","Thorn Lash"],["🌳","Timber Crash"],["🍃","Leaf Dash"],["🛡️","Barkskin"],["🌱","Bloom Surge"],["🍂","Verdant Drain"],["🌲","World Tree"]]
+ [["💧","Water Shot"],["🌊","Water Blast"],["🐟","Fish Attack"],["⚓","Shipwreck"],["💦","Water Sprout"],["🦈","Shark Attack"],["🌊","Giant Wave"]],
+ [["✨","Holy Smite"],["♨️","Intense Heat"],["🌟","Blinding Light"],["🛡️","Radiant Shield"],["☀️","Solar Charge"],["💖","Divine Heal"],["💥","Sunburst"]],
+ [["🦷","Bite"],["🦶","Trample"],["💨","Tail Whip"],["😱","Fear"],["🗣️","Savage Roar"],["🩸","Devour"],["💥","Apex Crush"]],
+ [["🌑","Ambush"],["⚡","Roar of Thunder"],["🐺","Pack Attack"],["🛡️","Howl"],["🔋","Storm Surge"],["🩸","Thunder Fang"],["🌩️","Thunderstorm"]]
 ];
 const LEGEND_IDXS=SPECIES.map((s,i)=>s.type==="Legendary"?i:-1).filter(i=>i>=0);   /* legendary species indices */
 const NONLEGEND_IDXS=SPECIES.map((s,i)=>s.type!=="Legendary"?i:-1).filter(i=>i>=0); /* normal (non-legendary) species indices */
@@ -1623,10 +1623,9 @@ function completeTask(c){
     if(c.stamina<=0)startSleep(c);else{c.state="wander";c.nextTaskIn=rng(3,9);}
     return;
   }
-  let reward=pool*(t.pct/100);
-  if(EVENT.active&&EVENT.kind==="storm")reward*=2;
-  pool-=reward;distributed+=reward;
-  c.holder.earned+=reward;c.tasksDone++;c.lastReward=reward;t.count++;
+  /* REAL economy: SOL is NOT minted per visible task. Real, claimable rewards accrue to the
+     Chiki Pouch (server-seeded, treasury-backed) and pop as their own floats. Tasks give XP + progress. */
+  c.tasksDone++;t.count++;
   if(c.holder===player){player.taskCounts=player.taskCounts||{};player.taskCounts[t.name]=(player.taskCounts[t.name]||0)+1;}  /* per-task tally of YOUR Chikis (shown in the Done column) */
   c.stamina=Math.max(0,c.stamina-t.stam);
   const wasReady=(c.xp||0)>=xpNeed(c.level);
@@ -1634,9 +1633,8 @@ function completeTask(c){
   const col=RARITY[t.rarity].color;
   if(c.holder===player)spawnFloat(c.x,c.y,`+${xpGain} XP`,"#b197fc");
   if(c.holder===player&&!wasReady&&(c.xp||0)>=xpNeed(c.level)&&c.level<MAX_LEVEL)showBanner(`⭐ ${nameOf(c)} has enough XP — ready to Level Up to Lv ${c.level+1}!`,"");
-  spawnFloat(c.x,c.y,`+${fmt(reward)} ◎${EVENT.active&&EVENT.kind==="storm"?" ×2!":""}`,col);
   spawnBurst(c.x,c.y,col,RARE_SET.includes(t.rarity)?40:16);
-  if(c.holder===player)addFeed(`${t.emoji} <b>${nameOf(c)}</b> completed <span style="color:${col}">${t.name}</span> → <b style="color:${col}">+${fmt(reward)} SOL</b> · +${xpGain} XP`,t.rarity);
+  if(c.holder===player)addFeed(`${t.emoji} <b>${nameOf(c)}</b> completed <span style="color:${col}">${t.name}</span> · +${xpGain} XP`,t.rarity);
   checkAchievements(c,t);
   freeSpot(c);c.task=null;c.target=null;
   if(c.stamina<=0)startSleep(c);
@@ -1938,7 +1936,8 @@ function showInspect(c,soft){
     <div class="row"><span>Status</span><span style="color:${col}">${c.hungry?"🍖 Hungry — needs feeding":c.state==="sleeping"?"💤 Sleeping — wakes in "+fmtSleep(c.sleepT):c.task?(c.state==="working"?"Doing: "+c.task.name+" ⏱"+fmtDur(c.workT):"Heading to: "+c.task.name):"Wandering"}</span></div>
     <div class="row"><span>Tasks completed</span><span>${c.tasksDone}</span></div>
     <div class="row"><span>EXP to reach Lv ${c.level>=MAX_LEVEL?"MAX":c.level+1}</span><span style="color:${c.level>=MAX_LEVEL?'#8fa6c9':(xpLeft(c)===0?'#2e9e5b':'#7c5cd6')}">${c.level>=MAX_LEVEL?"—":(xpLeft(c)===0?"✓ ready to level up":Math.floor(c.xp||0)+" / "+xpNeed(c.level)+" XP ("+xpLeft(c)+" to go)")}</span></div>
-    <div class="row"><span>Last reward</span><span>${c.lastReward?fmt(c.lastReward)+" SOL":"—"}</span></div>`;
+    <div class="row"><span>Last reward</span><span style="color:var(--green)">${c.lastReward?(+c.lastReward).toFixed(5)+" ◎":"—"}</span></div>
+    <div class="row"><span>🪙 Chiki Pouch</span><span style="color:var(--green)">${(player._pouchSol!=null?player._pouchSol:0)} ◎ <span style="font-size:9px;color:#8fa6c9">claimable</span></span></div>`;
 }
 /* pull the player's REAL on-chain SOL + $CHIKI balances so the profile shows authentic numbers */
 async function refreshChainBalances(){
@@ -2947,10 +2946,13 @@ setInterval(()=>{
     while(c._revealed<dueSlots && shown<2){
       const rar=slotRarity(player.pk,player._lastClaim,ci,c._revealed);
       const val=(SEED_CFG.raritySol[rar]||0)*SEED_CFG.mult;
+      c.lastReward=val;   /* real reward (matches the Pouch) */
       if(c.mesh&&c.state!=="sleeping"&&typeof spawnFloat==="function"){
         spawnFloat(c.x,c.y,`${RARITY[rar].label} +${val.toFixed(5)} ◎`,RARITY[rar].color);
         if(typeof spawnBurst==="function"&&["epic","mythic","shiny","legend"].includes(rar))spawnBurst(c.x,c.y,RARITY[rar].color,18);
       }
+      if(["epic","mythic","shiny","legend"].includes(rar)&&typeof addFeed==="function")
+        addFeed(`🪙 <b>${nameOf(c)}</b> earned a <span style="color:${RARITY[rar].color}">${RARITY[rar].label}</span> reward → <b style="color:#3ddc84">+${val.toFixed(5)} ◎</b> to your Pouch`,rar);
       c._revealed++; shown++;
     }
   });
