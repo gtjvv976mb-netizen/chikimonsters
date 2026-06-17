@@ -136,6 +136,7 @@
     <div class="legend"><img class="e" src="chikidex/adalor.png" alt="Adalor" onerror="this.onerror=null;this.outerHTML='&lt;div class=\'e\' style=\'display:flex;align-items:center;justify-content:center;font-size:38px;background:radial-gradient(circle at 50% 35%,#fff3b0,#e0a800);border-radius:10px\'&gt;🔥&lt;/div&gt;'"><strong>Adalor</strong><span>Legendary</span></div>
     <div class="legend"><img class="e" src="chikidex/tyrannos.png" alt="Tyrannos" onerror="this.style.display='none'"><strong>Tyrannos</strong><span>Legendary</span></div>
     <div class="legend"><img class="e" src="chikidex/grovador.png" alt="Grovador" onerror="this.style.display='none'"><strong>Grovador</strong><span>Legendary</span></div>
+    <div class="legend"><img class="e" src="chikidex/dragonos.png" alt="Dragonos" onerror="this.style.display='none'"><strong>Dragonos</strong><span>Legendary</span></div>
   </div>
 </div>
 
@@ -243,7 +244,7 @@
 <script>
 /* ChikiDex 3D viewer — rotate each Chiki */
 (function(){
-  const NAMES=["Mushrow","Electrox","Jellox","Firix","Owzard","Forestle","Drolax","Healix","Solarix","Scorplex","Galador","Adalor","Tyrannos","Grovador"];
+  const NAMES=["Mushrow","Electrox","Jellox","Firix","Owzard","Forestle","Drolax","Healix","Solarix","Scorplex","Galador","Adalor","Tyrannos","Grovador","Dragonos"];
   let curGlow=null;
   let renderer,scene,camera,current,rot=0,drag=false,lastX=0,inited=false;const cache={};
   function b64(s){const b=atob(s),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u.buffer;}
@@ -264,7 +265,7 @@
   function resize(){if(!renderer)return;const cv=renderer.domElement,w=cv.clientWidth||320,h=cv.clientHeight||260;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
   function setModel(m){if(current)scene.remove(current);current=m;curGlow=m&&m.userData?m.userData.glowMats||null:null;scene.add(m);}
   /* try each candidate file in order until one loads (robust to whichever is uploaded) */
-  const EXTERNAL_GLB={11:["adalor_voxel.glb","adalor.glb"],12:["tyrannos.glb"],13:["grovador_voxel.glb","grovador.glb"]};
+  const EXTERNAL_GLB={11:["adalor_voxel.glb","adalor.glb"],12:["tyrannos.glb"],13:["grovador_voxel.glb","grovador.glb"],14:["dragonos_voxel.glb","dragonos.glb"]};
   function tryLoad(i,list,n){
     if(n>=list.length)return;
     fetch(list[n],{cache:"force-cache"}).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer();})
