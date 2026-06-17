@@ -1036,18 +1036,18 @@ function slotRarity(wallet,lastClaim,ci,slot){let x=chikiHash(wallet+"|"+lastCla
 function seededEarn(wallet,lastClaim,chikis,minutes){const slots=Math.min(4000,Math.floor(minutes*60/SEED_CFG.taskSec));let sol=0;for(let ci=0;ci<chikis;ci++)for(let s=0;s<slots;s++)sol+=SEED_CFG.raritySol[slotRarity(wallet,lastClaim,ci,s)];return sol*SEED_CFG.mult;}
 function localPouch(){if(!player||!player.pk||player._lastClaim==null)return null;const minutes=Math.min(SEED_CFG.accrualCap,(Date.now()-player._lastClaim)/60000);return seededEarn(player.pk,player._lastClaim,player._earnChikis||1,minutes);}
 const TASKS=[
-  {id:0,name:"Berry Foraging",rarity:"common",chance:22,pct:0.0002,zone:"berry",emoji:"🍓",stam:8,dur:4,count:0,where:"🌸🍂"},
-  {id:1,name:"Flower Picking",rarity:"common",chance:16,pct:0.0004,zone:"flowers",emoji:"💐",stam:9,dur:5,count:0,where:"🌸☀️"},
-  {id:2,name:"Pond Fishing",rarity:"uncommon",chance:14,pct:0.002,zone:"pond",emoji:"🎣",stam:12,dur:6,count:0,where:"🌸☀️❄️"},
-  {id:3,name:"Firewood Chopping",rarity:"uncommon",chance:12,pct:0.003,zone:"wood",emoji:"🪓",stam:14,dur:7,count:0,where:"🌸🍂☀️"},
-  {id:4,name:"Courier Run",rarity:"uncommon",chance:8.5,pct:0.004,zone:"post",emoji:"📦",stam:15,dur:8,count:0,where:"🗺"},
-  {id:5,name:"Friendly Sparring",rarity:"rare",chance:8,pct:0.02,zone:"spar",emoji:"⚔️",stam:16,dur:8,count:0,where:"🌸☀️"},
-  {id:6,name:"Honey Harvest",rarity:"rare",chance:6,pct:0.04,zone:"hive",emoji:"🍯",stam:18,dur:9,count:0,where:"🌸🍂"},
-  {id:7,name:"Cave Treasure Hunt",rarity:"epic",chance:5,pct:0.2,zone:"cave",emoji:"💎",stam:20,dur:10,count:0,where:"🍂❄️"},
-  {id:8,name:"Ancient Relic Dig",rarity:"mythic",chance:3.5,pct:0.8,zone:"dig",emoji:"🏺",stam:24,dur:13,count:0,where:"☀️🍂"},
-  {id:9,name:"Ice Sculpting",rarity:"mythic",chance:2.5,pct:1.2,zone:"iceart",emoji:"🧊",stam:26,dur:14,count:0,where:"❄️"},
-  {id:10,name:"Shiny Encounter",rarity:"shiny",chance:1.5,pct:2.5,zone:"meadow",emoji:"✨",stam:28,dur:16,count:0,where:"🌸❄️"},
-  {id:11,name:"Legendary Summit Trial",rarity:"legend",chance:1,pct:4.0,zone:"summit",emoji:"🏔️",stam:34,dur:20,count:0,where:"☀️"},
+  {id:0,name:"Berry Foraging",rarity:"common",chance:22,pct:0.0002,zone:"berry",emoji:"🍓",stam:8,dur:300,count:0,where:"🌸🍂"},
+  {id:1,name:"Flower Picking",rarity:"common",chance:16,pct:0.0004,zone:"flowers",emoji:"💐",stam:9,dur:300,count:0,where:"🌸☀️"},
+  {id:2,name:"Pond Fishing",rarity:"uncommon",chance:14,pct:0.002,zone:"pond",emoji:"🎣",stam:12,dur:300,count:0,where:"🌸☀️❄️"},
+  {id:3,name:"Firewood Chopping",rarity:"uncommon",chance:12,pct:0.003,zone:"wood",emoji:"🪓",stam:14,dur:300,count:0,where:"🌸🍂☀️"},
+  {id:4,name:"Courier Run",rarity:"uncommon",chance:8.5,pct:0.004,zone:"post",emoji:"📦",stam:15,dur:300,count:0,where:"🗺"},
+  {id:5,name:"Friendly Sparring",rarity:"rare",chance:8,pct:0.02,zone:"spar",emoji:"⚔️",stam:16,dur:300,count:0,where:"🌸☀️"},
+  {id:6,name:"Honey Harvest",rarity:"rare",chance:6,pct:0.04,zone:"hive",emoji:"🍯",stam:18,dur:300,count:0,where:"🌸🍂"},
+  {id:7,name:"Cave Treasure Hunt",rarity:"epic",chance:5,pct:0.2,zone:"cave",emoji:"💎",stam:20,dur:300,count:0,where:"🍂❄️"},
+  {id:8,name:"Ancient Relic Dig",rarity:"mythic",chance:3.5,pct:0.8,zone:"dig",emoji:"🏺",stam:24,dur:300,count:0,where:"☀️🍂"},
+  {id:9,name:"Ice Sculpting",rarity:"mythic",chance:2.5,pct:1.2,zone:"iceart",emoji:"🧊",stam:26,dur:300,count:0,where:"❄️"},
+  {id:10,name:"Shiny Encounter",rarity:"shiny",chance:1.5,pct:2.5,zone:"meadow",emoji:"✨",stam:28,dur:300,count:0,where:"🌸❄️"},
+  {id:11,name:"Legendary Summit Trial",rarity:"legend",chance:1,pct:4.0,zone:"summit",emoji:"🏔️",stam:34,dur:300,count:0,where:"☀️"},
 ];
 const RARE_SET=["epic","mythic","shiny","legend"];
 /* task durations scale with rarity: 1 min (common) up to 30 min (legendary) */
@@ -1643,7 +1643,7 @@ function completeTask(c){
 }
 /* ---- XP: every task grants EXP by rarity (rarer = more). Leveling needs enough XP + payment;
         excess XP carries over to the next level. ---- */
-const XP_BY_RARITY={common:12,uncommon:20,rare:34,epic:55,mythic:90,shiny:140,legend:240};
+const XP_BY_RARITY={common:5,uncommon:8,rare:14,epic:24,mythic:40,shiny:65,legend:110};
 const xpForTask=t=>XP_BY_RARITY[t&&t.rarity]||12;
 const xpNeed=lv=>Math.round(60+(Math.max(1,lv)-1)*45);   /* L1→2:60, L2→3:105, … L49→50:2220 */
 const xpLeft=c=>Math.max(0,xpNeed(c.level)-(c.xp||0));
