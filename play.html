@@ -781,8 +781,8 @@ if(location.search.indexOf("embed")>-1){
     <li><b>💎 Crystal cave</b>: the Chiki <b>enters the cave and disappears</b> for the whole task; a floating icon and progress bar over the cave mouth show what it's doing and how long is left.</li>
     <li><b>🤝 Owner presence matters</b>: while you're <b>online</b>, your Chikis are motivated and work <b>20% faster</b>; while you're <b>away</b>, they grow lonely and work <b>60% slower</b> — so check in often!</li>
   </ul>
-  <h3>⚡ Stamina, sleep &amp; feeding</h3>
-  <p>Every task costs stamina. At zero, your Chiki <b>sleeps</b> to recover (higher level = shorter sleep), then wakes up <b>hungry</b> — it won't work again until you <b>feed it 1,000–5,000 $CHIKI</b> (more for higher levels) from the My Chiki panel. Feeding happens <b>every sleep cycle</b>: it's what keeps your Chiki earning, and every feed burns $CHIKI and tops up the reward pool.</p>
+  <h3>⚡ Stamina, sleep &amp; the food bar</h3>
+  <p>Two bars keep your Chiki going. <b>Stamina</b> powers tasks — at zero your Chiki <b>sleeps</b> to recover it for free (higher level = shorter nap). The <b>food bar</b> drains in real time: it holds about <b>30 minutes</b> at Lv 1, growing to <b>12 hours</b> at Lv 50. When food runs out your Chiki is <b>famished</b> and won't work until you feed it. Refilling food costs <b>100 $CHIKI per minute</b> from the My Chiki panel (1% burned · 49.5% reward pool · 49.5% team) — this is the main way your Chiki spends $CHIKI to keep earning.</p>
   <h3>🌟 Levels &amp; evolution (max Lv 50)</h3>
   <ul>
     <li><b>Levels are earned with EXP</b>: every completed task grants EXP, and <b>rarer tasks give much more</b> — Common +5, Uncommon +8, Rare +14, Epic +24, Mythic +40, Shiny +65, Legendary +110. The My Chiki and details panels show an EXP bar to the next level.</li>
@@ -1127,7 +1127,14 @@ for(let i=0;i<SPECIES.length;i++){
 const stageOf=lv=>lv>=EVOLVE_AT[1]?3:lv>=EVOLVE_AT[0]?2:1;
 const maxStamOf=lv=>80+lv*12;
 const sleepTimeOf=lv=>Math.max(900,Math.round(3600-(Math.min(lv,MAX_LEVEL)/MAX_LEVEL)*2700)); /* 60min low-lvl -> 15min max-lvl, lets the pool refill */
-const feedCostOf=lv=>Math.round(1000+(Math.min(lv,MAX_LEVEL)-1)/Math.max(1,MAX_LEVEL-1)*4000); /* 1,000 (Lv1) -> 5,000 (Lv50) $CHIKI */
+const feedCostOf=lv=>Math.round(1000+(Math.min(lv,MAX_LEVEL)-1)/Math.max(1,MAX_LEVEL-1)*4000); /* legacy (unused by food bar) */
+/* ===== FOOD (famish) bar: a time-based food stock — ~30min at Lv1, scaling up to 12h at Lv50.
+   Replenishing 1 minute of food costs 100 $CHIKI. When it empties the Chiki is FAMISHED and won't work until fed. ===== */
+const FOOD_PER_MIN=100;                                  /* $CHIKI per minute of food */
+const foodMaxMin=lv=>Math.round(30+(Math.min(lv,MAX_LEVEL)-1)/Math.max(1,MAX_LEVEL-1)*(720-30));  /* 30min (Lv1) -> 720min/12h (Lv50) */
+const foodMaxSec=lv=>foodMaxMin(lv)*60;
+const foodRefillCost=c=>Math.ceil(Math.max(0,(foodMaxSec(c.level)-(c.food||0)))/60)*FOOD_PER_MIN;   /* $CHIKI to top the bar back to full */
+const fmtFood=s=>{s=Math.max(0,Math.floor(s));const h=Math.floor(s/3600),m=Math.floor((s%3600)/60);return h>0?h+"h "+m+"m":m+"m";};
 const fmtSleep=s=>{s=Math.max(0,Math.ceil(s));return s>=60?Math.floor(s/60)+"m "+(s%60)+"s":s+"s";};
 const rareBoostOf=c=>1+c.level*0.015+(stageOf(c.level)-1)*0.35;
 const chikiCostOf=lv=>Math.round(2500*Math.pow(1.09,lv));
@@ -1221,7 +1228,7 @@ const usedHandles=new Set();
 let tracked=null;
 const usedChikiNames=new Set();
 function myChikis(){return player?creatures.filter(c=>c.holder===player):[];}
-function statusText(c){return c.hungry?"🍖 Hungry — feed to wake":c.state==="sleeping"?"💤 Sleeping":c.task?(c.state==="working"?"⚒ "+c.task.name:"→ "+c.task.name):"Wandering";}
+function statusText(c){return c.hungry?"🍖 Famished — feed to wake":c.state==="sleeping"?"💤 Sleeping":c.task?(c.state==="working"?"⚒ "+c.task.name:"→ "+c.task.name):"Wandering";}
 function nameTaken(set,v){return set.has(String(v).trim().toLowerCase());}
 function saveNameDB(){try{localStorage.setItem("chikiNameDB",JSON.stringify([...usedChikiNames]));localStorage.setItem("handleDB",JSON.stringify([...usedHandles]));}catch(e){}}
 (function(){try{JSON.parse(localStorage.getItem("chikiNameDB")||"[]").forEach(n=>usedChikiNames.add(String(n).toLowerCase()));}catch(e){}try{JSON.parse(localStorage.getItem("handleDB")||"[]").forEach(n=>usedHandles.add(String(n).toLowerCase()));}catch(e){}})();
@@ -1229,7 +1236,7 @@ function assignChikis(h,n){const pool=[...Array(SPECIES.length).keys()];const ou
 /* ===== egg hatching: each egg secretly picks 2 winning tap-counts in 1..100.
    Hatch on exactly one of them = Legendary (Galador). 2 winners / 100 = 2% chance. ===== */
 const HATCH_MAX=100;
-function hatchEgg(){
+function hatchEgg(noLegend){   /* noLegend=true → guaranteed normal (no legendary chance) */
   return new Promise(resolve=>{
     const g=id=>document.getElementById(id);
     const ov=g("hatchOverlay"),egg=g("hatchEgg"),meter=g("hatchMeter"),btn=g("hatchBtn"),hint=g("hatchHint"),title=g("hatchTitle"),tapsEl=g("hatchTaps"),rev=g("hatchReveal"),mw=g("hatchMeterWrap");
@@ -1251,7 +1258,7 @@ function hatchEgg(){
       if(taps>=HATCH_MAX)hatch();      /* auto-hatch at 100 */
     }
     function hatch(){ if(hatched)return; hatched=true;
-      const legend=lucky.indexOf(taps)>-1;
+      const legend=!noLegend && lucky.indexOf(taps)>-1;
       const sp=legend?LEGEND_IDXS[ri(0,LEGEND_IDXS.length-1)]:NONLEGEND_IDXS[ri(0,NONLEGEND_IDXS.length-1)];
       egg.classList.add("pop");btn.style.display="none";hint.textContent="";tapsEl.style.display="none";mw.style.display="none";
       if(window.playSfx)window.playSfx("reward");
@@ -1267,11 +1274,27 @@ function hatchEgg(){
     egg.onclick=tap; egg.ontouchstart=tap; btn.onclick=hatch;
   });
 }
-async function hatchChikis(h,n){
+/* ===== Hatch caps: every user may keep at most 2 normal + 1 legendary (the creator wallet is exempt) ===== */
+const MAX_NORMAL=2, MAX_LEGEND=1;
+function holderCounts(h){let n=0,l=0;for(const c of creatures){if(c.holder===h){if(c.isLegend)l++;else n++;}}return {normal:n,legend:l,total:n+l};}
+function holderAtCap(h){ if(isCreator(h&&h.pk))return false; const c=holderCounts(h); return c.normal>=MAX_NORMAL && c.legend>=MAX_LEGEND; }
+async function hatchChikis(h,n,opts){
+  opts=opts||{};
+  const creator=isCreator(h&&h.pk);
   for(let k=0;k<n;k++){
-    const sp=await hatchEgg();
+    const counts=holderCounts(h);
+    if(!creator && counts.normal>=MAX_NORMAL && counts.legend>=MAX_LEGEND) break;        /* full roster */
+    const allowLegend = !opts.noLegend && (creator || counts.legend<MAX_LEGEND);
+    const sp=await hatchEgg(!allowLegend);
     const c=spawnCreature(h,1,sp);
+    if(LEGEND_IDXS.indexOf(sp)>-1)c.isLegend=true;
     if(!h.creature)h.creature=c;
+    /* if the user's FIRST hatch is a Legendary, immediately hatch one extra NORMAL (no legendary chance) */
+    if(c.isLegend && counts.total===0 && !opts.noLegend && !creator && holderCounts(h).normal<MAX_NORMAL){
+      const sp2=await hatchEgg(true);
+      const c2=spawnCreature(h,1,sp2);
+      if(LEGEND_IDXS.indexOf(sp2)>-1)c2.isLegend=true;
+    }
   }
   if(typeof ensureSpots==="function")ensureSpots();
 }
@@ -1463,7 +1486,7 @@ function spawnCreature(h,lvl,spIdx){
   const sp=SPECIES[spIdx%SPECIES.length];
   let x,y,tries=0;
   do{x=rng(2,COLS-2)*TILE;y=rng(2,ROWS-2)*TILE;tries++;}while(!walkable(x,y)&&tries<299);
-  const c={holder:h,sp,x,y,vx:0,vy:0,level:lvl,stamina:maxStamOf(lvl),
+  const c={holder:h,sp,x,y,vx:0,vy:0,level:lvl,stamina:maxStamOf(lvl),food:foodMaxSec(lvl),
     state:"wander",task:null,target:null,workT:0,workDur:0,sleepT:0,nextTaskIn:rng(3,14),
     bob:rng(0,6.28),tasksDone:0,lastReward:0,stuck:0,mesh:null,fx:null,dir:0,named:false,
     sleepCycles:0,hungry:false,lvlTasks:0};
@@ -1482,7 +1505,7 @@ function saveProfile(h){
       handle:h.handle||null,renames:h.renames||0,   /* player name follows the wallet across browsers/devices */
       ancientEgg:h.ancientEgg||null,                /* Sorceress: legendary egg incubation state */
       taskCounts:h.taskCounts||null,                /* per-task completions by this player's Chikis (Done column) */
-      chikis:mine.map(c=>({sp:SPECIES.indexOf(c.sp),level:c.level,tasksDone:c.tasksDone||0,nick:c.nick||null,sleepCycles:c.sleepCycles||0,hungry:!!c.hungry,xp:Math.floor(c.xp||0),isLegend:!!c.isLegend,arenaSkills:c.arenaSkills||null}))};
+      chikis:mine.map(c=>({sp:SPECIES.indexOf(c.sp),level:c.level,tasksDone:c.tasksDone||0,nick:c.nick||null,sleepCycles:c.sleepCycles||0,hungry:!!c.hungry,food:Math.round(c.food||0),xp:Math.floor(c.xp||0),isLegend:!!c.isLegend,arenaSkills:c.arenaSkills||null}))};
     localStorage.setItem(profileKey(h.pk),JSON.stringify(data));
     if(CHAIN.BACKEND)fetch(CHAIN.BACKEND+"/profile",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:h.pk,profile:data})}).catch(()=>{});
   }catch(e){}
@@ -1491,21 +1514,23 @@ function loadProfile(pk){try{const s=localStorage.getItem(profileKey(pk));return
 /* ---- offline progression: fast-forward a Chiki for the time its master was away ---- */
 function offlineProgress(c,elapsedSec){
   let t=Math.min(Math.max(0,elapsedSec),72*3600);   /* cap a long absence at 72h */
-  if(t<30)return 0;
-  let did=0,guard=0;const AVG=Math.round(45*1.6),COST=16,stage0=stageOf(c.level);   /* owner OFFLINE/away: Chikis work 60% slower (saddened by their absence) */
-  while(t>0&&guard++<6000){
-    if(c.hungry)break;                                /* stuck asleep until fed — no progress */
+  if(t<30){ c.food=Math.max(0,(c.food!=null?c.food:foodMaxSec(c.level))-t); return 0; }
+  const food0=(c.food!=null?c.food:foodMaxSec(c.level));
+  let active=Math.min(t,food0);                       /* a Chiki only works while it still has FOOD */
+  let did=0,guard=0;const AVG=Math.round(45*1.6),COST=16,stage0=stageOf(c.level);   /* owner OFFLINE/away: Chikis work 60% slower */
+  while(active>0&&guard++<6000){
     if(c.stamina>=COST){                              /* working a task */
-      if(t<AVG)break;
-      t-=AVG;c.stamina-=COST;c.tasksDone++;did++;
-      c.xp=Math.min((c.xp||0)+COST*2, xpNeed(c.level));   /* XP fills toward "ready" — leveling is ALWAYS a paid action, never automatic */
-    }else{                                            /* stamina spent → naps, then needs feeding before it can work again */
+      if(active<AVG)break;
+      active-=AVG;c.stamina-=COST;c.tasksDone++;did++;
+      c.xp=Math.min((c.xp||0)+COST*2, xpNeed(c.level));   /* XP fills toward "ready" — leveling is ALWAYS a paid action */
+    }else{                                            /* stamina spent → naps, sleep restores stamina for free */
       const dur=sleepTimeOf(c.level);
-      if(t<dur){c.state="sleeping";c.sleepT=dur-t;break;}
-      t-=dur;c.sleepCycles=(c.sleepCycles||0)+1;
-      c.hungry=true;c.state="sleeping";c.sleepT=0;break;   /* will NOT refill stamina on its own — owner must feed it ($CHIKI sink) */
+      if(active<dur){c.state="sleeping";c.sleepT=dur-active;break;}
+      active-=dur;c.sleepCycles=(c.sleepCycles||0)+1;c.stamina=maxStamOf(c.level);
     }
   }
+  c.food=Math.max(0,food0-t);                          /* food drained for the whole absence */
+  if(c.food<=0){c.hungry=true;c.state="sleeping";c.sleepT=0;}   /* famished while away — rests until fed */
   c.stamina=Math.min(c.stamina,maxStamOf(c.level));
   if(stageOf(c.level)>stage0&&typeof rebuildChiki==="function")rebuildChiki(c);  /* evolved while away */
   return did;
@@ -1520,6 +1545,7 @@ function restoreChikis(h,saved){
     c.tasksDone=cd.tasksDone||0;
     c.sleepCycles=cd.sleepCycles||0;
     c.xp=cd.xp||0;
+    c.food=(cd.food!=null?cd.food:foodMaxSec(c.level));   /* restore the food bar (offlineProgress drains it for time away) */
     if(cd.isLegend)c.isLegend=true;
     if(cd.arenaSkills)c.arenaSkills=cd.arenaSkills;   /* legendary's 3-of-7 Chi skills */
     if(cd.hungry){c.hungry=true;c.state="sleeping";c.sleepT=0;}
@@ -1700,26 +1726,21 @@ function startSleep(c){
 }
 function finishSleep(c){
   c.sleepCycles=(c.sleepCycles||0)+1;
-  /* a Chiki ALWAYS wakes hungry — it must be fed ($CHIKI) before it can work again. This is the core economy gate. */
-  if(c.bot){                         /* demo bot auto-feeds so the showcase keeps running */
-    spawnFloat(c.x,c.y,"🍖 fed","#ff922b");spawnBurst(c.x,c.y,"#ff922b",14);
-    wakeUp(c);return;
-  }
-  c.hungry=true;c.sleepT=0;
-  addFeed(`🍖 <b>${nameOf(c)}</b> woke up hungry — feed it <b>${feedCostOf(c.level).toLocaleString()} $CHIKI</b> to send it back to work.`);
-  if(c.holder===player)spawnFloat(c.x,c.y,"🍖 Feed me!","#ff922b");
-  refreshUI();
+  wakeUp(c);   /* sleeping restores stamina for free; the FOOD bar (not sleep) is the $CHIKI gate now */
 }
 function wakeUp(c){
-  c.stamina=maxStamOf(c.level);c.hungry=false;
+  c.stamina=maxStamOf(c.level);
+  if((c.food||0)<=0){ c.hungry=true;c.state="sleeping";c.sleepT=0;refreshUI();return; }   /* famished — stays down until fed */
+  c.hungry=false;
   c.state="wander";c.nextTaskIn=rng(2,8);
   if(!c.bot)addFeed(`🌅 <b>${nameOf(c)}</b> woke up — stamina restored (${c.stamina}⚡)`);
   refreshUI();
 }
-async function feedChiki(c){
-  const h=c.holder;if(!h||!c.hungry)return;
-  const cost=feedCostOf(c.level);
-  if(h.bal<cost||h.bal-cost<MIN_HOLD){addFeed(`⚠️ ${nameFor(h)}: needs ${cost.toLocaleString()} $CHIKI to feed ${nameOf(c)} while staying above 500k.`);refreshUI();return;}
+async function feedChiki(c){            /* refill the FOOD bar — 100 $CHIKI per minute of food */
+  const h=c.holder;if(!h)return;
+  const cost=foodRefillCost(c);
+  if(cost<=0){addFeed(`🍖 ${nameOf(c)}'s food bar is already full.`);refreshUI();return;}
+  if(h.bal<cost||h.bal-cost<MIN_HOLD){addFeed(`⚠️ ${nameFor(h)}: needs ${cost.toLocaleString()} $CHIKI to refill ${nameOf(c)}'s food while staying above 500k.`);refreshUI();return;}
   if(CHAIN.ONCHAIN_SPENDS&&h.pk){                       /* real on-chain payment (burn/pool/team) */
     try{await chikiSpend(cost,"Feed "+nameOf(c));}
     catch(e){console.error("feed spend error:",e);const m="⚠️ Feeding payment failed: "+(e.message||e);showBanner(m,"error");addFeed(m);refreshUI();return;}
@@ -1727,9 +1748,10 @@ async function feedChiki(c){
   h.bal-=cost;
   const burn=cost*0.01,toPool=cost*0.495,toTeam=cost*0.495;
   burnedChiki+=burn;pool+=toPool*TOKEN_PRICE;teamChiki+=toTeam;
-  addFeed(`🍖 ${nameFor(h)} fed <b>${nameOf(c)}</b> ${cost.toLocaleString()} $CHIKI → 🔥${fmtK(burn)} burned · 💰${fmtK(toPool)}→pool · 🏦${fmtK(toTeam)}→team`);
+  c.food=foodMaxSec(c.level);
+  addFeed(`🍖 ${nameFor(h)} fed <b>${nameOf(c)}</b> ${cost.toLocaleString()} $CHIKI → food full (${fmtFood(c.food)}) · 🔥${fmtK(burn)} burned · 💰${fmtK(toPool)}→pool · 🏦${fmtK(toTeam)}→team`);
   spawnBurst(c.x,c.y,"#ff922b",24);spawnFloat(c.x,c.y,"🍖 Yum!","#ff922b");
-  wakeUp(c);
+  if(c.hungry||c.state==="sleeping")wakeUp(c); else refreshUI();
   if(typeof saveProfile==="function"&&h.pk)saveProfile(h);
 }
 
@@ -1805,10 +1827,17 @@ function staminaBarHTML(c){
   const barW=c.hungry?100:c.state==="sleeping"?Math.round((1-c.sleepT/sleepTimeOf(c.level))*100):p;
   return `<div class="stam"><i class="${cls}" style="width:${barW}%"></i></div>
     <div style="font-size:11px;color:#8fa6c9">${c.hungry
-      ?`🍖 Hungry — feed ${feedCostOf(c.level).toLocaleString()} $CHIKI to wake`
+      ?`🍖 Famished — refill its food to wake`
       :c.state==="sleeping"
       ?`💤 Sleeping — wakes in ${fmtSleep(c.sleepT)} (Lv${c.level} nap: ${fmtSleep(sleepTimeOf(c.level))})`
       :`⚡ ${Math.round(c.stamina)} / ${max} stamina`}</div>`;
+}
+/* FOOD (famish) bar — time-based food stock */
+function foodBarHTML(c){
+  const mx=foodMaxSec(c.level),f=Math.max(0,c.food||0),p=Math.round(f/mx*100);
+  const col=p<=0?"#e8590c":p<25?"#ff922b":"#3ddc84";
+  return `<div class="stam" style="margin-top:5px"><i style="width:${p}%;background:${col}"></i></div>
+    <div style="font-size:11px;color:#8fa6c9">${f<=0?"🍖 <b style='color:#ff922b'>Famished</b> — out of food":`🍖 Food: ${fmtFood(f)} / ${fmtFood(mx)} left`}</div>`;
 }
 function refreshUI(){
   const S=REAL_STATS;
@@ -1880,7 +1909,8 @@ function renderMyPanel(){
         <span class="tag" style="background:${c.sp.body}22;color:${c.sp.body}">${c.sp.type}</span>
         <span class="tag" style="background:#ffd16633;color:#ffd166">Lv ${c.level}${atMax?" MAX":""}</span></div>
       ${staminaBarHTML(c)}
-      ${c.hungry?`<button class="feedBtn" data-i="${i}" style="width:100%;margin:7px 0;background:#ff922b;color:#fff;border-color:#e8590c">🍖 Feed ${feedCostOf(c.level).toLocaleString()} $CHIKI to wake</button>`:""}
+      ${foodBarHTML(c)}
+      ${foodRefillCost(c)>0?`<button class="feedBtn" data-i="${i}" style="width:100%;margin:7px 0;background:#ff922b;color:#fff;border-color:#e8590c">🍖 Feed — ${foodRefillCost(c).toLocaleString()} $CHIKI (${fmtFood(foodMaxSec(c.level)-(c.food||0))})</button>`:""}
       <div class="row"><span>Status</span><span>${statusText(c)}</span></div>
       <div class="row"><span>Tasks done</span><span style="color:var(--green)">${c.tasksDone}</span></div>
       <div class="row"><span>EXP to Lv ${atMax?"MAX":c.level+1}</span><span style="color:${ready?'#2e9e5b':'#7c5cd6'}">${atMax?"—":have+" / "+need+" XP"+(ready?" ✓ ready!":"")}</span></div>
@@ -1908,7 +1938,7 @@ function showInspect(c,soft){
   const legendTag=c.isLegend?' <span class="tag" style="background:#ffd16633;color:#ffd166">👑 Legendary</span>':'';
   const ownerVal=(c.holder.handle?("<b>"+clean(c.holder.handle)+"</b> · "):"")+c.holder.addr+(c.holder===player?" 👤 you":"");
   if(c.ghost){   /* another player's Chiki — show their REAL data only (no fabricated stats) */
-    const st=c.hungry?"🍖 Hungry":"🌍 Exploring Chikoria";
+    const st=c.hungry?"🍖 Famished":"🌍 Exploring Chikoria";
     document.getElementById("inspectBody").innerHTML=`
       <div class="big" style="color:${c.sp.body}">${nameOf(c)}${legendTag}
         <span style="font-size:11px;color:#8fa6c9">(${c.sp.type} · Stage ${stage} · Lv ${c.level})</span></div>
@@ -1924,10 +1954,11 @@ function showInspect(c,soft){
     <div class="big" style="color:${c.sp.body}">${nameOf(c)}${legendTag}
       <span style="font-size:11px;color:#8fa6c9">(${c.sp.type} · Stage ${stage} · Lv ${c.level})</span></div>
     ${staminaBarHTML(c)}
+    ${foodBarHTML(c)}
     <div class="row"><span>${c.holder===player?"Your wallet":"Owner"}</span><span>${ownerVal}</span></div>
     <div class="row"><span>$CHIKI balance</span><span>${c.holder.bal.toLocaleString()}</span></div>
     <div class="row"><span>Rare-task boost</span><span style="color:var(--blue)">+${Math.round((rareBoostOf(c)-1)*100)}% on Epic+</span></div>
-    <div class="row"><span>Status</span><span style="color:${col}">${c.hungry?"🍖 Hungry — needs feeding":c.state==="sleeping"?"💤 Sleeping — wakes in "+fmtSleep(c.sleepT):c.task?(c.state==="working"?"Doing: "+c.task.name+" ⏱"+fmtDur(c.workT):"Heading to: "+c.task.name):"Wandering"}</span></div>
+    <div class="row"><span>Status</span><span style="color:${col}">${c.hungry?"🍖 Famished — needs feeding":c.state==="sleeping"?"💤 Sleeping — wakes in "+fmtSleep(c.sleepT):c.task?(c.state==="working"?"Doing: "+c.task.name+" ⏱"+fmtDur(c.workT):"Heading to: "+c.task.name):"Wandering"}</span></div>
     <div class="row"><span>Tasks completed</span><span>${c.tasksDone}</span></div>
     <div class="row"><span>EXP to reach Lv ${c.level>=MAX_LEVEL?"MAX":c.level+1}</span><span style="color:${c.level>=MAX_LEVEL?'#8fa6c9':(xpLeft(c)===0?'#2e9e5b':'#7c5cd6')}">${c.level>=MAX_LEVEL?"—":(xpLeft(c)===0?"✓ ready to level up":Math.floor(c.xp||0)+" / "+xpNeed(c.level)+" XP ("+xpLeft(c)+" to go)")}</span></div>
     <div class="row"><span>Last reward</span><span style="color:var(--green)">${c.lastReward?(+c.lastReward).toFixed(5)+" ◎":"—"}</span></div>
@@ -4398,8 +4429,16 @@ function tickCreature(c,dt){
     if(!moveWith(c,c.vx*dt,c.vy*dt))steerClear(c);
     return;
   }
+  if(c.holder===player){                      /* FOOD bar drains in real time; when empty the Chiki is FAMISHED and rests until fed */
+    c.food=Math.max(0,(c.food||0)-dt);
+    if(c.food<=0&&!c.hungry){
+      c.hungry=true;freeSpot(c);c.task=null;c.target=null;c.state="sleeping";c.sleepT=0;
+      addFeed(`🍖 <b>${nameOf(c)}</b> is <b>famished</b> — its food ran out. Refill its food bar to get it back to work.`);
+      spawnFloat(c.x,c.y,"🍖 Famished!","#ff922b");refreshUI();
+    }
+  }
   if(c.state==="sleeping"){
-    if(c.hungry)return;                       /* won't wake until its master feeds it */
+    if(c.hungry)return;                       /* famished — won't get up until its master refills its food */
     c.sleepT-=dt;
     if(c.sleepT<=0)finishSleep(c);
     return;
