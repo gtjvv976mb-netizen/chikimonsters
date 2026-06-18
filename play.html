@@ -1661,6 +1661,16 @@ function restoreChikis(h,saved){
     lvUps+=Math.max(0,c.level-before);
     if(c.hungry)anyHungry=true;
   });
+  /* SELF-HEAL the legacy duplicate-name bug: the old code overwrote the PRIMARY Chiki's name
+     with the last-named Chiki's name, leaving two Chikis sharing a name. Detect it and clear the
+     primary's name so the two are distinct again and the player can re-name the affected one. */
+  try{
+    const mine=creatures.filter(x=>x.holder===h), prim=h.creature;
+    if(prim&&prim.nick&&mine.some(o=>o!==prim&&o.nick&&o.nick.toLowerCase()===prim.nick.toLowerCase())){
+      if(prim.nick&&usedChikiNames)usedChikiNames.delete(prim.nick.toLowerCase());
+      prim.nick=null; prim.named=false; h._nameGlitch=true;
+    }
+  }catch(e){}
   /* Mithra: fast-forward the Legendary Egg's food-driven care for the time away (egg already set above) */
   if(saved.ancientEgg){
     if(h.ancientEgg&&!h.ancientEgg.hatched&&!creatures.some(c=>c.holder===h&&!c.isLegend&&c.tending))creatures.forEach(c=>{if(c.holder===h&&!c.isLegend)c.tending=true;});  /* back-compat: pre-selection eggs → all tend */
@@ -1675,6 +1685,11 @@ function restoreChikis(h,saved){
   }
   if(saved.glory!=null)h.glory=saved.glory;            /* Chikoria Cup battle currency */
   if(saved.taskCounts)h.taskCounts=saved.taskCounts;   /* restore the player's per-task Done tally */
+  if(h._nameGlitch){ h._nameGlitch=false;
+    if(h.pk&&typeof saveProfile==="function")saveProfile(h);   /* persist the cleared name so the glitch can't recur */
+    if(typeof addFeed==="function")addFeed("⚠️ A past naming glitch had given two of your Chikis the same name. We've reset the affected one — please give it a fresh name (✏️ Change Name or the prompt).");
+    if(typeof startOnboarding==="function")setTimeout(()=>{try{startOnboarding();}catch(e){}},1000);   /* re-prompt a unique name */
+  }
   if(elapsed>120&&(totalTasks>0||anyHungry)){
     const away=elapsed>=3600?(Math.round(elapsed/360)/10)+"h":Math.max(1,Math.round(elapsed/60))+"m";
     addFeed(`🌙 While you were away (${away}), your Chikis finished <b>${totalTasks}</b> task${totalTasks===1?"":"s"}${lvUps?` and gained <b>${lvUps}</b> level${lvUps>1?"s":""}`:""}.${anyHungry?" One is <b>hungry</b> 🍖 — feed it to wake it up!":""}`);
