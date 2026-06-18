@@ -2745,14 +2745,37 @@ setInterval(updateWhaleTab,1000);
     const i=creatures.indexOf(c); if(i>-1)creatures.splice(i,1);
     if(c.holder&&c.holder.creature===c)c.holder.creature=creatures.find(x=>x.holder===c.holder)||null;
   }
-  /* RELEASE & REROLL: send a normal Chiki back to the jungle (200,000 $CHIKI) and Mithra grants a fresh egg — repeatable */
-  async function releaseRehatch(){
+  /* RELEASE & REROLL (200,000 $CHIKI): 1) pick which Chiki → 2) confirm → 3) hatch a fresh egg → 4) name it */
+  function releaseRehatch(){
     if(!player){showBanner("Connect your wallet first.","error");return;}
     const norms=creatures.filter(c=>c.holder===player&&!c.isLegend);
     if(!norms.length){showBanner("You have no normal Chiki to release.","error");return;}
+    if((player.bal||0)-REROLL_COST<MIN_HOLD){showBanner(`Releasing costs ${REROLL_COST.toLocaleString()} $CHIKI (keep ≥${MIN_HOLD.toLocaleString()}).`,"error");return;}
+    if(norms.length===1){ releaseConfirm(norms[0]); return; }          /* only one — straight to confirm */
+    const body=g("sorcBody");
+    body.innerHTML=`${PORTRAIT}<div id="sorcLore">“Which Chiki shall I release to the jungle? A fresh egg will take its place.”</div>`+
+      norms.map(c=>`<div class="mCard"><div class="mCardHead">${nameOf(c)} <span class="mPrice">Lv ${c.level}</span></div>
+        <div class="sNote">${c.sp.type} · ${(c.tasksDone||0)} tasks done</div>
+        <button class="sBtn" data-rel="${creatures.indexOf(c)}">🌿 Release this one</button></div>`).join("")+
+      `<button class="sBtn" id="relCancel" style="background:#1b1430;box-shadow:0 4px 0 #0c0820;margin-top:6px">↩ Cancel</button>`;
+    body.querySelectorAll("button[data-rel]").forEach(b=>b.onclick=()=>releaseConfirm(creatures[+b.dataset.rel]));
+    const cb=g("relCancel"); if(cb)cb.onclick=renderSorc;
+  }
+  function releaseConfirm(victim){
+    if(!victim){renderSorc();return;}
+    const body=g("sorcBody");
+    body.innerHTML=`${PORTRAIT}<div id="sorcLore">Release <b style="color:${victim.sp.body}">${nameOf(victim)}</b> (Lv ${victim.level}) back to the jungle?</div>
+      <div class="sNote">This costs <b>${REROLL_COST.toLocaleString()} $CHIKI</b> and <b>cannot be undone</b> — ${nameOf(victim)}'s level &amp; progress are lost. Mithra will grant you a fresh egg in its place.</div>
+      <button class="sBtn" id="relYes">✅ Yes, release &amp; hatch a new egg</button>
+      <button class="sBtn" id="relNo" style="background:#1b1430;box-shadow:0 4px 0 #0c0820;margin-top:8px">↩ Cancel</button>`;
+    const yb=g("relYes"); if(yb)yb.onclick=()=>doRelease(victim);
+    const nb=g("relNo"); if(nb)nb.onclick=renderSorc;
+  }
+  async function doRelease(victim){
+    if(!player||!victim)return;
     const cost=REROLL_COST;
     if((player.bal||0)-cost<MIN_HOLD){showBanner(`Releasing costs ${cost.toLocaleString()} $CHIKI (keep ≥${MIN_HOLD.toLocaleString()}).`,"error");return;}
-    const btn=g("mithReroll"); if(btn){btn.disabled=true;btn.textContent="✍️ Approve in Phantom…";}
+    const yb=g("relYes"); if(yb){yb.disabled=true;yb.textContent="✍️ Approve in Phantom…";}
     if(CHAIN.ONCHAIN_SPENDS&&player.pk){
       try{await chikiSpend(cost,"Release Chiki",REROLL_SPLIT);}
       catch(e){console.error("reroll spend error:",e);const m="⚠️ Release failed: "+(e.message||e);showBanner(m,"error");addFeed(m);renderSorc();return;}
@@ -2760,14 +2783,37 @@ setInterval(updateWhaleTab,1000);
     player.bal-=cost;
     const burn=cost*0.01,toPool=cost*0.39,toTeam=cost*0.60;
     burnedChiki+=burn;pool+=toPool*TOKEN_PRICE;teamChiki+=toTeam;
-    const victim=norms[norms.length-1];                       /* release the newest normal Chiki */
-    const vname=(typeof nameOf==="function"?nameOf(victim):victim.sp.names[0]);
+    const vname=nameOf(victim);
+    const before=creatures.filter(c=>c.holder===player&&!c.isLegend);
     removeCreature(victim);
     addFeed(`🌿 ${nameFor(player)} released <b>${vname}</b> to the jungle for ${cost.toLocaleString()} $CHIKI → 🔥${fmtK(burn)} burned · 💰${fmtK(toPool)}→pool · 🏦${fmtK(toTeam)}→team. Mithra grants a fresh egg…`);
     await hatchChikis(player,1,{noLegend:true});               /* fresh NORMAL egg, from scratch (Lv 1) */
+    const after=creatures.filter(c=>c.holder===player&&!c.isLegend);
+    const newC=after.find(c=>before.indexOf(c)<0)||after[after.length-1];
     if(player.pk&&typeof saveProfile==="function")saveProfile(player);
     if(typeof refreshUI==="function")refreshUI();
-    renderSorc();
+    nameNewChiki(newC);
+  }
+  function nameNewChiki(c){
+    if(!c){renderSorc();return;}
+    const si=SPECIES.indexOf(c.sp), body=g("sorcBody");
+    body.innerHTML=`${PORTRAIT}<div id="sorcLore">A new <b style="color:${c.sp.body}">${c.sp.names[0]}</b> has hatched! Give your companion a name.</div>
+      <div class="sReveal"><img src="chikidex/${DEX_IMG[si]||'mushrow'}.png" alt="${c.sp.names[0]}" style="width:118px;height:118px;object-fit:contain" onerror="this.outerHTML='🐣'"></div>
+      <div class="sStat">🪪 Name your Chiki:</div>
+      <input id="newNm" class="onbInp" maxlength="16" value="${c.sp.names[0]}" placeholder="Name your Chiki…" style="margin:6px 0">
+      <div id="newNmErr" class="onbErr"></div>
+      <button class="sBtn gold" id="newNmGo" style="margin-top:10px">✅ Confirm Name</button>`;
+    const inp=g("newNm"); if(inp)setTimeout(()=>{inp.focus();inp.select();},60);
+    const finish=()=>{ const v=(g("newNm").value||"").trim().slice(0,16);
+      if(v.length<2){const e=g("newNmErr");if(e)e.textContent="Enter at least 2 characters.";return;}
+      c.nick=v; c.named=true;
+      addFeed(`🐣 ${nameFor(player)} welcomed a new Chiki — <b style="color:${c.sp.body}">${v}</b>!`);
+      if(player.pk&&typeof saveProfile==="function")saveProfile(player);
+      if(typeof refreshUI==="function")refreshUI();
+      renderSorc();
+    };
+    const gb=g("newNmGo"); if(gb)gb.onclick=finish;
+    if(inp)inp.addEventListener("keydown",e=>{if(e.key==="Enter")finish();});
   }
   async function buyEgg(){    /* buy a LEGENDARY egg (1,000,000 $CHIKI) — cared for 24h / 12h with 2 Chikis */
     if(!ANCIENT_EGG_ENABLED){showBanner("🔮 Mithra's Mystic Market is closed right now.","info");return;}
