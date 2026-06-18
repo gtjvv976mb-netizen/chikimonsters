@@ -1577,6 +1577,8 @@ function saveProfile(h){
 function loadProfile(pk){try{const s=localStorage.getItem(profileKey(pk));return s?JSON.parse(s):null;}catch(e){return null;}}
 /* ---- offline progression: fast-forward a Chiki for the time its master was away ---- */
 function offlineProgress(c,elapsedSec){
+  if(c.isLegend)return 0;                                                     /* legendaries don't work/earn/eat */
+  if(c.holder&&c.holder.ancientEgg&&!c.holder.ancientEgg.hatched)return 0;    /* carers tend the Legendary Egg — tickCare spends their food */
   let t=Math.min(Math.max(0,elapsedSec),72*3600);   /* cap a long absence at 72h */
   if(t<30){ c.food=Math.max(0,(c.food!=null?c.food:foodMaxSec(c.level))-t); return 0; }
   const food0=(c.food!=null?c.food:foodMaxSec(c.level));
@@ -1602,6 +1604,7 @@ function offlineProgress(c,elapsedSec){
 function restoreChikis(h,saved){
   const since=saved._serverSavedAt||saved.savedAt||0;
   const elapsed=since?Math.max(0,(Date.now()-since)/1000):0;
+  if(saved.ancientEgg)h.ancientEgg=saved.ancientEgg;   /* set FIRST so offlineProgress knows the carers are tending the egg, not working */
   let totalTasks=0,lvUps=0,anyHungry=false;
   (saved.chikis||[]).forEach(cd=>{
     const idx=(cd.sp>=0?cd.sp:ri(0,SPECIES.length-1));
@@ -1620,12 +1623,14 @@ function restoreChikis(h,saved){
     lvUps+=Math.max(0,c.level-before);
     if(c.hungry)anyHungry=true;
   });
-  /* Sorceress: restore the Ancient Egg and fast-forward its care for the time away */
-  if(saved.ancientEgg){ h.ancientEgg=saved.ancientEgg; if(typeof tickCare==="function")tickCare(h);
-    const e=h.ancientEgg; if(e&&!e.hatched){ const need=e.need||1440, done=Math.min(need,e.careMin||0), left=Math.max(0,need-done), ready=done>=need;
-      const lt=left>=60?Math.floor(left/60)+"h "+Math.round(left%60)+"m":Math.ceil(left)+"m";
-      addFeed(ready?`🔮 <b>Mithra:</b> your <b>Legendary Egg is ready to hatch!</b> Open the 🔮 Mystic Market to claim it. 👑`
-                   :`🔮 <b>Mithra:</b> your <b>Legendary Egg</b> is incubating — about <b>${lt}</b> of care left. Tap the 🔮 Mystic Market tab to watch its progress.`);
+  /* Mithra: fast-forward the Legendary Egg's food-driven care for the time away (egg already set above) */
+  if(saved.ancientEgg){ if(typeof tickCare==="function")tickCare(h);
+    const e=h.ancientEgg; if(e&&!e.hatched){ const need=e.need||1440, done=Math.min(need,e.careMin||0), careLeft=Math.max(0,need-done), ready=done>=need;
+      const fed=creatures.filter(c=>c.holder===h&&!c.isLegend&&(c.food||0)>0).length;
+      if(ready)addFeed(`🔮 <b>Mithra:</b> your <b>Legendary Egg is ready to hatch!</b> Open the 🔮 Mystic Market to claim it. 👑`);
+      else if(fed<=0)addFeed(`🔮 <b>Mithra:</b> your <b>Legendary Egg</b> is incubating but <b>paused</b> — your Chiki(s) ran out of food. Feed them to resume! 🍖`);
+      else { const left=careLeft/fed, lt=left>=60?Math.floor(left/60)+"h "+Math.round(left%60)+"m":Math.max(1,Math.ceil(left))+"m";
+        addFeed(`🔮 <b>Mithra:</b> your <b>Legendary Egg</b> is incubating — about <b>${lt}</b> of care left (keep your Chiki(s) fed). Tap the 🔮 Mystic Market to watch.`); }
     }
   }
   if(saved.glory!=null)h.glory=saved.glory;            /* Chikoria Cup battle currency */
@@ -1692,6 +1697,7 @@ function separateCreatures(){
 }
 function assignTask(c,forceRare){
   if(c.isLegend){ c.task=null;c.target=null;c.state="wander";c.nextTaskIn=rng(10,20); return; }   /* Legendaries are defenders of Chikoria — they don't do tasks or earn */
+  if(c.holder&&c.holder.ancientEgg&&!c.holder.ancientEgg.hatched){ c.task=null;c.target=null;c.state="wander";c.nextTaskIn=rng(6,12); return; }   /* carers tend the Legendary Egg instead of working */
   let t;
   if(c.bot&&c.demoZone){                 /* showcase bot — demonstrate its assigned task */
     const pool=TASKS.filter(x=>x.zone===c.demoZone);
@@ -2722,16 +2728,22 @@ setInterval(updateWhaleTab,1000);
   let open=false, revealing=false;
   /* the normal Chikis that tend the egg (all of them — they pour their stamina & food into it) */
   function carers(h){return creatures.filter(c=>c.holder===h&&!c.isLegend);}
-  function careNeed(h){return carers(h).length>=2?CARE_NEED_12H:CARE_NEED_24H;}   /* 24h with 1 Chiki, 12h with 2 */
+  function careNeed(h){return carers(h).length>=2?CARE_NEED_12H:CARE_NEED_24H;}   /* human estimate: ~24h with 1 Chiki, ~12h with 2 */
+  function fedCarers(h){return carers(h).filter(c=>(c.food||0)>0).length;}
+  /* ===== FOOD-DRIVEN incubation: the egg only advances while a carer has FOOD (which drains in sync with time).
+     Each fed carer spends its food into the egg; when food runs out, care PAUSES until the player feeds them. ===== */
   function tickCare(h){
     const e=h&&h.ancientEgg; if(!e||e.hatched)return;
-    const need=e.need||careNeed(h);
-    const now=Date.now(), mins=(now-(e.lastAt||now))/60000;
-    if(mins>0){ e.careMin=Math.min(need,(e.careMin||0)+mins); e.lastAt=now;   /* real-time care */
-      /* the carer Chikis spend all their stamina & food tending the egg; they sleep when drained */
-      carers(h).forEach(c=>{ c.food=Math.max(0,(c.food||0)-mins*60); c.stamina=Math.max(0,(c.stamina||0)-mins*4);
-        if((c.stamina<=0||c.food<=0)&&c.state!=="sleeping"){c.hungry=c.food<=0;c.state="sleeping";c.sleepT=c.food<=0?0:sleepTimeOf(c.level);} });
-    }
+    const need=e.need||CARE_NEED_24H;                       /* 1440 care-minutes; 2 fed carers finish in ~half the time */
+    const now=Date.now(); let sec=(now-(e.lastAt||now))/1000; e.lastAt=now;
+    if(sec<=0)return;
+    let careSec=0;
+    carers(h).forEach(c=>{
+      const spend=Math.min(sec, c.food||0);                /* a carer cares only for as long as it has food */
+      if(spend>0){ c.food=Math.max(0,(c.food||0)-spend); careSec+=spend; c.stamina=Math.max(0,(c.stamina||0)-spend*0.06); }
+      if((c.food||0)<=0){ c.hungry=true; if(c.state!=="sleeping"){freeSpot&&freeSpot(c);c.task=null;c.target=null;c.state="sleeping";c.sleepT=0;} }  /* famished — rests until fed */
+    });
+    if(careSec>0)e.careMin=Math.min(need,(e.careMin||0)+careSec/60);
   }
   window.tickCare=tickCare;  /* used by profile restore for offline care */
   function fmtDur(min){ if(min<=0)return "ready"; if(min<60)return Math.ceil(min)+"m"; const h=Math.floor(min/60),m=Math.round(min%60); return h+"h"+(m?(" "+m+"m"):""); }
@@ -2832,9 +2844,9 @@ setInterval(updateWhaleTab,1000);
     player.bal-=cost;
     const burn=cost*EGG_SPLIT.burn/10000,toPool=cost*EGG_SPLIT.pool/10000,toTeam=cost*EGG_SPLIT.team/10000;
     burnedChiki+=burn;pool+=toPool*TOKEN_PRICE;teamChiki+=toTeam;
-    const need=careNeed(player);
-    player.ancientEgg={careMin:0,lastAt:Date.now(),hatched:false,need};
-    addFeed(`🥚 ${nameFor(player)} bought a <b>Legendary Egg</b> from Mithra → 🔥${fmtK(burn)} burned · 💰${fmtK(toPool)}→pool · 🏦${fmtK(toTeam)}→team. Your Chiki(s) will tend it for ${Math.round(need/60)}h…`);
+    player.ancientEgg={careMin:0,lastAt:Date.now(),hatched:false,need:CARE_NEED_24H};   /* food-driven: 2 fed carers finish in ~half the time */
+    carers(player).forEach(c=>{ if(typeof freeSpot==="function")freeSpot(c); c.task=null;c.target=null; if(c.state!=="sleeping")c.state="wander"; });   /* send the carers to the egg nest */
+    addFeed(`🥚 ${nameFor(player)} bought a <b>Legendary Egg</b> from Mithra → 🔥${fmtK(burn)} burned · 💰${fmtK(toPool)}→pool · 🏦${fmtK(toTeam)}→team. Keep your Chiki(s) <b>fed</b> — the egg only grows while they have food (~${Math.round(careNeed(player)/60)}h if kept fed).`);
     if(player.pk&&typeof saveProfile==="function")saveProfile(player);
     if(typeof refreshUI==="function")refreshUI();
     renderSorc();
@@ -2906,8 +2918,8 @@ setInterval(updateWhaleTab,1000);
     const e=player.ancientEgg;
     /* ---- a Legendary Egg is incubating / ready ---- */
     if(e&&!e.hatched){
-      const need=e.need||careNeed(player), done=Math.min(need,e.careMin||0), pct=Math.round(done/need*100), ready=done>=need;
-      const left=Math.max(0,need-done);
+      const need=e.need||CARE_NEED_24H, done=Math.min(need,e.careMin||0), pct=Math.round(done/need*100), ready=done>=need;
+      const careLeft=Math.max(0,need-done), fed=fedCarers(player), left=fed>0?careLeft/fed:Infinity;
       if(ready){
         body.innerHTML=`${PORTRAIT}<div id="sorcLore">“The Legendary Egg trembles with power — it is ready.” ✨</div>
           <img class="sEggImg shake" src="ui/legendary-egg.png" alt="Legendary Egg" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'sEgg shake',textContent:'🥚'}))"><div class="sCareWrap"><div class="sCare" style="width:100%"></div></div>
@@ -2916,10 +2928,11 @@ setInterval(updateWhaleTab,1000);
         const hb=g("sorcHatchBtn"); if(hb)hb.onclick=hatchAncient;
         return;
       }
-      body.innerHTML=`${PORTRAIT}<div id="sorcLore">Your Chiki(s) are caring for the <b>Legendary Egg</b> — pouring all their stamina &amp; food into it. They rest when drained.</div>
+      const paused=fed<=0;
+      body.innerHTML=`${PORTRAIT}<div id="sorcLore">Your Chiki(s) feed the <b>Legendary Egg</b> from their own food bar — it grows only while they're <b>fed</b>.</div>
         <img class="sEggImg shake" src="ui/legendary-egg.png" alt="Legendary Egg" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'sEgg shake',textContent:'🥚'}))"><div class="sCareWrap"><div class="sCare" style="width:${pct}%"></div></div>
-        <div class="sStat">Care progress: <b>${pct}%</b> · ⏳ <b>${fmtDur(left)}</b> left</div>
-        <div class="sNote">${Math.round(need/60)}h total${carers(player).length>=2?" — sped up by your 2 Chikis":""}. Care continues while you're away.</div>`;
+        <div class="sStat">Care progress: <b>${pct}%</b> · ${paused?`<b style="color:#ff922b">⏸ Paused — feed your Chiki(s)!</b>`:`⏳ <b>${fmtDur(left)}</b> left`}</div>
+        <div class="sNote">${paused?"Your Chiki(s) ran out of food, so the egg has paused. Refill their food bar in the My Chiki panel to resume.":(fed>=2?"Two fed Chikis are caring — it grows twice as fast! ":"")+"Keep them fed to keep the egg growing. Progress continues while you're away (until their food runs out)."}</div>`;
       return;
     }
     /* ---- market: release/reroll + buy a Legendary Egg ---- */
@@ -4315,6 +4328,31 @@ function loadMithra(){
   }).catch(()=>{});
 }
 setTimeout(loadMithra,500);
+/* ===== Legendary Egg NEST — a 3D egg that appears in the world while one incubates; carers walk to it and tend it ===== */
+let eggNest=null, eggSprite=null, eggGlow=null, _eggT=0;
+function makeEggNest(){
+  if(typeof THREE==="undefined")return;
+  let tx=92,ty=72,found=null;
+  for(let r=0;r<34&&!found;r++)for(let dx=-r;dx<=r&&!found;dx++)for(let dy=-r;dy<=r&&!found;dy++){
+    const nx=tx+dx,ny=ty+dy; if(nx<5||ny<5||nx>COLS-5||ny>ROWS-5)continue;
+    if(walkable(nx*TILE+TILE/2,ny*TILE+TILE/2))found={x:nx,y:ny};
+  }
+  if(!found)found={x:tx,y:ty};
+  const wx=found.x*TILE+TILE/2, wz=found.y*TILE+TILE/2, gy=heightY(wx,wz);
+  eggNest={x:wx,z:wz,gy};
+  const tex=new THREE.TextureLoader().load("ui/legendary-egg.png");
+  const m=new THREE.SpriteMaterial({map:tex,transparent:true,depthWrite:false});
+  eggSprite=new THREE.Sprite(m); eggSprite.scale.set(48,48,1); eggSprite.position.set(wx,gy+28,wz); eggSprite.visible=false; scene.add(eggSprite);
+  const gm=new THREE.SpriteMaterial({map:(typeof auraTex==="function"?auraTex():null),color:0xb061ff,transparent:true,opacity:0.5,blending:THREE.AdditiveBlending,depthWrite:false});
+  eggGlow=new THREE.Sprite(gm); eggGlow.scale.set(70,70,1); eggGlow.position.set(wx,gy+22,wz); eggGlow.visible=false; scene.add(eggGlow);
+}
+setTimeout(makeEggNest,650);
+setInterval(()=>{                                  /* show the egg + gentle bob while incubating */
+  if(!eggSprite||!eggNest)return;
+  const inc=!!(player&&player.ancientEgg&&!player.ancientEgg.hatched);
+  eggSprite.visible=inc; if(eggGlow)eggGlow.visible=inc;
+  if(inc){ _eggT+=0.09; eggSprite.position.y=eggNest.gy+28+Math.sin(_eggT)*3; if(eggGlow)eggGlow.material.opacity=0.35+0.2*Math.sin(_eggT*0.8); }
+},60);
 function makeTextSprite(txt,scalePx,color){
   const c2v=document.createElement("canvas");c2v.width=256;c2v.height=64;
   const c2=c2v.getContext("2d");
@@ -4725,7 +4763,7 @@ function tickCreature(c,dt){
     if(!moveWith(c,c.vx*dt,c.vy*dt))steerClear(c);
     return;
   }
-  if(c.holder===player&&!c.isLegend){         /* FOOD bar drains in real time (workers only); empty = FAMISHED until fed. Legendaries are defenders — no tasks, no food/earning */
+  if(c.holder===player&&!c.isLegend&&!(player.ancientEgg&&!player.ancientEgg.hatched)){   /* FOOD drains in real time (workers); empty = FAMISHED. While a Legendary Egg incubates, carers' food is spent by tickCare instead. Legendaries never use food. */
     c.food=Math.max(0,(c.food||0)-dt);
     if(c.food<=0&&!c.hungry){
       c.hungry=true;freeSpot(c);c.task=null;c.target=null;c.state="sleeping";c.sleepT=0;
@@ -4740,6 +4778,15 @@ function tickCreature(c,dt){
     return;
   }
   if(c.state==="wander"){
+    /* carers walk to the Legendary Egg nest and tend it while it incubates */
+    if(c.holder===player&&!c.isLegend&&player.ancientEgg&&!player.ancientEgg.hatched&&typeof eggNest!=="undefined"&&eggNest){
+      const ex=eggNest.x-c.x, ez=eggNest.z-c.y, ed=Math.hypot(ex,ez);
+      const slot=(creatures.filter(o=>o.holder===player&&!o.isLegend).indexOf(c))%2;
+      const ringR=30+slot*8;
+      if(ed>ringR){ const a=Math.atan2(ex,ez); c.vx=Math.sin(a); c.vy=Math.cos(a); c.dir=a; if(!moveWith(c,c.vx*64*dt,c.vy*64*dt))steerClear(c); }
+      else { c.vx=0;c.vy=0; c.dir=Math.atan2(ex,ez); if(!c.say&&Math.random()<dt*0.02){c.say="🥚 tending…";c.sayUntil=performance.now()/1000+2.6;} }   /* parked at the nest, facing the egg */
+      return;
+    }
     c.nextTaskIn-=dt;
     if(c.nextTaskIn<=0){assignTask(c,false);return;}
     if((c.vx===0&&c.vy===0)||Math.random()<dt*0.8)steerClear(c);
