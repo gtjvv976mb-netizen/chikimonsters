@@ -2794,6 +2794,15 @@ setInterval(updateWhaleTab,1000);
     renderSorc();
   }
 
+  /* origin lore shown at hatch — keyed by Legendary species name */
+  const LEGEND_LORE={
+    Galador:{ep:"The Tide Sovereign",lore:"Risen from the lightless abyss of the eastern sea — ancient and patient as the ocean itself.",tag:"The tide does not rush. The tide simply wins."},
+    Adalor:{ep:"The Dawnbringer",lore:"Born of Chikoria's first sunrise, a radiant judge who shields the weak and burns away the dark.",tag:"Even the darkest valley cannot outlast the dawn."},
+    Tyrannos:{ep:"The Apex",lore:"Instinct perfected in the untamed Wilds — the absolute guardian of Chikoria's borders.",tag:"There is the predator, and there is everything else."},
+    Grovador:{ep:"The Tempest Warden",lore:"A grove-spirit struck by a thousand storms into a wolf crowned in violet thunder.",tag:"You will not hear the thunder that finds you."},
+    Dragonos:{ep:"The Last Flame",lore:"The final Legendary, forged in the volcano's heart from the same fire that made the world.",tag:"All things end in fire — and from fire, all things begin again."}
+  };
+
   function hatchAncient(){
     const e=player&&player.ancientEgg; if(!e||(e.careMin||0)<(e.need||careNeed(player))||revealing)return;
     if(!isCreator(player.pk)&&holderCounts(player).legend>=MAX_LEGEND){showBanner("You already have a Legendary (max 1) — cannot hatch another.","error");return;}
@@ -2814,10 +2823,13 @@ setInterval(updateWhaleTab,1000);
     setTimeout(()=>{ const st=g("eggStage"); if(st)st.classList.add("burst"); const hm=g("hatchMsg"); if(hm)hm.textContent="✨ It bursts open!"; if(window.playSfx)window.playSfx("reward"); },1050);
     setTimeout(()=>{
       const sp=SPECIES[idx], defName=sp.names[0];
+      const lore=LEGEND_LORE[defName]||{ep:"Descendant of the Ancient Bloodline",lore:"Sworn to defend Chikoria with the power of Chi.",tag:""};
       body.innerHTML=`<div class="sReveal"><img src="chikidex/${DEX_IMG[idx]}.png" alt="${defName}" style="width:130px;height:130px;object-fit:contain" onerror="this.outerHTML='👑'"></div>
         <div style="font-size:20px;font-weight:800;color:#ffd93d">LEGENDARY!</div>
-        <div style="font-size:13px;font-weight:800;color:#c79bff;margin:2px 0">${sp.type} · descendant of the ancient bloodline</div>
-        <div class="sNote" style="margin:8px 0">Born of the first Chikis' royal line, this Legendary is sworn to <b>defend Chikoria</b> with the power of Chi. Legendaries don't toil at tasks — their destiny is the arena. ⚔️</div>
+        <div style="font-size:17px;font-weight:800;color:${sp.body};margin:3px 0">${defName} — <span style="color:#c79bff">${lore.ep}</span></div>
+        <div style="font-size:11px;color:#8fa6c9;margin-bottom:6px">${sp.type} · descendant of the ancient bloodline</div>
+        <div class="sNote" style="margin:6px 0">${lore.lore} Legendaries don't toil at tasks — their destiny is to <b>defend Chikoria</b>. ⚔️</div>
+        ${lore.tag?`<div style="font-style:italic;color:#c79bff;font-size:12.5px;margin:6px 0">“${lore.tag}”</div>`:""}
         <div class="sStat" style="margin-top:4px">🪪 Name your Legendary:</div>
         <input id="legNameInp" class="onbInp" maxlength="16" value="${defName}" placeholder="Name your Legendary…" style="margin:6px 0">
         <div id="legNameErr" class="onbErr"></div>
