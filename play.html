@@ -1630,7 +1630,7 @@ function saveProfile(h){
       ancientEgg:h.ancientEgg||null,                /* Sorceress: legendary egg incubation state */
       glory:h.glory||0,                             /* Chikoria Cup battle currency */
       taskCounts:h.taskCounts||null,                /* per-task completions by this player's Chikis (Done column) */
-      chikis:mine.map(c=>({sp:SPECIES.indexOf(c.sp),level:c.level,tasksDone:c.tasksDone||0,nick:c.nick||null,renames:c.renames||0,sleepCycles:c.sleepCycles||0,hungry:!!c.hungry,food:Math.round(c.food||0),xp:Math.floor(c.xp||0),isLegend:!!c.isLegend,tending:!!c.tending,arenaSkills:c.arenaSkills||null,br:c.br||1,battleXp:Math.floor(c.battleXp||0),skillPts:c.skillPts||0,cardTier:c.cardTier||null,arenaStam:c.arenaStam!=null?Math.round(c.arenaStam):null,arenaSleepUntil:c.arenaSleepUntil||0}))};
+      chikis:mine.map(c=>({sp:SPECIES.indexOf(c.sp),level:c.level,tasksDone:c.tasksDone||0,nick:c.nick||null,renames:c.renames||0,sleepCycles:c.sleepCycles||0,hungry:!!c.hungry,food:Math.round(c.food||0),stamina:Math.round(c.stamina||0),xp:Math.floor(c.xp||0),isLegend:!!c.isLegend,tending:!!c.tending,arenaSkills:c.arenaSkills||null,br:c.br||1,battleXp:Math.floor(c.battleXp||0),skillPts:c.skillPts||0,cardTier:c.cardTier||null,arenaStam:c.arenaStam!=null?Math.round(c.arenaStam):null,arenaSleepUntil:c.arenaSleepUntil||0}))};
     localStorage.setItem(profileKey(h.pk),JSON.stringify(data));
     if(CHAIN.BACKEND)fetch(CHAIN.BACKEND+"/profile",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:h.pk,profile:data})}).catch(()=>{});
   }catch(e){}
@@ -1674,6 +1674,7 @@ function restoreChikis(h,saved){
     c.sleepCycles=cd.sleepCycles||0;
     c.xp=cd.xp||0;
     c.food=(cd.food!=null?cd.food:foodMaxSec(c.level));   /* restore the food bar (offlineProgress drains it for time away) */
+    if(cd.stamina!=null)c.stamina=Math.max(0,Math.min(cd.stamina,maxStamOf(c.level)));   /* restore stamina — refreshing must NOT refill it */
     if(cd.tending)c.tending=true;                         /* this Chiki was chosen to tend the Legendary Egg */
     if(cd.isLegend)c.isLegend=true;
     if(cd.arenaStam!=null)c.arenaStam=cd.arenaStam; if(cd.arenaSleepUntil)c.arenaSleepUntil=cd.arenaSleepUntil;   /* arena stamina + sleep cooldown */
@@ -3583,7 +3584,22 @@ setInterval(()=>{
 /* autosave the connected wallet's Chikis + progress so a refresh never resets them */
 setInterval(()=>{if(player&&player.pk)saveProfile(player);},8000);
 addEventListener("beforeunload",()=>{if(player&&player.pk)saveProfile(player);});
-addEventListener("visibilitychange",()=>{if(document.hidden&&player&&player.pk)saveProfile(player);});
+/* Background tabs throttle/suspend the render loop, so the sim would otherwise "pause".
+   Record when the tab is hidden and CREDIT the elapsed time on return (same engine as a reload). */
+let _hiddenAt=0;
+addEventListener("visibilitychange",()=>{
+  if(document.hidden){ _hiddenAt=Date.now(); if(player&&player.pk)saveProfile(player); return; }
+  if(!_hiddenAt||!player)return;
+  const elapsed=(Date.now()-_hiddenAt)/1000; _hiddenAt=0;
+  if(elapsed<3)return;                                  /* quick tab flick — nothing to catch up */
+  let did=0;
+  creatures.filter(c=>c.holder===player&&!c.isLegend).forEach(c=>{ try{did+=offlineProgress(c,elapsed)||0;}catch(e){} });
+  try{ if(typeof tickCare==="function"&&player.ancientEgg&&!player.ancientEgg.hatched)tickCare(player); }catch(e){}
+  if(typeof last!=="undefined")last=performance.now();  /* avoid a huge first-frame dt */
+  if(typeof refreshUI==="function")refreshUI();
+  if(player.pk)saveProfile(player);
+  if(did>0&&typeof addFeed==="function")addFeed(`⏱️ Welcome back — your Chikis kept working while the tab was in the background (${did} task${did===1?"":"s"} done).`);
+});
 document.getElementById("phantomBtn").onclick=connectPhantom;
 function doDisconnect(){
   if(!player)return;
