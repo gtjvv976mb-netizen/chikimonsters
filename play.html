@@ -2704,7 +2704,7 @@ setInterval(updateWhaleTab,1000);
       if(CARD_ART.has(artKey)){                       /* illustrated skill card */
         b.className="aPow art"+(selected?" sel":"")+(canSelect?"":" dis");
         b.style.backgroundImage=`url("ui/cards/${artKey}.jpg")`;
-        b.innerHTML=`<span class="apCost">${CARD_COST[slot]}</span>${t>1?`<span class="apTier">T${t}</span>`:""}${selBadge}`;
+        b.innerHTML=`${t>1?`<span class="apTier">T${t}</span>`:""}${selBadge}`;   /* art already shows the ⚡ cost */
       }else{                                           /* text fallback for cards without art yet */
         const big=k==="guard"?`🛡${TVAL.guardShield[t]}`:k==="bulwark"?`🛡${TVAL.bulwarkShield[t]}`:k==="charge"?`×${TVAL.charge[t]}`:k==="rally"?`+${Math.round((TVAL.rally[t]-1)*100)}%`:`${cardDmgN(slot,t)}`;
         const bigCls=(k==="guard"||k==="bulwark")?"shi":(k==="charge"||k==="rally")?"util":"atk";
@@ -3396,13 +3396,33 @@ positionHuds();setTimeout(positionHuds,400);setTimeout(positionHuds,1500);
     }catch(e){}
   }
 
+  /* one-time wallet sign-in: proves you own the wallet you chat as (anti-impersonation).
+     Phantom shows a single signature prompt; the result is reused for ~20h. */
+  let _chatAuth=null;
+  async function getChatAuth(){
+    if(!player||!player.pk)return null;
+    const now=Date.now();
+    if(_chatAuth&&_chatAuth.wallet===player.pk&&(now-_chatAuth.ts)<20*3600*1000)return _chatAuth;
+    const sol=window.solana;
+    if(!sol||!sol.signMessage)return null;     /* wallet can't sign → can't chat */
+    const msg="Chikoria Chat sign-in\nwallet:"+player.pk+"\nts:"+now;
+    try{
+      const res=await sol.signMessage(new TextEncoder().encode(msg),"utf8");
+      const sig=res.signature||res;
+      let bin=""; for(let i=0;i<sig.length;i++)bin+=String.fromCharCode(sig[i]);
+      _chatAuth={wallet:player.pk,msg,sig:btoa(bin),ts:now};
+      return _chatAuth;
+    }catch(e){return null;}
+  }
   async function send(){
     const inp=document.getElementById("chatText");if(!inp)return;
     const raw=inp.value.trim(); if(!raw)return;
     if(!player||!player.pk){showBanner("👛 Connect your wallet to chat.","error");return;}
     if(!B()){showBanner("⚙️ Chat needs the backend online.","error");return;}
+    const auth=await getChatAuth();
+    if(!auth){showBanner("✍️ Approve the one-time chat sign-in in your wallet to chat.","error");return;}
     inp.value="";
-    const body={wallet:player.pk,handle:myHandle(),text:clean(raw)};
+    const body={wallet:player.pk,handle:myHandle(),text:clean(raw),authMsg:auth.msg,authSig:auth.sig};
     if(dmTarget)body.to=dmTarget;
     try{
       const r=await fetch(B()+"/chat/send",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)});
@@ -3416,8 +3436,10 @@ positionHuds();setTimeout(positionHuds,400);setTimeout(positionHuds,1500);
     if(!isAdmin()){showBanner("🛡 Admins only.","error");return;}
     const ta=document.getElementById("adminText");const t=ta.value.trim();
     if(!t){showBanner("✍️ Write the announcement first.","error");return;}
+    const auth=await getChatAuth();
+    if(!auth){showBanner("✍️ Approve the wallet sign-in to post.","error");return;}
     try{
-      const r=await fetch(B()+"/chat/send",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:player.pk,handle:myHandle(),text:t,pin:true})});
+      const r=await fetch(B()+"/chat/send",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:player.pk,handle:myHandle(),text:t,pin:true,authMsg:auth.msg,authSig:auth.sig})});
       const j=await r.json();
       if(!j.ok){showBanner("⚠️ "+(j.error||"couldn't post"),"error");return;}
       ta.value="";showBanner("📢 Announcement posted & pinned for everyone.","");poll();
@@ -3463,7 +3485,7 @@ positionHuds();setTimeout(positionHuds,400);setTimeout(positionHuds,1500);
   document.getElementById("adminPost").onclick=postAnnounce;
   document.getElementById("adminCur").addEventListener("click",async e=>{
     const u=e.target.closest("[data-unpin]");
-    if(u&&isAdmin()){try{await fetch(B()+"/chat/pin",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:player.pk,id:+u.dataset.unpin,pin:false})});poll();}catch(_){}}
+    if(u&&isAdmin()){const a=await getChatAuth();if(!a)return;try{await fetch(B()+"/chat/pin",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:player.pk,id:+u.dataset.unpin,pin:false,authMsg:a.msg,authSig:a.sig})});poll();}catch(_){}}
   });
   document.getElementById("chatSend").onclick=send;
   document.getElementById("chatText").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();send();}});
@@ -3471,11 +3493,11 @@ positionHuds();setTimeout(positionHuds,400);setTimeout(positionHuds,1500);
   document.getElementById("onlineView").addEventListener("click",e=>{const el=e.target.closest(".conline");if(!el)return;const w=el.dataset.dm;if(player&&w===player.pk)return;openDM(w,el.dataset.nm);});
   document.getElementById("chatScroll").addEventListener("click",async e=>{
     const p=e.target.closest("[data-pin]"),u=e.target.closest("[data-unpin]");
-    if(p&&isAdmin()){try{await fetch(B()+"/chat/pin",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:player.pk,id:+p.dataset.pin,pin:true})});poll();}catch(_){}}
+    if(p&&isAdmin()){const a=await getChatAuth();if(!a)return;try{await fetch(B()+"/chat/pin",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:player.pk,id:+p.dataset.pin,pin:true,authMsg:a.msg,authSig:a.sig})});poll();}catch(_){}}
   });
   document.getElementById("chatPinned").addEventListener("click",async e=>{
     const u=e.target.closest("[data-unpin]");
-    if(u&&isAdmin()){try{await fetch(B()+"/chat/pin",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:player.pk,id:+u.dataset.unpin,pin:false})});poll();}catch(_){}}
+    if(u&&isAdmin()){const a=await getChatAuth();if(!a)return;try{await fetch(B()+"/chat/pin",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:player.pk,id:+u.dataset.unpin,pin:false,authMsg:a.msg,authSig:a.sig})});poll();}catch(_){}}
   });
 
   /* polling: faster while open, slower in the background to keep the unread badge alive */
