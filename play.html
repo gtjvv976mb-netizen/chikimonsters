@@ -4187,19 +4187,7 @@ function buildZoneProps(){
       }catch(e){}
     },function(){});}catch(e){}
   },90);
-  /* sparring dummies */
-  const sparSpots=[];
-  ZONES.spar.forEach((z,i)=>{
-    if(i%2)return; /* one arena per pair */
-    const g=new THREE.Group(),gy=topY(z.x,z.y);
-    g.position.set(z.x*TILE+TILE/2,gy,z.y*TILE+TILE/2);
-    box(g,3,18,3,0x8a5a2b,0,9,0);
-    box(g,9,9,9,0xd9c98e,0,22,0);
-    box(g,18,3,3,0x8a5a2b,0,14,0);
-    structGroup.add(g);
-    sparSpots.push({proc:g,x:z.x*TILE+TILE/2,z:z.y*TILE+TILE/2,gy});
-  });
-  setTimeout(()=>loadVoxelDeco(window.ARENA_GLB,"spar",138,sparSpots,true),120);
+  /* Friendly Sparring now happens inside the Chikiseum (see placeChikiseum) — no standalone dummies */
   /* beehives + bees */
   const hiveSpots=[];
   ZONES.hive.forEach(z=>{
@@ -4588,9 +4576,13 @@ function placeChikiseum(){
     const k=ARENA_MODEL_HEIGHT/Math.max(0.001,size.y);
     const wrap=new THREE.Group(); wrap.add(root); wrap.scale.setScalar(k);
     wrap.position.set(wx,gy,wz); scene.add(wrap); chikiseumMesh=wrap;
-    /* block the footprint so Chikis route around it (treats it like a building) */
-    const halfT=Math.ceil((Math.max(size.x,size.z)*k/2)/TILE);
-    for(let dy=-halfT;dy<=halfT;dy++)for(let dx=-halfT;dx<=halfT;dx++){const bx=found.x+dx,by=found.y+dy;if(blocked[by]&&bx>=0&&bx<COLS)blocked[by][bx]=true;}
+    /* the arena floor stays WALKABLE so Chikis can enter to spar inside the Chikiseum */
+    /* route the Friendly Sparring task into the arena: two bouts on the central floor */
+    if(typeof ZONES==="object"&&ZONES.spar){
+      const cx=found.x, cy=found.y;
+      ZONES.spar.length=0;
+      ZONES.spar.push({x:cx-2,y:cy-1},{x:cx,y:cy-1},{x:cx-2,y:cy+1},{x:cx+1,y:cy+1});
+    }
   },undefined,()=>{console.warn("Chikiseum model failed to load");});
 }
 setTimeout(placeChikiseum,950);
