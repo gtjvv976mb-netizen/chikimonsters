@@ -1569,7 +1569,7 @@ function saveProfile(h){
       ancientEgg:h.ancientEgg||null,                /* Sorceress: legendary egg incubation state */
       glory:h.glory||0,                             /* Chikoria Cup battle currency */
       taskCounts:h.taskCounts||null,                /* per-task completions by this player's Chikis (Done column) */
-      chikis:mine.map(c=>({sp:SPECIES.indexOf(c.sp),level:c.level,tasksDone:c.tasksDone||0,nick:c.nick||null,sleepCycles:c.sleepCycles||0,hungry:!!c.hungry,food:Math.round(c.food||0),xp:Math.floor(c.xp||0),isLegend:!!c.isLegend,arenaSkills:c.arenaSkills||null,br:c.br||1,battleXp:Math.floor(c.battleXp||0),skillPts:c.skillPts||0,cardTier:c.cardTier||null}))};
+      chikis:mine.map(c=>({sp:SPECIES.indexOf(c.sp),level:c.level,tasksDone:c.tasksDone||0,nick:c.nick||null,sleepCycles:c.sleepCycles||0,hungry:!!c.hungry,food:Math.round(c.food||0),xp:Math.floor(c.xp||0),isLegend:!!c.isLegend,tending:!!c.tending,arenaSkills:c.arenaSkills||null,br:c.br||1,battleXp:Math.floor(c.battleXp||0),skillPts:c.skillPts||0,cardTier:c.cardTier||null}))};
     localStorage.setItem(profileKey(h.pk),JSON.stringify(data));
     if(CHAIN.BACKEND)fetch(CHAIN.BACKEND+"/profile",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:h.pk,profile:data})}).catch(()=>{});
   }catch(e){}
@@ -1578,7 +1578,7 @@ function loadProfile(pk){try{const s=localStorage.getItem(profileKey(pk));return
 /* ---- offline progression: fast-forward a Chiki for the time its master was away ---- */
 function offlineProgress(c,elapsedSec){
   if(c.isLegend)return 0;                                                     /* legendaries don't work/earn/eat */
-  if(c.holder&&c.holder.ancientEgg&&!c.holder.ancientEgg.hatched)return 0;    /* carers tend the Legendary Egg — tickCare spends their food */
+  if(c.tending&&c.holder&&c.holder.ancientEgg&&!c.holder.ancientEgg.hatched)return 0;    /* tenders tend the Legendary Egg — tickCare spends their food */
   let t=Math.min(Math.max(0,elapsedSec),72*3600);   /* cap a long absence at 72h */
   if(t<30){ c.food=Math.max(0,(c.food!=null?c.food:foodMaxSec(c.level))-t); return 0; }
   const food0=(c.food!=null?c.food:foodMaxSec(c.level));
@@ -1613,6 +1613,7 @@ function restoreChikis(h,saved){
     c.sleepCycles=cd.sleepCycles||0;
     c.xp=cd.xp||0;
     c.food=(cd.food!=null?cd.food:foodMaxSec(c.level));   /* restore the food bar (offlineProgress drains it for time away) */
+    if(cd.tending)c.tending=true;                         /* this Chiki was chosen to tend the Legendary Egg */
     if(cd.isLegend)c.isLegend=true;
     if(cd.arenaSkills)c.arenaSkills=cd.arenaSkills;   /* legendary's 3-of-7 Chi skills */
     if(c.isLegend){ c.br=cd.br||1; c.battleXp=cd.battleXp||0; c.skillPts=cd.skillPts||0; c.cardTier=cd.cardTier||null; ensureBattle(c); }
@@ -1624,7 +1625,9 @@ function restoreChikis(h,saved){
     if(c.hungry)anyHungry=true;
   });
   /* Mithra: fast-forward the Legendary Egg's food-driven care for the time away (egg already set above) */
-  if(saved.ancientEgg){ if(typeof tickCare==="function")tickCare(h);
+  if(saved.ancientEgg){
+    if(h.ancientEgg&&!h.ancientEgg.hatched&&!creatures.some(c=>c.holder===h&&!c.isLegend&&c.tending))creatures.forEach(c=>{if(c.holder===h&&!c.isLegend)c.tending=true;});  /* back-compat: pre-selection eggs → all tend */
+    if(typeof tickCare==="function")tickCare(h);
     const e=h.ancientEgg; if(e&&!e.hatched){ const need=e.need||1440, done=Math.min(need,e.careMin||0), careLeft=Math.max(0,need-done), ready=done>=need;
       const fed=creatures.filter(c=>c.holder===h&&!c.isLegend&&(c.food||0)>0).length;
       if(ready)addFeed(`🔮 <b>Mithra:</b> your <b>Legendary Egg is ready to hatch!</b> Open the 🔮 Mystic Market to claim it. 👑`);
@@ -1697,7 +1700,7 @@ function separateCreatures(){
 }
 function assignTask(c,forceRare){
   if(c.isLegend){ c.task=null;c.target=null;c.state="wander";c.nextTaskIn=rng(10,20); return; }   /* Legendaries are defenders of Chikoria — they don't do tasks or earn */
-  if(c.holder&&c.holder.ancientEgg&&!c.holder.ancientEgg.hatched){ c.task=null;c.target=null;c.state="wander";c.nextTaskIn=rng(6,12); return; }   /* carers tend the Legendary Egg instead of working */
+  if(c.tending&&c.holder&&c.holder.ancientEgg&&!c.holder.ancientEgg.hatched){ c.task=null;c.target=null;c.state="wander";c.nextTaskIn=rng(6,12); return; }   /* chosen tenders tend the egg instead of working */
   let t;
   if(c.bot&&c.demoZone){                 /* showcase bot — demonstrate its assigned task */
     const pool=TASKS.filter(x=>x.zone===c.demoZone);
@@ -2727,8 +2730,8 @@ setInterval(updateWhaleTab,1000);
   const g=id=>document.getElementById(id);
   let open=false, revealing=false;
   /* the normal Chikis that tend the egg (all of them — they pour their stamina & food into it) */
-  function carers(h){return creatures.filter(c=>c.holder===h&&!c.isLegend);}
-  function careNeed(h){return carers(h).length>=2?CARE_NEED_12H:CARE_NEED_24H;}   /* human estimate: ~24h with 1 Chiki, ~12h with 2 */
+  function carers(h){return creatures.filter(c=>c.holder===h&&!c.isLegend&&c.tending);}   /* only the SELECTED tenders */
+  function careNeed(h){return carers(h).length>=2?CARE_NEED_12H:CARE_NEED_24H;}   /* human estimate: ~24h with 1 tender, ~12h with 2 */
   function fedCarers(h){return carers(h).filter(c=>(c.food||0)>0).length;}
   /* ===== FOOD-DRIVEN incubation: the egg only advances while a carer has FOOD (which drains in sync with time).
      Each fed carer spends its food into the egg; when food runs out, care PAUSES until the player feeds them. ===== */
@@ -2844,10 +2847,39 @@ setInterval(updateWhaleTab,1000);
     player.bal-=cost;
     const burn=cost*EGG_SPLIT.burn/10000,toPool=cost*EGG_SPLIT.pool/10000,toTeam=cost*EGG_SPLIT.team/10000;
     burnedChiki+=burn;pool+=toPool*TOKEN_PRICE;teamChiki+=toTeam;
-    player.ancientEgg={careMin:0,lastAt:Date.now(),hatched:false,need:CARE_NEED_24H};   /* food-driven: 2 fed carers finish in ~half the time */
-    carers(player).forEach(c=>{ if(typeof freeSpot==="function")freeSpot(c); c.task=null;c.target=null; if(c.state!=="sleeping")c.state="wander"; });   /* send the carers to the egg nest */
-    addFeed(`🥚 ${nameFor(player)} bought a <b>Legendary Egg</b> from Mithra → 🔥${fmtK(burn)} burned · 💰${fmtK(toPool)}→pool · 🏦${fmtK(toTeam)}→team. Keep your Chiki(s) <b>fed</b> — the egg only grows while they have food (~${Math.round(careNeed(player)/60)}h if kept fed).`);
+    creatures.forEach(c=>{if(c.holder===player&&!c.isLegend)c.tending=false;});   /* clear; the player will choose the tenders next */
+    player.ancientEgg={careMin:0,lastAt:Date.now(),hatched:false,need:CARE_NEED_24H};   /* food-driven: 2 fed tenders finish in ~half the time */
+    addFeed(`🥚 ${nameFor(player)} bought a <b>Legendary Egg</b> from Mithra → 🔥${fmtK(burn)} burned · 💰${fmtK(toPool)}→pool · 🏦${fmtK(toTeam)}→team. Choose who will tend it…`);
     if(player.pk&&typeof saveProfile==="function")saveProfile(player);
+    if(typeof refreshUI==="function")refreshUI();
+    chooseCarers();
+  }
+  /* choose which Chiki(s) tend the egg — 1 (≈24h) or 2 (≈12h). Non-tenders keep working & earning. */
+  function chooseCarers(){
+    const norms=creatures.filter(c=>c.holder===player&&!c.isLegend);
+    if(norms.length<=1){ norms.forEach(c=>c.tending=true); finalizeCare(); return; }
+    const sel=new Set(norms.map(c=>creatures.indexOf(c)));   /* default: both tend */
+    function render(){
+      const body=g("sorcBody");
+      body.innerHTML=`${PORTRAIT}<div id="sorcLore">Who shall tend the <b>Legendary Egg</b>? More tenders hatch it faster — but a tending Chiki stops working &amp; earning while it cares.</div>`+
+        norms.map(c=>{const ci=creatures.indexOf(c),on=sel.has(ci);
+          return `<div class="mCard" style="${on?'border-color:#b061ff;box-shadow:inset 0 0 16px rgba(176,97,255,.25)':''}">
+            <div class="mCardHead">${nameOf(c)} <span class="mPrice">Lv ${c.level}</span></div>
+            <div class="sNote">${c.sp.type} · food lasts ${fmtFood(foodMaxSec(c.level))}</div>
+            <button class="sBtn ${on?'gold':''}" data-ci="${ci}">${on?'✓ Tending':'🥚 Tend with this Chiki'}</button></div>`;}).join("")+
+        `<div class="sStat">${sel.size} tending · ${sel.size>=2?'~12h':'~24h'} if kept fed</div>
+         <button class="sBtn gold" id="careGo" style="margin-top:8px" ${sel.size?'':'disabled'}>✅ Confirm tenders</button>`;
+      body.querySelectorAll("button[data-ci]").forEach(b=>b.onclick=()=>{const ci=+b.dataset.ci; sel.has(ci)?sel.delete(ci):sel.add(ci); render();});
+      const gb=g("careGo"); if(gb)gb.onclick=()=>{ norms.forEach(c=>c.tending=sel.has(creatures.indexOf(c))); finalizeCare(); };
+    }
+    render();
+  }
+  function finalizeCare(){
+    if(player&&player.ancientEgg){ player.ancientEgg.careMin=0; player.ancientEgg.lastAt=Date.now(); }
+    carers(player).forEach(c=>{ if(typeof freeSpot==="function")freeSpot(c); c.task=null;c.target=null; if(c.state!=="sleeping")c.state="wander"; });   /* send the tenders to the egg nest */
+    const names=carers(player).map(c=>nameOf(c)).join(" & ");
+    addFeed(`🥚 <b>${names}</b> ${carers(player).length>1?"are":"is"} now tending the Legendary Egg. Keep ${carers(player).length>1?"them":"it"} fed!`);
+    if(player&&player.pk&&typeof saveProfile==="function")saveProfile(player);
     if(typeof refreshUI==="function")refreshUI();
     renderSorc();
   }
@@ -2870,6 +2902,7 @@ setInterval(updateWhaleTab,1000);
     c.isLegend=true; c.arenaSkills=rollSkills();
     c.nick=SPECIES[idx].names[stageOf(10)-1]; c.named=true;
     player.ancientEgg=null;
+    creatures.forEach(x=>{if(x.holder===player&&!x.isLegend)x.tending=false;});   /* tenders return to work */
     const skillsTxt=c.arenaSkills.map(s=>CHI_PN[idx][s][0]+" "+CHI_PN[idx][s][1]);
     addFeed(`✨ The Ancient Egg HATCHED — a LEGENDARY <b>${c.nick}</b> is born! 👑 Chi skills: ${skillsTxt.join(", ")}`);
     if(player.pk&&typeof saveProfile==="function")saveProfile(player);
@@ -4786,7 +4819,7 @@ function tickCreature(c,dt){
     if(!moveWith(c,c.vx*dt,c.vy*dt))steerClear(c);
     return;
   }
-  if(c.holder===player&&!c.isLegend&&!(player.ancientEgg&&!player.ancientEgg.hatched)){   /* FOOD drains in real time (workers); empty = FAMISHED. While a Legendary Egg incubates, carers' food is spent by tickCare instead. Legendaries never use food. */
+  if(c.holder===player&&!c.isLegend&&!(c.tending&&player.ancientEgg&&!player.ancientEgg.hatched)){   /* FOOD drains in real time (workers); empty = FAMISHED. A tending Chiki's food is spent by tickCare instead. Legendaries never use food. */
     c.food=Math.max(0,(c.food||0)-dt);
     if(c.food<=0&&!c.hungry){
       c.hungry=true;freeSpot(c);c.task=null;c.target=null;c.state="sleeping";c.sleepT=0;
@@ -4801,10 +4834,10 @@ function tickCreature(c,dt){
     return;
   }
   if(c.state==="wander"){
-    /* carers walk to the Legendary Egg nest and tend it while it incubates */
-    if(c.holder===player&&!c.isLegend&&player.ancientEgg&&!player.ancientEgg.hatched&&typeof eggNest!=="undefined"&&eggNest){
+    /* chosen tenders walk to the Legendary Egg nest and tend it while it incubates */
+    if(c.tending&&c.holder===player&&player.ancientEgg&&!player.ancientEgg.hatched&&typeof eggNest!=="undefined"&&eggNest){
       const ex=eggNest.x-c.x, ez=eggNest.z-c.y, ed=Math.hypot(ex,ez);
-      const slot=(creatures.filter(o=>o.holder===player&&!o.isLegend).indexOf(c))%2;
+      const slot=(creatures.filter(o=>o.holder===player&&o.tending).indexOf(c))%2;
       const ringR=30+slot*8;
       if(ed>ringR){ const a=Math.atan2(ex,ez); c.vx=Math.sin(a); c.vy=Math.cos(a); c.dir=a; if(!moveWith(c,c.vx*64*dt,c.vy*64*dt))steerClear(c); }
       else { c.vx=0;c.vy=0; c.dir=Math.atan2(ex,ez); if(!c.say&&Math.random()<dt*0.02){c.say="🥚 tending…";c.sayUntil=performance.now()/1000+2.6;} }   /* parked at the nest, facing the egg */
