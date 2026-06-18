@@ -701,6 +701,12 @@ if(location.search.indexOf("embed")>-1){
 .aEnBar{display:flex;gap:3px}
 .enpip{width:9px;height:18px;border-radius:3px;background:#1d2740;border:1px solid #33436a;box-shadow:inset 0 0 3px rgba(0,0,0,.5)}
 .enpip.on{background:linear-gradient(180deg,#ffe27a,#e0a800);border-color:#ffd93d;box-shadow:0 0 7px rgba(255,205,50,.9)}
+.enpip.used{background:#5a4a1e;border-color:#7a6526}   /* energy reserved by selected cards */
+.aTimer{margin-left:8px;font-size:15px;font-weight:800;color:#9fe0ff;background:rgba(10,20,40,.6);border:1px solid #2c4470;border-radius:8px;padding:2px 8px}
+.aTimer.low{color:#ff8a8a;border-color:#7a2c2c;animation:tpulse 1s infinite}
+@keyframes tpulse{0%,100%{opacity:1}50%{opacity:.5}}
+.aPow.sel{border-color:#ffd93d!important;box-shadow:0 0 0 2px #ffd93d,0 6px 14px rgba(0,0,0,.5);transform:translateY(-6px)}
+.aPow .apSel{position:absolute;bottom:5px;right:5px;width:24px;height:24px;border-radius:50%;background:linear-gradient(180deg,#3ddc84,#1f9e57);color:#04220f;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;border:2px solid #0f1b34;box-shadow:0 0 8px rgba(60,220,130,.8)}
 .aMatch{font-size:11px;letter-spacing:.5px}
 /* ===== illustrated skill cards (Axie-style, at the bottom) ===== */
 .aPow.art{padding:0;border:2px solid #2a3a5e;width:104px;height:158px;border-radius:11px;overflow:hidden;background-size:cover;background-position:center;background-color:#0f1b34;box-shadow:0 5px 12px rgba(0,0,0,.55)}
@@ -735,13 +741,12 @@ if(location.search.indexOf("embed")>-1){
 .aFighter{position:absolute;bottom:11%;width:44%;display:flex;flex-direction:column;align-items:center;gap:4px}
 .aFighter.you{left:3%}
 .aFighter.foe{right:3%}
-.aFighter img{width:76%;max-width:178px;image-rendering:auto;filter:drop-shadow(0 11px 8px rgba(0,0,0,.5));transition:transform .16s ease}
-.aFighter.you img{transform:translateY(0)}
-.aFighter.foe img{transform:scaleX(-1)}                 /* face inward — fighters face each other */
-.aFighter.you.lunge img{transform:translateX(34%) scale(1.06)}
-.aFighter.foe.lunge img{transform:scaleX(-1) translateX(34%) scale(1.06)}
+.aFighter img{width:76%;max-width:178px;image-rendering:auto;filter:drop-shadow(0 11px 8px rgba(0,0,0,.5));transition:transform .16s ease;transform:scaleX(var(--face,1))}  /* --face set per sprite so each one faces inward */
+.aFighter.lunge{z-index:2}
+.aFighter.you.lunge{transform:translateX(34%) scale(1.04)}     /* lunge moves the whole fighter toward centre (facing handled on the img) */
+.aFighter.foe.lunge{transform:translateX(-34%) scale(1.04)}
 .aFighter.hit img{animation:aHitShake .3s}
-@keyframes aHitShake{0%,100%{filter:drop-shadow(0 11px 8px rgba(0,0,0,.5))}25%{filter:drop-shadow(0 11px 8px rgba(0,0,0,.5)) brightness(2.2) sepia(1) hue-rotate(-30deg)}50%{transform:translateX(-6px) scaleX(var(--fx,1))}}
+@keyframes aHitShake{0%,100%{filter:drop-shadow(0 11px 8px rgba(0,0,0,.5))}25%{filter:drop-shadow(0 11px 8px rgba(0,0,0,.5)) brightness(2.2) sepia(1) hue-rotate(-30deg)}50%{transform:translateX(-6px) scaleX(var(--face,1))}}
 .aFighter.fainted img{opacity:.2;filter:grayscale(1)}
 /* compact health nameplate sitting ON TOP of each fighter */
 .aPlate{width:98%;max-width:172px;background:rgba(9,13,26,.6);border:1px solid rgba(255,255,255,.16);border-radius:10px;padding:3px 7px 4px;backdrop-filter:blur(2px);box-shadow:0 3px 10px rgba(0,0,0,.4)}
@@ -2660,11 +2665,15 @@ setInterval(updateWhaleTab,1000);
       <img src="${side.img}" alt="${side.name}">
       <div class="aShadow"></div>`;
   }
+  const LEFT_FACERS=new Set([10]);   /* Galador's art faces LEFT; everyone else faces RIGHT */
   function renderTeams(){
     const yEl=g("aFyou"),fEl=g("aFfoe"); if(!yEl||!fEl)return;
     if(!B){yEl.innerHTML="";fEl.innerHTML="";return;}
     yEl.innerHTML=sideHTML(B.you,"you",(player&&player.handle)?player.handle:"You");
     fEl.innerHTML=sideHTML(B.foe,"foe","🤖 Rival");
+    /* you must face RIGHT, foe must face LEFT — flip per the sprite's natural direction */
+    yEl.style.setProperty("--face", LEFT_FACERS.has(B.you.si)? -1 : 1);
+    fEl.style.setProperty("--face", LEFT_FACERS.has(B.foe.si)? 1 : -1);
   }
   /* which (speciesIdx_slot) skill cards have illustrated art in ui/cards/ */
   const CARD_ART=new Set(["10_0","10_1","10_2","10_3","10_4","10_5","10_6","10_7","10_8","10_9","10_10","10_11","11_0","11_1","11_2","11_3","11_4","11_5","11_6","11_7","11_8","11_9","11_10","11_11","12_0","12_1","12_2","12_3","12_4","12_5","12_6","12_7","12_8","12_9","12_10","12_11","13_0","13_1","13_2","13_3","13_4","13_5","13_6","13_7","13_8","13_9","13_10","13_11","14_0","14_1","14_2","14_3","14_4","14_5","14_6","14_7","14_8","14_9","14_10","14_11"]);
@@ -2674,34 +2683,42 @@ setInterval(updateWhaleTab,1000);
     const keyEl=g("arenaKey"), ac=g("arenaCenter");
     if(!B||B.over){if(keyEl)keyEl.innerHTML="";return;}
     const em=elemMult(legElem(B.you.si),legElem(B.foe.si));
+    const q=B.you.queue||(B.you.queue=[]);
+    const spent=q.reduce((s,i)=>s+CARD_COST[B.you.hand[i]],0);
+    const remain=Math.max(0,B.you.energy-spent), cap=10;
     if(keyEl){
-      const e=B.you.energy, cap=10;
-      const pips=Array.from({length:cap},(_,i)=>`<i class="enpip${i<e?' on':''}"></i>`).join("");
+      const pips=Array.from({length:cap},(_,i)=>{let cls=i<remain?" on":(i<B.you.energy?" used":"");return `<i class="enpip${cls}"></i>`;}).join("");
       const matchTxt=em>1?`<b style="color:#3ddc84">💪 ${legElem(B.you.si)} vs ${legElem(B.foe.si)} ×${em}</b>`:em<1?`<b style="color:#ff8a8a">⚠️ ${legElem(B.you.si)} vs ${legElem(B.foe.si)} ×${em}</b>`:`${legElem(B.you.si)} vs ${legElem(B.foe.si)}`;
-      keyEl.innerHTML=`<div class="aEnergy"><span class="aEnLbl">⚡ ENERGY</span><span class="aEnNum">${e}<small>/${cap}</small></span><span class="aEnBar">${pips}</span></div><div class="aMatch">${matchTxt} &nbsp;·&nbsp; play cards, then End Turn</div>`;
+      const tl=B._left!=null?B._left:TURN_SECONDS;
+      const timer=B.turn==="you"?`<span class="aTimer${tl<=10?' low':''}" id="aTimer">⏱ 0:${tl<10?'0':''}${tl}</span>`:'';
+      keyEl.innerHTML=`<div class="aEnergy"><span class="aEnLbl">⚡</span><span class="aEnNum">${remain}<small>/${cap}</small></span><span class="aEnBar">${pips}</span>${timer}</div><div class="aMatch">${matchTxt} &nbsp;·&nbsp; pick up to 3 cards, then End Turn</div>`;
     }
-    if(B.turn!=="you"){ if(ac)ac.innerHTML="<div style='font-size:13px;color:#8fa6c9'>🤖 Rival is playing…</div>"; return; }
-    B.you.hand.forEach((slot,idx)=>{const t=cardTier(B.you.c,slot),k=ARCHK[slot],afford=B.you.energy>=CARD_COST[slot];
+    if(B.turn!=="you"){ if(ac)ac.innerHTML="<div style='font-size:13px;color:#8fa6c9'>🤖 Rival is planning…</div>"; return; }
+    B.you.hand.forEach((slot,idx)=>{const t=cardTier(B.you.c,slot),k=ARCHK[slot];
+      const qpos=q.indexOf(idx), selected=qpos>-1;
+      const canSelect=selected||(q.length<3&&remain>=CARD_COST[slot]&&!B._resolving);
       const b=document.createElement("button");
       const artKey=B.you.si+"_"+slot;
+      const selBadge=selected?`<span class="apSel">${qpos+1}</span>`:"";
       if(CARD_ART.has(artKey)){                       /* illustrated skill card */
-        b.className="aPow art"+(afford?"":" dis");
+        b.className="aPow art"+(selected?" sel":"")+(canSelect?"":" dis");
         b.style.backgroundImage=`url("ui/cards/${artKey}.jpg")`;
-        b.innerHTML=`<span class="apCost">${CARD_COST[slot]}</span>${t>1?`<span class="apTier">T${t}</span>`:""}`;
+        b.innerHTML=`<span class="apCost">${CARD_COST[slot]}</span>${t>1?`<span class="apTier">T${t}</span>`:""}${selBadge}`;
       }else{                                           /* text fallback for cards without art yet */
         const big=k==="guard"?`🛡${TVAL.guardShield[t]}`:k==="bulwark"?`🛡${TVAL.bulwarkShield[t]}`:k==="charge"?`×${TVAL.charge[t]}`:k==="rally"?`+${Math.round((TVAL.rally[t]-1)*100)}%`:`${cardDmgN(slot,t)}`;
         const bigCls=(k==="guard"||k==="bulwark")?"shi":(k==="charge"||k==="rally")?"util":"atk";
         const unit=(k==="guard"||k==="bulwark"||k==="charge"||k==="rally")?"":"<i> ATK</i>";
         const eff=k==="strike"?"reliable hit":k==="blast"?"heavy hit":k==="quick"?"ignores 🛡":k==="guard"?`+reflect ${TVAL.guardReflect[t]}`:k==="charge"?"+1⚡ · boost next":k==="drain"?`heal ${Math.round(TVAL.drainHeal[t]*100)}%`:k==="nova"?`recoil ${TVAL.novaRecoil[t]}`:k==="rend"?"ignores ½ 🛡":k==="jolt"?"drains ⚡":k==="rally"?"your dmg this turn":k==="wither"?`enemy −${Math.round(TVAL.witherAmt[t]*100)}% next`:k==="bulwark"?`+reflect ${TVAL.bulwarkReflect[t]}`:"";
-        b.className="aPow"+(afford?"":" dis");
-        b.innerHTML=`<span class="apCost">${CARD_COST[slot]}</span><span class="apTier">T${t}</span><span class="apName">${ARCH_EMOJI[slot]} ${PN[B.you.si][slot][1]}</span><span class="apVal ${bigCls}">${big}${unit}</span><span class="apEff">${eff}</span>`;
+        b.className="aPow"+(selected?" sel":"")+(canSelect?"":" dis");
+        b.innerHTML=`<span class="apCost">${CARD_COST[slot]}</span><span class="apTier">T${t}</span><span class="apName">${ARCH_EMOJI[slot]} ${PN[B.you.si][slot][1]}</span><span class="apVal ${bigCls}">${big}${unit}</span><span class="apEff">${eff}</span>${selBadge}`;
       }
-      if(afford)b.onclick=()=>playCard(idx);
+      if(canSelect)b.onclick=()=>toggleCard(idx);
       pw.appendChild(b);
     });
-    if(ac){ac.innerHTML="";const et=document.createElement("button");et.className="aBtn";et.textContent="End Turn ⏭";et.onclick=()=>endTurn("you");ac.appendChild(et);}
+    if(ac){ac.innerHTML="";const et=document.createElement("button");et.className="aBtn";et.innerHTML=`▶ End Turn${q.length?` <small>(play ${q.length})</small>`:""}`;et.onclick=()=>resolveTurn();ac.appendChild(et);}
   }
   function startBattle(){
+    clearTurnTimer();
     const legs=myLegends().map(ensureLegendSkills); if(!legs.length)return;
     const me=legs[0]; const foeC=aiFoe(me.br||1);
     B={you:makeSide(me,true),foe:makeSide(foeC,false),over:false,turn:null,foeBr:foeC.br};
@@ -2710,15 +2727,27 @@ setInterval(updateWhaleTab,1000);
     renderTeams(); setTimeout(()=>beginTurn(B.turn),650);
   }
   function drawTo(side,n){for(let i=0;i<n;i++){ if(!side.draw.length){side.draw=side.disc;side.disc=[];for(let k=side.draw.length-1;k>0;k--){const j=ri(0,k);[side.draw[k],side.draw[j]]=[side.draw[j],side.draw[k]];}} if(!side.draw.length)break; side.hand.push(side.draw.pop()); }}
+  const TURN_SECONDS=60; let _atimer=null;
+  function clearTurnTimer(){ if(_atimer){clearInterval(_atimer);_atimer=null;} }
+  function startTurnTimer(){
+    if(!B)return; B._left=TURN_SECONDS; clearTurnTimer();
+    _atimer=setInterval(()=>{
+      if(!B||B.over||B.turn!=="you"||B._resolving){clearTurnTimer();return;}
+      B._left--; const el=g("aTimer"); if(el){el.innerHTML=`⏱ 0:${B._left<10?'0':''}${Math.max(0,B._left)}`;el.className="aTimer"+(B._left<=10?" low":"");}
+      if(B._left<=0){ clearTurnTimer(); resolveTurn(); }
+    },1000);
+  }
   function beginTurn(who){
     if(!B||B.over)return; const side=B[who];
     side.disc=side.disc.concat(side.hand); side.hand=[];
     side.shield=0; side._reflect=0; side._turnBuff=1;                 /* shield/reflect/Rally reset each turn */
     side.energy=Math.min(10,side.started?side.energy+1:3);
     if(side._joltNext){side.energy=Math.max(0,side.energy-side._joltNext);side._joltNext=0;}  /* Jolt: lose energy this turn */
-    side.started=true; side.buff=1; side.playedThisTurn=0;
-    drawTo(side,6); B.turn=who; render();
-    if(who==="foe")setTimeout(aiTurn,800);
+    side.started=true; side.buff=1; side.playedThisTurn=0; side.queue=[];
+    drawTo(side,6); B.turn=who; B._resolving=false; clearTurnTimer();
+    render();
+    if(who==="you")startTurnTimer();           /* 1-minute selection timer */
+    else setTimeout(aiTurn,900);
   }
   function critRoll(side){return Math.random()<Math.min(.5,side.st.mor/240);}
   function applyHP(def,dmg){ if(def.ls>0){def.ls--;if(def.ls<=0)def.hp=-1;return;} def.hp-=dmg; if(def.hp<=0){ if(Math.random()<def.st.mor/255||def.st.mor>=120){def.ls=1+Math.floor(def.st.mor/60);def.hp=1;} } }
@@ -2755,30 +2784,61 @@ setInterval(updateWhaleTab,1000);
     log(`${side.isYou?"You":"Rival"}: <b>${nm[0]} ${nm[1]}</b> ${r}`);
   }
   function flash(targetWho){const a=g(targetWho==="foe"?"aFfoe":"aFyou");if(a){a.classList.add("hit");setTimeout(()=>a.classList.remove("hit"),300);} const at=g(targetWho==="foe"?"aFyou":"aFfoe");if(at){at.classList.add("lunge");setTimeout(()=>at.classList.remove("lunge"),200);}}
-  function playCard(idx){
-    if(!B||B.over||B.turn!=="you")return; const s=B.you.hand[idx]; if(s==null||B.you.energy<CARD_COST[s])return;
-    B.you.hand.splice(idx,1); B.you.disc.push(s); flash("foe");
+  /* SELECTION: tap a card to add it to your turn plan (max 3, limited by energy); tap again to remove */
+  function toggleCard(idx){
+    if(!B||B.over||B.turn!=="you"||B._resolving)return;
+    const q=B.you.queue, pos=q.indexOf(idx);
+    if(pos>-1){ q.splice(pos,1); }
+    else{
+      if(q.length>=3)return;
+      const spent=q.reduce((s,i)=>s+CARD_COST[B.you.hand[i]],0);
+      if(spent+CARD_COST[B.you.hand[idx]]>B.you.energy)return;
+      q.push(idx);
+    }
     if(window.playSfx)window.playSfx("click");
-    applyCard(B.you,B.foe,s,"you"); render(); checkEnd();
+    render();
+  }
+  /* RESOLVE: play the planned cards in sequence, then hand the turn to the rival */
+  function resolveTurn(){
+    if(!B||B.over||B._resolving)return; B._resolving=true; clearTurnTimer();
+    const slots=(B.you.queue||[]).map(i=>B.you.hand[i]);
+    (B.you.queue||[]).slice().sort((a,b)=>b-a).forEach(i=>{B.you.disc.push(B.you.hand[i]);B.you.hand.splice(i,1);});
+    B.you.queue=[]; render();
+    let k=0;
+    const step=()=>{
+      if(!B||B.over){B._resolving=false;return;}
+      if(k>=slots.length){ B._resolving=false; render(); setTimeout(()=>endTurn("you"),500); return; }
+      const s=slots[k++]; flash("foe"); applyCard(B.you,B.foe,s,"you"); render(); checkEnd();
+      if(B.over){B._resolving=false;return;} setTimeout(step,760);
+    };
+    setTimeout(step, slots.length?340:200);
   }
   function endTurn(who){ if(!B||B.over)return; beginTurn(who==="you"?"foe":"you"); }
   function aiTurn(){
-    if(!B||B.over)return; const me=B.foe,foe=B.you; let guard=0;
+    if(!B||B.over)return; const me=B.foe,foe=B.you;
+    /* the rival plans up to 3 cards within its energy, then resolves them in sequence */
+    const picks=[], hand=me.hand.slice(); let budget=me.energy;
+    const take=slot=>{const hi=hand.indexOf(slot); if(hi>-1&&picks.length<3&&CARD_COST[slot]<=budget){hand.splice(hi,1);picks.push(slot);budget-=CARD_COST[slot];if(slot===4)budget+=1;return true;} return false;};
+    if(me.hp/me.maxhp<.4){ if(!take(3))take(11); }                 /* guard/bulwark when low */
+    if(hand.includes(4)&&(hand.includes(6)||hand.includes(1)))take(4);  /* charge before a big hit */
+    while(picks.length<3){
+      const atks=hand.filter(x=>CARD_COST[x]<=budget&&KIND[x]==="atk").sort((a,b)=>cardDmgN(b,cardTier(me.c,b))-cardDmgN(a,cardTier(me.c,a)));
+      if(!atks.length||!take(atks[0]))break;
+    }
+    if(!picks.length){ setTimeout(()=>endTurn("foe"),700); return; }
+    let k=0;
     const step=()=>{
       if(!B||B.over)return;
-      if(me.hp/me.maxhp<.4){const gi=me.hand.indexOf(3);if(gi>-1&&me.energy>=CARD_COST[3]){me.hand.splice(gi,1);me.disc.push(3);flash("you");applyCard(me,foe,3,"foe");render();checkEnd();if(B.over)return;}}
-      let s=-1; const ci=me.hand.indexOf(4);
-      if(ci>-1&&(me.hand.includes(6)||me.hand.includes(1)))s=4;
-      else{const atks=me.hand.filter(x=>me.energy>=CARD_COST[x]&&KIND[x]==="atk").sort((a,b)=>cardDmgN(b,cardTier(me.c,b))-cardDmgN(a,cardTier(me.c,a)));s=atks.length?atks[0]:-1;}
-      if(s<0||guard++>9){setTimeout(()=>{render();endTurn("foe");},500);return;}
-      const idx=me.hand.indexOf(s);me.hand.splice(idx,1);me.disc.push(s);flash("you");applyCard(me,foe,s,"foe");render();checkEnd();
-      if(B.over)return; setTimeout(step,680);
+      if(k>=picks.length){ setTimeout(()=>endTurn("foe"),500); return; }
+      const s=picks[k++], hi=me.hand.indexOf(s); if(hi>-1){me.disc.push(s);me.hand.splice(hi,1);}
+      flash("you"); applyCard(me,foe,s,"foe"); render(); checkEnd();
+      if(B.over)return; setTimeout(step,760);
     };
-    setTimeout(step,450);
+    setTimeout(step,650);
   }
   function checkEnd(){ if(!B||B.over)return; if(B.foe.hp<=0&&B.foe.ls<=0)return end(true); if(B.you.hp<=0&&B.you.ls<=0)return end(false); }
   function end(win){
-    B.over=true; g("arenaPowers").innerHTML=""; const keyEl=g("arenaKey"); if(keyEl)keyEl.innerHTML="";
+    B.over=true; clearTurnTimer(); B._resolving=false; g("arenaPowers").innerHTML=""; const keyEl=g("arenaKey"); if(keyEl)keyEl.innerHTML="";
     const foeBr=B.foeBr||1, c=B.you.c; ensureBattle(c);
     c.arenaStam=Math.max(0,(c.arenaStam!=null?c.arenaStam:legStamMax(c.level||1))-ARENA_STAM);   /* spend 30 stamina */
     let slept=false;
@@ -2945,7 +3005,7 @@ setInterval(updateWhaleTab,1000);
       }
     };
   }
-  const ac=g("arenaClose"); if(ac)ac.onclick=()=>{ g("arenaOverlay").style.display="none"; B=null; const up=g("upgPanel"); if(up)up.style.display="none"; };
+  const ac=g("arenaClose"); if(ac)ac.onclick=()=>{ clearTurnTimer(); g("arenaOverlay").style.display="none"; B=null; const up=g("upgPanel"); if(up)up.style.display="none"; };
 })();
 
 /* ===================== IMMORTAL SORCERESS — ANCIENT EGGS (legendary care + hatch) ===================== */
