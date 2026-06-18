@@ -4481,8 +4481,8 @@ function loadMithra(){
 }
 setTimeout(loadMithra,500);
 /* ===== Legendary Egg NEST — a 3D egg that appears in the world while one incubates; carers walk to it and tend it ===== */
-let eggNest=null, eggSprite=null, eggAura=null, _eggT=0;
-const EGG_SPRITE_SCALE=118;   /* big — bump this to resize the egg */
+let eggNest=null, eggMesh=null, eggAura=null, _eggT=0;
+const EGG_MODEL_HEIGHT=92;    /* world-units tall — big landmark; bump to resize the egg */
 function makeEggNest(){
   if(typeof THREE==="undefined")return;
   let tx=92,ty=72,found=null;
@@ -4493,12 +4493,17 @@ function makeEggNest(){
   if(!found)found={x:tx,y:ty};
   const wx=found.x*TILE+TILE/2, wz=found.y*TILE+TILE/2, gy=heightY(wx,wz);
   eggNest={x:wx,z:wz,gy};
-  /* render the legendary egg as the original artwork (camera-facing billboard), BIG */
-  const tex=new THREE.TextureLoader().load("ui/legendary-egg.png");
-  if(tex){tex.minFilter=THREE.LinearMipmapLinearFilter;tex.magFilter=THREE.LinearFilter;}
-  const m=new THREE.SpriteMaterial({map:tex,transparent:true,depthWrite:false});
-  eggSprite=new THREE.Sprite(m); eggSprite.scale.set(EGG_SPRITE_SCALE,EGG_SPRITE_SCALE,1);
-  eggSprite.position.set(wx,gy+EGG_SPRITE_SCALE*0.42,wz); eggSprite.visible=false; scene.add(eggSprite);
+  /* render the legendary egg as a 3D voxel model (replaces the old PNG billboard) */
+  if(typeof THREE.GLTFLoader!=="undefined"){
+    new THREE.GLTFLoader().load("legendaryegg_voxel.glb?v=1",gltf=>{
+      const root=gltf.scene;
+      root.traverse(o=>{if(o.isMesh){o.castShadow=true; if(o.geometry&&o.geometry.attributes&&o.geometry.attributes.color&&o.material){o.material.vertexColors=true;if(o.material.color)o.material.color.setRGB(1,1,1);o.material.needsUpdate=true;}}});
+      const box=new THREE.Box3().setFromObject(root); const size=new THREE.Vector3(); box.getSize(size);
+      const k=EGG_MODEL_HEIGHT/Math.max(0.001,size.y);
+      const wrap=new THREE.Group(); wrap.add(root); wrap.scale.setScalar(k);
+      wrap.position.set(wx,gy,wz); wrap.visible=false; scene.add(wrap); eggMesh=wrap;
+    },undefined,()=>{/* if the model fails to load, the aura still shows the spot */});
+  }
   /* BIG purple flame aura */
   if(typeof buildAura==="function"){ eggAura=buildAura("purple",true); eggAura.scale.setScalar(1.9); eggAura.position.set(wx,gy+6,wz); eggAura.visible=false; scene.add(eggAura); }
 }
@@ -4507,7 +4512,7 @@ setInterval(()=>{                                  /* show the egg + gentle bob 
   if(!eggNest)return;
   const inc=!!(player&&player.ancientEgg&&!player.ancientEgg.hatched);
   _eggT+=0.06;
-  if(eggSprite){ eggSprite.visible=inc; if(inc)eggSprite.position.y=eggNest.gy+EGG_SPRITE_SCALE*0.42+Math.sin(_eggT)*3; }
+  if(eggMesh){ eggMesh.visible=inc; if(inc){eggMesh.position.y=eggNest.gy+Math.sin(_eggT)*2; eggMesh.rotation.y+=0.004;} }
   if(eggAura){ eggAura.visible=inc; if(inc&&typeof animateAura==="function")animateAura(eggAura,performance.now()/1000,0.06); }
 },60);
 function makeTextSprite(txt,scalePx,color){
