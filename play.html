@@ -4545,6 +4545,7 @@ setInterval(()=>{                                  /* show the egg + gentle bob 
 /* ===== Chikiseum arena — placed once on a flat, empty, walkable spot (no obstruction) ===== */
 let chikiseumMesh=null, chikiseumSpot=null;
 const ARENA_MODEL_HEIGHT=120;     /* world-units tall; bump to resize the arena */
+const ARENA_DARKEN=0.38;          /* multiplies all vertex colors — lower = darker (0.38 = very dark) */
 function placeChikiseum(){
   if(typeof THREE==="undefined"||typeof THREE.GLTFLoader==="undefined"){setTimeout(placeChikiseum,500);return;}
   const RAD=5;                    /* tiles each side that must be clear + flat (≈11×11 block) */
@@ -4578,7 +4579,7 @@ function placeChikiseum(){
     const root=gltf.scene;
     root.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;
       if(o.geometry&&!(o.geometry.attributes&&o.geometry.attributes.normal))o.geometry.computeVertexNormals();   /* normals stripped from the GLB to keep it light — rebuild flat normals */
-      if(o.geometry&&o.geometry.attributes&&o.geometry.attributes.color&&o.material){o.material.vertexColors=true;if(o.material.color)o.material.color.setRGB(1,1,1);o.material.needsUpdate=true;}}});
+      if(o.geometry&&o.geometry.attributes&&o.geometry.attributes.color&&o.material){o.material.vertexColors=true;if(o.material.color)o.material.color.setRGB(ARENA_DARKEN,ARENA_DARKEN,ARENA_DARKEN);o.material.needsUpdate=true;}}});
     const box=new THREE.Box3().setFromObject(root); const size=new THREE.Vector3(); box.getSize(size);
     const k=ARENA_MODEL_HEIGHT/Math.max(0.001,size.y);
     const wrap=new THREE.Group(); wrap.add(root); wrap.scale.setScalar(k);
