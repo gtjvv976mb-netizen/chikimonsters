@@ -2813,15 +2813,30 @@ setInterval(updateWhaleTab,1000);
     body.innerHTML=`<div class="eggHatchStage" id="eggStage"><div class="eggBurst"></div><img class="sEggImg hatching" src="ui/legendary-egg.png" alt="Legendary Egg" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'sEgg shake',textContent:'🥚'}))"></div><div class="sStat" id="hatchMsg">The shell is cracking… ✨</div>`;
     setTimeout(()=>{ const st=g("eggStage"); if(st)st.classList.add("burst"); const hm=g("hatchMsg"); if(hm)hm.textContent="✨ It bursts open!"; if(window.playSfx)window.playSfx("reward"); },1050);
     setTimeout(()=>{
-      body.innerHTML=`<div class="sReveal"><img src="chikidex/${DEX_IMG[idx]}.png" alt="${c.nick}" style="width:140px;height:140px;object-fit:contain" onerror="this.outerHTML='👑'"></div>
+      const sp=SPECIES[idx], defName=sp.names[0];
+      body.innerHTML=`<div class="sReveal"><img src="chikidex/${DEX_IMG[idx]}.png" alt="${defName}" style="width:130px;height:130px;object-fit:contain" onerror="this.outerHTML='👑'"></div>
         <div style="font-size:20px;font-weight:800;color:#ffd93d">LEGENDARY!</div>
-        <div style="font-size:17px;font-weight:800;margin:2px 0">${c.nick} <span style="font-size:12px;color:#c79bff">${SPECIES[idx].type}</span></div>
+        <div style="font-size:13px;font-weight:800;color:#c79bff;margin:2px 0">${sp.type} · descendant of the ancient bloodline</div>
+        <div class="sNote" style="margin:8px 0">Born of the first Chikis' royal line, this Legendary is sworn to <b>defend Chikoria</b> with the power of Chi. Legendaries don't toil at tasks — their destiny is the arena. ⚔️</div>
+        <div class="sStat" style="margin-top:4px">🪪 Name your Legendary:</div>
+        <input id="legNameInp" class="onbInp" maxlength="16" value="${defName}" placeholder="Name your Legendary…" style="margin:6px 0">
+        <div id="legNameErr" class="onbErr"></div>
         <div class="sStat" style="margin-top:6px">Awakened Chi skills (3 of 7):</div>
         <div>${skillsTxt.map(s=>`<span class="sSkill">${s}</span>`).join("")}</div>
-        ${ARENA_ENABLED?`<button class="sBtn gold" id="sorcArenaBtn" style="margin-top:14px">⚔️ Enter the Arena</button>`:`<div class="sNote" style="margin-top:12px">⚔️ The Chikiseum is being polished — your Legendary will be able to battle very soon!</div>`}
-        <button class="sBtn" id="sorcDoneBtn" style="margin-top:8px;background:#1b1430;box-shadow:0 4px 0 #0c0820">Done</button>`;
-      const ab=g("sorcArenaBtn"); if(ab)ab.onclick=()=>{ revealing=false; g("sorcOverlay").style.display="none"; const ar=g("btnArena"); if(ar&&ar.onclick)ar.onclick(); };
-      const db=g("sorcDoneBtn"); if(db)db.onclick=()=>{ revealing=false; renderSorc(); };
+        <div class="sNote" style="margin-top:12px;border:1px solid #6b4ea0;border-radius:10px;padding:8px">⚔️ <b style="color:#c79bff">Your Legendary will be activated in the Chikoria Cup Patch</b> — the arena is being polished, and battles are coming soon!</div>
+        <button class="sBtn gold" id="legNameGo" style="margin-top:12px">✅ Confirm Name</button>`;
+      const inp=g("legNameInp"); if(inp)setTimeout(()=>{inp.focus();inp.select();},60);
+      const finish=()=>{
+        const v=(g("legNameInp").value||"").trim().slice(0,16);
+        if(v.length<2){const e=g("legNameErr");if(e)e.textContent="Enter at least 2 characters.";return;}
+        c.nick=v; c.named=true;
+        addFeed(`👑 You named your Legendary <b style="color:${sp.body}">${v}</b> — a defender of Chikoria! It will be activated in the <b>Chikoria Cup Patch</b>.`);
+        if(player&&player.pk&&typeof saveProfile==="function")saveProfile(player);
+        if(typeof refreshUI==="function")refreshUI();
+        revealing=false; renderSorc();
+      };
+      const gb=g("legNameGo"); if(gb)gb.onclick=finish;
+      if(inp)inp.addEventListener("keydown",e=>{if(e.key==="Enter")finish();});
     },1750);
   }
 
