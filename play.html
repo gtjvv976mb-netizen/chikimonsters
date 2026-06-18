@@ -2872,10 +2872,10 @@ setInterval(updateWhaleTab,1000);
       const lore=LEGEND_LORE[defName]||{ep:"Descendant of the Ancient Bloodline",lore:"Sworn to defend Chikoria with the power of Chi.",tag:""};
       body.innerHTML=`<div class="sReveal"><img src="chikidex/${DEX_IMG[idx]}.png" alt="${defName}" style="width:130px;height:130px;object-fit:contain" onerror="this.outerHTML='👑'"></div>
         <div style="font-size:20px;font-weight:800;color:#ffd93d">LEGENDARY!</div>
-        <div style="font-size:17px;font-weight:800;color:${sp.body};margin:3px 0">${defName} — <span style="color:#c79bff">${lore.ep}</span></div>
+        <div style="font-size:17px;font-weight:800;color:${sp.body};margin:3px 0">${defName} — <span style="color:${sp.body}">${lore.ep}</span></div>
         <div style="font-size:11px;color:#8fa6c9;margin-bottom:6px">${sp.type} · descendant of the ancient bloodline</div>
-        <div class="sNote" style="margin:6px 0">${lore.lore} Legendaries don't toil at tasks — their destiny is to <b>defend Chikoria</b>. ⚔️</div>
-        ${lore.tag?`<div style="font-style:italic;color:#c79bff;font-size:12.5px;margin:6px 0">“${lore.tag}”</div>`:""}
+        <div class="sNote" style="margin:6px 0;color:${sp.body}">${lore.lore} Legendaries don't toil at tasks — their destiny is to <b>defend Chikoria</b>. ⚔️</div>
+        ${lore.tag?`<div style="font-style:italic;color:${sp.body};font-size:12.5px;margin:6px 0">“${lore.tag}”</div>`:""}
         <div class="sStat" style="margin-top:4px">🪪 Name your Legendary:</div>
         <input id="legNameInp" class="onbInp" maxlength="16" value="${defName}" placeholder="Name your Legendary…" style="margin:6px 0;color:${sp.body};font-weight:800">
         <div id="legNameErr" class="onbErr"></div>
