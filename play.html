@@ -4574,9 +4574,11 @@ function placeChikiseum(){
   const wx=found.x*TILE+TILE/2, wz=found.y*TILE+TILE/2;
   let gy=1e9; for(let dy=-RAD;dy<=RAD;dy++)for(let dx=-RAD;dx<=RAD;dx++)gy=Math.min(gy,heightY((found.x+dx)*TILE+TILE/2,(found.y+dy)*TILE+TILE/2));
   chikiseumSpot={x:wx,z:wz,gy,tx:found.x,ty:found.y};
-  new THREE.GLTFLoader().load("chikiseum_voxel.glb?v=1",gltf=>{
+  new THREE.GLTFLoader().load("chikiseum_voxel.glb?v=2",gltf=>{
     const root=gltf.scene;
-    root.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true; if(o.geometry&&o.geometry.attributes&&o.geometry.attributes.color&&o.material){o.material.vertexColors=true;if(o.material.color)o.material.color.setRGB(1,1,1);o.material.needsUpdate=true;}}});
+    root.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;
+      if(o.geometry&&!(o.geometry.attributes&&o.geometry.attributes.normal))o.geometry.computeVertexNormals();   /* normals stripped from the GLB to keep it light — rebuild flat normals */
+      if(o.geometry&&o.geometry.attributes&&o.geometry.attributes.color&&o.material){o.material.vertexColors=true;if(o.material.color)o.material.color.setRGB(1,1,1);o.material.needsUpdate=true;}}});
     const box=new THREE.Box3().setFromObject(root); const size=new THREE.Vector3(); box.getSize(size);
     const k=ARENA_MODEL_HEIGHT/Math.max(0.001,size.y);
     const wrap=new THREE.Group(); wrap.add(root); wrap.scale.setScalar(k);
