@@ -1193,10 +1193,11 @@ const sleepTimeOf=lv=>Math.max(900,Math.round(3600-(Math.min(lv,MAX_LEVEL)/MAX_L
 const feedCostOf=lv=>Math.round(1000+(Math.min(lv,MAX_LEVEL)-1)/Math.max(1,MAX_LEVEL-1)*4000); /* legacy (unused by food bar) */
 /* ===== FOOD (famish) bar: a time-based food stock — ~30min at Lv1, scaling up to 12h at Lv50.
    Replenishing 1 minute of food costs 100 $CHIKI. When it empties the Chiki is FAMISHED and won't work until fed. ===== */
-const FOOD_PER_MIN=100;                                  /* $CHIKI per minute of food */
+/* $CHIKI per minute of food — DROPS as the Chiki levels up: 100 (Lv1) -> 40 (Lv50) */
+const foodPerMin=lv=>Math.round(100-(Math.min(Math.max(lv,1),MAX_LEVEL)-1)/Math.max(1,MAX_LEVEL-1)*(100-40));
 const foodMaxMin=lv=>Math.round(30+(Math.min(lv,MAX_LEVEL)-1)/Math.max(1,MAX_LEVEL-1)*(720-30));  /* 30min (Lv1) -> 720min/12h (Lv50) */
 const foodMaxSec=lv=>foodMaxMin(lv)*60;
-const foodRefillCost=c=>Math.ceil(Math.max(0,(foodMaxSec(c.level)-(c.food||0)))/60)*FOOD_PER_MIN;   /* $CHIKI to top the bar back to full */
+const foodRefillCost=c=>Math.ceil(Math.max(0,(foodMaxSec(c.level)-(c.food||0)))/60)*foodPerMin(c.level);   /* $CHIKI to top the bar back to full */
 const fmtFood=s=>{s=Math.max(0,Math.floor(s));const h=Math.floor(s/3600),m=Math.floor((s%3600)/60);return h>0?h+"h "+m+"m":m+"m";};
 const fmtSleep=s=>{s=Math.max(0,Math.ceil(s));return s>=60?Math.floor(s/60)+"m "+(s%60)+"s":s+"s";};
 const rareBoostOf=c=>1+c.level*0.015+(stageOf(c.level)-1)*0.35;
@@ -1847,7 +1848,7 @@ function wakeUp(c){
   if(!c.bot)addFeed(`🌅 <b>${nameOf(c)}</b> woke up — stamina restored (${c.stamina}⚡)`);
   refreshUI();
 }
-async function feedChiki(c){            /* refill the FOOD bar — 100 $CHIKI per minute of food */
+async function feedChiki(c){            /* refill the FOOD bar — foodPerMin(level) $CHIKI per minute (100 at Lv1 → 40 at Lv50) */
   const h=c.holder;if(!h)return;
   const cost=foodRefillCost(c);
   if(cost<=0){addFeed(`🍖 ${nameOf(c)}'s food bar is already full.`);refreshUI();return;}
