@@ -4070,7 +4070,13 @@ function buildZoneProps(){
     addBeacon("🦋",z.x*TILE+TILE/2,z.y*TILE+TILE/2,gy+26,14,1.1);
     flowerSpots.push({proc:g,x:z.x*TILE+TILE/2,z:z.y*TILE+TILE/2,gy});
   });
-  setTimeout(()=>loadPropURL("flower.glb","flowers",24,flowerSpots),115);
+  setTimeout(()=>{                                  /* scatter several of the new daisy model per field (flower + stalk, no ground) */
+    const scattered=[];
+    flowerSpots.forEach(fs=>{ if(fs.proc)fs.proc.visible=false;
+      for(let i=0;i<6;i++){ const a=Math.random()*6.28, r=4+Math.random()*15, sx=fs.x+Math.cos(a)*r, sz=fs.z+Math.sin(a)*r;
+        scattered.push({x:sx,z:sz,gy:(typeof heightY==="function"?heightY(sx,sz):fs.gy)}); } });
+    loadPropURL("flower_voxel.glb?v=1","flowers",17,scattered);
+  },115);
   /* fishing docks pointing at the water */
   ZONES.pond.forEach(z=>{
     let best=LAKE_CENTERS[0],bd=1e9;
