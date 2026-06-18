@@ -4054,7 +4054,7 @@ function buildZoneProps(){
     structGroup.add(g);
     berrySpots.push({proc:g,x:z.x*TILE+TILE/2,z:z.y*TILE+TILE/2,gy});
   });
-  setTimeout(()=>loadVoxelDeco(window.BERRY_GLB,"berry",18,berrySpots),100);
+  setTimeout(()=>loadPropURL("berry_voxel.glb?v=1","berry",20,berrySpots),100);   /* new 3D berry-bush model */
   /* flower fields */
   const flowerSpots=[];
   ZONES.flowers.forEach(z=>{
