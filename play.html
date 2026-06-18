@@ -674,6 +674,9 @@ if(location.search.indexOf("embed")>-1){
 .upgBtn{font-family:'Baloo 2';font-weight:800;font-size:11.5px;padding:5px 9px;border:none;border-radius:8px;cursor:pointer;white-space:nowrap;
   background:linear-gradient(180deg,#ffd93d,#e0a800);color:#3a2a00;box-shadow:0 3px 0 #a87c00}
 .upgBtn:disabled{filter:grayscale(.7);opacity:.55;cursor:not-allowed}
+.upgSubHd{margin:11px 0 2px;font-weight:800;font-size:12px;color:#cdd8ee;border-top:1px solid rgba(255,255,255,.08);padding-top:9px}
+.buyBtn{font-family:'Baloo 2';font-weight:800;font-size:11.5px;padding:5px 9px;border:none;border-radius:8px;cursor:pointer;white-space:nowrap;
+  background:linear-gradient(180deg,#b197fc,#7c5cff);color:#fff;box-shadow:0 3px 0 #5b3ec9}
 .aSide{display:flex;align-items:center;gap:8px;margin:6px 0}
 .aSide.foe{flex-direction:row-reverse;text-align:right}
 .aAvatars{display:flex;gap:4px}
@@ -690,12 +693,24 @@ if(location.search.indexOf("embed")>-1){
 #arenaResult{font-size:22px;font-weight:800;margin:6px 0;min-height:0}
 #arenaLog{min-height:40px;font-size:13px;color:#cdd8ee;margin:8px 0;line-height:1.45}
 #arenaPowers{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
-.aPow{font-family:'Baloo 2',sans-serif;font-weight:700;font-size:12.5px;padding:8px 10px;border-radius:9px;border:2px solid #38507e;
-  background:#13213f;color:#dce8fa;cursor:pointer;min-width:96px}
-.aPow:hover{border-color:#ffd93d}.aPow:active{transform:scale(.95)}
+.aPow{position:relative;font-family:'Baloo 2',sans-serif;font-weight:700;padding:9px 8px 7px;border-radius:11px;border:2px solid #38507e;
+  background:linear-gradient(180deg,#16244a,#0f1b34);color:#dce8fa;cursor:pointer;min-width:108px;display:flex;flex-direction:column;align-items:center;gap:1px}
+.aPow:hover{border-color:#ffd93d;transform:translateY(-2px)}.aPow:active{transform:scale(.96)}
+.aPow.dis{opacity:.42;cursor:not-allowed;filter:grayscale(.5)}
+.aPow .apCost{position:absolute;top:-8px;left:-8px;width:22px;height:22px;border-radius:50%;background:linear-gradient(180deg,#ffe27a,#e0a800);color:#3a2a00;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;border:2px solid #0f1b34;box-shadow:0 2px 4px rgba(0,0,0,.4)}
+.aPow .apTier{position:absolute;top:3px;right:6px;font-size:9px;color:#ffd93d;font-weight:800}
+.aPow .apName{font-size:11px;color:#7fd0ff;font-weight:800}
+.aPow .apVal{font-size:21px;font-weight:800;line-height:1.05}
+.aPow .apVal i{font-size:8.5px;font-style:normal;color:#8fa6c9;font-weight:700;letter-spacing:1px}
+.aPow .apVal.atk{color:#ff9a6e}.aPow .apVal.shi{color:#62b9ff}.aPow .apVal.util{color:#b197fc}
+.aPow .apEff{font-size:9.5px;color:#9fb3d6}
+.aPow .apMatch{font-size:11px;letter-spacing:1px;margin-top:1px}
 .aPow b{color:#7fd0ff;font-size:11px;display:block}
 .aPow small{display:block;font-weight:400;color:#8fa6c9;font-size:10px}
+.aPow small.aMatch{font-size:11px;margin-top:2px;letter-spacing:1px}
 #arenaCenter{margin-top:12px}
+#arenaKey{font-size:10px;color:#8fa6c9;margin:4px 0 2px;line-height:1.5}
+#arenaKey b{color:#cdd8ee}
 .aBtn{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:16px;padding:11px 26px;border:none;border-radius:11px;
   background:linear-gradient(180deg,#ff7849,#c0392b);color:#fff;cursor:pointer;box-shadow:0 4px 0 #8c2a22}
 .aBtn:active{transform:translateY(2px);box-shadow:0 1px 0 #8c2a22}
@@ -728,6 +743,7 @@ if(location.search.indexOf("embed")>-1){
   </div>
   <div id="arenaResult"></div>
   <div id="arenaLog"></div>
+  <div id="arenaKey"></div>
   <div id="arenaPowers"></div>
   <div id="arenaCenter"></div>
 </div></div>
@@ -1143,11 +1159,11 @@ const CHI_PN=[
  [["💎","Shard Jab"],["🔆","Prism Beam"],["✨","Gleam Dash"],["💠","Crystal Wall"],["🔮","Refraction"],["💎","Gem Drain"],["🌟","Shard Nova"]],
  [["💨","Gust Jab"],["🌪️","Cyclone"],["💨","Wind Dash"],["🌬️","Air Barrier"],["🍃","Updraft"],["🌬️","Breeze Drain"],["🌀","Hurricane"]],
  [["⭐","Star Jab"],["☄️","Meteor"],["🛸","Warp Dash"],["🌌","Nebula Shield"],["✨","Cosmic Charge"],["🪐","Gravity Drain"],["🌌","Galaxy Burst"]],
- [["💧","Water Shot"],["🌊","Water Blast"],["🐟","Fish Attack"],["⚓","Shipwreck"],["💦","Water Sprout"],["🦈","Shark Attack"],["🌊","Giant Wave"]],
- [["✨","Holy Smite"],["♨️","Intense Heat"],["🌟","Blinding Light"],["🛡️","Radiant Shield"],["☀️","Solar Charge"],["💖","Divine Heal"],["💥","Sunburst"]],
- [["🦷","Bite"],["🦶","Trample"],["💨","Tail Whip"],["😱","Fear"],["🗣️","Savage Roar"],["🩸","Devour"],["💥","Apex Crush"]],
- [["🌑","Ambush"],["⚡","Roar of Thunder"],["🐺","Pack Attack"],["🛡️","Howl"],["🔋","Storm Surge"],["🩸","Thunder Fang"],["🌩️","Thunderstorm"]],
- [["🔥","Fire Whip"],["🐉","Breath of Fire"],["💨","Fire Dash"],["🛡️","Scale Guard"],["🔥","Blaze Charge"],["🔥","Ember Drain"],["💥","Inferno"]]
+ [["💧","Water Shot"],["🌊","Water Blast"],["🐟","Fish Attack"],["⚓","Shipwreck"],["💦","Water Sprout"],["🦈","Shark Attack"],["🌊","Giant Wave"],["🌊","Riptide"],["💧","Splash Burst"],["🌊","High Tide"],["🌀","Undertow"],["🐚","Coral Bastion"]],
+ [["✨","Holy Smite"],["♨️","Intense Heat"],["🌟","Blinding Light"],["🛡️","Radiant Shield"],["☀️","Solar Charge"],["💖","Divine Heal"],["💥","Sunburst"],["☀️","Searing Ray"],["✨","Flash Bang"],["🌟","Ascension"],["🌑","Eclipse Veil"],["🛡️","Aegis of Dawn"]],
+ [["🦷","Bite"],["🦶","Trample"],["💨","Tail Whip"],["😱","Fear"],["🗣️","Savage Roar"],["🩸","Devour"],["💥","Apex Crush"],["🐾","Claw Rake"],["🦶","Ground Stomp"],["🩸","Bloodlust"],["😱","Terrify"],["🛡️","Thick Hide"]],
+ [["🌑","Ambush"],["⚡","Roar of Thunder"],["🐺","Pack Attack"],["🛡️","Howl"],["🔋","Storm Surge"],["🩸","Thunder Fang"],["🌩️","Thunderstorm"],["⚡","Lightning Rend"],["🔌","Static Shock"],["🌩️","Gathering Storm"],["🌑","Gloom"],["🛡️","Stormwall"]],
+ [["🔥","Fire Whip"],["🐉","Breath of Fire"],["💨","Fire Dash"],["🛡️","Scale Guard"],["🔥","Blaze Charge"],["🔥","Ember Drain"],["💥","Inferno"],["🔥","Searing Claw"],["⚡","Spark Lash"],["♨️","Overheat"],["🌑","Smolder"],["🛡️","Magma Shell"]]
 ];
 const LEGEND_IDXS=SPECIES.map((s,i)=>s.type==="Legendary"?i:-1).filter(i=>i>=0);   /* legendary species indices */
 const LEGEND_SCALE=1.0;                                                            /* legendaries are the SAME size as normal Chikis */
@@ -1325,20 +1341,33 @@ function hatchEgg(noLegend){   /* noLegend=true → guaranteed normal (no legend
 const MAX_NORMAL=2, MAX_LEGEND=1;
 /* ===== Legendary BATTLE progression (separate track from world Lv — never affects SOL earnings) ===== */
 const MAX_BR=30, ARENA_STAM=30;                              /* stamina a Legendary spends per rewarded battle */
+const ARENA_TICKET=1000;                                     /* $CHIKI entry ticket charged per Chikiseum battle (1% burn / 49.5% pool / 49.5% team) */
 const TVAL={                                                 /* card stats by Tier 1..5 (index 0 unused) */
   strike:[0,18,20,22,24,26], blast:[0,30,33,36,39,42], quick:[0,12,14,16,18,20],
   guardBlock:[0,0.60,0.64,0.68,0.72,0.76], guardReflect:[0,6,7,8,9,10],
+  guardShield:[0,30,34,38,42,46],                            /* SHIELD points added by Guard (drawn-hand model) */
   charge:[0,1.7,1.8,1.9,2.0,2.2], drainDmg:[0,14,16,18,20,22], drainHeal:[0,0.60,0.64,0.68,0.72,0.76],
-  novaDmg:[0,40,44,48,52,56], novaRecoil:[0,8,7,6,5,4]
+  novaDmg:[0,40,44,48,52,56], novaRecoil:[0,8,7,6,5,4],
+  rendDmg:[0,16,18,20,22,24],                                /* Rend — ignores HALF the enemy shield */
+  joltDmg:[0,10,11,12,13,14],                                /* Jolt — drains 1 enemy energy next turn */
+  rally:[0,1.25,1.30,1.35,1.40,1.50],                        /* Rally — +% YOUR damage rest of turn */
+  witherDmg:[0,8,9,10,11,12], witherAmt:[0,0.30,0.33,0.36,0.39,0.45],  /* Wither — weaken enemy's next attack */
+  bulwarkShield:[0,45,50,55,60,65], bulwarkReflect:[0,10,11,12,13,14]  /* Bulwark — big shield + reflect */
 };
-const ARCHK=["strike","blast","quick","guard","charge","drain","nova"];
+const CARD_COST=[1,2,1,1,0,1,2, 1,1,1,1,2];                  /* energy: Strike/Blast/Quick/Guard/Charge/Drain/Nova/Rend/Jolt/Rally/Wither/Bulwark */
+const ARCHK=["strike","blast","quick","guard","charge","drain","nova","rend","jolt","rally","wither","bulwark"];
+const ARCH_EMOJI=["⚔️","💥","💨","🛡️","🔋","🩸","🌟","🪓","🔌","📣","🥀","🏰"];
+const ARCH_LABEL=["Strike","Blast","Quick","Guard","Charge","Drain","Nova","Rend","Jolt","Rally","Wither","Bulwark"];
+const strongVs=a=>[1,2,3].map(k=>(a+k)%7);      /* the 3 slots this card beats */
+const weakVs=a=>[1,2,3].map(k=>(a+7-k)%7);      /* the 3 slots that beat this card */
+function rpsMult(a,d){ if(d<0||d==null)return 1; for(let k=1;k<=3;k++)if((a+k)%7===d)return 1.4; for(let k=1;k<=3;k++)if((a+7-k)%7===d)return 0.65; return 1; }
 const brNeed=br=>Math.round(60+(Math.max(1,br)-1)*45);       /* battle-XP to the next Battle Rank */
 function ensureBattle(c){ if(!c)return c; if(c.br==null)c.br=1; if(c.battleXp==null)c.battleXp=0; if(c.skillPts==null)c.skillPts=0;
   if(!c.cardTier)c.cardTier={}; (c.arenaSkills||[]).forEach(s=>{ if(c.cardTier[s]==null)c.cardTier[s]=1; }); return c; }
 function cardTier(c,slot){ const t=c&&c.cardTier&&c.cardTier[slot]; return Math.min(5,Math.max(1,t||1)); }
 function gainBattleXp(c,amt){ ensureBattle(c); c.battleXp+=amt; let ups=0;
   while(c.br<MAX_BR && c.battleXp>=brNeed(c.br)){ c.battleXp-=brNeed(c.br); c.br++; c.skillPts++; ups++; } return ups; }
-function ensureLegendSkills(c){ if(c&&c.isLegend&&(!c.arenaSkills||!c.arenaSkills.length)){ const p=[0,1,2,3,4,5,6],o=[]; for(let k=0;k<3;k++)o.push(p.splice(ri(0,p.length-1),1)[0]); c.arenaSkills=o.sort((a,b)=>a-b); } if(c&&c.isLegend)ensureBattle(c); return c; }
+function ensureLegendSkills(c){ if(c&&c.isLegend&&(!c.arenaSkills||!c.arenaSkills.length)){ const p=[0,1,2,3,4,5,6,7,8,9,10,11],o=[]; for(let k=0;k<3;k++)o.push(p.splice(ri(0,p.length-1),1)[0]); c.arenaSkills=o.sort((a,b)=>a-b); } if(c&&c.isLegend)ensureBattle(c); return c; }
 function holderCounts(h){let n=0,l=0;for(const c of creatures){if(c.holder===h){if(c.isLegend)l++;else n++;}}return {normal:n,legend:l,total:n+l};}
 function holderAtCap(h){ if(isCreator(h&&h.pk))return false; const c=holderCounts(h); return c.normal>=MAX_NORMAL && c.legend>=MAX_LEGEND; }
 async function hatchChikis(h,n,opts){
@@ -2536,158 +2565,188 @@ setInterval(updateWhaleTab,1000);
   /* 7 balanced effect archetypes (keeps battles fair); each species names them thematically */
   const ARCH=[{k:"strike",dmg:22},{k:"blast",dmg:34},{k:"quick",dmg:15},{k:"guard",dmg:0},{k:"charge",dmg:0},{k:"drain",dmg:18},{k:"nova",dmg:40}];
   const DESC=["Reliable hit","Big hit · blocked by Guard","Ignores Guard","Block 60% + reflect","Next hit +70%","Heal 60% of dmg","Huge hit · 7 recoil"];
-  const PN=[
-   [["🌿","Vine Lash"],["🌸","Bloom Burst"],["🍃","Spore Dash"],["🪵","Bark Wall"],["☀️","Photosynthesis"],["🌱","Leech Seed"],["🌳","Overgrowth"]],
-   [["⚡","Spark Jab"],["🌩️","Thunderbolt"],["✨","Flash Step"],["🔌","Static Field"],["🔋","Overcharge"],["💫","Volt Siphon"],["🌪️","Tempest"]],
-   [["💧","Aqua Jet"],["🌊","Tidal Wave"],["🫧","Bubble Dash"],["🐚","Reef Guard"],["🌀","Whirlpool"],["💦","Hydro Drain"],["🌊","Maelstrom"]],
-   [["🔥","Ember Jab"],["☄️","Fireball"],["💨","Flame Dash"],["🛡️","Cinder Shield"],["♨️","Heat Up"],["🔥","Flame Siphon"],["💥","Inferno"]],
-   [["❄️","Frost Jab"],["🏔️","Avalanche"],["💨","Ice Dash"],["🧊","Frost Wall"],["❄️","Deep Freeze"],["🩵","Chill Drain"],["🌨️","Blizzard"]],
-   [["🪨","Rock Throw"],["🪨","Boulder Smash"],["💨","Tremor Dash"],["🧱","Stone Wall"],["⛰️","Tectonic Charge"],["🟤","Earth Drain"],["🏔️","Landslide"]],
-   [["🌑","Shadow Jab"],["🌑","Dark Pulse"],["👻","Phantom Dash"],["🕶️","Veil Guard"],["🌃","Nightfall"],["🩸","Soul Drain"],["🌘","Eclipse"]],
-   [["💎","Shard Jab"],["🔆","Prism Beam"],["✨","Gleam Dash"],["💠","Crystal Wall"],["🔮","Refraction"],["💎","Gem Drain"],["🌟","Shard Nova"]],
-   [["💨","Gust Jab"],["🌪️","Cyclone"],["💨","Wind Dash"],["🌬️","Air Barrier"],["🍃","Updraft"],["🌬️","Breeze Drain"],["🌀","Hurricane"]],
-   [["⭐","Star Jab"],["☄️","Meteor"],["🛸","Warp Dash"],["🌌","Nebula Shield"],["✨","Cosmic Charge"],["🪐","Gravity Drain"],["🌌","Galaxy Burst"]],
-   [["👑","Royal Strike"],["👑","Sovereign Blast"],["💨","Regal Dash"],["🛡️","Aegis"],["✨","Ascend"],["💜","Majesty Drain"],["💥","Cataclysm"]]
-  ];
+  const PN=CHI_PN;   /* use the canonical per-Legendary card names (12 each for species 10–14) */
   const STRONG={Plant:["Ocean","Mountain"],Lightning:["Ocean","Wind"],Ocean:["Flame","Mountain"],
     Flame:["Plant","Ice","Crystal"],Ice:["Plant","Wind","Cosmic"],Mountain:["Lightning","Flame"],
     Shadow:["Crystal","Cosmic"],Crystal:["Shadow","Lightning"],Wind:["Mountain","Plant"],
     Cosmic:["Shadow","Wind","Legendary"],Legendary:["Plant","Ocean","Flame","Ice","Lightning"]};
   function mult(att,def){ if((STRONG[att]||[]).indexOf(def)>-1)return 1.5; if((STRONG[def]||[]).indexOf(att)>-1)return 0.7; return 1; }
   const g=id=>document.getElementById(id);
-  function fighter(c){ensureBattle(c);const si=SPECIES.indexOf(c.sp),br=c.br||1,max=120+br*4;return {c,si,type:c.sp.type,name:(typeof nameOf==="function"?nameOf(c):c.sp.names[0]),img:"chikidex/"+(DEX_IMG[si]||"mushrow")+".png",hp:max,maxhp:max,buff:1};}
-  function roll3(){const p=[0,1,2,3,4,5,6],o=[];for(let k=0;k<3;k++)o.push(p.splice(ri(0,p.length-1),1)[0]);return o.sort((a,b)=>a-b);}
-  function aiTeam(br,n){const t=[];for(let i=0;i<n;i++){const sp=SPECIES[LEGEND_IDXS[ri(0,LEGEND_IDXS.length-1)]];const c={sp,isLegend:true,br:Math.max(1,br+ri(-2,2))};c.arenaSkills=roll3();ensureBattle(c);const tier=Math.min(5,1+Math.floor(c.br/6));c.arenaSkills.forEach(s=>c.cardTier[s]=tier);t.push(fighter(c));}return t;}  /* rival is a BR-matched Legendary with tiered cards */
+  /* ===== DRAWN-HAND battle (Axie-style): energy · draw a hand · Attack vs Shield · combos · crits · Last Stand. 1 Legendary each. ===== */
+  const KIND=["atk","atk","atk","shi","util","atk","atk","atk","atk","util","atk","shi"];   /* +Rend/Jolt/Wither=atk, Rally=util, Bulwark=shi */
+  const LEG_ELEM={10:"Water",11:"Light",12:"Beast",13:"Storm",14:"Fire"};
+  const ELEM_NEXT={Water:"Fire",Fire:"Beast",Beast:"Storm",Storm:"Light",Light:"Water"};   /* triangle: Water→Fire→Beast→Storm→Light→(Water); each beats the next */
+  const legElem=si=>LEG_ELEM[si]||"Chi";
+  const elemMult=(a,b)=>ELEM_NEXT[a]===b?1.5:ELEM_NEXT[b]===a?0.7:1;
+  const cardDmgN=(s,t)=>{const k=ARCHK[s];return k==="strike"?TVAL.strike[t]:k==="blast"?TVAL.blast[t]:k==="quick"?TVAL.quick[t]:k==="drain"?TVAL.drainDmg[t]:k==="nova"?TVAL.novaDmg[t]:k==="rend"?TVAL.rendDmg[t]:k==="jolt"?TVAL.joltDmg[t]:k==="wither"?TVAL.witherDmg[t]:0;};
+  function statsFor(c){ensureBattle(c);const br=c.br||1;return {hp:120+br*6, spd:42+br*2, skill:30+br*2, mor:30+br*2};}
+  function roll3(){const p=[0,1,2,3,4,5,6,7,8,9,10,11],o=[];for(let k=0;k<3;k++)o.push(p.splice(ri(0,p.length-1),1)[0]);return o.sort((a,b)=>a-b);}
+  function makeSide(c,isYou){
+    ensureLegendSkills(c); const st=statsFor(c), si=SPECIES.indexOf(c.sp);
+    const owned=(c.arenaSkills&&c.arenaSkills.length)?c.arenaSkills:roll3();
+    const deck=[]; for(let i=0;i<12;i++)deck.push(owned[i%owned.length]);
+    for(let i=deck.length-1;i>0;i--){const j=ri(0,i);[deck[i],deck[j]]=[deck[j],deck[i]];}
+    return {c,si,name:(typeof nameOf==="function"?nameOf(c):c.sp.names[0]),img:"chikidex/"+(DEX_IMG[si]||"mushrow")+".png",
+      st,hp:st.hp,maxhp:st.hp,shield:0,energy:0,buff:1,draw:deck,hand:[],disc:[],ls:0,started:false,isYou,playedThisTurn:0};
+  }
+  function aiFoe(br){const sp=SPECIES[LEGEND_IDXS[ri(0,LEGEND_IDXS.length-1)]];const c={sp,isLegend:true,br:Math.max(1,br+ri(-2,2))};c.arenaSkills=roll3();ensureBattle(c);const tier=Math.min(5,1+Math.floor(c.br/6));c.arenaSkills.forEach(s=>c.cardTier[s]=tier);return c;}
   let B=null;
-  const frontIdx=team=>team.findIndex(f=>f.hp>0);
-  const alive=team=>team.some(f=>f.hp>0);
   function log(h){g("arenaLog").innerHTML=h;}
-  function bar(f,foe){return `<div class="aHPwrap"><div class="aName">${f.name} <span class="aType">${f.type}</span></div><div class="aHPbar"><div class="aHP ${foe?'foe':''}" style="width:${Math.max(0,f.hp/f.maxhp*100)}%"></div></div></div>`;}
-  function avatars(team){const fi=frontIdx(team);return `<div class="aAvatars">`+team.map((f,i)=>`<img class="aAv ${i===fi?'front':''} ${f.hp<=0?'fainted':''}" src="${f.img}">`).join("")+`</div>`;}
-  function fighterHTML(f,foe,who){
-    if(!f)return `<div class="hpwrap"><div class="nm">${who}</div></div>`;
-    const n=team=>team>1?` ×${team}`:"";
-    return `<div class="hpwrap"><div class="nm">${f.name} <span class="aType">${f.type}</span></div>
-      <div class="aHPbar"><div class="aHP ${foe?'foe':''}" style="width:${Math.max(0,f.hp/f.maxhp*100)}%"></div></div></div>
-      <img src="${f.img}" alt="${f.name}">
-      <div style="font-size:10px;font-weight:800;color:${foe?'#ffd93d':'#7fd0ff'};text-shadow:0 1px 2px #000">${who}</div>`;
+  function sideHTML(side,who,label){
+    const ls=side.ls>0?` <span style="color:#ff5a5a;font-weight:800;font-size:10px">🛡LAST STAND ${side.ls}</span>`:"";
+    return `<div class="nm" style="color:${who==='foe'?'#ffd93d':'#7fd0ff'}">${label}${ls}</div>
+      <div class="aType">${legElem(side.si)} · BR ${side.c.br||1}</div>
+      <div class="aHPbar"><div class="aHP ${who==='foe'?'foe':''}" style="width:${Math.max(0,side.hp/side.maxhp*100)}%"></div></div>
+      <div style="font-size:10px;font-weight:800">${Math.max(0,Math.round(side.hp))}/${side.maxhp} &nbsp; <span style="color:#62b9ff">🛡${side.shield}</span> &nbsp; <span style="color:#ffd93d">⚡${side.energy}</span></div>
+      <img src="${side.img}" alt="${side.name}">`;
   }
   function renderTeams(){
     const yEl=g("aFyou"),fEl=g("aFfoe"); if(!yEl||!fEl)return;
     if(!B){yEl.innerHTML="";fEl.innerHTML="";return;}
-    const yf=B.you[frontIdx(B.you)], ff=B.foe[frontIdx(B.foe)];
-    yEl.innerHTML=fighterHTML(yf,false,(player&&player.handle)?player.handle:"You");
-    fEl.innerHTML=fighterHTML(ff,true,"🤖 Rival");
-    yEl.classList.toggle("fainted",!yf); fEl.classList.toggle("fainted",!ff);
+    yEl.innerHTML=sideHTML(B.you,"you",(player&&player.handle)?player.handle:"You");
+    fEl.innerHTML=sideHTML(B.foe,"foe","🤖 Rival");
   }
   function render(){
     renderTeams();
     const pw=g("arenaPowers"); pw.innerHTML="";
-    if(!B||B.over)return;
-    B.you.forEach((f,idx)=>{ if(f.hp<=0)return;
-      const slots=(f.c.arenaSkills&&f.c.arenaSkills.length)?f.c.arenaSkills:[];  /* only Legendaries have Chi skills — normal Chikis can't battle */
-      slots.forEach(slot=>{const nm=PN[f.si][slot];
-        const b=document.createElement("button");b.className="aPow";
-        b.innerHTML=`<b>${f.name}</b>${nm[0]} ${nm[1]} <span style="color:#ffd93d">T${cardTier(f.c,slot)}</span><small>${DESC[slot]}</small>`;
-        b.onclick=()=>{ resolve({atkIdx:idx,power:slot}, aiPick(B.foe)); };
-        pw.appendChild(b);
-      });
+    const keyEl=g("arenaKey"), ac=g("arenaCenter");
+    if(!B||B.over){if(keyEl)keyEl.innerHTML="";return;}
+    const em=elemMult(legElem(B.you.si),legElem(B.foe.si));
+    if(keyEl)keyEl.innerHTML=`⚡ Energy <b style="color:#ffd93d">${B.you.energy}</b> &nbsp;·&nbsp; ${em>1?`<b style="color:#3ddc84">💪 ${legElem(B.you.si)} vs ${legElem(B.foe.si)} ×${em}</b>`:em<1?`<b style="color:#ff8a8a">⚠️ ${legElem(B.you.si)} vs ${legElem(B.foe.si)} ×${em}</b>`:`${legElem(B.you.si)} vs ${legElem(B.foe.si)}`} &nbsp;·&nbsp; play cards, then End Turn`;
+    if(B.turn!=="you"){ if(ac)ac.innerHTML="<div style='font-size:13px;color:#8fa6c9'>🤖 Rival is playing…</div>"; return; }
+    B.you.hand.forEach((slot,idx)=>{const t=cardTier(B.you.c,slot),k=ARCHK[slot],afford=B.you.energy>=CARD_COST[slot];
+      const big=k==="guard"?`🛡${TVAL.guardShield[t]}`:k==="bulwark"?`🛡${TVAL.bulwarkShield[t]}`:k==="charge"?`×${TVAL.charge[t]}`:k==="rally"?`+${Math.round((TVAL.rally[t]-1)*100)}%`:`${cardDmgN(slot,t)}`;
+      const bigCls=(k==="guard"||k==="bulwark")?"shi":(k==="charge"||k==="rally")?"util":"atk";
+      const unit=(k==="guard"||k==="bulwark"||k==="charge"||k==="rally")?"":"<i> ATK</i>";
+      const eff=k==="strike"?"reliable hit":k==="blast"?"heavy hit":k==="quick"?"ignores 🛡":k==="guard"?`+reflect ${TVAL.guardReflect[t]}`:k==="charge"?"+1⚡ · boost next":k==="drain"?`heal ${Math.round(TVAL.drainHeal[t]*100)}%`:k==="nova"?`recoil ${TVAL.novaRecoil[t]}`:k==="rend"?"ignores ½ 🛡":k==="jolt"?"drains ⚡":k==="rally"?"your dmg this turn":k==="wither"?`enemy −${Math.round(TVAL.witherAmt[t]*100)}% next`:k==="bulwark"?`+reflect ${TVAL.bulwarkReflect[t]}`:"";
+      const b=document.createElement("button");b.className="aPow"+(afford?"":" dis");
+      b.innerHTML=`<span class="apCost">${CARD_COST[slot]}</span><span class="apTier">T${t}</span><span class="apName">${ARCH_EMOJI[slot]} ${PN[B.you.si][slot][1]}</span><span class="apVal ${bigCls}">${big}${unit}</span><span class="apEff">${eff}</span>`;
+      if(afford)b.onclick=()=>playCard(idx);
+      pw.appendChild(b);
     });
-    g("arenaCenter").innerHTML="";
+    if(ac){ac.innerHTML="";const et=document.createElement("button");et.className="aBtn";et.textContent="End Turn ⏭";et.onclick=()=>endTurn("you");ac.appendChild(et);}
   }
-  function aiPick(team){
-    const idx=frontIdx(team),f=team[idx],r=Math.random();let slot;
-    if(f.hp/f.maxhp<0.35&&r<0.4)slot=3;            /* guard when low */
-    else if(r<0.22)slot=6;                          /* nova */
-    else if(r<0.32)slot=4;                          /* charge */
-    else slot=[0,1,2,5][ri(0,3)];                   /* damage */
-    const sk=f.c&&f.c.arenaSkills;                  /* a Legendary rival may only use its awakened 3 */
-    if(sk&&sk.length&&sk.indexOf(slot)<0)slot=sk[ri(0,sk.length-1)];
-    return {atkIdx:idx,power:slot};
+  function startBattle(){
+    const legs=myLegends().map(ensureLegendSkills); if(!legs.length)return;
+    const me=legs[0]; const foeC=aiFoe(me.br||1);
+    B={you:makeSide(me,true),foe:makeSide(foeC,false),over:false,turn:null,foeBr:foeC.br};
+    log(`A wild <b style="color:${SPECIES[B.foe.si].body}">${B.foe.name}</b> (BR ${B.foe.c.br}) challenges you!`);
+    B.turn=(B.you.st.spd>=B.foe.st.spd)?"you":"foe";
+    renderTeams(); setTimeout(()=>beginTurn(B.turn),650);
   }
-  function attack(team,atkIdx,slot,defTeam,defAction){
-    const A=team[atkIdx],k=ARCHK[slot],t=cardTier(A.c,slot),out={dmg:0,heal:0,recoil:0,reflect:0,target:frontIdx(defTeam)};
-    if(k==="charge"){A.buff=Math.max(A.buff,TVAL.charge[t]);return out;}
-    if(k==="guard")return out;
-    const D=defTeam[out.target]; if(!D)return out;
-    const base=k==="strike"?TVAL.strike[t]:k==="blast"?TVAL.blast[t]:k==="quick"?TVAL.quick[t]:k==="drain"?TVAL.drainDmg[t]:k==="nova"?TVAL.novaDmg[t]:0;
-    let dmg=base*mult(A.type,D.type)*A.buff; A.buff=1;
-    if(defAction&&ARCHK[defAction.power]==="guard"&&k!=="quick"){const dt=cardTier(D.c,defAction.power);dmg*=(1-TVAL.guardBlock[dt]);out.reflect=TVAL.guardReflect[dt];}  /* tiered Guard block + reflect */
-    if(k==="nova")out.recoil=TVAL.novaRecoil[t];
-    if(k==="drain")out.heal=dmg*TVAL.drainHeal[t];
-    out.dmg=Math.round(dmg); return out;
+  function drawTo(side,n){for(let i=0;i<n;i++){ if(!side.draw.length){side.draw=side.disc;side.disc=[];for(let k=side.draw.length-1;k>0;k--){const j=ri(0,k);[side.draw[k],side.draw[j]]=[side.draw[j],side.draw[k]];}} if(!side.draw.length)break; side.hand.push(side.draw.pop()); }}
+  function beginTurn(who){
+    if(!B||B.over)return; const side=B[who];
+    side.disc=side.disc.concat(side.hand); side.hand=[];
+    side.shield=0; side._reflect=0; side._turnBuff=1;                 /* shield/reflect/Rally reset each turn */
+    side.energy=Math.min(10,side.started?side.energy+1:3);
+    if(side._joltNext){side.energy=Math.max(0,side.energy-side._joltNext);side._joltNext=0;}  /* Jolt: lose energy this turn */
+    side.started=true; side.buff=1; side.playedThisTurn=0;
+    drawTo(side,6); B.turn=who; render();
+    if(who==="foe")setTimeout(aiTurn,800);
   }
-  function resolve(pAct,aAct){
-    if(!B||B.over)return;
-    const pf=B.you[pAct.atkIdx],af=B.foe[aAct.atkIdx];
-    const pn=PN[pf.si][pAct.power],an=PN[af.si][aAct.power];
-    const pOut=attack(B.you,pAct.atkIdx,pAct.power,B.foe,aAct);
-    const aOut=attack(B.foe,aAct.atkIdx,aAct.power,B.you,pAct);
-    if(pOut.dmg){const t=B.foe[pOut.target];if(t)t.hp-=pOut.dmg;}
-    if(aOut.dmg){const t=B.you[aOut.target];if(t)t.hp-=aOut.dmg;}
-    pf.hp+=pOut.heal-pOut.recoil-aOut.reflect;
-    af.hp+=aOut.heal-aOut.recoil-pOut.reflect;
-    B.you.forEach(f=>f.hp=Math.min(f.maxhp,f.hp));
-    B.foe.forEach(f=>f.hp=Math.min(f.maxhp,f.hp));
+  function critRoll(side){return Math.random()<Math.min(.5,side.st.mor/240);}
+  function applyHP(def,dmg){ if(def.ls>0){def.ls--;if(def.ls<=0)def.hp=-1;return;} def.hp-=dmg; if(def.hp<=0){ if(Math.random()<def.st.mor/255||def.st.mor>=120){def.ls=1+Math.floor(def.st.mor/60);def.hp=1;} } }
+  function dealDamage(att,def,raw,pierceFrac){
+    pierceFrac=pierceFrac||0;                                          /* 0 normal · 0.5 Rend (½ pierce) · 1 Quick (full pierce) */
+    let dmg=raw*att.buff; att.buff=1;
+    dmg*=(att._turnBuff||1);                                           /* Rally: +% your damage this turn */
+    dmg*=elemMult(legElem(att.si),legElem(def.si));
+    if(att._weaken){dmg*=(1-att._weaken);att._weaken=0;}               /* Wither: this attack was weakened */
+    if(att.playedThisTurn>1)dmg+=Math.round(att.st.skill*0.4*(att.playedThisTurn-1));   /* combo: Skill bonus */
+    const crit=critRoll(att); if(crit)dmg*=2; dmg=Math.round(dmg); let txt="";
+    const direct=Math.round(dmg*pierceFrac), viaShield=dmg-direct;     /* part that bypasses shield vs part the shield can soak */
+    if(def.shield>0 && viaShield>0){
+      if(def._reflect){applyHP(att,def._reflect);}                     /* shield reflects to attacker */
+      if(viaShield>=def.shield){const over=Math.round((viaShield-def.shield)*1.15);def.shield=0;applyHP(def,direct+over);txt=`shield broke! −${direct+over}`;}
+      else {def.shield-=viaShield;applyHP(def,direct);txt=direct>0?`−${dmg} (½ pierce)`:`−${dmg}🛡`;}
+    } else { applyHP(def,dmg); txt=`−${dmg}`; }
+    return (crit?"💥CRIT ":"")+txt;
+  }
+  function applyCard(side,foe,slot,who){
+    const t=cardTier(side.c,slot),k=ARCHK[slot]; side.energy-=CARD_COST[slot]; side.playedThisTurn++;
+    const nm=PN[side.si][slot]; let r="";
+    if(k==="guard"){side.shield+=TVAL.guardShield[t];side._reflect=Math.max(side._reflect||0,TVAL.guardReflect[t]);r=`+${TVAL.guardShield[t]}🛡 · reflect ${TVAL.guardReflect[t]}`;}
+    else if(k==="bulwark"){side.shield+=TVAL.bulwarkShield[t];side._reflect=Math.max(side._reflect||0,TVAL.bulwarkReflect[t]);r=`+${TVAL.bulwarkShield[t]}🛡 · reflect ${TVAL.bulwarkReflect[t]}`;}
+    else if(k==="charge"){side.energy+=1;side.buff=Math.max(side.buff,TVAL.charge[t]);r=`+1⚡ · next ×${TVAL.charge[t]}`;}
+    else if(k==="rally"){side._turnBuff=Math.max(side._turnBuff||1,TVAL.rally[t]);r=`+${Math.round((TVAL.rally[t]-1)*100)}% dmg this turn`;}
+    else if(k==="drain"){const res=dealDamage(side,foe,TVAL.drainDmg[t],0);const heal=Math.round(TVAL.drainDmg[t]*TVAL.drainHeal[t]);side.hp=Math.min(side.maxhp,side.hp+heal);r=res+` · heal +${heal}`;}
+    else if(k==="nova"){const res=dealDamage(side,foe,TVAL.novaDmg[t],0);side.hp-=TVAL.novaRecoil[t];r=res+` · recoil −${TVAL.novaRecoil[t]}`;}
+    else if(k==="quick"){r=dealDamage(side,foe,TVAL.quick[t],1);}
+    else if(k==="rend"){r=dealDamage(side,foe,TVAL.rendDmg[t],0.5);}
+    else if(k==="jolt"){r=dealDamage(side,foe,TVAL.joltDmg[t],0);foe._joltNext=(foe._joltNext||0)+1;r+=` · ⚡drain`;}
+    else if(k==="wither"){r=dealDamage(side,foe,TVAL.witherDmg[t],0);foe._weaken=Math.max(foe._weaken||0,TVAL.witherAmt[t]);r+=` · −${Math.round(TVAL.witherAmt[t]*100)}% next`;}
+    else {r=dealDamage(side,foe,(k==="strike"?TVAL.strike[t]:TVAL.blast[t]),0);}
+    log(`${side.isYou?"You":"Rival"}: <b>${nm[0]} ${nm[1]}</b> ${r}`);
+  }
+  function flash(targetWho){const a=g(targetWho==="foe"?"aFfoe":"aFyou");if(a){a.classList.add("hit");setTimeout(()=>a.classList.remove("hit"),300);} const at=g(targetWho==="foe"?"aFyou":"aFfoe");if(at){at.classList.add("lunge");setTimeout(()=>at.classList.remove("lunge"),200);}}
+  function playCard(idx){
+    if(!B||B.over||B.turn!=="you")return; const s=B.you.hand[idx]; if(s==null||B.you.energy<CARD_COST[s])return;
+    B.you.hand.splice(idx,1); B.you.disc.push(s); flash("foe");
     if(window.playSfx)window.playSfx("click");
-    log(`You: ${pf.name} ${pn[0]}${pn[1]}${pOut.dmg?` <b style='color:#ff7849'>(−${pOut.dmg})</b>`:""} · Rival: ${af.name} ${an[0]}${an[1]}${aOut.dmg?` <b style='color:#ff7849'>(−${aOut.dmg})</b>`:""}`);
-    renderTeams();
-    /* fight animation: attacker lunges in, the one taking damage flashes */
-    const yE=g("aFyou"),fE=g("aFfoe");
-    if(yE){yE.classList.add("lunge"); if(aOut.dmg)yE.classList.add("hit");}
-    if(fE){fE.classList.add("lunge"); if(pOut.dmg)fE.classList.add("hit");}
-    setTimeout(()=>{[yE,fE].forEach(e=>{if(e){e.classList.remove("lunge");e.classList.remove("hit");}});},320);
-    setTimeout(()=>{
-      if(!alive(B.foe))return end(true);
-      if(!alive(B.you))return end(false);
-      B.round++; render();
-    },680);
+    applyCard(B.you,B.foe,s,"you"); render(); checkEnd();
   }
+  function endTurn(who){ if(!B||B.over)return; beginTurn(who==="you"?"foe":"you"); }
+  function aiTurn(){
+    if(!B||B.over)return; const me=B.foe,foe=B.you; let guard=0;
+    const step=()=>{
+      if(!B||B.over)return;
+      if(me.hp/me.maxhp<.4){const gi=me.hand.indexOf(3);if(gi>-1&&me.energy>=CARD_COST[3]){me.hand.splice(gi,1);me.disc.push(3);flash("you");applyCard(me,foe,3,"foe");render();checkEnd();if(B.over)return;}}
+      let s=-1; const ci=me.hand.indexOf(4);
+      if(ci>-1&&(me.hand.includes(6)||me.hand.includes(1)))s=4;
+      else{const atks=me.hand.filter(x=>me.energy>=CARD_COST[x]&&KIND[x]==="atk").sort((a,b)=>cardDmgN(b,cardTier(me.c,b))-cardDmgN(a,cardTier(me.c,a)));s=atks.length?atks[0]:-1;}
+      if(s<0||guard++>9){setTimeout(()=>{render();endTurn("foe");},500);return;}
+      const idx=me.hand.indexOf(s);me.hand.splice(idx,1);me.disc.push(s);flash("you");applyCard(me,foe,s,"foe");render();checkEnd();
+      if(B.over)return; setTimeout(step,680);
+    };
+    setTimeout(step,450);
+  }
+  function checkEnd(){ if(!B||B.over)return; if(B.foe.hp<=0&&B.foe.ls<=0)return end(true); if(B.you.hp<=0&&B.you.ls<=0)return end(false); }
   function end(win){
-    B.over=true; g("arenaPowers").innerHTML="";
-    const foeBr=Math.round(B.foe.reduce((s,f)=>s+(f.c.br||1),0)/Math.max(1,B.foe.length));
+    B.over=true; g("arenaPowers").innerHTML=""; const keyEl=g("arenaKey"); if(keyEl)keyEl.innerHTML="";
+    const foeBr=B.foeBr||1, c=B.you.c; ensureBattle(c);
+    const tired=(c.stamina!=null)&&(c.stamina<ARENA_STAM);
+    if(c.stamina!=null)c.stamina=Math.max(0,c.stamina-ARENA_STAM);
     if(win){
       g("arenaResult").innerHTML="🏆 <span style='color:#3ddc84'>VICTORY!</span>";
-      const mine=myLegends(); let ups=0, anyRewarded=false, xpEach=0;
-      mine.forEach(c=>{ ensureBattle(c);
-        const tired=(c.stamina!=null)&&(c.stamina<ARENA_STAM);
-        const rewardMult=tired?0.3:1; if(!tired)anyRewarded=true;
-        if(c.stamina!=null)c.stamina=Math.max(0,c.stamina-ARENA_STAM);
-        const x=Math.round((18+foeBr*4)*rewardMult); xpEach=x; ups+=gainBattleXp(c,x);
-      });
-      const glory=Math.round((6+foeBr*2)*(anyRewarded?1:0.3));
+      const x=Math.round((18+foeBr*4)*(tired?0.3:1)), ups=gainBattleXp(c,x), glory=Math.round((6+foeBr*2)*(tired?0.3:1));
       if(player){ player.glory=(player.glory||0)+glory; player.pvpWins=(player.pvpWins||0)+1; if(typeof saveProfile==="function"&&player.pk)saveProfile(player); }
-      log(`Your Legendaries gained <b>+${xpEach} Battle EXP</b> &amp; <b>+${glory} ✨ Glory</b>!${ups?` 🆙 <b>Battle Rank up! +${ups} skill point${ups>1?"s":""}</b>`:""}${(!anyRewarded)?" <span style='color:#ff922b'>(tired — reduced)</span>":""}`);
-      if(typeof addFeed==="function")addFeed(`🏆 ${player&&player.handle?player.handle:'You'} won an Arena battle — +${xpEach} Battle EXP · +${glory} ✨ Glory${ups?` · Rank up!`:""}`);
+      log(`🏆 <b style="color:#3ddc84">VICTORY!</b> +${x} Battle EXP · +${glory} ✨ Glory${ups?` · 🆙 <b>Rank up! +${ups} skill pt${ups>1?"s":""}</b>`:""}${tired?" <span style='color:#ff922b'>(tired — reduced)</span>":""}`);
+      if(typeof addFeed==="function")addFeed(`🏆 ${player&&player.handle?player.handle:'You'} won an Arena battle — +${x} EXP · +${glory} ✨ Glory${ups?` · Rank up!`:""}`);
       if(window.playSfx)window.playSfx("reward");
     }else{ g("arenaResult").innerHTML="💀 <span style='color:#ff6b6b'>Defeated…</span>";
-      const mine=myLegends(); mine.forEach(c=>{ensureBattle(c); if(c.stamina!=null)c.stamina=Math.max(0,c.stamina-ARENA_STAM); gainBattleXp(c,Math.round((18+foeBr*4)*0.3));});  /* losing still grants ~30% EXP */
+      gainBattleXp(c,Math.round((18+foeBr*4)*0.3));
       if(player&&typeof saveProfile==="function"&&player.pk)saveProfile(player);
-      log("Your Legendaries earned a little Battle EXP. Upgrade their cards and try again!"); }
+      log("💀 Defeated… you earned a little Battle EXP. Upgrade your cards &amp; try again!"); }
     renderArenaMeta();
     const again=document.createElement("button");again.className="aBtn";again.textContent="⚔️ Battle Again";again.onclick=findMatch;
     g("arenaCenter").innerHTML=""; g("arenaCenter").appendChild(again);
   }
   const myLegends=()=>(typeof myChikis==="function")?myChikis().filter(c=>c.isLegend):[];
-  function findMatch(){
+  async function payTicket(){
+    if(typeof isCreator==="function"&&isCreator(player.pk))return true;   /* creator enters free for testing */
+    if((player.bal||0)-ARENA_TICKET<MIN_HOLD){showBanner(`A Chikiseum ticket costs ${ARENA_TICKET.toLocaleString()} $CHIKI (keep ≥${MIN_HOLD.toLocaleString()}). Top up to battle.`,"error");return false;}
+    if(CHAIN.ONCHAIN_SPENDS&&player.pk){try{await chikiSpend(ARENA_TICKET,"Chikiseum Ticket");}catch(e){showBanner("Ticket payment failed: "+(e.message||e),"error");return false;}}
+    player.bal-=ARENA_TICKET;
+    const burn=ARENA_TICKET*0.01,toPool=ARENA_TICKET*0.495,toTeam=ARENA_TICKET*0.495;
+    burnedChiki+=burn; pool+=toPool*TOKEN_PRICE; teamChiki+=toTeam;
+    if(player.pk&&typeof saveProfile==="function")saveProfile(player);
+    if(typeof refreshUI==="function")refreshUI();
+    return true;
+  }
+  async function findMatch(){
     g("arenaResult").textContent="";g("arenaPowers").innerHTML="";
     const legs=myLegends();
     if(!player||!legs.length){B=null;renderTeams();
       g("arenaResult").innerHTML="<span style='color:#ffd93d'>👑 Legendaries only</span>";
       g("arenaLog").innerHTML="Only <b>Legendary</b> Chikimons can wield the power of Chi and enter the Arena. Buy a Legendary Egg from 🔮 <b>Mithra's Mystic Market</b> to awaken one!";
       g("arenaCenter").innerHTML="";return;}
-    B=null;renderTeams();log("");
+    g("arenaCenter").innerHTML="<div style='font-size:13px;color:#8fa6c9'>🎟️ Paying Chikiseum ticket…</div>";
+    if(!(await payTicket())){ g("arenaCenter").innerHTML=`<button class="aBtn" id="ticketRetry">🎟️ Pay ${ARENA_TICKET.toLocaleString()} $CHIKI &amp; Enter</button>`; const rb=g("ticketRetry"); if(rb)rb.onclick=findMatch; return; }
+    B=null;renderTeams();log(`🎟️ Ticket paid — ${ARENA_TICKET.toLocaleString()} $CHIKI staked into the arena.`);
     g("arenaCenter").innerHTML="<div style='font-size:14px;color:#cdd8ee'>🔎 Searching for an opponent…</div>";
     setTimeout(()=>{ g("arenaCenter").innerHTML="<div style='font-size:13px;color:#8fa6c9'>No player online — battling a Legendary rival.</div>";
-      setTimeout(start,650); },1300);
-  }
-  function start(){
-    const legs=myLegends().map(ensureLegendSkills);
-    const mine=legs.slice(0,2).map(fighter);
-    const avgBr=Math.round(legs.reduce((s,c)=>s+(c.br||1),0)/Math.max(1,legs.length));
-    B={you:mine,foe:aiTeam(avgBr,Math.min(2,mine.length)),round:1,over:false};
-    log("⚔️ Battle start! Pick a Chi skill — you and the rival strike at once.");
-    render(); renderArenaMeta();
+      setTimeout(()=>{ startBattle(); renderArenaMeta(); },650); },1300);
   }
   /* BR + Glory header + a card-upgrade entry point */
   function renderArenaMeta(){
@@ -2703,9 +2762,27 @@ setInterval(updateWhaleTab,1000);
   }
   window.renderArenaMeta=renderArenaMeta;
   /* ---- card upgrade panel ---- */
-  const ARCH_NAME=["Strike","Blast","Quick","Guard","Charge","Drain","Nova"];
-  function tierVal(slot,t){const k=ARCHK[slot];return k==="strike"?TVAL.strike[t]+" dmg":k==="blast"?TVAL.blast[t]+" dmg":k==="quick"?TVAL.quick[t]+" dmg":k==="guard"?Math.round(TVAL.guardBlock[t]*100)+"% block":k==="charge"?"×"+TVAL.charge[t]:k==="drain"?TVAL.drainDmg[t]+" dmg":TVAL.novaDmg[t]+" dmg";}
+  const ARCH_NAME=["Strike","Blast","Quick","Guard","Charge","Drain","Nova","Rend","Jolt","Rally","Wither","Bulwark"];
+  function tierVal(slot,t){const k=ARCHK[slot];return k==="strike"?TVAL.strike[t]+" dmg":k==="blast"?TVAL.blast[t]+" dmg":k==="quick"?TVAL.quick[t]+" dmg":k==="guard"?TVAL.guardShield[t]+" 🛡":k==="charge"?"×"+TVAL.charge[t]:k==="drain"?TVAL.drainDmg[t]+" dmg":k==="nova"?TVAL.novaDmg[t]+" dmg":k==="rend"?TVAL.rendDmg[t]+" dmg ½pierce":k==="jolt"?TVAL.joltDmg[t]+" dmg ⚡drain":k==="rally"?"+"+Math.round((TVAL.rally[t]-1)*100)+"% dmg":k==="wither"?TVAL.witherDmg[t]+" dmg −"+Math.round(TVAL.witherAmt[t]*100)+"%":k==="bulwark"?TVAL.bulwarkShield[t]+" 🛡":TVAL.novaDmg[t]+" dmg";}
   function upgCost(t){return t<=2?{sp:t}:t===3?{sp:3,glory:120}:{glory:300,chiki:50000};}   /* T1→2:1sp · 2→3:2sp · 3→4:3sp+120 glory · 4→5:300 glory+50k $CHIKI */
+  /* ---- Card shop: a Legendary is born with 3 of its 12 cards; collect the other 9.
+         Each new card needs GLORY (to earn the right to it) AND $CHIKI (to MINT the skill card). ---- */
+  const CARD_MINT_CHIKI=25000;                                      /* $CHIKI minting fee per new skill card (1% burn / 49.5% pool / 49.5% team) */
+  function cardBuyCost(owned){return 150+Math.max(0,owned-3)*60;}   /* 4th card 150✨ → rises as the deck grows (Glory sink) */
+  async function buyCard(c,slot){
+    ensureBattle(c); if((c.arenaSkills||[]).indexOf(slot)>-1)return;
+    const gCost=cardBuyCost((c.arenaSkills||[]).length), mint=CARD_MINT_CHIKI;
+    if((player.glory||0)<gCost){showBanner(`Need ${gCost} ✨ Glory to acquire this card — win Arena battles.`,"error");return;}
+    if((player.bal||0)-mint<MIN_HOLD){showBanner(`Minting costs ${mint.toLocaleString()} $CHIKI (keep ≥${MIN_HOLD.toLocaleString()}). Top up to mint this card.`,"error");return;}
+    if(CHAIN.ONCHAIN_SPENDS&&player.pk){try{await chikiSpend(mint,"Mint Skill Card");}catch(e){showBanner("Mint payment failed: "+(e.message||e),"error");return;}}
+    player.bal-=mint;
+    const burn=mint*0.01,toPool=mint*0.495,toTeam=mint*0.495; burnedChiki+=burn; pool+=toPool*TOKEN_PRICE; teamChiki+=toTeam;
+    player.glory-=gCost; c.arenaSkills=(c.arenaSkills||[]).concat(slot).sort((a,b)=>a-b); c.cardTier[slot]=1;
+    const si=SPECIES.indexOf(c.sp); addFeed(`🃏 ${nameOf(c)} minted a new skill card: <b>${PN[si][slot][1]}</b>! (−${gCost}✨ · −${mint.toLocaleString()} $CHIKI)`);
+    if(player.pk&&typeof saveProfile==="function")saveProfile(player);
+    if(typeof refreshUI==="function")refreshUI();
+    openUpgrade(); renderArenaMeta();
+  }
   async function doUpgrade(c,slot){
     ensureBattle(c); const t=cardTier(c,slot); if(t>=5){showBanner("That card is already maxed (T5).","info");return;}
     const cost=upgCost(t);
@@ -2731,11 +2808,19 @@ setInterval(updateWhaleTab,1000);
           (c.arenaSkills||[]).map(slot=>{const t=cardTier(c,slot),cost=upgCost(t),max=t>=5;
             const costTxt=max?"MAX":(cost.sp?`${cost.sp} pt`:"")+(cost.glory?` ${cost.glory}✨`:"")+(cost.chiki?` ${(cost.chiki/1000)}k $CHIKI`:"");
             return `<div class="upgRow"><span>${PN[si][slot][0]} ${PN[si][slot][1]} <small style="color:#8fa6c9">T${t} · ${tierVal(slot,t)}</small></span>
-              <button class="upgBtn" data-ci="${creatures.indexOf(c)}" data-slot="${slot}" ${max?"disabled":""}>${max?"MAX":"⬆ "+costTxt}</button></div>`;}).join("")+`</div>`;
+              <button class="upgBtn" data-ci="${creatures.indexOf(c)}" data-slot="${slot}" ${max?"disabled":""}>${max?"MAX":"⬆ "+costTxt}</button></div>`;}).join("")
+          +(()=>{const unowned=[];for(let s=0;s<12;s++)if((c.arenaSkills||[]).indexOf(s)<0)unowned.push(s);
+            if(!unowned.length)return `<div class="upgSubHd">🃏 Full deck — all 12 cards collected!</div>`;
+            const buyC=cardBuyCost((c.arenaSkills||[]).length);
+            return `<div class="upgSubHd">🃏 Mint new cards <small style="color:#8fa6c9">(${buyC}✨ + ${(CARD_MINT_CHIKI/1000)}k $CHIKI each)</small></div>`+
+              unowned.map(slot=>`<div class="upgRow"><span>${PN[si][slot][0]} ${PN[si][slot][1]} <small style="color:#8fa6c9">${ARCH_NAME[slot]} · ${tierVal(slot,1)}</small></span>
+                <button class="buyBtn" data-ci="${creatures.indexOf(c)}" data-slot="${slot}">+ ${buyC}✨ · ${(CARD_MINT_CHIKI/1000)}k</button></div>`).join("");
+          })()+`</div>`;
       }).join(""):`<div style="color:#8fa6c9;padding:10px">No Legendaries yet — hatch one at Mithra's Mystic Market.</div>`)+`</div>`;
     p.style.display="flex";
     g("upgX").onclick=()=>p.style.display="none";
     p.querySelectorAll(".upgBtn").forEach(b=>{if(!b.disabled)b.onclick=()=>doUpgrade(creatures[+b.dataset.ci],+b.dataset.slot);});
+    p.querySelectorAll(".buyBtn").forEach(b=>{b.onclick=()=>buyCard(creatures[+b.dataset.ci],+b.dataset.slot);});
   }
   window.openUpgrade=openUpgrade;
   const ab=g("btnArena");
@@ -2769,7 +2854,7 @@ setInterval(updateWhaleTab,1000);
   }
   window.tickCare=tickCare;  /* used by profile restore for offline care */
   function fmtDur(min){ if(min<=0)return "ready"; if(min<60)return Math.ceil(min)+"m"; const h=Math.floor(min/60),m=Math.round(min%60); return h+"h"+(m?(" "+m+"m"):""); }
-  function rollSkills(){const p=[0,1,2,3,4,5,6],o=[];for(let i=0;i<3;i++)o.push(p.splice(ri(0,p.length-1),1)[0]);return o.sort((a,b)=>a-b);}
+  function rollSkills(){const p=[0,1,2,3,4,5,6,7,8,9,10,11],o=[];for(let i=0;i<3;i++)o.push(p.splice(ri(0,p.length-1),1)[0]);return o.sort((a,b)=>a-b);}
 
   function removeCreature(c){
     if(!c)return;
@@ -5522,7 +5607,10 @@ function installGlb(i,buf,fromStorage){
 /* restore saved GLBs, then load the built-in litematic chikimons
    (a player's own custom model always wins over the built-in) */
 setTimeout(()=>{
+  const BUILTIN_LEGEND_IDXS=[11,12,13,14];   /* these always load fresh from file — never from a stale localStorage copy */
+  BUILTIN_LEGEND_IDXS.forEach(i=>{try{localStorage.removeItem("chikiGlb"+i);}catch(e){}});
   for(let i=0;i<SPECIES.length;i++){
+    if(BUILTIN_LEGEND_IDXS.indexOf(i)>-1)continue;   /* skip — loaded by the EXTERNAL_GLB fetch below */
     try{
       const s=localStorage.getItem("chikiGlb"+i);
       if(s)installGlb(i,b64decode(s),true);
@@ -5540,10 +5628,12 @@ setTimeout(()=>{
   }
   /* large built-in models kept as separate files (out of models.js to stay light) */
   const EXTERNAL_GLB={11:"adalor_voxel.glb",12:"tyrannos_voxel.glb",13:"grovador_voxel.glb",14:"dragonos_voxel.glb"};   /* in-game legendaries — voxel models, procedural limb rigs (see RIG_MODE above) */
+  const GLB_VER="2";   /* bump this whenever a voxel GLB is re-exported, to bust the browser cache */
   for(const i in EXTERNAL_GLB){
     const idx=+i;
     if(glbCache[idx]||customModels[idx])continue;
-    fetch(EXTERNAL_GLB[i],{cache:"force-cache"}).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer();})
+    try{localStorage.removeItem("chikiGlb"+idx);}catch(e){}   /* never serve a stale cached copy of a built-in legendary */
+    fetch(EXTERNAL_GLB[i]+"?v="+GLB_VER,{cache:"reload"}).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer();})
       .then(buf=>{try{installGlb(idx,buf,true);}catch(e){}}).catch(()=>{});
   }
   if(window.BOAT_GLB){try{installBoatGlb(b64decode(window.BOAT_GLB));}catch(e){}}
