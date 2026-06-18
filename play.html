@@ -2499,7 +2499,8 @@ let _whaleHatching=false;
 function updateWhaleTab(){
   const el=document.getElementById("whaleTab");if(!el)return;
   if(!player||!player.pk){el.style.display="none";el.onclick=null;return;}
-  if((typeof myChikis==="function"?myChikis().length:0)>=2){el.style.display="none";el.onclick=null;return;}   /* at the 2-Chiki cap */
+  const normCount=(typeof myChikis==="function")?myChikis().filter(c=>!c.isLegend).length:0;
+  if(normCount>=2){el.style.display="none";el.onclick=null;return;}   /* at the 2 NORMAL-Chiki cap (a Legendary doesn't use up the whale's 2nd-earner slot) */
   const bal=player.bal||0;
   if(bal<1_000_000){
     el.style.display="block";el.style.cursor="default";el.onclick=null;
@@ -2513,12 +2514,12 @@ function updateWhaleTab(){
     el.style.display="block";el.style.cursor="pointer";
     el.innerHTML=`<img class="whaleEgg ready" src="egg.png"> 🐣 <b>Tap to hatch your 2nd Chiki!</b>`;
     el.onclick=async ()=>{
-      if(_whaleHatching||myChikis().length>=2)return;_whaleHatching=true;
+      if(_whaleHatching||myChikis().filter(c=>!c.isLegend).length>=2)return;_whaleHatching=true;
       let ok=true;
       if(CHAIN.BACKEND){try{const v=await backendVerify(player.pk);ok=!!(v&&v.chikis>=2);}catch(e){ok=true;}}
       if(!ok){_whaleHatching=false;showBanner("🐳 Not ready yet — keep holding 1,000,000 $CHIKI for the full 6 hours.","error");return;}
       el.onclick=null;
-      const sp=await hatchEgg();
+      const sp=await hatchEgg(true);              /* whale 2nd Chiki is always NORMAL (no legendary chance) */
       const c=spawnCreature(player,1,sp);
       player._whaleUnlockAt=0;_whaleHatching=false;
       try{localStorage.removeItem("whaleUnlock_"+player.addr);}catch(e){}
@@ -4395,7 +4396,8 @@ function loadMithra(){
 }
 setTimeout(loadMithra,500);
 /* ===== Legendary Egg NEST — a 3D egg that appears in the world while one incubates; carers walk to it and tend it ===== */
-let eggNest=null, eggMesh=null, eggAura=null, _eggT=0;
+let eggNest=null, eggSprite=null, eggAura=null, _eggT=0;
+const EGG_SPRITE_SCALE=118;   /* big — bump this to resize the egg */
 function makeEggNest(){
   if(typeof THREE==="undefined")return;
   let tx=92,ty=72,found=null;
@@ -4406,27 +4408,21 @@ function makeEggNest(){
   if(!found)found={x:tx,y:ty};
   const wx=found.x*TILE+TILE/2, wz=found.y*TILE+TILE/2, gy=heightY(wx,wz);
   eggNest={x:wx,z:wz,gy};
-  /* 3D legendary egg model (crafted in Blockbench) */
-  if(THREE.GLTFLoader)fetch("legendary_egg.glb",{cache:"force-cache"}).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer();}).then(buf=>{
-    new THREE.GLTFLoader().parse(buf,"",function(gltf){
-      const root=gltf.scene; root.updateMatrixWorld(true);
-      const box=new THREE.Box3().setFromObject(root),sz=new THREE.Vector3();box.getSize(sz);const ctr=new THREE.Vector3();box.getCenter(ctr);
-      const k=84/Math.max(0.001,sz.y);                       /* BIG egg */
-      const inner=new THREE.Group();inner.add(root);inner.scale.setScalar(k);
-      root.position.set(-ctr.x,-box.min.y,-ctr.z);
-      inner.traverse(o=>{if(o.isMesh){o.castShadow=true; if(o.geometry&&o.geometry.attributes&&o.geometry.attributes.color&&o.material){o.material.vertexColors=true;if(o.material.color)o.material.color.setRGB(1,1,1);o.material.needsUpdate=true;}}});
-      const wrap=new THREE.Group();wrap.add(inner);wrap.position.set(wx,gy,wz);wrap.visible=false;scene.add(wrap);eggMesh=wrap;
-    },function(){});
-  }).catch(()=>{});
+  /* render the legendary egg as the original artwork (camera-facing billboard), BIG */
+  const tex=new THREE.TextureLoader().load("ui/legendary-egg.png");
+  if(tex){tex.minFilter=THREE.LinearMipmapLinearFilter;tex.magFilter=THREE.LinearFilter;}
+  const m=new THREE.SpriteMaterial({map:tex,transparent:true,depthWrite:false});
+  eggSprite=new THREE.Sprite(m); eggSprite.scale.set(EGG_SPRITE_SCALE,EGG_SPRITE_SCALE,1);
+  eggSprite.position.set(wx,gy+EGG_SPRITE_SCALE*0.42,wz); eggSprite.visible=false; scene.add(eggSprite);
   /* BIG purple flame aura */
-  if(typeof buildAura==="function"){ eggAura=buildAura("purple",true); eggAura.scale.setScalar(1.6); eggAura.position.set(wx,gy+4,wz); eggAura.visible=false; scene.add(eggAura); }
+  if(typeof buildAura==="function"){ eggAura=buildAura("purple",true); eggAura.scale.setScalar(1.9); eggAura.position.set(wx,gy+6,wz); eggAura.visible=false; scene.add(eggAura); }
 }
 setTimeout(makeEggNest,650);
-setInterval(()=>{                                  /* show the egg + spin/bob + animate aura while incubating */
+setInterval(()=>{                                  /* show the egg + gentle bob + animate aura while incubating */
   if(!eggNest)return;
   const inc=!!(player&&player.ancientEgg&&!player.ancientEgg.hatched);
   _eggT+=0.06;
-  if(eggMesh){ eggMesh.visible=inc; if(inc){ eggMesh.position.y=eggNest.gy+Math.sin(_eggT)*2.5; eggMesh.rotation.y+=0.012; } }
+  if(eggSprite){ eggSprite.visible=inc; if(inc)eggSprite.position.y=eggNest.gy+EGG_SPRITE_SCALE*0.42+Math.sin(_eggT)*3; }
   if(eggAura){ eggAura.visible=inc; if(inc&&typeof animateAura==="function")animateAura(eggAura,performance.now()/1000,0.06); }
 },60);
 function makeTextSprite(txt,scalePx,color){
