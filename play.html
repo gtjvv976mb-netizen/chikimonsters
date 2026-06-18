@@ -3963,7 +3963,7 @@ function buildBee(){
 function spawnBees(cx,cz,baseY,n){
   for(let i=0;i<n;i++){
     const m=buildBee(); structGroup.add(m);
-    beeSwarm.push({mesh:m,cx,cz,baseY,ph:Math.random()*6.28,r:13+Math.random()*11,h:Math.random()*9,sp:0.7+Math.random()*0.7,wob:Math.random()*6.28});
+    beeSwarm.push({mesh:m,cx,cz,baseY,ph:Math.random()*6.28,r:26+Math.random()*16,h:Math.random()*9,sp:0.7+Math.random()*0.7,wob:Math.random()*6.28});
   }
 }
 function animBees(t){
@@ -4207,7 +4207,7 @@ function buildZoneProps(){
     spawnBees(z.x*TILE+TILE/2, z.y*TILE+TILE/2, gy+28, 3);   /* animated 3D bees orbit the hive (no emoji bees) */
     hiveSpots.push({proc:g,x:z.x*TILE+TILE/2,z:z.y*TILE+TILE/2,gy});
   });
-  setTimeout(()=>loadPropURL("beehive.glb","hive",42,hiveSpots,false,0xffd400),110);   /* bright stand-out yellow hive */
+  setTimeout(()=>loadPropURL("beehive_voxel.glb?v=1","hive",42,hiveSpots,false),110);   /* new 3D honey-hive model (real vibrant colors) */
   /* grand crystal caves: the uploaded 3D voxel model at each cave mouth (vibrant, dark-stone + glowing crystals) */
   let _caveTpl=null; const _cavePending=[];
   const _placeCave=(g)=>{ const put=tpl=>{ const m=tpl.clone(true); const bx=new THREE.Box3().setFromObject(m),sz=new THREE.Vector3(); bx.getSize(sz);
