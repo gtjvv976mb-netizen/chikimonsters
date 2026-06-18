@@ -934,7 +934,7 @@ body.pre #liveHud{display:none}
 #welcomeBanner.info{background:rgba(20,58,110,.96);border-color:#74c0fc}
 </style>
 <div id="liveHud" title="Live activity in Chikoria">
-  <span class="ldot"></span><span id="liveUsers">👥 —</span><span class="lsep">·</span><span id="liveChikis">🐣 —</span>
+  <span class="ldot"></span><span id="liveUsers">👥 —</span><span class="lsep">·</span><span id="liveChikis">🐣 —</span><span class="lsep">·</span><span id="liveLegends" title="Legendary Chikimon hatched in Chikoria">👑 —</span>
 </div>
 <div id="whaleTab"></div>
 
@@ -2444,6 +2444,17 @@ function _setLive(j){if(!j||typeof j.activeUsers!=="number")return;
   const U=document.getElementById("liveUsers"),K=document.getElementById("liveChikis");
   if(U)U.textContent="👥 "+j.activeUsers+(j.activeUsers===1?" player":" players");
   if(K)K.textContent="🐣 "+j.chikimons+" roaming";}
+/* 👑 always-visible counter of Legendary Chikimon hatched in Chikoria (community total) */
+function updateLegendHud(){
+  const el=document.getElementById("liveLegends"); if(!el)return;
+  let n=(REAL_STATS&&typeof REAL_STATS.legendsHatched==="number")?REAL_STATS.legendsHatched:0;
+  const owned=(typeof creatures!=="undefined")?creatures.filter(c=>player&&c.holder===player&&c.isLegend).length:0;
+  let seen=0; try{seen=+(localStorage.getItem("legendsHatchedSeen")||0)||0;}catch(e){}
+  n=Math.max(n,owned,seen);
+  try{localStorage.setItem("legendsHatchedSeen",n);}catch(e){}
+  el.textContent="👑 "+n+(n===1?" Legendary":" Legendaries");
+}
+setTimeout(updateLegendHud,1200);
 async function pollPresence(){if(!CHAIN.BACKEND)return;try{const r=await fetch(CHAIN.BACKEND+"/presence",{cache:"no-store"});_setLive(await r.json());}catch(e){}}
 async function pingPresence(){
   if(!CHAIN.BACKEND)return;
@@ -2462,6 +2473,7 @@ setInterval(()=>{(player&&player.pk)?pingPresence():pollPresence();},25000);
 async function pollReal(){
   if(!CHAIN.BACKEND)return;
   try{const r=await fetch(CHAIN.BACKEND+"/stats",{cache:"no-store"});REAL_STATS=await r.json();}catch(e){}
+  updateLegendHud();
   try{const r=await fetch(CHAIN.BACKEND+"/leaderboard",{cache:"no-store"});REAL_LB=await r.json();}catch(e){}
   try{
     const r=await fetch(CHAIN.BACKEND+"/feed?since="+_feedSince,{cache:"no-store"});const j=await r.json();
@@ -2835,7 +2847,7 @@ setInterval(updateWhaleTab,1000);
     if(!player){showBanner("Connect your wallet first.","error");return;}
     if(player.ancientEgg&&!player.ancientEgg.hatched){renderSorc();return;}
     if(!isCreator(player.pk)&&holderCounts(player).legend>=MAX_LEGEND){showBanner("You already have a Legendary Chikimon (max 1).","error");return;}
-    if(!carers(player).length){showBanner("🔮 You need at least one normal Chiki to care for a Legendary Egg.","error");return;}
+    if(!creatures.some(c=>c.holder===player&&!c.isLegend)){showBanner("🔮 You need at least one normal Chiki to care for a Legendary Egg.","error");return;}   /* potential tenders (selected after purchase) */
     const cost=LEGEND_EGG_COST;
     if((player.bal||0)-cost<MIN_HOLD){showBanner(`🔮 A Legendary Egg costs ${cost.toLocaleString()} $CHIKI (must keep ≥${MIN_HOLD.toLocaleString()}).`,"error");return;}
     const btn=g("sorcBuyBtn"); if(btn){btn.disabled=true;btn.textContent="✍️ Approve in Phantom…";}
@@ -2903,6 +2915,8 @@ setInterval(updateWhaleTab,1000);
     c.nick=SPECIES[idx].names[stageOf(10)-1]; c.named=true;
     player.ancientEgg=null;
     creatures.forEach(x=>{if(x.holder===player&&!x.isLegend)x.tending=false;});   /* tenders return to work */
+    try{localStorage.setItem("legendsHatchedSeen",((+(localStorage.getItem("legendsHatchedSeen")||0))||0)+1);}catch(e){}
+    if(typeof updateLegendHud==="function")updateLegendHud();   /* bump the 👑 counter immediately */
     const skillsTxt=c.arenaSkills.map(s=>CHI_PN[idx][s][0]+" "+CHI_PN[idx][s][1]);
     addFeed(`✨ The Ancient Egg HATCHED — a LEGENDARY <b>${c.nick}</b> is born! 👑 Chi skills: ${skillsTxt.join(", ")}`);
     if(player.pk&&typeof saveProfile==="function")saveProfile(player);
