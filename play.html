@@ -1347,8 +1347,13 @@ function hatchEgg(noLegend){   /* noLegend=true → guaranteed normal (no legend
 /* ===== Hatch caps: every user may keep at most 2 normal + 1 legendary (the creator wallet is exempt) ===== */
 const MAX_NORMAL=2, MAX_LEGEND=1;
 /* ===== Legendary BATTLE progression (separate track from world Lv — never affects SOL earnings) ===== */
-const MAX_BR=30, ARENA_STAM=30;                              /* stamina a Legendary spends per rewarded battle */
-const ARENA_TICKET=1000;                                     /* $CHIKI entry ticket charged per Chikiseum battle (1% burn / 49.5% pool / 49.5% team) */
+const MAX_BR=30, ARENA_STAM=30;                              /* stamina a Legendary spends to fight in the Chikiseum */
+/* Legendary arena stamina: pool grows with level (120 → 900); a battle costs 30. */
+const legStamMax=lv=>Math.round(120+(Math.min(Math.max(lv,1),MAX_LEVEL)-1)/Math.max(1,MAX_LEVEL-1)*(900-120));
+/* When exhausted, the Legendary sleeps before it can be fed again: 10 min (Lv1) → 5 min (Lv50). */
+const legSleepSec=lv=>Math.round(600-(Math.min(Math.max(lv,1),MAX_LEVEL)-1)/Math.max(1,MAX_LEVEL-1)*(600-300));
+/* Feeding restores arena stamina — $CHIKI per stamina point: 100 (Lv1) → 50 (Lv50). */
+const legFeedPer=lv=>Math.round(100-(Math.min(Math.max(lv,1),MAX_LEVEL)-1)/Math.max(1,MAX_LEVEL-1)*(100-50));
 const TVAL={                                                 /* card stats by Tier 1..5 (index 0 unused) */
   strike:[0,18,20,22,24,26], blast:[0,30,33,36,39,42], quick:[0,12,14,16,18,20],
   guardBlock:[0,0.60,0.64,0.68,0.72,0.76], guardReflect:[0,6,7,8,9,10],
@@ -1370,6 +1375,7 @@ const weakVs=a=>[1,2,3].map(k=>(a+7-k)%7);      /* the 3 slots that beat this ca
 function rpsMult(a,d){ if(d<0||d==null)return 1; for(let k=1;k<=3;k++)if((a+k)%7===d)return 1.4; for(let k=1;k<=3;k++)if((a+7-k)%7===d)return 0.65; return 1; }
 const brNeed=br=>Math.round(60+(Math.max(1,br)-1)*45);       /* battle-XP to the next Battle Rank */
 function ensureBattle(c){ if(!c)return c; if(c.br==null)c.br=1; if(c.battleXp==null)c.battleXp=0; if(c.skillPts==null)c.skillPts=0;
+  if(c.isLegend&&c.arenaStam==null)c.arenaStam=legStamMax(c.level||1);   /* arena stamina pool (separate from world stamina) */
   if(!c.cardTier)c.cardTier={}; (c.arenaSkills||[]).forEach(s=>{ if(c.cardTier[s]==null)c.cardTier[s]=1; }); return c; }
 function cardTier(c,slot){ const t=c&&c.cardTier&&c.cardTier[slot]; return Math.min(5,Math.max(1,t||1)); }
 function gainBattleXp(c,amt){ ensureBattle(c); c.battleXp+=amt; let ups=0;
@@ -1605,7 +1611,7 @@ function saveProfile(h){
       ancientEgg:h.ancientEgg||null,                /* Sorceress: legendary egg incubation state */
       glory:h.glory||0,                             /* Chikoria Cup battle currency */
       taskCounts:h.taskCounts||null,                /* per-task completions by this player's Chikis (Done column) */
-      chikis:mine.map(c=>({sp:SPECIES.indexOf(c.sp),level:c.level,tasksDone:c.tasksDone||0,nick:c.nick||null,renames:c.renames||0,sleepCycles:c.sleepCycles||0,hungry:!!c.hungry,food:Math.round(c.food||0),xp:Math.floor(c.xp||0),isLegend:!!c.isLegend,tending:!!c.tending,arenaSkills:c.arenaSkills||null,br:c.br||1,battleXp:Math.floor(c.battleXp||0),skillPts:c.skillPts||0,cardTier:c.cardTier||null}))};
+      chikis:mine.map(c=>({sp:SPECIES.indexOf(c.sp),level:c.level,tasksDone:c.tasksDone||0,nick:c.nick||null,renames:c.renames||0,sleepCycles:c.sleepCycles||0,hungry:!!c.hungry,food:Math.round(c.food||0),xp:Math.floor(c.xp||0),isLegend:!!c.isLegend,tending:!!c.tending,arenaSkills:c.arenaSkills||null,br:c.br||1,battleXp:Math.floor(c.battleXp||0),skillPts:c.skillPts||0,cardTier:c.cardTier||null,arenaStam:c.arenaStam!=null?Math.round(c.arenaStam):null,arenaSleepUntil:c.arenaSleepUntil||0}))};
     localStorage.setItem(profileKey(h.pk),JSON.stringify(data));
     if(CHAIN.BACKEND)fetch(CHAIN.BACKEND+"/profile",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:h.pk,profile:data})}).catch(()=>{});
   }catch(e){}
@@ -1651,6 +1657,7 @@ function restoreChikis(h,saved){
     c.food=(cd.food!=null?cd.food:foodMaxSec(c.level));   /* restore the food bar (offlineProgress drains it for time away) */
     if(cd.tending)c.tending=true;                         /* this Chiki was chosen to tend the Legendary Egg */
     if(cd.isLegend)c.isLegend=true;
+    if(cd.arenaStam!=null)c.arenaStam=cd.arenaStam; if(cd.arenaSleepUntil)c.arenaSleepUntil=cd.arenaSleepUntil;   /* arena stamina + sleep cooldown */
     if(cd.arenaSkills)c.arenaSkills=cd.arenaSkills;   /* legendary's 3-of-7 Chi skills */
     if(c.isLegend){ c.br=cd.br||1; c.battleXp=cd.battleXp||0; c.skillPts=cd.skillPts||0; c.cardTier=cd.cardTier||null; ensureBattle(c); }
     if(cd.hungry){c.hungry=true;c.state="sleeping";c.sleepT=0;}
@@ -1956,6 +1963,9 @@ function addFeed(html,rarity){
   while(feedEl.children.length>40)feedEl.removeChild(feedEl.lastChild);
 }
 function staminaBarHTML(c){
+  if(c._arenaNap&&c.arenaSleepUntil){const left=Math.max(0,(c.arenaSleepUntil-Date.now())/1000);
+    return `<div class="stam"><i class="sleep" style="width:100%"></i></div>
+      <div style="font-size:11px;color:#b197fc">💤 Resting after the Chikiseum — wakes in ${fmtSleep(left)}, then feed to restore stamina</div>`;}
   const max=maxStamOf(c.level),p=Math.round(c.stamina/max*100);
   const cls=c.state==="sleeping"?"sleep":p<25?"low":"";
   const barW=c.hungry?100:c.state==="sleeping"?Math.round((1-c.sleepT/sleepTimeOf(c.level))*100):p;
@@ -2741,13 +2751,14 @@ setInterval(updateWhaleTab,1000);
   function end(win){
     B.over=true; g("arenaPowers").innerHTML=""; const keyEl=g("arenaKey"); if(keyEl)keyEl.innerHTML="";
     const foeBr=B.foeBr||1, c=B.you.c; ensureBattle(c);
-    const tired=(c.stamina!=null)&&(c.stamina<ARENA_STAM);
-    if(c.stamina!=null)c.stamina=Math.max(0,c.stamina-ARENA_STAM);
+    c.arenaStam=Math.max(0,(c.arenaStam!=null?c.arenaStam:legStamMax(c.level||1))-ARENA_STAM);   /* spend 30 stamina */
+    let slept=false;
+    if(c.arenaStam<ARENA_STAM){ c.arenaSleepUntil=Date.now()+legSleepSec(c.level||1)*1000; slept=true; }   /* exhausted → sleep */
     if(win){
       g("arenaResult").innerHTML="🏆 <span style='color:#3ddc84'>VICTORY!</span>";
-      const x=Math.round((18+foeBr*4)*(tired?0.3:1)), ups=gainBattleXp(c,x), glory=Math.round((6+foeBr*2)*(tired?0.3:1));
+      const x=Math.round(18+foeBr*4), ups=gainBattleXp(c,x), glory=Math.round(6+foeBr*2);
       if(player){ player.glory=(player.glory||0)+glory; player.pvpWins=(player.pvpWins||0)+1; if(typeof saveProfile==="function"&&player.pk)saveProfile(player); }
-      log(`🏆 <b style="color:#3ddc84">VICTORY!</b> +${x} Battle EXP · +${glory} ✨ Glory${ups?` · 🆙 <b>Rank up! +${ups} skill pt${ups>1?"s":""}</b>`:""}${tired?" <span style='color:#ff922b'>(tired — reduced)</span>":""}`);
+      log(`🏆 <b style="color:#3ddc84">VICTORY!</b> +${x} Battle EXP · +${glory} ✨ Glory${ups?` · 🆙 <b>Rank up! +${ups} skill pt${ups>1?"s":""}</b>`:""}${slept?` · 💤 <span style='color:#b197fc'>exhausted — resting</span>`:` · ⚡${c.arenaStam} stamina left`}`);
       if(typeof addFeed==="function")addFeed(`🏆 ${player&&player.handle?player.handle:'You'} won an Arena battle — +${x} EXP · +${glory} ✨ Glory${ups?` · Rank up!`:""}`);
       if(window.playSfx)window.playSfx("reward");
     }else{ g("arenaResult").innerHTML="💀 <span style='color:#ff6b6b'>Defeated…</span>";
@@ -2759,17 +2770,25 @@ setInterval(updateWhaleTab,1000);
     g("arenaCenter").innerHTML=""; g("arenaCenter").appendChild(again);
   }
   const myLegends=()=>(typeof myChikis==="function")?myChikis().filter(c=>c.isLegend):[];
-  async function payTicket(){
-    if(typeof isCreator==="function"&&isCreator(player.pk))return true;   /* creator enters free for testing */
-    if((player.bal||0)-ARENA_TICKET<MIN_HOLD){showBanner(`A Chikiseum ticket costs ${ARENA_TICKET.toLocaleString()} $CHIKI (keep ≥${MIN_HOLD.toLocaleString()}). Top up to battle.`,"error");return false;}
-    if(CHAIN.ONCHAIN_SPENDS&&player.pk){try{await chikiSpend(ARENA_TICKET,"Chikiseum Ticket");}catch(e){showBanner("Ticket payment failed: "+(e.message||e),"error");return false;}}
-    player.bal-=ARENA_TICKET;
-    const burn=ARENA_TICKET*0.01,toPool=ARENA_TICKET*0.495,toTeam=ARENA_TICKET*0.495;
-    burnedChiki+=burn; pool+=toPool*TOKEN_PRICE; teamChiki+=toTeam;
+  const fmtSleep=s=>{s=Math.max(0,Math.ceil(s));return s>=60?Math.floor(s/60)+"m "+(s%60)+"s":s+"s";};
+  /* Feed a Legendary to restore its arena stamina ($CHIKI per stamina, cheaper at higher level) */
+  async function feedLegendary(c){
+    ensureBattle(c);
+    if(c.arenaSleepUntil&&c.arenaSleepUntil>Date.now()){showBanner("It's still resting — wait for it to wake up.","info");return;}
+    const max=legStamMax(c.level||1), cur=Math.round(c.arenaStam||0), need=Math.max(0,max-cur);
+    if(need<=0){showBanner("Already at full stamina.","info");return;}
+    const per=legFeedPer(c.level||1), cost=Math.round(need*per);
+    if((player.bal||0)-cost<MIN_HOLD){showBanner(`Feeding ${nameOf(c)} costs ${cost.toLocaleString()} $CHIKI (${per}/stamina, keep ≥${MIN_HOLD.toLocaleString()}).`,"error");return;}
+    if(CHAIN.ONCHAIN_SPENDS&&player.pk){try{await chikiSpend(cost,"Feed Legendary");}catch(e){showBanner("Payment failed: "+(e.message||e),"error");return;}}
+    player.bal-=cost;
+    const burn=cost*0.01,toPool=cost*0.495,toTeam=cost*0.495; burnedChiki+=burn; pool+=toPool*TOKEN_PRICE; teamChiki+=toTeam;
+    c.arenaStam=max; c.arenaSleepUntil=0;
     if(player.pk&&typeof saveProfile==="function")saveProfile(player);
+    if(typeof addFeed==="function")addFeed(`🍖 ${nameFor(player)} fed <b style="color:${c.sp.body}">${nameOf(c)}</b> ${cost.toLocaleString()} $CHIKI → arena stamina full (⚡${max}).`);
     if(typeof refreshUI==="function")refreshUI();
-    return true;
+    renderArenaMeta(); findMatch();
   }
+  window.feedLegendary=feedLegendary;
   async function findMatch(){
     g("arenaResult").textContent="";g("arenaPowers").innerHTML="";
     const legs=myLegends();
@@ -2777,9 +2796,26 @@ setInterval(updateWhaleTab,1000);
       g("arenaResult").innerHTML="<span style='color:#ffd93d'>👑 Legendaries only</span>";
       g("arenaLog").innerHTML="Only <b>Legendary</b> Chikimons can wield the power of Chi and enter the Arena. Buy a Legendary Egg from 🔮 <b>Mithra's Mystic Market</b> to awaken one!";
       g("arenaCenter").innerHTML="";return;}
-    g("arenaCenter").innerHTML="<div style='font-size:13px;color:#8fa6c9'>🎟️ Paying Chikiseum ticket…</div>";
-    if(!(await payTicket())){ g("arenaCenter").innerHTML=`<button class="aBtn" id="ticketRetry">🎟️ Pay ${ARENA_TICKET.toLocaleString()} $CHIKI &amp; Enter</button>`; const rb=g("ticketRetry"); if(rb)rb.onclick=findMatch; return; }
-    B=null;renderTeams();log(`🎟️ Ticket paid — ${ARENA_TICKET.toLocaleString()} $CHIKI staked into the arena.`);
+    const c=ensureBattle(legs[0]); const now=Date.now();
+    /* SLEEP: exhausted Legendaries must rest before they can be fed again */
+    if(c.arenaSleepUntil&&c.arenaSleepUntil>now){
+      const left=(c.arenaSleepUntil-now)/1000;
+      g("arenaResult").innerHTML="💤 <span style='color:#b197fc'>Resting</span>";
+      g("arenaLog").innerHTML=`<b style="color:${c.sp.body}">${nameOf(c)}</b> exhausted its stamina and is <b>sleeping</b> — <b>${fmtSleep(left)}</b> until it wakes. Then feed it to restore stamina.`;
+      g("arenaCenter").innerHTML=`<div style='font-size:13px;color:#b197fc'>💤 Wakes in ${fmtSleep(left)}…</div>`;
+      renderArenaMeta(); return;
+    }
+    /* OUT OF STAMINA: awake but needs feeding */
+    if((c.arenaStam||0)<ARENA_STAM){
+      const per=legFeedPer(c.level||1), max=legStamMax(c.level||1), cost=Math.round(Math.max(0,max-Math.round(c.arenaStam||0))*per);
+      g("arenaResult").innerHTML="🍖 <span style='color:#ff922b'>Needs feeding</span>";
+      g("arenaLog").innerHTML=`<b style="color:${c.sp.body}">${nameOf(c)}</b> is out of stamina (needs ${ARENA_STAM} to fight). Feed it to restore — <b>${per} $CHIKI / stamina</b>.`;
+      g("arenaCenter").innerHTML=`<button class="aBtn" id="feedLeg">🍖 Feed to full — ${cost.toLocaleString()} $CHIKI</button>`;
+      const fb=g("feedLeg"); if(fb)fb.onclick=()=>feedLegendary(c);
+      renderArenaMeta(); return;
+    }
+    /* ENOUGH STAMINA → enter free (no ticket); the bout spends 30 stamina */
+    B=null;renderTeams();log(`⚔️ <b style="color:${c.sp.body}">${nameOf(c)}</b> enters the Chikiseum — staking <b>${ARENA_STAM}</b> stamina (⚡${Math.round(c.arenaStam)}).`);
     g("arenaCenter").innerHTML="<div style='font-size:14px;color:#cdd8ee'>🔎 Searching for an opponent…</div>";
     setTimeout(()=>{ g("arenaCenter").innerHTML="<div style='font-size:13px;color:#8fa6c9'>No player online — battling a Legendary rival.</div>";
       setTimeout(()=>{ startBattle(); renderArenaMeta(); },650); },1300);
@@ -2791,10 +2827,16 @@ setInterval(updateWhaleTab,1000);
     const legs=myLegends().map(ensureLegendSkills);
     const glory=player.glory||0;
     const sp=legs.reduce((s,c)=>s+(c.skillPts||0),0);
+    const now=Date.now();
     el.innerHTML=`<span class="aMetaPill">✨ ${glory} Glory</span>`+
-      legs.map(c=>`<span class="aMetaPill">${(typeof nameOf==="function"?nameOf(c):c.sp.names[0])}: BR ${c.br||1}</span>`).join("")+
+      legs.map(c=>{const max=legStamMax(c.level||1),cur=Math.round(c.arenaStam!=null?c.arenaStam:max);
+        const sleeping=c.arenaSleepUntil&&c.arenaSleepUntil>now;
+        const st=sleeping?`💤 ${fmtSleep((c.arenaSleepUntil-now)/1000)}`:`⚡${cur}/${max}`;
+        return `<span class="aMetaPill">${(typeof nameOf==="function"?nameOf(c):c.sp.names[0])}: BR ${c.br||1} · ${st}</span>`;}).join("")+
+      (legs.some(c=>!(c.arenaSleepUntil&&c.arenaSleepUntil>now)&&(c.arenaStam||0)<legStamMax(c.level||1))?`<button class="aMetaBtn" id="arenaFeed" style="background:linear-gradient(180deg,#ffb15a,#e8590c);box-shadow:0 3px 0 #a83e00">🍖 Feed</button>`:"")+
       `<button class="aMetaBtn" id="arenaUpg">🃏 Upgrade Cards${sp?` (${sp})`:""}</button>`;
     const ub=g("arenaUpg"); if(ub)ub.onclick=openUpgrade;
+    const fb=g("arenaFeed"); if(fb)fb.onclick=()=>{const c=legs.find(c=>!(c.arenaSleepUntil&&c.arenaSleepUntil>Date.now())&&(c.arenaStam||0)<legStamMax(c.level||1));if(c)feedLegendary(c);};
   }
   window.renderArenaMeta=renderArenaMeta;
   /* ---- card upgrade panel ---- */
@@ -5068,6 +5110,12 @@ function tickCreature(c,dt){
     if(!moveWith(c,c.vx*dt,c.vy*dt))steerClear(c);
     return;
   }
+  /* Legendary Chikimon lie down & sleep on the map while their Chikiseum stamina cooldown runs */
+  if(c.isLegend){
+    const napping=c.arenaSleepUntil&&c.arenaSleepUntil>Date.now();
+    if(napping){ if(c.state!=="sleeping"){ if(typeof freeSpot==="function")freeSpot(c); c.task=null;c.target=null;c.state="sleeping";c.sleepT=0; } c._arenaNap=true; c.vx=0;c.vy=0; }
+    else if(c._arenaNap){ c._arenaNap=false; if(c.state==="sleeping"){c.state="wander";c.nextTaskIn=rng(2,6);} }
+  }
   if(c.holder===player&&!c.isLegend&&!(c.tending&&player.ancientEgg&&!player.ancientEgg.hatched)){   /* FOOD drains in real time (workers); empty = FAMISHED. A tending Chiki's food is spent by tickCare instead. Legendaries never use food. */
     c.food=Math.max(0,(c.food||0)-dt);
     if(c.food<=0&&!c.hungry){
@@ -5078,6 +5126,7 @@ function tickCreature(c,dt){
   }
   if(c.state==="sleeping"){
     if(c.hungry)return;                       /* famished — won't get up until its master refills its food */
+    if(c._arenaNap)return;                    /* Legendary arena rest — wakes via the Chikiseum cooldown timer, not sleepT */
     c.sleepT-=dt;
     if(c.sleepT<=0)finishSleep(c);
     return;
