@@ -2800,7 +2800,7 @@ setInterval(updateWhaleTab,1000);
     body.innerHTML=`${PORTRAIT}<div id="sorcLore">A new <b style="color:${c.sp.body}">${c.sp.names[0]}</b> has hatched! Give your companion a name.</div>
       <div class="sReveal"><img src="chikidex/${DEX_IMG[si]||'mushrow'}.png" alt="${c.sp.names[0]}" style="width:118px;height:118px;object-fit:contain" onerror="this.outerHTML='🐣'"></div>
       <div class="sStat">🪪 Name your Chiki:</div>
-      <input id="newNm" class="onbInp" maxlength="16" value="${c.sp.names[0]}" placeholder="Name your Chiki…" style="margin:6px 0">
+      <input id="newNm" class="onbInp" maxlength="16" value="${c.sp.names[0]}" placeholder="Name your Chiki…" style="margin:6px 0;color:${c.sp.body};font-weight:800">
       <div id="newNmErr" class="onbErr"></div>
       <button class="sBtn gold" id="newNmGo" style="margin-top:10px">✅ Confirm Name</button>`;
     const inp=g("newNm"); if(inp)setTimeout(()=>{inp.focus();inp.select();},60);
@@ -2877,10 +2877,10 @@ setInterval(updateWhaleTab,1000);
         <div class="sNote" style="margin:6px 0">${lore.lore} Legendaries don't toil at tasks — their destiny is to <b>defend Chikoria</b>. ⚔️</div>
         ${lore.tag?`<div style="font-style:italic;color:#c79bff;font-size:12.5px;margin:6px 0">“${lore.tag}”</div>`:""}
         <div class="sStat" style="margin-top:4px">🪪 Name your Legendary:</div>
-        <input id="legNameInp" class="onbInp" maxlength="16" value="${defName}" placeholder="Name your Legendary…" style="margin:6px 0">
+        <input id="legNameInp" class="onbInp" maxlength="16" value="${defName}" placeholder="Name your Legendary…" style="margin:6px 0;color:${sp.body};font-weight:800">
         <div id="legNameErr" class="onbErr"></div>
         <div class="sStat" style="margin-top:6px">Awakened Chi skills (3 of 7):</div>
-        <div>${skillsTxt.map(s=>`<span class="sSkill">${s}</span>`).join("")}</div>
+        <div>${skillsTxt.map(s=>`<span class="sSkill" style="color:${sp.body};border-color:${sp.body}">${s}</span>`).join("")}</div>
         <div class="sNote" style="margin-top:12px;border:1px solid #6b4ea0;border-radius:10px;padding:8px">⚔️ <b style="color:#c79bff">Your Legendary will be activated in the Chikoria Cup Patch</b> — the arena is being polished, and battles are coming soon!</div>
         <button class="sBtn gold" id="legNameGo" style="margin-top:12px">✅ Confirm Name</button>`;
       const inp=g("legNameInp"); if(inp)setTimeout(()=>{inp.focus();inp.select();},60);
