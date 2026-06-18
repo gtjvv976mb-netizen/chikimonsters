@@ -692,7 +692,21 @@ if(location.search.indexOf("embed")>-1){
 #arenaVS{font-weight:800;color:#ffd93d;margin:4px 0}
 #arenaResult{font-size:22px;font-weight:800;margin:6px 0;min-height:0}
 #arenaLog{min-height:40px;font-size:13px;color:#cdd8ee;margin:8px 0;line-height:1.45}
-#arenaPowers{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+#arenaPowers{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;align-items:flex-end}
+/* ===== prominent ENERGY meter ===== */
+.aEnergy{display:flex;align-items:center;gap:8px;justify-content:center;margin:2px 0 7px;flex-wrap:wrap}
+.aEnLbl{font-size:10px;font-weight:800;letter-spacing:1.5px;color:#ffd93d;text-shadow:0 0 6px rgba(255,200,40,.5)}
+.aEnNum{font-size:26px;font-weight:800;color:#ffe27a;text-shadow:0 0 10px rgba(255,210,60,.9);line-height:1}
+.aEnNum small{font-size:13px;color:#9a7a2a}
+.aEnBar{display:flex;gap:3px}
+.enpip{width:9px;height:18px;border-radius:3px;background:#1d2740;border:1px solid #33436a;box-shadow:inset 0 0 3px rgba(0,0,0,.5)}
+.enpip.on{background:linear-gradient(180deg,#ffe27a,#e0a800);border-color:#ffd93d;box-shadow:0 0 7px rgba(255,205,50,.9)}
+.aMatch{font-size:11px;letter-spacing:.5px}
+/* ===== illustrated skill cards (Axie-style, at the bottom) ===== */
+.aPow.art{padding:0;border:2px solid #2a3a5e;width:104px;height:158px;border-radius:11px;overflow:hidden;background-size:cover;background-position:center;background-color:#0f1b34;box-shadow:0 5px 12px rgba(0,0,0,.55)}
+.aPow.art:hover{border-color:#ffd93d;transform:translateY(-5px) scale(1.03)}
+.aPow.art .apCost{top:5px;left:5px;width:27px;height:27px;font-size:15px;box-shadow:0 2px 5px rgba(0,0,0,.6),0 0 8px rgba(255,205,50,.7)}
+.aPow.art .apTier{top:6px;right:7px;font-size:11px;background:rgba(10,14,28,.7);padding:1px 5px;border-radius:6px}
 .aPow{position:relative;font-family:'Baloo 2',sans-serif;font-weight:700;padding:9px 8px 7px;border-radius:11px;border:2px solid #38507e;
   background:linear-gradient(180deg,#16244a,#0f1b34);color:#dce8fa;cursor:pointer;min-width:108px;display:flex;flex-direction:column;align-items:center;gap:1px}
 .aPow:hover{border-color:#ffd93d;transform:translateY(-2px)}.aPow:active{transform:scale(.96)}
@@ -2652,21 +2666,36 @@ setInterval(updateWhaleTab,1000);
     yEl.innerHTML=sideHTML(B.you,"you",(player&&player.handle)?player.handle:"You");
     fEl.innerHTML=sideHTML(B.foe,"foe","🤖 Rival");
   }
+  /* which (speciesIdx_slot) skill cards have illustrated art in ui/cards/ */
+  const CARD_ART=new Set(["10_0","10_1","10_2","10_3","10_4","10_5","10_6","10_7","10_8","10_9","10_10","10_11","11_0","11_1","11_2","11_3","11_4","11_5","11_6","11_7","11_8","11_9","11_10","11_11","12_0","12_1","12_2","12_3","12_4","12_5","12_6","12_7","12_8","12_9","13_0","13_1","13_2","13_3","13_4","13_5","13_6","13_7","13_8","13_9","13_10","13_11","14_0","14_1","14_2","14_3","14_4","14_5","14_6","14_7","14_8","14_9","14_10","14_11"]);
   function render(){
     renderTeams();
     const pw=g("arenaPowers"); pw.innerHTML="";
     const keyEl=g("arenaKey"), ac=g("arenaCenter");
     if(!B||B.over){if(keyEl)keyEl.innerHTML="";return;}
     const em=elemMult(legElem(B.you.si),legElem(B.foe.si));
-    if(keyEl)keyEl.innerHTML=`⚡ Energy <b style="color:#ffd93d">${B.you.energy}</b> &nbsp;·&nbsp; ${em>1?`<b style="color:#3ddc84">💪 ${legElem(B.you.si)} vs ${legElem(B.foe.si)} ×${em}</b>`:em<1?`<b style="color:#ff8a8a">⚠️ ${legElem(B.you.si)} vs ${legElem(B.foe.si)} ×${em}</b>`:`${legElem(B.you.si)} vs ${legElem(B.foe.si)}`} &nbsp;·&nbsp; play cards, then End Turn`;
+    if(keyEl){
+      const e=B.you.energy, cap=10;
+      const pips=Array.from({length:cap},(_,i)=>`<i class="enpip${i<e?' on':''}"></i>`).join("");
+      const matchTxt=em>1?`<b style="color:#3ddc84">💪 ${legElem(B.you.si)} vs ${legElem(B.foe.si)} ×${em}</b>`:em<1?`<b style="color:#ff8a8a">⚠️ ${legElem(B.you.si)} vs ${legElem(B.foe.si)} ×${em}</b>`:`${legElem(B.you.si)} vs ${legElem(B.foe.si)}`;
+      keyEl.innerHTML=`<div class="aEnergy"><span class="aEnLbl">⚡ ENERGY</span><span class="aEnNum">${e}<small>/${cap}</small></span><span class="aEnBar">${pips}</span></div><div class="aMatch">${matchTxt} &nbsp;·&nbsp; play cards, then End Turn</div>`;
+    }
     if(B.turn!=="you"){ if(ac)ac.innerHTML="<div style='font-size:13px;color:#8fa6c9'>🤖 Rival is playing…</div>"; return; }
     B.you.hand.forEach((slot,idx)=>{const t=cardTier(B.you.c,slot),k=ARCHK[slot],afford=B.you.energy>=CARD_COST[slot];
-      const big=k==="guard"?`🛡${TVAL.guardShield[t]}`:k==="bulwark"?`🛡${TVAL.bulwarkShield[t]}`:k==="charge"?`×${TVAL.charge[t]}`:k==="rally"?`+${Math.round((TVAL.rally[t]-1)*100)}%`:`${cardDmgN(slot,t)}`;
-      const bigCls=(k==="guard"||k==="bulwark")?"shi":(k==="charge"||k==="rally")?"util":"atk";
-      const unit=(k==="guard"||k==="bulwark"||k==="charge"||k==="rally")?"":"<i> ATK</i>";
-      const eff=k==="strike"?"reliable hit":k==="blast"?"heavy hit":k==="quick"?"ignores 🛡":k==="guard"?`+reflect ${TVAL.guardReflect[t]}`:k==="charge"?"+1⚡ · boost next":k==="drain"?`heal ${Math.round(TVAL.drainHeal[t]*100)}%`:k==="nova"?`recoil ${TVAL.novaRecoil[t]}`:k==="rend"?"ignores ½ 🛡":k==="jolt"?"drains ⚡":k==="rally"?"your dmg this turn":k==="wither"?`enemy −${Math.round(TVAL.witherAmt[t]*100)}% next`:k==="bulwark"?`+reflect ${TVAL.bulwarkReflect[t]}`:"";
-      const b=document.createElement("button");b.className="aPow"+(afford?"":" dis");
-      b.innerHTML=`<span class="apCost">${CARD_COST[slot]}</span><span class="apTier">T${t}</span><span class="apName">${ARCH_EMOJI[slot]} ${PN[B.you.si][slot][1]}</span><span class="apVal ${bigCls}">${big}${unit}</span><span class="apEff">${eff}</span>`;
+      const b=document.createElement("button");
+      const artKey=B.you.si+"_"+slot;
+      if(CARD_ART.has(artKey)){                       /* illustrated skill card */
+        b.className="aPow art"+(afford?"":" dis");
+        b.style.backgroundImage=`url("ui/cards/${artKey}.jpg")`;
+        b.innerHTML=`<span class="apCost">${CARD_COST[slot]}</span>${t>1?`<span class="apTier">T${t}</span>`:""}`;
+      }else{                                           /* text fallback for cards without art yet */
+        const big=k==="guard"?`🛡${TVAL.guardShield[t]}`:k==="bulwark"?`🛡${TVAL.bulwarkShield[t]}`:k==="charge"?`×${TVAL.charge[t]}`:k==="rally"?`+${Math.round((TVAL.rally[t]-1)*100)}%`:`${cardDmgN(slot,t)}`;
+        const bigCls=(k==="guard"||k==="bulwark")?"shi":(k==="charge"||k==="rally")?"util":"atk";
+        const unit=(k==="guard"||k==="bulwark"||k==="charge"||k==="rally")?"":"<i> ATK</i>";
+        const eff=k==="strike"?"reliable hit":k==="blast"?"heavy hit":k==="quick"?"ignores 🛡":k==="guard"?`+reflect ${TVAL.guardReflect[t]}`:k==="charge"?"+1⚡ · boost next":k==="drain"?`heal ${Math.round(TVAL.drainHeal[t]*100)}%`:k==="nova"?`recoil ${TVAL.novaRecoil[t]}`:k==="rend"?"ignores ½ 🛡":k==="jolt"?"drains ⚡":k==="rally"?"your dmg this turn":k==="wither"?`enemy −${Math.round(TVAL.witherAmt[t]*100)}% next`:k==="bulwark"?`+reflect ${TVAL.bulwarkReflect[t]}`:"";
+        b.className="aPow"+(afford?"":" dis");
+        b.innerHTML=`<span class="apCost">${CARD_COST[slot]}</span><span class="apTier">T${t}</span><span class="apName">${ARCH_EMOJI[slot]} ${PN[B.you.si][slot][1]}</span><span class="apVal ${bigCls}">${big}${unit}</span><span class="apEff">${eff}</span>`;
+      }
       if(afford)b.onclick=()=>playCard(idx);
       pw.appendChild(b);
     });
