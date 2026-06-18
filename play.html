@@ -4210,19 +4210,20 @@ function buildZoneProps(){
     hiveSpots.push({proc:g,x:z.x*TILE+TILE/2,z:z.y*TILE+TILE/2,gy});
   });
   setTimeout(()=>loadPropURL("beehive.glb","hive",42,hiveSpots,false,0xffd400),110);   /* bright stand-out yellow hive */
-  /* grand cave mouths: deep tunnel, torches with real light, gem glints */
+  /* grand crystal caves: the uploaded 3D voxel model at each cave mouth (vibrant, dark-stone + glowing crystals) */
+  let _caveTpl=null; const _cavePending=[];
+  const _placeCave=(g)=>{ const put=tpl=>{ const m=tpl.clone(true); const bx=new THREE.Box3().setFromObject(m),sz=new THREE.Vector3(); bx.getSize(sz);
+      const k=86/Math.max(0.001,sz.y); const wrap=new THREE.Group(); wrap.add(m); wrap.scale.setScalar(k); g.add(wrap); };
+    if(_caveTpl)put(_caveTpl); else _cavePending.push(put); };
+  if(typeof THREE.GLTFLoader!=="undefined"){
+    new THREE.GLTFLoader().load("crystalcave_voxel.glb?v=1",gltf=>{ const root=gltf.scene;
+      root.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true; if(o.geometry&&o.geometry.attributes&&o.geometry.attributes.color&&o.material){o.material.vertexColors=true;if(o.material.color)o.material.color.setRGB(1,1,1);o.material.needsUpdate=true;}}});
+      _caveTpl=root; _cavePending.forEach(fn=>fn(_caveTpl)); _cavePending.length=0; }, undefined, ()=>{});
+  }
   ZONES.cave.forEach(z=>{
     const g=new THREE.Group(),gy=topY(z.x,z.y);
     g.position.set(z.x*TILE+TILE/2,gy,z.y*TILE+TILE/2);
-    box(g,10,30,12,0x6f6354,-16,15,-10);
-    box(g,10,30,12,0x6f6354,16,15,-10);
-    box(g,42,10,12,0x57504a,0,33,-10);
-    box(g,30,6,10,0x4d463e,0,40,-10);
-    box(g,22,24,6,0x0c0a08,0,12,-13);          /* dark mouth */
-    box(g,18,18,18,0x14110d,0,9,-24);          /* tunnel going back */
-    box(g,4,5,3,0x4dabf7,-6,4,-11);            /* gems */
-    box(g,3,4,3,0xb197fc,6,3,-11);
-    box(g,2.5,3,2.5,0xffd93d,0,2,-12);
+    _placeCave(g);                               /* the 3D crystal cave model */
     for(const sx of [-13,13]){                  /* torches */
       box(g,2,9,2,0x6b4a2b,sx,22,-3);
       box(g,3,3,3,0xff9f43,sx,28,-3);
