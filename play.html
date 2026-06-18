@@ -1158,6 +1158,7 @@ window.RIG_MODE=window.RIG_MODE||{};
 Object.assign(window.RIG_MODE,{11:"wingsonly",12:"legs",13:"legs",14:"dragon"});   /* Adalor wings-only · Tyrannos/Grovador walk + tail · Dragonos wings + tail */
 const NONLEGEND_IDXS=SPECIES.map((s,i)=>s.type!=="Legendary"?i:-1).filter(i=>i>=0); /* normal (non-legendary) species indices */
 const ANCIENT_EGG_ENABLED=true;  /* Mithra's Mystic Market is OPEN */
+const ARENA_ENABLED=false;       /* ⚔️ Chikiseum paused while the battle system is polished */
 const LEGEND_EGG_COST=1000000;   /* Legendary Egg from Mithra (cared for 24h, 12h with 2 Chikis) */
 const REROLL_COST=200000;        /* release a Chiki to the jungle & have Mithra grant a fresh egg */
 const ANCIENT_EGG_COST=LEGEND_EGG_COST;   /* legacy alias */
@@ -1690,6 +1691,7 @@ function separateCreatures(){
   }
 }
 function assignTask(c,forceRare){
+  if(c.isLegend){ c.task=null;c.target=null;c.state="wander";c.nextTaskIn=rng(10,20); return; }   /* Legendaries are defenders of Chikoria — they don't do tasks or earn */
   let t;
   if(c.bot&&c.demoZone){                 /* showcase bot — demonstrate its assigned task */
     const pool=TASKS.filter(x=>x.zone===c.demoZone);
@@ -2708,7 +2710,9 @@ setInterval(updateWhaleTab,1000);
     p.querySelectorAll(".upgBtn").forEach(b=>{if(!b.disabled)b.onclick=()=>doUpgrade(creatures[+b.dataset.ci],+b.dataset.slot);});
   }
   window.openUpgrade=openUpgrade;
-  const ab=g("btnArena"); if(ab)ab.onclick=()=>{ g("arenaOverlay").style.display="flex"; findMatch(); renderArenaMeta(); };
+  const ab=g("btnArena");
+  if(ab){ if(!ARENA_ENABLED){ ab.style.display="none"; }   /* Chikiseum paused — hide the tab */
+    else ab.onclick=()=>{ g("arenaOverlay").style.display="flex"; findMatch(); renderArenaMeta(); }; }
   const ac=g("arenaClose"); if(ac)ac.onclick=()=>{ g("arenaOverlay").style.display="none"; B=null; const up=g("upgPanel"); if(up)up.style.display="none"; };
 })();
 
@@ -2814,7 +2818,7 @@ setInterval(updateWhaleTab,1000);
         <div style="font-size:17px;font-weight:800;margin:2px 0">${c.nick} <span style="font-size:12px;color:#c79bff">${SPECIES[idx].type}</span></div>
         <div class="sStat" style="margin-top:6px">Awakened Chi skills (3 of 7):</div>
         <div>${skillsTxt.map(s=>`<span class="sSkill">${s}</span>`).join("")}</div>
-        <button class="sBtn gold" id="sorcArenaBtn" style="margin-top:14px">⚔️ Enter the Arena</button>
+        ${ARENA_ENABLED?`<button class="sBtn gold" id="sorcArenaBtn" style="margin-top:14px">⚔️ Enter the Arena</button>`:`<div class="sNote" style="margin-top:12px">⚔️ The Chikiseum is being polished — your Legendary will be able to battle very soon!</div>`}
         <button class="sBtn" id="sorcDoneBtn" style="margin-top:8px;background:#1b1430;box-shadow:0 4px 0 #0c0820">Done</button>`;
       const ab=g("sorcArenaBtn"); if(ab)ab.onclick=()=>{ revealing=false; g("sorcOverlay").style.display="none"; const ar=g("btnArena"); if(ar&&ar.onclick)ar.onclick(); };
       const db=g("sorcDoneBtn"); if(db)db.onclick=()=>{ revealing=false; renderSorc(); };
@@ -3145,7 +3149,7 @@ setInterval(()=>{
   /* reveal newly-due rarity slots as floats over the earning Chikis */
   const elapsedMin=Math.min(SEED_CFG.accrualCap,(Date.now()-player._lastClaim)/60000);
   const dueSlots=Math.min(4000,Math.floor(elapsedMin*60/SEED_CFG.taskSec));
-  const mine=myChikis().slice(0,player._earnChikis||1);
+  const mine=myChikis().filter(c=>!c.isLegend).slice(0,player._earnChikis||1);   /* Legendaries are defenders — they don't earn */
   mine.forEach((c,ci)=>{
     if(c._revAnchor!==player._lastClaim){c._revAnchor=player._lastClaim;c._revealed=Math.max(0,dueSlots-1);}  /* start at "now", don't replay history */
     let shown=0;
@@ -4648,7 +4652,7 @@ function tickCreature(c,dt){
     if(!moveWith(c,c.vx*dt,c.vy*dt))steerClear(c);
     return;
   }
-  if(c.holder===player){                      /* FOOD bar drains in real time; when empty the Chiki is FAMISHED and rests until fed */
+  if(c.holder===player&&!c.isLegend){         /* FOOD bar drains in real time (workers only); empty = FAMISHED until fed. Legendaries are defenders — no tasks, no food/earning */
     c.food=Math.max(0,(c.food||0)-dt);
     if(c.food<=0&&!c.hungry){
       c.hungry=true;freeSpot(c);c.task=null;c.target=null;c.state="sleeping";c.sleepT=0;
