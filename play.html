@@ -718,21 +718,25 @@ if(location.search.indexOf("embed")>-1){
 /* ===== battle stage (Chikiseum interior) ===== */
 #arenaStage{position:relative;width:100%;aspect-ratio:3/2;border-radius:12px;overflow:hidden;
   background:url("ui/arena2d.png") center/cover no-repeat;box-shadow:inset 0 0 0 2px rgba(255,255,255,.08),0 6px 18px rgba(0,0,0,.55);margin-bottom:10px}
-.aFighter{position:absolute;bottom:12%;width:40%;display:flex;flex-direction:column;align-items:center;gap:3px}
-.aFighter.you{left:2%}
-.aFighter.foe{right:2%}
-.aFighter img{width:58%;max-width:150px;image-rendering:auto;filter:drop-shadow(0 8px 7px rgba(0,0,0,.55));transition:transform .16s ease}
+.aFighter{position:absolute;bottom:11%;width:44%;display:flex;flex-direction:column;align-items:center;gap:4px}
+.aFighter.you{left:3%}
+.aFighter.foe{right:3%}
+.aFighter img{width:76%;max-width:178px;image-rendering:auto;filter:drop-shadow(0 11px 8px rgba(0,0,0,.5));transition:transform .16s ease}
 .aFighter.you img{transform:translateY(0)}
-.aFighter.foe img{transform:scaleX(-1)}                 /* face inward */
-.aFighter.you.lunge img{transform:translateX(38%) scale(1.04)}
-.aFighter.foe.lunge img{transform:scaleX(-1) translateX(38%) scale(1.04)}
+.aFighter.foe img{transform:scaleX(-1)}                 /* face inward — fighters face each other */
+.aFighter.you.lunge img{transform:translateX(34%) scale(1.06)}
+.aFighter.foe.lunge img{transform:scaleX(-1) translateX(34%) scale(1.06)}
 .aFighter.hit img{animation:aHitShake .3s}
-@keyframes aHitShake{0%,100%{filter:drop-shadow(0 8px 7px rgba(0,0,0,.55))}25%{filter:drop-shadow(0 8px 7px rgba(0,0,0,.55)) brightness(2.2) sepia(1) hue-rotate(-30deg)}50%{transform:translateX(-6px) scaleX(var(--fx,1))}}
+@keyframes aHitShake{0%,100%{filter:drop-shadow(0 11px 8px rgba(0,0,0,.5))}25%{filter:drop-shadow(0 11px 8px rgba(0,0,0,.5)) brightness(2.2) sepia(1) hue-rotate(-30deg)}50%{transform:translateX(-6px) scaleX(var(--fx,1))}}
 .aFighter.fainted img{opacity:.2;filter:grayscale(1)}
-.aFighter .hpwrap{width:80%}
-.aFighter .nm{font-size:12.5px;font-weight:800;text-shadow:0 1px 3px #000,0 0 4px #000}
-.aFighter .nm .aType{font-size:9.5px;color:#dbe6ff;opacity:.85}
-.aFighter .aHPbar{height:11px;background:rgba(10,16,30,.7);border-radius:6px;overflow:hidden;border:1px solid rgba(255,255,255,.25)}
+/* compact health nameplate sitting ON TOP of each fighter */
+.aPlate{width:98%;max-width:172px;background:rgba(9,13,26,.6);border:1px solid rgba(255,255,255,.16);border-radius:10px;padding:3px 7px 4px;backdrop-filter:blur(2px);box-shadow:0 3px 10px rgba(0,0,0,.4)}
+.aPlate .aNm{font-size:11.5px;font-weight:800;line-height:1.15;text-shadow:0 1px 2px #000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.aPlate .aNm small{font-weight:700;opacity:.82;font-size:8.5px}
+.aFighter .aHPbar{position:relative;height:10px;background:rgba(6,10,20,.85);border-radius:6px;overflow:hidden;border:1px solid rgba(255,255,255,.25);margin-top:2px}
+.aFighter .aHPtxt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:800;color:#fff;text-shadow:0 1px 1px #000}
+.aFighter .aBadges{font-size:9px;font-weight:800;margin-top:2px;letter-spacing:.3px;text-shadow:0 1px 2px #000}
+.aFighter .aShadow{position:absolute;bottom:-3%;width:40%;height:7%;border-radius:50%;background:radial-gradient(ellipse,rgba(0,0,0,.45),transparent 70%);z-index:-1}
 </style>
 <div id="arenaOverlay"><div id="arenaBox">
   <div id="arenaHead">⚔️ The Chikiseum <span class="x" id="arenaClose">✕</span></div>
@@ -1294,6 +1298,8 @@ const usedChikiNames=new Set();
 function myChikis(){return player?creatures.filter(c=>c.holder===player):[];}
 function statusText(c){return c.hungry?"🍖 Famished — feed to wake":c.state==="sleeping"?"💤 Sleeping":c.task?(c.state==="working"?"⚒ "+c.task.name:"→ "+c.task.name):"Wandering";}
 function nameTaken(set,v){return set.has(String(v).trim().toLowerCase());}
+/* true if another of the player's OWN Chikis already uses this name (excluding `self`) */
+function ownChikiNameTaken(v,self){const lv=String(v).trim().toLowerCase();return myChikis().some(o=>o!==self&&o.nick&&o.nick.toLowerCase()===lv);}
 function saveNameDB(){try{localStorage.setItem("chikiNameDB",JSON.stringify([...usedChikiNames]));localStorage.setItem("handleDB",JSON.stringify([...usedHandles]));}catch(e){}}
 (function(){try{JSON.parse(localStorage.getItem("chikiNameDB")||"[]").forEach(n=>usedChikiNames.add(String(n).toLowerCase()));}catch(e){}try{JSON.parse(localStorage.getItem("handleDB")||"[]").forEach(n=>usedHandles.add(String(n).toLowerCase()));}catch(e){}})();
 function assignChikis(h,n){const pool=[...Array(SPECIES.length).keys()];const out=[];for(let i=0;i<n;i++){let idx=pool.length?pool.splice(ri(0,pool.length-1),1)[0]:ri(0,SPECIES.length-1);out.push(spawnCreature(h,1,idx));}if(typeof ensureSpots==="function")ensureSpots();return out;}
@@ -1599,7 +1605,7 @@ function saveProfile(h){
       ancientEgg:h.ancientEgg||null,                /* Sorceress: legendary egg incubation state */
       glory:h.glory||0,                             /* Chikoria Cup battle currency */
       taskCounts:h.taskCounts||null,                /* per-task completions by this player's Chikis (Done column) */
-      chikis:mine.map(c=>({sp:SPECIES.indexOf(c.sp),level:c.level,tasksDone:c.tasksDone||0,nick:c.nick||null,sleepCycles:c.sleepCycles||0,hungry:!!c.hungry,food:Math.round(c.food||0),xp:Math.floor(c.xp||0),isLegend:!!c.isLegend,tending:!!c.tending,arenaSkills:c.arenaSkills||null,br:c.br||1,battleXp:Math.floor(c.battleXp||0),skillPts:c.skillPts||0,cardTier:c.cardTier||null}))};
+      chikis:mine.map(c=>({sp:SPECIES.indexOf(c.sp),level:c.level,tasksDone:c.tasksDone||0,nick:c.nick||null,renames:c.renames||0,sleepCycles:c.sleepCycles||0,hungry:!!c.hungry,food:Math.round(c.food||0),xp:Math.floor(c.xp||0),isLegend:!!c.isLegend,tending:!!c.tending,arenaSkills:c.arenaSkills||null,br:c.br||1,battleXp:Math.floor(c.battleXp||0),skillPts:c.skillPts||0,cardTier:c.cardTier||null}))};
     localStorage.setItem(profileKey(h.pk),JSON.stringify(data));
     if(CHAIN.BACKEND)fetch(CHAIN.BACKEND+"/profile",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:h.pk,profile:data})}).catch(()=>{});
   }catch(e){}
@@ -1649,6 +1655,7 @@ function restoreChikis(h,saved){
     if(c.isLegend){ c.br=cd.br||1; c.battleXp=cd.battleXp||0; c.skillPts=cd.skillPts||0; c.cardTier=cd.cardTier||null; ensureBattle(c); }
     if(cd.hungry){c.hungry=true;c.state="sleeping";c.sleepT=0;}
     if(cd.nick){c.nick=cd.nick;c.named=true;}   /* already named — don't re-prompt onboarding */
+    c.renames=cd.renames||0;                      /* per-Chiki rename budget */
     const before=c.level;
     totalTasks+=offlineProgress(c,elapsed);
     lvUps+=Math.max(0,c.level-before);
@@ -2137,16 +2144,42 @@ function renderProfile(){
 }
 /* ===== rename pop-up (player name + chiki name) ===== */
 function openRename(){openPop("renamePop");renderRename();}
+function doRenameChiki(c,inpId){
+  if((c.renames||0)>=2)return;
+  const v=document.getElementById(inpId).value.trim().slice(0,14);
+  if(v.length<2){addFeed("Enter at least 2 characters.");return;}
+  if(c.nick&&c.nick.toLowerCase()===v.toLowerCase()){addFeed("That's already this Chiki's name.");return;}
+  if(nameTaken(usedChikiNames,v)||ownChikiNameTaken(v,c)){addFeed(`⚠️ The Chiki name "${v}" is already taken — choose a different one.`);return;}
+  if((c.renames||0)===1){   /* 2nd rename of THIS Chiki costs $CHIKI */
+    if((player.bal||0)-50000<MIN_HOLD){addFeed("⚠️ Not enough $CHIKI for a paid rename (50,000, keeping ≥500k).");return;}
+    player.bal-=50000;burnedChiki+=50000*0.01;pool+=50000*0.495*TOKEN_PRICE;teamChiki+=50000*0.495;
+    addFeed(`🛒 ${nameFor(player)} paid <b>50,000 $CHIKI</b> to rename a Chiki.`);
+  }
+  if(c.nick&&player.pk)usedChikiNames.delete(c.nick.toLowerCase());
+  c.nick=v; c.named=true; c.renames=(c.renames||0)+1;
+  if(player.pk){usedChikiNames.add(v.toLowerCase());saveNameDB();saveProfile(player);}   /* persist the per-Chiki name */
+  addFeed(`✏️ Your Chiki is now called <b style="color:${c.sp.body}">${v}</b>!`);
+  renderRename();renderProfile();refreshUI();
+}
 function renderRename(){
-  if(!player)return;const c=player.creature;const renames=player.renames||0;
-  const rLabel=renames===0?"Rename Chiki (free)":renames===1?"Rename Chiki (50,000 $CHIKI)":"No more renames";
-  const canR=renames<2;
+  if(!player)return;
+  const chikis=myChikis();
+  const rows=chikis.map((c,i)=>{
+    const r=c.renames||0, canR=r<2;
+    const lbl=r===0?"Rename (free)":r===1?"Rename (50k)":"Locked";
+    return `<div style="margin-top:8px">
+        <div style="font-size:11px;font-weight:700;color:#8a6a3a;margin-bottom:2px">${c.sp.names[0]} <span style="color:#8fa6c9;font-weight:400">· now: <b style="color:${c.sp.body}">${nameOf(c)}</b>${c.isLegend?" 👑":""}</span></div>
+        <div style="display:flex;gap:6px">
+          <input id="cn_${i}" maxlength="14" placeholder="Name this Chiki" value="${(c.nick||"").replace(/"/g,"&quot;")}" ${canR?"":"disabled"} style="flex:1;border:2px solid #d9bd85;border-radius:8px;padding:6px 8px;font-family:inherit;font-size:12px;background:#fff;color:#3a2c16">
+          <button id="cb_${i}" ${canR?"":"disabled"} style="font-size:11px;padding:5px 10px;white-space:nowrap">${lbl}</button>
+        </div></div>`;
+  }).join("");
   document.getElementById("renameBody").innerHTML=`
     <h3 style="font-family:'Baloo 2';color:#b5803a;margin:2px 0 5px;font-size:13px">🪪 Player name</h3>
-    <div style="display:flex;gap:6px"><input id="handleInp" maxlength="16" placeholder="Your name" value="${player.handle||""}" style="flex:1;border:2px solid #d9bd85;border-radius:8px;padding:6px 8px;font-family:inherit;font-size:12px;background:#fff;color:#3a2c16"><button id="handleBtn" style="font-size:11px;padding:5px 10px">Set</button></div>
-    <h3 style="font-family:'Baloo 2';color:#b5803a;margin:12px 0 5px;font-size:13px">🐣 Chiki name <span style="color:#8fa6c9;font-weight:400">(${nameOf(c)})</span></h3>
-    <div style="display:flex;gap:6px"><input id="cnameInp" maxlength="14" placeholder="Name your Chiki" value="${c.nick||""}" ${canR?"":"disabled"} style="flex:1;border:2px solid #d9bd85;border-radius:8px;padding:6px 8px;font-family:inherit;font-size:12px;background:#fff;color:#3a2c16"><button id="cnameBtn" ${canR?"":"disabled"} style="font-size:11px;padding:5px 10px">${rLabel}</button></div>
-    <div style="font-size:10.5px;color:#8fa6c9;margin-top:6px">Unique names only · first Chiki rename free · a second costs 50,000 $CHIKI · then locked.</div>`;
+    <div style="display:flex;gap:6px"><input id="handleInp" maxlength="16" placeholder="Your name" value="${(player.handle||"").replace(/"/g,"&quot;")}" style="flex:1;border:2px solid #d9bd85;border-radius:8px;padding:6px 8px;font-family:inherit;font-size:12px;background:#fff;color:#3a2c16"><button id="handleBtn" style="font-size:11px;padding:5px 10px">Set</button></div>
+    <h3 style="font-family:'Baloo 2';color:#b5803a;margin:12px 0 4px;font-size:13px">🐣 Chiki names</h3>
+    ${rows||"<div style='color:#8fa6c9;font-size:11px'>No Chikis yet.</div>"}
+    <div style="font-size:10.5px;color:#8fa6c9;margin-top:8px">Unique names only — each Chiki needs its own name. First rename of a Chiki is free · a second costs 50,000 $CHIKI · then locked.</div>`;
   const hb=document.getElementById("handleBtn");
   if(hb)hb.onclick=()=>{
     const v=document.getElementById("handleInp").value.trim().slice(0,16);
@@ -2154,26 +2187,10 @@ function renderRename(){
     if(!(player.handle&&player.handle.toLowerCase()===v.toLowerCase())&&nameTaken(usedHandles,v)){addFeed(`⚠️ The name "${v}" is taken.`);return;}
     if(player.handle&&player.pk)usedHandles.delete(player.handle.toLowerCase());
     player.handle=v;
-    if(player.pk){usedHandles.add(v.toLowerCase());saveNameDB();try{localStorage.setItem("handle_"+player.addr,v);}catch(e){}}  /* persist only for REAL wallets */
+    if(player.pk){usedHandles.add(v.toLowerCase());saveNameDB();try{localStorage.setItem("handle_"+player.addr,v);}catch(e){}}
     addFeed(`🪪 You'll now appear as <b>${v}</b> in the Live Feed.`);renderRename();renderProfile();refreshUI();
   };
-  const cb=document.getElementById("cnameBtn");
-  if(cb)cb.onclick=()=>{
-    if((player.renames||0)>=2)return;
-    const v=document.getElementById("cnameInp").value.trim().slice(0,14);
-    if(v.length<2){addFeed("Enter at least 2 characters.");return;}
-    if(!(c.nick&&c.nick.toLowerCase()===v.toLowerCase())&&nameTaken(usedChikiNames,v)){addFeed(`⚠️ The Chiki name "${v}" is taken.`);return;}
-    if((player.renames||0)===1){
-      if(player.bal-50000<MIN_HOLD){addFeed("⚠️ Not enough $CHIKI for a paid rename (50,000, keeping ≥500k).");return;}
-      player.bal-=50000;burnedChiki+=50000*0.01;pool+=50000*0.495*TOKEN_PRICE;teamChiki+=50000*0.495;
-      addFeed(`🛒 ${nameFor(player)} paid <b>50,000 $CHIKI</b> to rename a Chiki.`);
-    }
-    if(c.nick&&player.pk)usedChikiNames.delete(c.nick.toLowerCase());
-    c.nick=v;
-    player.renames=(player.renames||0)+1;
-    if(player.pk){usedChikiNames.add(v.toLowerCase());saveNameDB();try{localStorage.setItem("renames_"+player.addr,player.renames);}catch(e){}}  /* persist only for REAL wallets */
-    addFeed(`✏️ Your Chiki is now called <b style="color:${c.sp.body}">${v}</b>!`);renderRename();renderProfile();refreshUI();
-  };
+  chikis.forEach((c,i)=>{const cb=document.getElementById("cb_"+i);if(cb&&!cb.disabled)cb.onclick=()=>doRenameChiki(c,"cn_"+i);});
 }
 /* ===== onboarding: player name + chiki naming with a 3D preview ===== */
 let _onbQueue=[],_miniRAF=null,_miniRenderer=null;
@@ -2229,9 +2246,9 @@ function onbStep(){
     document.getElementById("onbGo").onclick=()=>{
       const v=document.getElementById("onbInp").value.trim().slice(0,14);
       if(v.length<2){onbErr("Enter at least 2 characters.");return;}
-      if(nameTaken(usedChikiNames,v)){onbErr("That Chiki name is taken — try another.");return;}
+      if(nameTaken(usedChikiNames,v)||ownChikiNameTaken(v,c)){onbErr("That Chiki name is taken — try another.");return;}
       c.nick=v;c.named=true;
-      if(player.pk){usedChikiNames.add(v.toLowerCase());saveNameDB();try{localStorage.setItem("nick_"+player.addr,v);}catch(e){}saveProfile(player);}  /* persist only for REAL wallets */
+      if(player.pk){usedChikiNames.add(v.toLowerCase());saveNameDB();saveProfile(player);}  /* per-Chiki nick persists in the profile */
       _onbQueue.shift();onbStep();refreshUI();
     };
   }
@@ -2594,12 +2611,15 @@ setInterval(updateWhaleTab,1000);
   let B=null;
   function log(h){g("arenaLog").innerHTML=h;}
   function sideHTML(side,who,label){
-    const ls=side.ls>0?` <span style="color:#ff5a5a;font-weight:800;font-size:10px">🛡LAST STAND ${side.ls}</span>`:"";
-    return `<div class="nm" style="color:${who==='foe'?'#ffd93d':'#7fd0ff'}">${label}${ls}</div>
-      <div class="aType">${legElem(side.si)} · BR ${side.c.br||1}</div>
-      <div class="aHPbar"><div class="aHP ${who==='foe'?'foe':''}" style="width:${Math.max(0,side.hp/side.maxhp*100)}%"></div></div>
-      <div style="font-size:10px;font-weight:800">${Math.max(0,Math.round(side.hp))}/${side.maxhp} &nbsp; <span style="color:#62b9ff">🛡${side.shield}</span> &nbsp; <span style="color:#ffd93d">⚡${side.energy}</span></div>
-      <img src="${side.img}" alt="${side.name}">`;
+    const pct=Math.max(0,side.hp/side.maxhp*100);
+    const ls=side.ls>0?` · <span style="color:#ff7a7a">🛡LS ${side.ls}</span>`:"";
+    return `<div class="aPlate">
+        <div class="aNm" style="color:${who==='foe'?'#ffd93d':'#7fd0ff'}">${label} <small>${legElem(side.si)} · BR ${side.c.br||1}</small></div>
+        <div class="aHPbar"><div class="aHP ${who==='foe'?'foe':''}" style="width:${pct}%"></div><span class="aHPtxt">${Math.max(0,Math.round(side.hp))}/${side.maxhp}</span></div>
+        <div class="aBadges"><span style="color:#62b9ff">🛡${side.shield}</span> &nbsp; <span style="color:#ffd93d">⚡${side.energy}</span>${ls}</div>
+      </div>
+      <img src="${side.img}" alt="${side.name}">
+      <div class="aShadow"></div>`;
   }
   function renderTeams(){
     const yEl=g("aFyou"),fEl=g("aFfoe"); if(!yEl||!fEl)return;
@@ -2938,7 +2958,9 @@ setInterval(updateWhaleTab,1000);
     const inp=g("newNm"); if(inp)setTimeout(()=>{inp.focus();inp.select();},60);
     const finish=()=>{ const v=(g("newNm").value||"").trim().slice(0,16);
       if(v.length<2){const e=g("newNmErr");if(e)e.textContent="Enter at least 2 characters.";return;}
+      if(nameTaken(usedChikiNames,v)||ownChikiNameTaken(v,c)){const e=g("newNmErr");if(e)e.textContent="That name is taken — choose another.";return;}
       c.nick=v; c.named=true;
+      if(player.pk){usedChikiNames.add(v.toLowerCase());saveNameDB();}
       addFeed(`🐣 ${nameFor(player)} welcomed a new Chiki — <b style="color:${c.sp.body}">${v}</b>!`);
       if(player.pk&&typeof saveProfile==="function")saveProfile(player);
       if(typeof refreshUI==="function")refreshUI();
@@ -3051,7 +3073,9 @@ setInterval(updateWhaleTab,1000);
       const finish=()=>{
         const v=(g("legNameInp").value||"").trim().slice(0,16);
         if(v.length<2){const e=g("legNameErr");if(e)e.textContent="Enter at least 2 characters.";return;}
+        if(nameTaken(usedChikiNames,v)||ownChikiNameTaken(v,c)){const e=g("legNameErr");if(e)e.textContent="That name is taken — choose another.";return;}
         c.nick=v; c.named=true;
+        if(player&&player.pk){usedChikiNames.add(v.toLowerCase());saveNameDB();}
         addFeed(`👑 You named your Legendary <b style="color:${sp.body}">${v}</b> — a defender of Chikoria! It will be activated in the <b>Chikoria Cup Patch</b>.`);
         if(player&&player.pk&&typeof saveProfile==="function")saveProfile(player);
         if(typeof refreshUI==="function")refreshUI();
@@ -3468,7 +3492,8 @@ document.getElementById("newWallet").onclick=async ()=>{
 };
 function loginAs(h){
   player=h;
-  try{const n=localStorage.getItem("nick_"+h.addr);if(n)h.creature.nick=n;}catch(e){}
+  /* NOTE: per-Chiki names live on each creature (c.nick) and load from the profile.
+     The old single "nick_<addr>" store clobbered both Chikis with one name — removed. */
   try{const hn=localStorage.getItem("handle_"+h.addr);if(hn){h.handle=hn;usedHandles.add(hn.toLowerCase());}}catch(e){}
   try{h.renames=+(localStorage.getItem("renames_"+h.addr)||0);}catch(e){h.renames=0;}
   modal.classList.remove("show");
