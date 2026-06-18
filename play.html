@@ -2404,7 +2404,12 @@ async function connectPhantom(){
         addFeed(`🎉 <b>${h.handle||short}</b> hatched their first Chiki from the egg!`);
       }
     }else h.bal=bal;
-    h._whaleUnlockAt=whaleUnlockAt||(serverChikis>=2?1:0);   /* 1 = already eligible (grant 2nd if missing) */
+    { let wu=whaleUnlockAt||(serverChikis>=2?1:0);
+      try{ const key="whaleUnlock_"+h.addr, st=+(localStorage.getItem(key)||0)||0;
+        if(wu>1){ if(st>Date.now())wu=st; else localStorage.setItem(key,String(wu)); }   /* ANCHOR the countdown — never reset/increase it on reconnect */
+        else if(st&&Date.now()>=st)localStorage.removeItem(key);
+      }catch(e){}
+      h._whaleUnlockAt=wu; }
     loginAs(h);
     if(isCreator(pk))setTimeout(()=>{try{grantCreatorLoadout(h);}catch(e){console.error("creator loadout:",e);}},800);  /* admin → full max-level loadout (non-blocking) */
     saveProfile(h);
@@ -2516,6 +2521,7 @@ function updateWhaleTab(){
       const sp=await hatchEgg();
       const c=spawnCreature(player,1,sp);
       player._whaleUnlockAt=0;_whaleHatching=false;
+      try{localStorage.removeItem("whaleUnlock_"+player.addr);}catch(e){}
       saveProfile(player);showBanner("🎉 Your 2nd Chiki has hatched!","");refreshUI();
     };
     return;
