@@ -2930,9 +2930,13 @@ setInterval(updateWhaleTab,1000);
       }
       const paused=fed<=0;
       body.innerHTML=`${PORTRAIT}<div id="sorcLore">Your Chiki(s) feed the <b>Legendary Egg</b> from their own food bar — it grows only while they're <b>fed</b>.</div>
-        <img class="sEggImg shake" src="ui/legendary-egg.png" alt="Legendary Egg" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'sEgg shake',textContent:'🥚'}))"><div class="sCareWrap"><div class="sCare" style="width:${pct}%"></div></div>
+        <img id="eggGoTo" class="sEggImg shake" src="ui/legendary-egg.png" alt="Legendary Egg" title="Tap to find the egg in Chikoria" style="cursor:pointer" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'sEgg shake',textContent:'🥚'}))"><div class="sCareWrap"><div class="sCare" style="width:${pct}%"></div></div>
         <div class="sStat">Care progress: <b>${pct}%</b> · ${paused?`<b style="color:#ff922b">⏸ Paused — feed your Chiki(s)!</b>`:`⏳ <b>${fmtDur(left)}</b> left`}</div>
-        <div class="sNote">${paused?"Your Chiki(s) ran out of food, so the egg has paused. Refill their food bar in the My Chiki panel to resume.":(fed>=2?"Two fed Chikis are caring — it grows twice as fast! ":"")+"Keep them fed to keep the egg growing. Progress continues while you're away (until their food runs out)."}</div>`;
+        <div class="sNote">${paused?"Your Chiki(s) ran out of food, so the egg has paused. Refill their food bar in the My Chiki panel to resume.":(fed>=2?"Two fed Chikis are caring — it grows twice as fast! ":"")+"Keep them fed to keep the egg growing. Progress continues while you're away (until their food runs out)."}</div>
+        <button class="sBtn" id="eggLocate" style="margin-top:10px">📍 Show me the egg in Chikoria</button>`;
+      const goEgg=()=>{ if(window.focusOnEgg&&window.focusOnEgg()){ g("sorcOverlay").style.display="none"; open=false; } else showBanner("The egg nest is still loading…","info"); };
+      const el1=g("eggGoTo"); if(el1)el1.onclick=goEgg;
+      const el2=g("eggLocate"); if(el2)el2.onclick=goEgg;
       return;
     }
     /* ---- market: release/reroll + buy a Legendary Egg ---- */
@@ -3407,6 +3411,15 @@ function focusOnMithra(){
   updateCamera();
 }
 window.focusOnMithra=focusOnMithra;
+/* pan the camera to the Legendary Egg nest */
+function focusOnEgg(){
+  if(typeof eggNest==="undefined"||!eggNest)return false;
+  followMode=false;
+  cam.target.set(eggNest.x,(eggNest.gy||0)+30,eggNest.z);
+  cam.dist=Math.min(cam.dist,540); cam.theta=-0.6; cam.phi=0.9;
+  updateCamera(); return true;
+}
+window.focusOnEgg=focusOnEgg;
 let dragging=false,dragMoved=false,lastMx=0,lastMy=0;
 cv.addEventListener("mousedown",e=>{dragging=true;dragMoved=false;lastMx=e.clientX;lastMy=e.clientY;cv.classList.add("dragging");});
 window.addEventListener("mousemove",e=>{
@@ -4329,7 +4342,7 @@ function loadMithra(){
 }
 setTimeout(loadMithra,500);
 /* ===== Legendary Egg NEST — a 3D egg that appears in the world while one incubates; carers walk to it and tend it ===== */
-let eggNest=null, eggSprite=null, eggGlow=null, _eggT=0;
+let eggNest=null, eggMesh=null, eggAura=null, _eggT=0;
 function makeEggNest(){
   if(typeof THREE==="undefined")return;
   let tx=92,ty=72,found=null;
@@ -4340,18 +4353,28 @@ function makeEggNest(){
   if(!found)found={x:tx,y:ty};
   const wx=found.x*TILE+TILE/2, wz=found.y*TILE+TILE/2, gy=heightY(wx,wz);
   eggNest={x:wx,z:wz,gy};
-  const tex=new THREE.TextureLoader().load("ui/legendary-egg.png");
-  const m=new THREE.SpriteMaterial({map:tex,transparent:true,depthWrite:false});
-  eggSprite=new THREE.Sprite(m); eggSprite.scale.set(48,48,1); eggSprite.position.set(wx,gy+28,wz); eggSprite.visible=false; scene.add(eggSprite);
-  const gm=new THREE.SpriteMaterial({map:(typeof auraTex==="function"?auraTex():null),color:0xb061ff,transparent:true,opacity:0.5,blending:THREE.AdditiveBlending,depthWrite:false});
-  eggGlow=new THREE.Sprite(gm); eggGlow.scale.set(70,70,1); eggGlow.position.set(wx,gy+22,wz); eggGlow.visible=false; scene.add(eggGlow);
+  /* 3D legendary egg model (crafted in Blockbench) */
+  if(THREE.GLTFLoader)fetch("legendary_egg.glb",{cache:"force-cache"}).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer();}).then(buf=>{
+    new THREE.GLTFLoader().parse(buf,"",function(gltf){
+      const root=gltf.scene; root.updateMatrixWorld(true);
+      const box=new THREE.Box3().setFromObject(root),sz=new THREE.Vector3();box.getSize(sz);const ctr=new THREE.Vector3();box.getCenter(ctr);
+      const k=84/Math.max(0.001,sz.y);                       /* BIG egg */
+      const inner=new THREE.Group();inner.add(root);inner.scale.setScalar(k);
+      root.position.set(-ctr.x,-box.min.y,-ctr.z);
+      inner.traverse(o=>{if(o.isMesh){o.castShadow=true; if(o.geometry&&o.geometry.attributes&&o.geometry.attributes.color&&o.material){o.material.vertexColors=true;if(o.material.color)o.material.color.setRGB(1,1,1);o.material.needsUpdate=true;}}});
+      const wrap=new THREE.Group();wrap.add(inner);wrap.position.set(wx,gy,wz);wrap.visible=false;scene.add(wrap);eggMesh=wrap;
+    },function(){});
+  }).catch(()=>{});
+  /* BIG purple flame aura */
+  if(typeof buildAura==="function"){ eggAura=buildAura("purple",true); eggAura.scale.setScalar(1.6); eggAura.position.set(wx,gy+4,wz); eggAura.visible=false; scene.add(eggAura); }
 }
 setTimeout(makeEggNest,650);
-setInterval(()=>{                                  /* show the egg + gentle bob while incubating */
-  if(!eggSprite||!eggNest)return;
+setInterval(()=>{                                  /* show the egg + spin/bob + animate aura while incubating */
+  if(!eggNest)return;
   const inc=!!(player&&player.ancientEgg&&!player.ancientEgg.hatched);
-  eggSprite.visible=inc; if(eggGlow)eggGlow.visible=inc;
-  if(inc){ _eggT+=0.09; eggSprite.position.y=eggNest.gy+28+Math.sin(_eggT)*3; if(eggGlow)eggGlow.material.opacity=0.35+0.2*Math.sin(_eggT*0.8); }
+  _eggT+=0.06;
+  if(eggMesh){ eggMesh.visible=inc; if(inc){ eggMesh.position.y=eggNest.gy+Math.sin(_eggT)*2.5; eggMesh.rotation.y+=0.012; } }
+  if(eggAura){ eggAura.visible=inc; if(inc&&typeof animateAura==="function")animateAura(eggAura,performance.now()/1000,0.06); }
 },60);
 function makeTextSprite(txt,scalePx,color){
   const c2v=document.createElement("canvas");c2v.width=256;c2v.height=64;
