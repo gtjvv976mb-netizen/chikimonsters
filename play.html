@@ -4515,6 +4515,51 @@ setInterval(()=>{                                  /* show the egg + gentle bob 
   if(eggMesh){ eggMesh.visible=inc; if(inc){eggMesh.position.y=eggNest.gy+Math.sin(_eggT)*2; eggMesh.rotation.y+=0.004;} }
   if(eggAura){ eggAura.visible=inc; if(inc&&typeof animateAura==="function")animateAura(eggAura,performance.now()/1000,0.06); }
 },60);
+/* ===== Chikiseum arena — placed once on a flat, empty, walkable spot (no obstruction) ===== */
+let chikiseumMesh=null, chikiseumSpot=null;
+const ARENA_MODEL_HEIGHT=120;     /* world-units tall; bump to resize the arena */
+function placeChikiseum(){
+  if(typeof THREE==="undefined"||typeof THREE.GLTFLoader==="undefined"){setTimeout(placeChikiseum,500);return;}
+  const RAD=5;                    /* tiles each side that must be clear + flat (≈11×11 block) */
+  const farFromLandmarks=(tx,ty)=>{
+    if(eggNest){const ex=Math.floor(eggNest.x/TILE),ey=Math.floor(eggNest.z/TILE);if(Math.abs(tx-ex)<=RAD+6&&Math.abs(ty-ey)<=RAD+6)return false;}
+    if(typeof ZONES==="object")for(const k in ZONES)for(const z of ZONES[k]){if(Math.abs(tx-z.x)<=RAD+3&&Math.abs(ty-z.y)<=RAD+3)return false;}
+    return true;
+  };
+  const clearFlat=(cx,cy,tol)=>{
+    let hmin=1e9,hmax=-1e9;
+    for(let dy=-RAD;dy<=RAD;dy++)for(let dx=-RAD;dx<=RAD;dx++){
+      const tx=cx+dx,ty=cy+dy;
+      if(tx<3||ty<3||tx>=COLS-3||ty>=ROWS-3)return false;
+      if(!walkable(tx*TILE+TILE/2,ty*TILE+TILE/2))return false;   /* no water / mountains / structures */
+      const h=topY(tx,ty); if(h<hmin)hmin=h; if(h>hmax)hmax=h;
+      if(hmax-hmin>tol*BH)return false;                            /* must be flat */
+    }
+    return true;
+  };
+  /* scan the whole map, preferring open ground near the south-central field */
+  const order=[];
+  for(let ty=RAD+3;ty<ROWS-RAD-3;ty++)for(let tx=RAD+3;tx<COLS-RAD-3;tx++)if(farFromLandmarks(tx,ty))order.push([tx,ty]);
+  order.sort((a,b)=>Math.hypot(a[0]-60,a[1]-104)-Math.hypot(b[0]-60,b[1]-104));
+  let found=null;
+  for(const tol of [0,1,2]){ for(const [tx,ty] of order){ if(clearFlat(tx,ty,tol)){found={x:tx,y:ty};break;} } if(found)break; }
+  if(!found){console.warn("Chikiseum: no clear flat spot found");return;}
+  const wx=found.x*TILE+TILE/2, wz=found.y*TILE+TILE/2;
+  let gy=1e9; for(let dy=-RAD;dy<=RAD;dy++)for(let dx=-RAD;dx<=RAD;dx++)gy=Math.min(gy,heightY((found.x+dx)*TILE+TILE/2,(found.y+dy)*TILE+TILE/2));
+  chikiseumSpot={x:wx,z:wz,gy,tx:found.x,ty:found.y};
+  new THREE.GLTFLoader().load("chikiseum_voxel.glb?v=1",gltf=>{
+    const root=gltf.scene;
+    root.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true; if(o.geometry&&o.geometry.attributes&&o.geometry.attributes.color&&o.material){o.material.vertexColors=true;if(o.material.color)o.material.color.setRGB(1,1,1);o.material.needsUpdate=true;}}});
+    const box=new THREE.Box3().setFromObject(root); const size=new THREE.Vector3(); box.getSize(size);
+    const k=ARENA_MODEL_HEIGHT/Math.max(0.001,size.y);
+    const wrap=new THREE.Group(); wrap.add(root); wrap.scale.setScalar(k);
+    wrap.position.set(wx,gy,wz); scene.add(wrap); chikiseumMesh=wrap;
+    /* block the footprint so Chikis route around it (treats it like a building) */
+    const halfT=Math.ceil((Math.max(size.x,size.z)*k/2)/TILE);
+    for(let dy=-halfT;dy<=halfT;dy++)for(let dx=-halfT;dx<=halfT;dx++){const bx=found.x+dx,by=found.y+dy;if(blocked[by]&&bx>=0&&bx<COLS)blocked[by][bx]=true;}
+  },undefined,()=>{console.warn("Chikiseum model failed to load");});
+}
+setTimeout(placeChikiseum,950);
 function makeTextSprite(txt,scalePx,color){
   const c2v=document.createElement("canvas");c2v.width=256;c2v.height=64;
   const c2=c2v.getContext("2d");
