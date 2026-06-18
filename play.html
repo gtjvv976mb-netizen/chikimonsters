@@ -1962,7 +1962,8 @@ function refreshUI(){
     <div><div class="v b">${S.claimedChikis??0}</div><div class="l">Chikis claimed</div></div>
     <div><a class="statLink" href="https://solscan.io/token/${CHAIN.MINT}" target="_blank" rel="noopener" title="Verify burns &amp; supply on Solscan"><div class="v r">${fmtK(S.burned||0)}</div><div class="l">🔥 $CHIKI burned · <u>verify ↗</u></div></a></div>
     <div><a class="statLink" href="https://solscan.io/token/${CHAIN.MINT}" target="_blank" rel="noopener" title="Verify circulating supply on Solscan"><div class="v" style="color:#dce8fa">${fmtK(S.supply||0)}</div><div class="l">Circulating supply · <u>verify ↗</u></div></a></div>
-    <div><div class="v b">${(S.teamSol??0).toFixed(3)} ◎</div><div class="l">Team wallet SOL</div></div>
+    <div><div class="v b">${(S.teamSol??0).toFixed(3)} ◎</div><div class="l">🏦 Team wallet SOL</div></div>
+    <div><a class="statLink" href="https://solscan.io/account/${CHAIN.TEAM||''}" target="_blank" rel="noopener" title="Verify the Team wallet on Solscan"><div class="v" style="color:#dce8fa">${fmtK(S.teamChiki||0)}</div><div class="l">🏦 Team wallet $CHIKI · <u>verify ↗</u></div></a></div>
     <div><div class="v" style="color:#dce8fa">${S.holders??0}</div><div class="l">Trainers</div></div>` : `
     <div><div class="v">…</div><div class="l">Reward pool ◎ (live)</div></div>
     <div><div class="v g">…</div><div class="l">SOL paid (24h)</div></div>
@@ -1970,7 +1971,8 @@ function refreshUI(){
     <div><div class="v b">…</div><div class="l">Chikis claimed</div></div>
     <div><div class="v r">…</div><div class="l">🔥 $CHIKI burned</div></div>
     <div><div class="v" style="color:#dce8fa">…</div><div class="l">Circulating supply</div></div>
-    <div><div class="v b">…</div><div class="l">Team wallet SOL</div></div>
+    <div><div class="v b">…</div><div class="l">🏦 Team wallet SOL</div></div>
+    <div><div class="v" style="color:#dce8fa">…</div><div class="l">🏦 Team wallet $CHIKI</div></div>
     <div><div class="v" style="color:#dce8fa">…</div><div class="l">Trainers</div></div>`;
   document.getElementById("econNote").innerHTML=
     `Level costs grow 9%/level (Lv1→2: ${chikiCostOf(1).toLocaleString()} $CHIKI, Lv49→50: ${chikiCostOf(49).toLocaleString()} $CHIKI). $CHIKI is the sole in-game token — every spend burns 1%, funds the reward pool, and supports the team. See 📖 Mechanics.`;
