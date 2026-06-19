@@ -3763,15 +3763,18 @@ positionHuds();setTimeout(positionHuds,400);setTimeout(positionHuds,1500);
   async function getChatAuth(){
     if(!player||!player.pk)return null;
     const now=Date.now();
+    /* reuse a saved signature so players sign ONCE per ~20h, even across refreshes (no repeated prompts) */
+    if(!_chatAuth||_chatAuth.wallet!==player.pk){try{const s=JSON.parse(localStorage.getItem("chatAuth_"+player.pk)||"null");if(s&&s.wallet===player.pk)_chatAuth=s;}catch(e){}}
     if(_chatAuth&&_chatAuth.wallet===player.pk&&(now-_chatAuth.ts)<20*3600*1000)return _chatAuth;
     const sol=window.solana;
-    if(!sol||!sol.signMessage)return null;     /* wallet can't sign → can't chat */
+    if(!sol||!sol.signMessage)return null;     /* wallet can't sign → caller still sends best-effort */
     const msg="Chikoria Chat sign-in\nwallet:"+player.pk+"\nts:"+now;
     try{
       const res=await sol.signMessage(new TextEncoder().encode(msg),"utf8");
       const sig=res.signature||res;
       let bin=""; for(let i=0;i<sig.length;i++)bin+=String.fromCharCode(sig[i]);
       _chatAuth={wallet:player.pk,msg,sig:btoa(bin),ts:now};
+      try{localStorage.setItem("chatAuth_"+player.pk,JSON.stringify(_chatAuth));}catch(e){}
       return _chatAuth;
     }catch(e){return null;}
   }
