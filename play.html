@@ -1298,7 +1298,7 @@ const RARITY={
 };
 /* ===== SEEDED earnings (mirror of the server) — the rares you SEE are the rares the server pays =====
    Defaults match the backend; refreshed from /claimable so they always agree. */
-let SEED_CFG={raritySol:{common:0.000004,uncommon:0.000008,rare:0.000018,epic:0.00004,mythic:0.0001,shiny:0.0002,legend:0.0005},taskSec:30,mult:1,accrualCap:60,claimTax:0.20};   /* claimTax: SOL claim tax withheld (stays in treasury) */
+let SEED_CFG={raritySol:{common:0.000004,uncommon:0.000008,rare:0.000018,epic:0.00004,mythic:0.0001,shiny:0.0002,legend:0.0005},taskSec:30,mult:1,accrualCap:1440,claimTax:0.20};   /* claimTax: SOL claim tax withheld (stays in treasury) · pouch accrues up to 24h */
 const SEED_DIST=[["common",45],["uncommon",27],["rare",15],["epic",7],["mythic",3.5],["shiny",1.7],["legend",0.8]];
 const SEED_TOTAL=SEED_DIST.reduce((s,r)=>s+r[1],0);
 function chikiHash(str){let h=1779033703^str.length;for(let i=0;i<str.length;i++){h=Math.imul(h^str.charCodeAt(i),3432918353);h=(h<<13)|(h>>>19);}h=Math.imul(h^(h>>>16),2246822507);h=Math.imul(h^(h>>>13),3266489909);return ((h^(h>>>16))>>>0)/4294967296;}
@@ -2386,7 +2386,7 @@ function renderProfile(){
     </div>`:player.pk?`<div style="margin-top:11px;background:linear-gradient(180deg,#142a18,#0d1f12);border:2px solid #3ddc8466;border-radius:11px;padding:11px 12px;text-align:center">
       <div style="font-size:12px;color:#8fa6c9">🪙 Chiki Pouch <span style="font-size:9px;color:#3ddc84">unclaimed</span></div>
       <div id="pouchVal" style="font-size:22px;font-weight:800;color:#3ddc84;margin:2px 0">${(function(){const lp=localPouch();return lp!=null?lp.toFixed(5):(player._pouchSol!=null?player._pouchSol:"…");})()} ◎</div>
-      <div style="font-size:10.5px;color:#8fa6c9">SOL your Chiki has collected, waiting to be claimed · claim regularly (accrues up to ~1h)</div>
+      <div style="font-size:10.5px;color:#8fa6c9">SOL your Chiki has collected, waiting to be claimed · claim regularly (accrues up to ~${Math.round((SEED_CFG.accrualCap||1440)/60)}h)</div>
     </div>`:""}
     ${CHAIN.BACKEND&&player.pk&&player._earnEligible!==false?`<button id="claimBtn" style="width:100%;margin-top:9px;font-size:12px;padding:8px 10px">💰 Claim Chiki Pouch</button>`:""}`;
   const ln=document.getElementById("changeNameLink");
