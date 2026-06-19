@@ -2655,7 +2655,7 @@ async function connectPhantom(){
         bal=Math.max(Math.floor(v.balance||0),MIN_HOLD);
         serverProfile=v.profile||null;
         serverChikis=v.chikis;
-        if(v.whalePending){whaleUnlockAt=Date.now()+(v.whaleReadyInMs||0);const hrs=Math.ceil((v.whaleReadyInMs||0)/3600000);whaleMsg=`🐳 Whale perk pending — hold 1,000,000+ $CHIKI for ~${hrs} more hour${hrs>1?"s":""} to unlock your 2nd Chiki.`;}
+        if(v.whalePending){whaleUnlockAt=Date.now()+(v.whaleReadyInMs||0);const hrs=Math.ceil((v.whaleReadyInMs||0)/3600000);whaleMsg=`🐳 Whale perk pending — hold 800,000+ $CHIKI for ~${hrs} more hour${hrs>1?"s":""} to unlock your 2nd Chiki.`;}
         addFeed(`🔗 Verified via backend — eligible (${(v.balance||0).toLocaleString()} $CHIKI).`);
       }else{showBanner("🔗 Server waking up — checking your balance on-chain…","info");addFeed("⚠️ Backend unreachable — using a direct on-chain check.");}
     }
@@ -2807,9 +2807,9 @@ function updateWhaleTab(){
   const normCount=(typeof myChikis==="function")?myChikis().filter(c=>!c.isLegend).length:0;
   if(normCount>=2){el.style.display="none";el.onclick=null;return;}   /* at the 2 NORMAL-Chiki cap (a Legendary doesn't use up the whale's 2nd-earner slot) */
   const bal=player.bal||0;
-  if(bal<1_000_000){
+  if(bal<800_000){
     el.style.display="block";el.style.cursor="default";el.onclick=null;
-    el.innerHTML=`🐳 Buy <b>${(1_000_000-bal).toLocaleString()}</b> more $CHIKI to unlock a 2nd Chiki`;return;
+    el.innerHTML=`🐳 Buy <b>${(800_000-bal).toLocaleString()}</b> more $CHIKI to unlock a 2nd Chiki`;return;
   }
   if(player._whaleUnlockAt&&Date.now()<player._whaleUnlockAt){          /* still waiting — show the shaking egg + countdown */
     el.style.display="block";el.style.cursor="default";el.onclick=null;
