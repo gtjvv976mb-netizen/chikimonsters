@@ -868,6 +868,7 @@ if(location.search.indexOf("embed")>-1){
       <div class="aiBlock"><h4>🪙 $CHIKI sinks</h4>Minting a new skill card costs <b>25,000 $CHIKI</b>; Tier 4→5 mastery costs <b>50,000 $CHIKI</b>; feeding restores stamina. Every $CHIKI spend: <b>1% burned</b>, 49.5% to the reward pool, 49.5% to the team.</div>
       <div class="aiBlock"><h4>🔮 Mystic Market</h4>Hatch Legendary Eggs and acquire skill cards at Mithra's Mystic Market.</div>
     </div>
+    <button class="aiEnter" id="arenaUpg" style="background:linear-gradient(180deg,#7a3aa8,#4a2270);color:#f0d9ff;border-color:#b061ff;box-shadow:0 4px 0 #4a2390;margin-bottom:8px">🃏 Verify &amp; Upgrade Cards</button>
     <button class="aiEnter" id="arenaEnter">⚔️ Enter the Arena</button>
   </div>
   <div id="arenaMeta"></div>
@@ -3144,16 +3145,14 @@ setInterval(updateWhaleTab,1000);
     document.querySelectorAll(".aiTab").forEach(t=>t.onclick=()=>aiSelect(t.dataset.ai));
     const aiEnterBtn=g("arenaEnter");
     if(aiEnterBtn)aiEnterBtn.onclick=()=>{ try{localStorage.setItem("csIntroSeen","1");}catch(e){} hideArenaIntro(); findMatch(); renderArenaMeta(); };
+    const aiUpgBtn=g("arenaUpg");
+    if(aiUpgBtn)aiUpgBtn.onclick=()=>{ if(typeof window.openUpgrade==="function")window.openUpgrade(); };
     const aiInfo=g("arenaInfo");
     if(aiInfo)aiInfo.onclick=()=>{ aiSelect("welcome"); showArenaIntro(); };
     ab.onclick=()=>{
       g("arenaOverlay").style.display="flex";
       if(typeof window.focusOnChikiseum==="function")window.focusOnChikiseum();   /* pan the camera to the arena in the world */
-      if(ARENA_ENABLED){
-        let seen=false; try{seen=!!localStorage.getItem("csIntroSeen");}catch(e){}
-        if(!seen){ aiSelect("welcome"); showArenaIntro(); }      /* first visit → greet with the guide */
-        else { hideArenaIntro(); findMatch(); renderArenaMeta(); }
-      }
+      if(ARENA_ENABLED){ aiSelect("welcome"); showArenaIntro(); }   /* always land on the Chikiseum hub first — Battle starts from there */
       else{   /* battles still being polished — show a notice, but the arena is now in the world */
         g("arenaResult").innerHTML="🛠️ <span style='color:#ffd93d'>The Chikiseum is being forged</span>";
         g("arenaLog").innerHTML="Battles open in the <b>Chikoria Cup</b> — but your arena now stands in the world. <b>Close this</b> to see it on the map! 👑";
