@@ -745,7 +745,7 @@ if(location.search.indexOf("embed")>-1){
 .aBtn.ghost{background:#1b2740;box-shadow:0 4px 0 #0c1426}
 /* ===== battle stage (Chikiseum interior) ===== */
 #arenaStage{position:relative;width:100%;aspect-ratio:3/2;border-radius:12px;overflow:hidden;
-  background:url("ui/arena2d.png") center/cover no-repeat;box-shadow:inset 0 0 0 2px rgba(255,255,255,.08),0 6px 18px rgba(0,0,0,.55);margin-bottom:10px}
+  background:url("ui/arena.png") center/cover no-repeat;box-shadow:inset 0 0 0 2px rgba(255,255,255,.08),0 6px 18px rgba(0,0,0,.55);margin-bottom:10px}
 .aFighter{position:absolute;bottom:11%;width:44%;display:flex;flex-direction:column;align-items:center;gap:4px}
 .aFighter.you{left:3%}
 .aFighter.foe{right:3%}
@@ -2464,10 +2464,11 @@ async function connectPhantom(){
     const short=pk.slice(0,4)+"…"+pk.slice(-4);
     showBanner(`🔗 Connected <b>${short}</b> — checking your $CHIKI balance…`,"info");
     addFeed(`👻 Phantom connected: <b>${short}</b> — checking balance…`);
-    let bal,solBal=0,serverProfile=null,serverChikis=null,whaleMsg=null,whaleUnlockAt=0;
+    let bal,solBal=0,serverProfile=null,serverChikis=null,whaleMsg=null,whaleUnlockAt=0,backendConfirmed=false;
     if(CHAIN.BACKEND){
       const v=await backendVerify(pk);
       if(v){
+        backendConfirmed=true;   /* the server answered — we can trust "no profile" = genuinely new player */
         if(!v.eligible&&!isCreator(pk)){const m=`⚠️ <b>${short}</b> holds ${(v.balance||0).toLocaleString()} $CHIKI — below the ${MIN_HOLD.toLocaleString()} threshold. Your Chikis, names & progress are <b>saved</b> — buy back to 500,000 to resume earning.`;showBanner(m,"error");addFeed(m);modal.classList.remove("show");return;}
         bal=Math.max(Math.floor(v.balance||0),MIN_HOLD);
         serverProfile=v.profile||null;
@@ -2512,6 +2513,12 @@ async function connectPhantom(){
         if(typeof ensureSpots==="function")ensureSpots();
         saveProfile(h);  /* mirror server profile back into localStorage */
         addFeed(`🔁 Welcome back <b>${short}</b> — your ${saved.chikis.length>1?"Chikis":"Chiki"} and progress were restored.`);
+      }else if(CHAIN.BACKEND && !backendConfirmed){
+        /* SAFETY: the backend was unreachable, so we can't tell a NEW player from a returning one
+           whose profile simply failed to load. Do NOT mint a new Chiki / overwrite their saved data. */
+        holders.splice(holders.indexOf(h),1);     /* undo the half-created holder so a retry is clean */
+        const m=`⚠️ Couldn't reach the server to load your Chikis (it may be waking up). Your saved Chikis are safe — please click <b>Connect</b> again in a few seconds.`;
+        showBanner(m,"error");addFeed(m);modal.classList.remove("show");return;
       }else{
         modal.classList.remove("show");          /* close the wallet popup */
         await promptName(h);                      /* 1) ask the player's name first */
