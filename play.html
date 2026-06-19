@@ -476,6 +476,13 @@
   #btnArena img{width:100%;height:100%;object-fit:cover;display:block}
   #btnArena:active{transform:translateY(2px);box-shadow:0 1px 0 #8c2a22}
   body.pre #btnArena{display:none}
+  /* "hold 500k to earn" HUD tag — shows when the wallet is below the earning threshold */
+  #holdWarn{position:fixed;top:62px;left:50%;transform:translateX(-50%);z-index:62;display:none;
+    background:linear-gradient(180deg,#3a2a12,#2a1d0c);border:2px solid #e8a33a;color:#ffd166;
+    font-family:'Baloo 2',sans-serif;font-weight:800;font-size:12px;padding:5px 13px;border-radius:20px;
+    box-shadow:0 4px 12px rgba(0,0,0,.45);cursor:pointer;white-space:nowrap;max-width:92vw;overflow:hidden;text-overflow:ellipsis}
+  #holdWarn.show{display:block}
+  body.pre #holdWarn{display:none!important}
   /* Immortal Sorceress — Ancient Eggs (below the arena tab) */
   #btnSorc{position:fixed;left:12px;top:282px;z-index:60;cursor:pointer;width:46px;height:46px;border-radius:50%;
     background:radial-gradient(circle at 30% 30%,#c79bff,#6a36c9);border:2px solid #fff;color:#fff;font-size:22px;line-height:1;
@@ -576,6 +583,7 @@ if(location.search.indexOf("embed")>-1){
 <div id="btnQuality" title="Graphics quality — tap to switch Low/High">HD</div>
 <div id="btnArena" title="Chikiseum — the Arena"><img src="ui/chikiseum.png" alt="Chikiseum"></div>
 <div id="btnSorc" title="Mithra's Mystic Market">🔮<span class="eggdot"></span></div>
+<div id="holdWarn" title="Hold 500,000 $CHIKI to start earning SOL — tap for details">⚠️ Hold 500k $CHIKI to earn</div>
 
 <div class="pop" id="chatPop">
   <h2>💬 Chikoria Chat <span class="x" data-close="chatPop">✕</span></h2>
@@ -2151,6 +2159,7 @@ async function refreshChainBalances(){
       if(ej.minHold!=null)player._minHold=ej.minHold;
       if(player._earnEligible===false&&!player._warnedHold){player._warnedHold=true;addFeed(`⚠️ <b>Hold ${(player._minHold||500000).toLocaleString()} $CHIKI</b> to earn SOL — you currently hold <b>${(player.bal||0).toLocaleString()}</b>. Top up to start filling your Chiki Pouch!`);}
       else if(player._earnEligible===true)player._warnedHold=false;
+      if(typeof updateHoldWarn==="function")updateHoldWarn();
       if(ej.raritySol)SEED_CFG.raritySol=ej.raritySol;          /* keep client seed math identical to server */
       if(ej.taskSec)SEED_CFG.taskSec=ej.taskSec;
       if(ej.mult!=null)SEED_CFG.mult=ej.mult;
@@ -2158,6 +2167,13 @@ async function refreshChainBalances(){
     }}}catch(e){}   /* real paid + Chiki Pouch (seed-synced) */
     player._chainAt=Date.now();
   }catch(e){}
+}
+function updateHoldWarn(){
+  const el=document.getElementById("holdWarn"); if(!el)return;
+  const show=!!(player&&player.pk&&player._earnEligible===false);
+  el.classList.toggle("show",show);
+  if(show)el.textContent=`⚠️ Hold ${(player._minHold||500000).toLocaleString()} $CHIKI to earn`;
+  el.onclick=()=>{ if(typeof openProfile==="function")openProfile(); };
 }
 function openProfile(){if(!player){addFeed("👛 Connect your wallet first to open your profile.");return;}openPop("profilePop");renderProfile();
   if(player.pk)refreshChainBalances().then(()=>{const p=document.getElementById("profilePop");if(p&&p.classList.contains("show"))renderProfile();});}
