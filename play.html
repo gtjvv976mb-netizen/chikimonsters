@@ -3783,10 +3783,10 @@ positionHuds();setTimeout(positionHuds,400);setTimeout(positionHuds,1500);
     const raw=inp.value.trim(); if(!raw)return;
     if(!player||!player.pk){showBanner("👛 Connect your wallet to chat.","error");return;}
     if(!B()){showBanner("⚙️ Chat needs the backend online.","error");return;}
-    const auth=await getChatAuth();   /* best-effort anti-impersonation signature — never blocks chatting */
+    const auth=await getChatAuth();
+    if(!auth){showBanner("✍️ Approve the one-time wallet sign-in to chat — it verifies you own this wallet.","error");return;}
     inp.value="";
-    const body={wallet:player.pk,handle:myHandle(),text:clean(raw)};   /* global chat; DMs go through the private window */
-    if(auth){body.authMsg=auth.msg;body.authSig=auth.sig;}
+    const body={wallet:player.pk,handle:myHandle(),text:clean(raw),authMsg:auth.msg,authSig:auth.sig};   /* global chat; DMs go through the private window */
     try{
       const r=await fetch(B()+"/chat/send",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)});
       const j=await r.json();
@@ -3842,10 +3842,10 @@ positionHuds();setTimeout(positionHuds,400);setTimeout(positionHuds,1500);
     const raw=inp.value.trim(); if(!raw||!dmTarget)return;
     if(!player||!player.pk){showBanner("👛 Connect your wallet to chat.","error");return;}
     if(!B()){showBanner("⚙️ Chat needs the backend online.","error");return;}
-    const auth=await getChatAuth();   /* best-effort signature — never blocks the DM */
+    const auth=await getChatAuth();
+    if(!auth){showBanner("✍️ Approve the wallet sign-in to send private messages.","error");return;}
     inp.value="";
-    const dbody={wallet:player.pk,handle:myHandle(),text:clean(raw),to:dmTarget};
-    if(auth){dbody.authMsg=auth.msg;dbody.authSig=auth.sig;}
+    const dbody={wallet:player.pk,handle:myHandle(),text:clean(raw),to:dmTarget,authMsg:auth.msg,authSig:auth.sig};
     try{
       const r=await fetch(B()+"/chat/send",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(dbody)});
       const j=await r.json(); if(!j.ok){showBanner("⚠️ "+(j.error||"couldn't send"),"error");return;} poll();
