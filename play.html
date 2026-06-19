@@ -41,8 +41,8 @@
     padding:7px 13px;font-size:12.5px;cursor:pointer;transition:.15s}
   button:hover{filter:brightness(1.08)}
   button:active{transform:translateY(2px);box-shadow:0 1px 0 #4a2f00}
-  button.on,.popbtns button.active{background:linear-gradient(180deg,#7be37b,#2faf4e);color:#fff;
-    border-color:#14501f;box-shadow:0 3px 0 #14501f;text-shadow:0 1px 2px rgba(0,0,0,.35)}
+  button.on,.popbtns button.active{color:#c8ffce;border-color:#7be37b;
+    box-shadow:0 0 0 2px rgba(123,227,123,.85),0 0 16px rgba(80,230,120,.6);text-shadow:0 0 9px rgba(123,227,123,.9)}
   button.primary{background:linear-gradient(180deg,#ff7a6e,#d72631);color:#fff;border-color:#5e0a10;
     box-shadow:0 3px 0 #5e0a10;text-shadow:0 1px 2px rgba(0,0,0,.4)}
   button:disabled{filter:grayscale(.5);opacity:.55;cursor:not-allowed}
@@ -209,7 +209,7 @@
   button:active{transform:translateY(3px);box-shadow:0 1px 0 #4a2d14}
   button.primary{background:linear-gradient(180deg,#5e97e0,#2f6fd0);color:#fff;border-color:#173a6e;
     box-shadow:0 4px 0 #173a6e;text-shadow:0 1px 2px rgba(0,0,0,.4)}
-  button.on,.popbtns button.active{background:linear-gradient(180deg,#7be37b,#3e8e38);border-color:#1c4a18;box-shadow:0 4px 0 #1c4a18}
+  button.on,.popbtns button.active{color:#c8ffce;border-color:#7be37b;box-shadow:0 0 0 2px rgba(123,227,123,.85),0 0 16px rgba(80,230,120,.6);text-shadow:0 0 9px rgba(123,227,123,.9)}
 
   /* --- popups: parchment in wooden frames with grass-strip headers --- */
   .pop{background:#f7ecd2;border:4px solid #4a2d14;border-radius:10px;
@@ -807,6 +807,25 @@ if(location.search.indexOf("embed")>-1){
 .hcBtn.up:disabled{filter:grayscale(.6) brightness(.85);cursor:not-allowed}
 .hcBtn.up.max{background:linear-gradient(180deg,#9fe0a0,#4aa85e);color:#06240f;border-color:#2c6a3a}
 .hcBtn.buy{background:linear-gradient(180deg,#7a3aa8,#4a2270);color:#f0d9ff;border-color:#b061ff}
+/* hub 3D legendary viewer */
+#hubLeg3D{display:flex;gap:16px;align-items:center;background:linear-gradient(180deg,rgba(20,28,52,.6),rgba(11,17,36,.6));border:1px solid #2c4470;border-radius:14px;padding:12px 14px;margin-bottom:14px;flex-wrap:wrap}
+#hub3d{position:relative;width:260px;height:260px;flex:0 0 auto;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 62%,rgba(120,200,255,.16),transparent 70%);cursor:grab}
+#hub3d canvas{display:block;width:100%;height:100%}
+#hub3d .ld{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:13px;color:#9fb3d6}
+#hubLegStats{flex:1;min-width:200px}
+.hls-name{font-size:22px;font-weight:800}
+.hls-sub{font-size:12.5px;color:#aebbd6;margin-top:1px}
+.hls-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.hls-stat{background:rgba(0,0,0,.3);border:1px solid #2c4470;border-radius:9px;padding:6px 11px;font-size:13px;color:#cfdcf2}
+.hls-stat b{color:#ffe27a}
+.hls-hint{font-size:11px;color:#7f93b3;margin-top:9px}
+/* Mystic Market skill-card shop */
+.mskHd{font-size:12.5px;color:#c9b8ee;margin-bottom:8px;line-height:1.45}
+.mskGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.mskCard{text-align:center}
+.mskImg{aspect-ratio:2/3;border-radius:8px;background:#0f1b34;background-size:cover;background-position:center;border:1px solid #6a4fb0}
+.mskNm{font-size:10.5px;font-weight:800;margin:5px 0 3px;color:#e7dcff;line-height:1.15}
+.mskBuy{width:100%;font-size:11.5px;padding:6px 4px}
 #arenaBox{position:relative;width:100vw;max-width:100vw;height:100vh;max-height:100vh;border-radius:0;padding:0;margin:0;overflow:hidden;
   background:url("ui/arena.png") center/cover no-repeat}
 #arenaBox::after{content:"";position:absolute;inset:0;background:rgba(5,8,15,.30);pointer-events:none;z-index:0}
@@ -892,6 +911,7 @@ if(location.search.indexOf("embed")>-1){
       <div class="aiBlock"><h4>🔮 Mystic Market</h4>Hatch Legendary Eggs and acquire skill cards at Mithra's Mystic Market.</div>
     </div>
     <div class="aiPane on" data-aip="cards">
+      <div id="hubLeg3D"><div id="hub3d"><div class="ld">Loading 3D…</div></div><div id="hubLegStats"></div></div>
       <div style="font-size:12.5px;color:#aebbd6;margin-bottom:10px">Your full skill deck — owned cards show their Tier (◆), locked cards can be minted at the 🔮 Mystic Market. Tap any card to enlarge it.</div>
       <div id="hubCards"></div>
     </div>
@@ -1766,6 +1786,8 @@ function saveProfile(h){
   if(!h||!h.pk)return;
   try{
     const mine=creatures.filter(c=>c.holder===h);
+    if(!mine.length&&(h._returning||h._hadChikis))return;   /* never overwrite a known roster with an empty one (anti-wipe) */
+    if(mine.length)h._hadChikis=true;
     const data={pk:h.pk,bal:h.bal,sol:h.sol,earned:h.earned||0,savedAt:Date.now(),
       handle:h.handle||null,renames:h.renames||0,   /* player name follows the wallet across browsers/devices */
       ancientEgg:h.ancientEgg||null,                /* Sorceress: legendary egg incubation state */
@@ -2868,6 +2890,64 @@ setInterval(updateWhaleTab,1000);
     host.querySelectorAll(".hcImg").forEach(el=>el.onclick=()=>showZoom(el.dataset.key));
     host.querySelectorAll(".hcBtn.up").forEach(b=>{if(!b.disabled)b.onclick=()=>doUpgrade(creatures[+b.dataset.ci],+b.dataset.slot);});
     host.querySelectorAll(".hcBtn.buy").forEach(b=>b.onclick=()=>buyCard(creatures[+b.dataset.ci],+b.dataset.slot));
+    renderHubLegend();
+  }
+  /* ---- hub 3D legendary viewer (HD .glb) ---- */
+  let _h3dR,_h3dS,_h3dC,_h3dM,_h3dRAF,_h3dSi=null;
+  const LEG_GLB=["galador","adalor","tyrannos","grovador","dragonos"];
+  function initHub3D(si){
+    const host=g("hub3d"); if(!host||typeof THREE==="undefined"||typeof THREE.GLTFLoader==="undefined")return;
+    const W=host.clientWidth||260,H=host.clientHeight||260;
+    if(!_h3dR){
+      _h3dR=new THREE.WebGLRenderer({antialias:true,alpha:true});
+      _h3dR.setPixelRatio(Math.min(2,window.devicePixelRatio||1)); _h3dR.setSize(W,H);
+      host.appendChild(_h3dR.domElement);
+      _h3dS=new THREE.Scene();
+      _h3dC=new THREE.PerspectiveCamera(40,W/H,0.1,1000); _h3dC.position.set(0,0.5,4.3);
+      _h3dS.add(new THREE.AmbientLight(0xffffff,0.95));
+      const d1=new THREE.DirectionalLight(0xffffff,1.15); d1.position.set(3,6,5); _h3dS.add(d1);
+      const d2=new THREE.DirectionalLight(0x88aaff,0.55); d2.position.set(-4,2,-3); _h3dS.add(d2);
+    }
+    if(_h3dSi!==si){
+      _h3dSi=si; if(_h3dM){_h3dS.remove(_h3dM);_h3dM=null;}
+      const ld=host.querySelector(".ld"); if(ld){ld.style.display="flex";ld.textContent="Loading 3D…";}
+      new THREE.GLTFLoader().load(LEG_GLB[si-10]+".glb?v="+(window.GLB_VER||"1"),gltf=>{
+        const m=gltf.scene;
+        const box=new THREE.Box3().setFromObject(m),size=box.getSize(new THREE.Vector3()),ctr=box.getCenter(new THREE.Vector3());
+        const md=Math.max(size.x,size.y,size.z)||1,s=2.5/md; m.scale.setScalar(s);
+        m.position.set(-ctr.x*s,-ctr.y*s,-ctr.z*s);
+        _h3dM=m; _h3dS.add(m);
+        const l=host.querySelector(".ld"); if(l)l.style.display="none";
+      },undefined,()=>{const l=host.querySelector(".ld"); if(l)l.textContent="3D unavailable";});
+    }
+    startHub3DLoop();
+  }
+  function startHub3DLoop(){
+    cancelAnimationFrame(_h3dRAF);
+    const loop=()=>{ const ov=g("arenaOverlay"); if(!_h3dR||!ov||ov.style.display==="none")return;   /* pause when hub/arena closed */
+      if(_h3dM)_h3dM.rotation.y+=0.012; _h3dR.render(_h3dS,_h3dC); _h3dRAF=requestAnimationFrame(loop); };
+    loop();
+  }
+  function renderHubLegend(){
+    const wrap=g("hubLeg3D"), stats=g("hubLegStats"); if(!wrap||!stats)return;
+    const legs=(typeof myLegends==="function"?myLegends():[]).map(ensureLegendSkills);
+    if(!legs.length){ wrap.style.display="none"; return; }
+    wrap.style.display="flex";
+    const c=legs[0], si=SPECIES.indexOf(c.sp);
+    const smax=legStamMax(c.level||1),scur=Math.round(c.arenaStam!=null?c.arenaStam:smax),slp=c.arenaSleepUntil&&c.arenaSleepUntil>Date.now();
+    const hp=120+(c.br||1)*6, spd=42+(c.br||1)*2;
+    stats.innerHTML='<div class="hls-name" style="color:'+c.sp.body+'">'+nameOf(c)+'</div>'+
+      '<div class="hls-sub">'+legElem(si)+' Legendary</div>'+
+      '<div class="hls-row">'+
+        '<span class="hls-stat">Lv <b>'+(c.level||1)+'</b></span>'+
+        '<span class="hls-stat">BR <b>'+(c.br||1)+'</b></span>'+
+        '<span class="hls-stat">❤️ HP <b>'+hp+'</b></span>'+
+        '<span class="hls-stat">⚡ Spd <b>'+spd+'</b></span>'+
+        '<span class="hls-stat">'+(slp?'💤 <b>'+fmtSleep((c.arenaSleepUntil-Date.now())/1000)+'</b>':'⚡ Stamina <b>'+scur+'/'+smax+'</b>')+'</span>'+
+        '<span class="hls-stat">🎯 <b>'+(c.skillPts||0)+'</b> pts</span>'+
+        '<span class="hls-stat">🃏 Deck <b>'+(c.arenaSkills||[]).length+'/12</b></span>'+
+      '</div><div class="hls-hint">✨ Your Legendary in HD — rotating live</div>';
+    initHub3D(si);
   }
   window.renderHubCards=renderHubCards;
   function render(){
@@ -3143,7 +3223,21 @@ setInterval(updateWhaleTab,1000);
     if(player.pk&&typeof saveProfile==="function")saveProfile(player);
     if(typeof refreshUI==="function")refreshUI();
     {const _up=g("upgPanel"); if(_up&&_up.style.display!=="none")openUpgrade();} if(typeof renderHubCards==="function")renderHubCards(); renderArenaMeta();
+    if(typeof window.renderSkillMarket==="function"&&g("sorcSkillMarket"))window.renderSkillMarket(g("sorcSkillMarket"));
   }
+  /* Skill-card shop rendered inside Mithra's Mystic Market — mint new cards for your Legendary */
+  window.renderSkillMarket=function(host){
+    if(!host)return;
+    const leg=(typeof player!=="undefined"&&player)?creatures.find(c=>c.holder===player&&c.isLegend):null;
+    if(!leg){ host.innerHTML='<div class="sNote">Awaken a Legendary (hatch a Legendary Egg) to collect &amp; mint skill cards.</div>'; return; }
+    ensureBattle(leg); const si=SPECIES.indexOf(leg.sp);
+    const owned=new Set(leg.arenaSkills||[]); const unowned=[]; for(let s=0;s<12;s++)if(!owned.has(s))unowned.push(s);
+    const bc=cardBuyCost((leg.arenaSkills||[]).length);
+    host.innerHTML='<div class="mskHd">Mint skill cards for <b style="color:'+leg.sp.body+'">'+nameOf(leg)+'</b> — <b>'+bc+'✨</b> + <b>'+(CARD_MINT_CHIKI/1000)+'k $CHIKI</b> each · owns '+(leg.arenaSkills||[]).length+'/12</div>'+
+      (unowned.length? '<div class="mskGrid">'+unowned.map(s=>'<div class="mskCard"><div class="mskImg" style="background-image:url(\'ui/cards/'+si+'_'+s+'.jpg\')"></div><div class="mskNm">'+PN[si][s][1]+'</div><button class="sBtn mskBuy" data-msk="'+s+'">+ Mint</button></div>').join('')+'</div>'
+        : '<div class="sNote">✨ Full deck — all 12 cards collected!</div>');
+    host.querySelectorAll('.mskBuy').forEach(b=>b.onclick=async()=>{ b.disabled=true; await buyCard(leg,+b.dataset.msk); window.renderSkillMarket(host); });
+  };
   async function doUpgrade(c,slot){
     ensureBattle(c); const t=cardTier(c,slot); if(t>=5){showBanner("That card is already maxed (T5).","info");return;}
     const cost=upgCost(t);
@@ -3493,9 +3587,11 @@ setInterval(updateWhaleTab,1000);
         <div class="sNote">A <b>guaranteed Legendary</b>. Your Chiki(s) will care for it <b>24h</b> (<b>12h</b> with 2 Chikis), spending all their stamina &amp; food until it hatches.</div>
         <button class="sBtn gold" id="sorcBuyBtn" ${(!atLegCap&&norms)?"":"disabled"}>👑 Buy Legendary Egg</button>
         ${atLegCap?`<div class="sNote">You already hold a Legendary (max 1).</div>`:(norms?"":`<div class="sNote">⚠️ Need a normal Chiki to care for it.</div>`)}
-      </div>`;
+      </div>
+      <div class="mCard"><div class="mCardHead">🃏 Skill Card Market</div><div id="sorcSkillMarket"></div></div>`;
     const rb=g("mithReroll"); if(rb)rb.onclick=releaseRehatch;
     const bb=g("sorcBuyBtn"); if(bb)bb.onclick=buyEgg;
+    if(typeof window.renderSkillMarket==="function")window.renderSkillMarket(g("sorcSkillMarket"));
   }
 
   /* button alert dot when an egg is ready to hatch */
