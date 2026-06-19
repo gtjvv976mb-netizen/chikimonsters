@@ -1650,6 +1650,7 @@ function offlineProgress(c,elapsedSec){
       if(active<AVG)break;
       active-=AVG;c.stamina-=COST;c.tasksDone++;did++;
       c.xp=Math.min((c.xp||0)+COST*2, xpNeed(c.level));   /* XP fills toward "ready" — leveling is ALWAYS a paid action */
+      const ht=c.holder; if(ht&&typeof rollTask==="function"){const tk=rollTask(c);if(tk){ht.taskCounts=ht.taskCounts||{};ht.taskCounts[tk.name]=(ht.taskCounts[tk.name]||0)+1;if(typeof tk.count==="number")tk.count++;}}  /* credit the Task Table for offline/background work */
     }else{                                            /* stamina spent → naps, sleep restores stamina for free */
       const dur=sleepTimeOf(c.level);
       if(active<dur){c.state="sleeping";c.sleepT=dur-active;break;}
@@ -2146,6 +2147,10 @@ async function refreshChainBalances(){
       if(ej.claimableSol!=null)player._pouchSol=+Number(ej.claimableSol).toFixed(6);
       if(ej.lastClaim!=null)player._lastClaim=ej.lastClaim;
       if(ej.chikis!=null)player._earnChikis=ej.chikis;
+      if(ej.eligible!=null)player._earnEligible=ej.eligible;
+      if(ej.minHold!=null)player._minHold=ej.minHold;
+      if(player._earnEligible===false&&!player._warnedHold){player._warnedHold=true;addFeed(`⚠️ <b>Hold ${(player._minHold||500000).toLocaleString()} $CHIKI</b> to earn SOL — you currently hold <b>${(player.bal||0).toLocaleString()}</b>. Top up to start filling your Chiki Pouch!`);}
+      else if(player._earnEligible===true)player._warnedHold=false;
       if(ej.raritySol)SEED_CFG.raritySol=ej.raritySol;          /* keep client seed math identical to server */
       if(ej.taskSec)SEED_CFG.taskSec=ej.taskSec;
       if(ej.mult!=null)SEED_CFG.mult=ej.mult;
@@ -2176,12 +2181,15 @@ function renderProfile(){
     <div class="row"><span>$CHIKI balance ${player.pk?'<span style="font-size:9px;color:#3ddc84">on-chain</span>':''}</span><span><a href="https://solscan.io/account/${player.pk||player.addr}" target="_blank" rel="noopener" style="color:#6fb1ff;text-decoration:none">${player.bal.toLocaleString()} ↗</a></span></div>
     <div class="row"><span>Wallet SOL ${player.pk?'<span style="font-size:9px;color:#3ddc84">on-chain</span>':''}</span><span>${(player._chainSol!=null?player._chainSol:player.sol)} ◎</span></div>
     <div class="row"><span>🏅 Achievements</span><span>${(player.ach&&player.ach.size)||0}</span></div>
-    ${player.pk?`<div style="margin-top:11px;background:linear-gradient(180deg,#142a18,#0d1f12);border:2px solid #3ddc8466;border-radius:11px;padding:11px 12px;text-align:center">
+    ${player.pk&&player._earnEligible===false?`<div style="margin-top:11px;background:linear-gradient(180deg,#3a2a12,#2a1d0c);border:2px solid #e8a33a;border-radius:11px;padding:11px 12px;text-align:center">
+      <div style="font-size:13px;font-weight:800;color:#ffd166">⚠️ Hold ${(player._minHold||500000).toLocaleString()} $CHIKI to earn SOL</div>
+      <div style="font-size:11px;color:#e0c089;margin-top:3px">You hold <b>${(player.bal||0).toLocaleString()}</b> $CHIKI. Earning is paused until you hold at least <b>${(player._minHold||500000).toLocaleString()}</b>. Feeding keeps your Chiki active, but the hold is what unlocks rewards.</div>
+    </div>`:player.pk?`<div style="margin-top:11px;background:linear-gradient(180deg,#142a18,#0d1f12);border:2px solid #3ddc8466;border-radius:11px;padding:11px 12px;text-align:center">
       <div style="font-size:12px;color:#8fa6c9">🪙 Chiki Pouch <span style="font-size:9px;color:#3ddc84">unclaimed</span></div>
       <div id="pouchVal" style="font-size:22px;font-weight:800;color:#3ddc84;margin:2px 0">${(function(){const lp=localPouch();return lp!=null?lp.toFixed(5):(player._pouchSol!=null?player._pouchSol:"…");})()} ◎</div>
-      <div style="font-size:10.5px;color:#8fa6c9">SOL your Chiki has collected, waiting to be claimed</div>
+      <div style="font-size:10.5px;color:#8fa6c9">SOL your Chiki has collected, waiting to be claimed · claim regularly (accrues up to ~1h)</div>
     </div>`:""}
-    ${CHAIN.BACKEND&&player.pk?`<button id="claimBtn" style="width:100%;margin-top:9px;font-size:12px;padding:8px 10px">💰 Claim Chiki Pouch</button>`:""}`;
+    ${CHAIN.BACKEND&&player.pk&&player._earnEligible!==false?`<button id="claimBtn" style="width:100%;margin-top:9px;font-size:12px;padding:8px 10px">💰 Claim Chiki Pouch</button>`:""}`;
   const ln=document.getElementById("changeNameLink");
   if(ln)ln.onclick=(e)=>{e.preventDefault();openRename();};
   const cl=document.getElementById("claimBtn");
