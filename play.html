@@ -1386,8 +1386,8 @@ Object.assign(window.RIG_MODE,{11:"wingsonly",12:"legs",13:"legs",14:"dragon"});
 const NONLEGEND_IDXS=SPECIES.map((s,i)=>s.type!=="Legendary"?i:-1).filter(i=>i>=0); /* normal (non-legendary) species indices */
 const ANCIENT_EGG_ENABLED=true;  /* Mithra's Mystic Market is OPEN */
 const ARENA_ENABLED=true;        /* ⚔️ Chikiseum LIVE — battles, Glory & card upgrades open */
-const LEGEND_EGG_COST=1000000;   /* Legendary Egg from Mithra (cared for 24h, 12h with 2 Chikis) */
-const REROLL_COST=200000;        /* release a Chiki to the jungle & have Mithra grant a fresh egg */
+const LEGEND_EGG_COST=700000;    /* Legendary Egg from Mithra (cared for 24h, 12h with 2 Chikis) */
+const REROLL_COST=150000;        /* normal egg: release a Chiki to the jungle & have Mithra grant a fresh egg */
 const ANCIENT_EGG_COST=LEGEND_EGG_COST;   /* legacy alias */
 const CARE_NEED_24H=1440, CARE_NEED_12H=720;   /* legendary-egg care time: 24h (1 carer) / 12h (2 carers) */
 const CARE_NEED_MIN=CARE_NEED_24H;        /* legacy */
@@ -1405,14 +1405,14 @@ const feedCostOf=lv=>Math.round(1000+(Math.min(lv,MAX_LEVEL)-1)/Math.max(1,MAX_L
 /* ===== FOOD (famish) bar: a time-based food stock — ~30min at Lv1, scaling up to 12h at Lv50.
    Replenishing 1 minute of food costs 100 $CHIKI. When it empties the Chiki is FAMISHED and won't work until fed. ===== */
 /* $CHIKI per minute of food — DROPS as the Chiki levels up: 80 (Lv1) -> 40 (Lv50) */
-const foodPerMin=lv=>Math.round(80-(Math.min(Math.max(lv,1),MAX_LEVEL)-1)/Math.max(1,MAX_LEVEL-1)*(80-40));
+const foodPerMin=lv=>Math.round((80-(Math.min(Math.max(lv,1),MAX_LEVEL)-1)/Math.max(1,MAX_LEVEL-1)*(80-40))*0.85);   /* living cost reduced 15% */
 const foodMaxMin=lv=>Math.round(30+(Math.min(lv,MAX_LEVEL)-1)/Math.max(1,MAX_LEVEL-1)*(720-30));  /* 30min (Lv1) -> 720min/12h (Lv50) */
 const foodMaxSec=lv=>foodMaxMin(lv)*60;
 const foodRefillCost=c=>Math.ceil(Math.max(0,(foodMaxSec(c.level)-(c.food||0)))/60)*foodPerMin(c.level);   /* $CHIKI to top the bar back to full */
 const fmtFood=s=>{s=Math.max(0,Math.floor(s));const h=Math.floor(s/3600),m=Math.floor((s%3600)/60);return h>0?h+"h "+m+"m":m+"m";};
 const fmtSleep=s=>{s=Math.max(0,Math.ceil(s));return s>=60?Math.floor(s/60)+"m "+(s%60)+"s":s+"s";};
 const rareBoostOf=c=>1+c.level*0.015+(stageOf(c.level)-1)*0.35;
-const chikiCostOf=lv=>Math.round(2500*Math.pow(1.09,lv));
+const chikiCostOf=lv=>Math.round(2500*Math.pow(1.09,lv)*0.85);   /* level-up cost reduced 15% */
 /* tasks a Chiki must complete to earn the next level: Lv1→2 needs 2, →3 needs 3, →N needs N */
 const tasksToNext=c=>c.level+1;
 const tasksLeft=c=>Math.max(0,tasksToNext(c)-(c.lvlTasks||0));
@@ -1560,7 +1560,7 @@ const legStamMax=lv=>Math.round(120+(Math.min(Math.max(lv,1),MAX_LEVEL)-1)/Math.
 /* When exhausted, the Legendary sleeps before it can be fed again: 10 min (Lv1) → 5 min (Lv50). */
 const legSleepSec=lv=>Math.round(600-(Math.min(Math.max(lv,1),MAX_LEVEL)-1)/Math.max(1,MAX_LEVEL-1)*(600-300));
 /* Feeding restores arena stamina — $CHIKI per stamina point: 100 (Lv1) → 50 (Lv50). */
-const legFeedPer=lv=>Math.round(100-(Math.min(Math.max(lv,1),MAX_LEVEL)-1)/Math.max(1,MAX_LEVEL-1)*(100-50));
+const legFeedPer=lv=>Math.round((100-(Math.min(Math.max(lv,1),MAX_LEVEL)-1)/Math.max(1,MAX_LEVEL-1)*(100-50))*0.85);   /* living cost reduced 15% */
 const TVAL={                                                 /* card stats by Tier 1..5 (index 0 unused) */
   strike:[0,18,20,22,24,26], blast:[0,30,33,36,39,42], quick:[0,12,14,16,18,20],
   guardBlock:[0,0.60,0.64,0.68,0.72,0.76], guardReflect:[0,6,7,8,9,10],
