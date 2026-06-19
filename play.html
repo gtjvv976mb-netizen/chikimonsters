@@ -3734,7 +3734,7 @@ positionHuds();setTimeout(positionHuds,400);setTimeout(positionHuds,1500);
       const j=await r.json();
       if(j.messages&&j.messages.length){
         let newCount=0;
-        for(const m of j.messages){ if(!seen.has(m.id)){renderMsg(m); if(!(player&&m.wallet===player.pk))newCount++;} if(m.id>since)since=m.id; }
+        for(const m of j.messages){ if(!seen.has(m.id)){renderMsg(m); if(!(player&&m.wallet===player.pk))newCount++;} if(Number(m.id)>Number(since))since=Number(m.id); }   /* NUMERIC compare — ids are strings, "100">"99" is false as text */
         if(newCount)bump(newCount);
       }
       renderPinned(j.pinned);
