@@ -787,6 +787,26 @@ if(location.search.indexOf("embed")>-1){
 #arenaBox{width:100vw!important;max-width:100vw!important;height:100vh!important;max-height:100vh!important}
 #upgPanel{z-index:200!important}   /* card verify/upgrade panel must sit above the reskinned arena UI */
 #upgPanel .upgBox{box-shadow:0 24px 60px rgba(0,0,0,.7)}
+#arenaBox.introMode>#arenaZoom{display:block!important}   /* allow the card zoom preview inside the hub */
+/* hub "My Cards" grid */
+#hubCards{padding:2px}
+.hubLeg{margin-bottom:16px}
+.hubLegHd{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:800;color:#cfe0ff;margin-bottom:8px;flex-wrap:wrap}
+.hubLegHd .gl{color:#ffd93d}
+.hubGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media(max-width:620px){.hubGrid{grid-template-columns:repeat(2,1fr)}}
+.hcard{background:rgba(8,14,28,.7);border:2px solid #34456a;border-radius:11px;padding:7px;text-align:center}
+.hcard.locked{opacity:.72}
+.hcard.rare{border-color:#ffd24a}.hcard.epic{border-color:#c069ff}
+.hcImg{position:relative;border-radius:8px;overflow:hidden;aspect-ratio:2/3;cursor:pointer;border:1px solid #2a3a5e;background:#0f1b34;background-size:cover;background-position:center}
+.hcImg .lk{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:28px;background:rgba(4,6,12,.62)}
+.hcName{font-size:11.5px;font-weight:800;margin:6px 0 2px;color:#dce8fa}
+.hcPips{font-size:13px;color:#ffd24a;letter-spacing:1px}.hcPips .o{color:#3b4664}
+.hcBtn{margin-top:6px;width:100%;font-family:inherit;font-weight:800;font-size:11px;padding:6px;border-radius:8px;cursor:pointer;border:2px solid}
+.hcBtn.up{background:linear-gradient(180deg,#ffe27a,#e0a800);color:#3a2a00;border-color:#b98a2e}
+.hcBtn.up:disabled{filter:grayscale(.6) brightness(.85);cursor:not-allowed}
+.hcBtn.up.max{background:linear-gradient(180deg,#9fe0a0,#4aa85e);color:#06240f;border-color:#2c6a3a}
+.hcBtn.buy{background:linear-gradient(180deg,#7a3aa8,#4a2270);color:#f0d9ff;border-color:#b061ff}
 #arenaBox{position:relative;width:100vw;max-width:100vw;height:100vh;max-height:100vh;border-radius:0;padding:0;margin:0;overflow:hidden;
   background:url("ui/arena.png") center/cover no-repeat}
 #arenaBox::after{content:"";position:absolute;inset:0;background:rgba(5,8,15,.30);pointer-events:none;z-index:0}
@@ -853,6 +873,7 @@ if(location.search.indexOf("embed")>-1){
       <button class="aiTab on" data-ai="welcome">📜 Welcome</button>
       <button class="aiTab" data-ai="mech">⚙️ Mechanics</button>
       <button class="aiTab" data-ai="tok">🏆 Tokenomics</button>
+      <button class="aiTab" data-ai="cards">🃏 My Cards</button>
     </div>
     <div class="aiPane on" data-aip="welcome">
       <h3>Welcome to the Chikiseum ⚔️</h3>
@@ -870,7 +891,10 @@ if(location.search.indexOf("embed")>-1){
       <div class="aiBlock"><h4>🪙 $CHIKI sinks</h4>Minting a new skill card costs <b>25,000 $CHIKI</b>; Tier 4→5 mastery costs <b>50,000 $CHIKI</b>; feeding restores stamina. Every $CHIKI spend: <b>1% burned</b>, 49.5% to the reward pool, 49.5% to the team.</div>
       <div class="aiBlock"><h4>🔮 Mystic Market</h4>Hatch Legendary Eggs and acquire skill cards at Mithra's Mystic Market.</div>
     </div>
-    <button class="aiEnter" id="arenaUpg" style="background:linear-gradient(180deg,#7a3aa8,#4a2270);color:#f0d9ff;border-color:#b061ff;box-shadow:0 4px 0 #4a2390;margin-bottom:8px">🃏 Verify &amp; Upgrade Cards</button>
+    <div class="aiPane" data-aip="cards">
+      <div style="font-size:12.5px;color:#aebbd6;margin-bottom:10px">Your full skill deck — owned cards show their Tier (◆), locked cards can be minted at the 🔮 Mystic Market. Tap any card to enlarge it.</div>
+      <div id="hubCards"></div>
+    </div>
     <button class="aiEnter" id="arenaEnter">⚔️ Enter the Arena</button>
   </div>
   <div id="arenaMeta"></div>
@@ -2817,6 +2841,30 @@ setInterval(updateWhaleTab,1000);
   const CARD_ART=new Set(["10_0","10_1","10_2","10_3","10_4","10_5","10_6","10_7","10_8","10_9","10_10","10_11","11_0","11_1","11_2","11_3","11_4","11_5","11_6","11_7","11_8","11_9","11_10","11_11","12_0","12_1","12_2","12_3","12_4","12_5","12_6","12_7","12_8","12_9","12_10","12_11","13_0","13_1","13_2","13_3","13_4","13_5","13_6","13_7","13_8","13_9","13_10","13_11","14_0","14_1","14_2","14_3","14_4","14_5","14_6","14_7","14_8","14_9","14_10","14_11"]);
   function showZoom(key){const z=g("arenaZoom");if(!z||!CARD_ART.has(key))return;z.style.backgroundImage=`url("ui/cards/${key}.jpg")`;z.classList.add("on");}
   function hideZoom(){const z=g("arenaZoom");if(z)z.classList.remove("on");}
+  /* hub "My Cards" grid: every slot a Legendary could own — owned (art + Tier + upgrade) and locked (mint) */
+  function renderHubCards(){
+    const host=g("hubCards"); if(!host)return;
+    const RAR=["common","common","common","rare","common","common","epic","common","common","rare","rare","epic"];
+    const legs=(typeof myLegends==="function"?myLegends():[]).map(ensureLegendSkills);
+    if(!legs.length){ host.innerHTML='<div style="color:#8fa6c9;padding:20px;text-align:center">No Legendary yet — hatch one at 🔮 <b>Mithra\'s Mystic Market</b> to collect &amp; battle with skill cards.</div>'; return; }
+    host.innerHTML=legs.map(c=>{
+      const si=SPECIES.indexOf(c.sp), owned=new Set(c.arenaSkills||[]); let cells="";
+      for(let slot=0;slot<12;slot++){
+        const key=si+"_"+slot, has=owned.has(slot), t=has?cardTier(c,slot):0;
+        const pips=has?Array.from({length:5},(_,k)=>k<t?"◆":'<span class="o">◇</span>').join(""):'<span class="o">locked</span>';
+        let btn;
+        if(!has){ const bc=cardBuyCost((c.arenaSkills||[]).length); btn='<button class="hcBtn buy" data-ci="'+creatures.indexOf(c)+'" data-slot="'+slot+'">🔒 Mint '+bc+'✨</button>'; }
+        else if(t>=5){ btn='<button class="hcBtn up max" disabled>★ MAX</button>'; }
+        else { const cost=upgCost(t),ct=(cost.sp?cost.sp+"pt":"")+(cost.glory?" "+cost.glory+"✨":"")+(cost.chiki?" "+(cost.chiki/1000)+"k":""); btn='<button class="hcBtn up" data-ci="'+creatures.indexOf(c)+'" data-slot="'+slot+'">⬆ '+ct.trim()+'</button>'; }
+        cells+='<div class="hcard '+RAR[slot]+(has?"":" locked")+'"><div class="hcImg" data-key="'+key+'" style="'+(has?"background-image:url('ui/cards/"+key+".jpg')":"")+'">'+(has?"":'<div class="lk">🔒</div>')+'</div><div class="hcName">'+PN[si][slot][1]+'</div><div class="hcPips">'+pips+'</div>'+btn+'</div>';
+      }
+      return '<div class="hubLeg"><div class="hubLegHd"><span style="color:'+c.sp.body+'">'+nameOf(c)+'</span><span>BR '+(c.br||1)+'</span><span class="gl">✨ '+(player&&player.glory||0)+' Glory</span><span>🎯 '+(c.skillPts||0)+' pts</span><span>Deck '+(c.arenaSkills||[]).length+'/12</span></div><div class="hubGrid">'+cells+'</div></div>';
+    }).join("");
+    host.querySelectorAll(".hcImg").forEach(el=>el.onclick=()=>showZoom(el.dataset.key));
+    host.querySelectorAll(".hcBtn.up").forEach(b=>{if(!b.disabled)b.onclick=()=>doUpgrade(creatures[+b.dataset.ci],+b.dataset.slot);});
+    host.querySelectorAll(".hcBtn.buy").forEach(b=>b.onclick=()=>buyCard(creatures[+b.dataset.ci],+b.dataset.slot));
+  }
+  window.renderHubCards=renderHubCards;
   function render(){
     renderTeams();
     const pw=g("arenaPowers"); pw.innerHTML="";
@@ -3092,7 +3140,7 @@ setInterval(updateWhaleTab,1000);
     const si=SPECIES.indexOf(c.sp); addFeed(`🃏 ${nameOf(c)} minted a new skill card: <b>${PN[si][slot][1]}</b>! (−${gCost}✨ · −${mint.toLocaleString()} $CHIKI)`);
     if(player.pk&&typeof saveProfile==="function")saveProfile(player);
     if(typeof refreshUI==="function")refreshUI();
-    openUpgrade(); renderArenaMeta();
+    {const _up=g("upgPanel"); if(_up&&_up.style.display!=="none")openUpgrade();} if(typeof renderHubCards==="function")renderHubCards(); renderArenaMeta();
   }
   async function doUpgrade(c,slot){
     ensureBattle(c); const t=cardTier(c,slot); if(t>=5){showBanner("That card is already maxed (T5).","info");return;}
@@ -3107,7 +3155,7 @@ setInterval(updateWhaleTab,1000);
     c.cardTier[slot]=t+1;
     addFeed(`🃏 ${nameOf(c)}'s <b>${PN[SPECIES.indexOf(c.sp)][slot][1]}</b> upgraded to <b>T${t+1}</b>!`);
     if(player.pk&&typeof saveProfile==="function")saveProfile(player);
-    openUpgrade(); renderArenaMeta();
+    {const _up=g("upgPanel"); if(_up&&_up.style.display!=="none")openUpgrade();} if(typeof renderHubCards==="function")renderHubCards(); renderArenaMeta();
   }
   function openUpgrade(){
     const ov=g("arenaOverlay"); if(!ov)return;
@@ -3143,6 +3191,7 @@ setInterval(updateWhaleTab,1000);
     function aiSelect(name){
       document.querySelectorAll(".aiTab").forEach(t=>t.classList.toggle("on",t.dataset.ai===name));
       document.querySelectorAll(".aiPane").forEach(p=>p.classList.toggle("on",p.dataset.aip===name));
+      if(name==="cards"&&typeof renderHubCards==="function")renderHubCards();
     }
     document.querySelectorAll(".aiTab").forEach(t=>t.onclick=()=>aiSelect(t.dataset.ai));
     const aiEnterBtn=g("arenaEnter");
