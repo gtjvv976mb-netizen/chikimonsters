@@ -782,9 +782,69 @@ if(location.search.indexOf("embed")>-1){
 .aiTrivia{margin-top:10px;background:rgba(0,0,0,.3);border-left:3px solid #ffd24a;border-radius:8px;padding:9px 11px;font-size:12.5px;color:#cfe0ff}
 .aiEnter{font-family:inherit;font-weight:800;font-size:16px;width:100%;padding:12px;margin-top:8px;border:2px solid #b98a2e;border-radius:12px;background:linear-gradient(180deg,#ffd93d,#e0a800);color:#3a2a00;cursor:pointer;box-shadow:0 4px 0 #a87c00}
 .aiEnter:active{transform:translateY(2px);box-shadow:0 2px 0 #a87c00}
+/* ===================== CHIKISEUM REDESIGN — full-screen battle stage (matches the demo) ===================== */
+#arenaOverlay{align-items:stretch;justify-content:stretch;background:#05080f}
+#arenaBox{position:relative;width:100vw;max-width:100vw;height:100vh;max-height:100vh;border-radius:0;padding:0;margin:0;overflow:hidden;
+  background:url("ui/arena.png") center/cover no-repeat}
+#arenaBox::after{content:"";position:absolute;inset:0;background:rgba(5,8,15,.30);pointer-events:none;z-index:0}
+#arenaBox.introMode{background:radial-gradient(120% 80% at 50% 0%,#243a63,#0d1426 75%);overflow-y:auto}
+#arenaBox.introMode #arenaIntro{position:relative;z-index:2;max-width:780px;margin:46px auto 24px;padding:0 16px 24px}
+#arenaHead{position:absolute;top:10px;right:14px;left:auto;z-index:46;background:none;border:none;padding:0;margin:0;font-size:0;width:auto;display:flex;gap:10px;align-items:center}
+#arenaBox.introMode #arenaHead{position:absolute}
+#arenaHead .x{font-size:22px;color:#ffd9d9;cursor:pointer}#arenaInfo{font-size:18px}
+/* banner */
+#arenaBanner{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:min(30vw,330px);height:auto;z-index:6;filter:drop-shadow(0 4px 10px rgba(0,0,0,.6));pointer-events:none}
+#arenaBox.introMode #arenaBanner{display:none}
+/* energy bar art + pips */
+#aEnergyBox{position:absolute;top:14px;left:16px;width:240px;height:84px;background:url("ui/energybar.png") center/contain no-repeat;z-index:7}
+.aEnPips{position:absolute;inset:0}
+.aEnPips i{position:absolute;top:50.5%;height:23%;width:3.2%;transform:translate(-50%,-50%);border-radius:3px;background:transparent;transition:.15s}
+.aEnPips i.on{background:linear-gradient(180deg,#fff3b0,#e0a800);box-shadow:0 0 10px 2px rgba(255,205,50,.95)}
+.aEnPips i.used{background:#6a5520}
+.aEnNum2{position:absolute;top:55%;left:13.5%;width:29%;text-align:center;font-weight:800;font-size:13px;color:#ffe27a;letter-spacing:.5px;text-shadow:0 1px 2px #000,0 0 6px rgba(255,200,60,.6)}
+/* timer art + countdown */
+#aTimerBox{position:absolute;top:13px;right:16px;width:176px;height:85px;background:url("ui/timer.png") center/contain no-repeat;z-index:7;display:none}
+#aTimerBox.on{display:block}
+#aTimerBox .tv{position:absolute;left:60%;top:49%;transform:translate(-50%,-50%);font-weight:800;font-size:22px;color:#ffe9b0;letter-spacing:1px;text-shadow:0 1px 3px #000,0 0 9px rgba(255,200,80,.55);white-space:nowrap}
+#aTimerBox.low .tv{color:#ff8a8a}
+.aMatch2{position:absolute;top:108px;left:50%;transform:translateX(-50%);z-index:6;font-size:12px;font-weight:700;color:#eaf2ff;background:rgba(10,14,30,.7);border:1px solid #2c4470;border-radius:16px;padding:4px 14px;white-space:nowrap}
+/* stage + fighters */
+#arenaStage{position:absolute;inset:0;width:100%;height:100%;aspect-ratio:auto;background:none;border-radius:0;margin:0;box-shadow:none;z-index:1}
+.aFighter{position:absolute;bottom:30%;width:auto;gap:6px}
+.aFighter.you{left:30%;right:auto;transform:translateX(-50%)}
+.aFighter.foe{left:70%;right:auto;transform:translateX(-50%)}
+.aFighter.you.lunge{transform:translateX(-50%) translateX(24%) scale(1.04)}
+.aFighter.foe.lunge{transform:translateX(-50%) translateX(-24%) scale(1.04)}
+.aFighter img{width:auto;height:40vh;max-width:none;max-height:360px;transform:scaleX(var(--face,1)) scale(var(--scl,1));transform-origin:bottom center}
+.aPlate{order:-1;width:172px;max-width:172px;margin-bottom:4px}
+/* log / result / center positioned over the stage */
+#arenaMeta{position:absolute;top:104px;left:16px;z-index:8;width:240px;font-size:11px;background:rgba(10,14,30,.66);border:1px solid #2c4470;border-radius:10px;padding:6px 8px}
+#arenaBox.introMode #arenaMeta{position:static;width:auto;background:none;border:none}
+#arenaLog{position:absolute;top:150px;left:50%;transform:translateX(-50%);z-index:6;min-width:300px;max-width:54vw;text-align:center;font-size:14px;font-weight:700;color:#eaf2ff;background:linear-gradient(180deg,rgba(16,22,44,.9),rgba(10,14,30,.85));border:1px solid #2c4470;border-radius:18px;padding:7px 18px;margin:0}
+#arenaResult{position:absolute;top:46%;left:50%;transform:translate(-50%,-50%);z-index:9;font-size:30px;margin:0}
+#arenaCenter{position:absolute;bottom:198px;left:50%;transform:translateX(-50%);z-index:9;margin:0}
+#arenaKey{position:static;margin:0}
+/* cards along the bottom */
+#arenaPowers{position:absolute;left:50%;bottom:6px;transform:translateX(-50%);z-index:8;max-width:97vw;gap:9px}
+.aPow.art{width:122px;height:183px;border-radius:11px;border-width:2px}
+.aPow.art:hover{transform:translateY(-12px) scale(1.05)}
+.aPow.art.sel{transform:translateY(-18px) scale(1.05)}
+/* lock-in / battle-again art buttons */
+.aLockBtn,.aAgainBtn{position:relative;border:none;background:transparent center/contain no-repeat;cursor:pointer;font-size:0;filter:drop-shadow(0 4px 6px rgba(0,0,0,.5));transition:transform .12s,filter .12s;box-shadow:none;padding:0}
+.aLockBtn{width:190px;height:64px;background-image:url("ui/lockin.png")}
+.aAgainBtn{width:210px;height:76px;background-image:url("ui/battleagain.png")}
+.aLockBtn:hover,.aAgainBtn:hover{transform:translateY(-2px);filter:drop-shadow(0 7px 11px rgba(0,0,0,.55)) brightness(1.08)}
+.aLockBtn:active,.aAgainBtn:active{transform:translateY(1px)}
+.aLockBtn .lkN{position:absolute;top:-7px;right:-7px;min-width:24px;height:24px;padding:0 5px;border-radius:13px;background:linear-gradient(180deg,#3ddc84,#1f9e57);color:#04220f;font-size:14px;font-weight:800;display:flex;align-items:center;justify-content:center;border:2px solid #0f1b34;box-shadow:0 0 8px rgba(60,220,130,.85)}
+/* bottom-left card zoom preview */
+#arenaZoom{position:absolute;bottom:20px;left:20px;z-index:30;width:300px;height:452px;border-radius:18px;overflow:hidden;background:#0f1b34 center/contain no-repeat;border:4px solid #ffe27a;box-shadow:0 16px 44px rgba(0,0,0,.75);pointer-events:none;opacity:0;transform:translateY(20px) scale(.92);transition:opacity .16s,transform .16s}
+#arenaZoom.on{opacity:1;transform:translateY(0) scale(1)}
+@media(max-width:760px){#aEnergyBox{width:180px;height:63px}#aTimerBox{width:132px;height:64px}.aFighter img{height:30vh}.aPow.art{width:92px;height:138px}#arenaZoom{width:200px;height:300px}}
 </style>
 <div id="arenaOverlay"><div id="arenaBox">
   <div id="arenaHead">⚔️ The Chikiseum <span id="arenaInfo" title="Chikiseum guide">ℹ️</span><span class="x" id="arenaClose">✕</span></div>
+  <img id="arenaBanner" src="ui/chikiseum-banner.png" alt="Chikiseum">
+  <div id="arenaZoom"></div>
   <div id="arenaIntro">
     <div class="aiTabs">
       <button class="aiTab on" data-ai="welcome">📜 Welcome</button>
@@ -2751,6 +2811,8 @@ setInterval(updateWhaleTab,1000);
   }
   /* which (speciesIdx_slot) skill cards have illustrated art in ui/cards/ */
   const CARD_ART=new Set(["10_0","10_1","10_2","10_3","10_4","10_5","10_6","10_7","10_8","10_9","10_10","10_11","11_0","11_1","11_2","11_3","11_4","11_5","11_6","11_7","11_8","11_9","11_10","11_11","12_0","12_1","12_2","12_3","12_4","12_5","12_6","12_7","12_8","12_9","12_10","12_11","13_0","13_1","13_2","13_3","13_4","13_5","13_6","13_7","13_8","13_9","13_10","13_11","14_0","14_1","14_2","14_3","14_4","14_5","14_6","14_7","14_8","14_9","14_10","14_11"]);
+  function showZoom(key){const z=g("arenaZoom");if(!z||!CARD_ART.has(key))return;z.style.backgroundImage=`url("ui/cards/${key}.jpg")`;z.classList.add("on");}
+  function hideZoom(){const z=g("arenaZoom");if(z)z.classList.remove("on");}
   function render(){
     renderTeams();
     const pw=g("arenaPowers"); pw.innerHTML="";
@@ -2761,11 +2823,13 @@ setInterval(updateWhaleTab,1000);
     const spent=q.reduce((s,i)=>s+CARD_COST[B.you.hand[i]],0);
     const remain=Math.max(0,B.you.energy-spent), cap=10;
     if(keyEl){
-      const pips=Array.from({length:cap},(_,i)=>{let cls=i<remain?" on":(i<B.you.energy?" used":"");return `<i class="enpip${cls}"></i>`;}).join("");
-      const matchTxt=em>1?`<b style="color:#3ddc84">💪 ${legElem(B.you.si)} vs ${legElem(B.foe.si)} ×${em}</b>`:em<1?`<b style="color:#ff8a8a">⚠️ ${legElem(B.you.si)} vs ${legElem(B.foe.si)} ×${em}</b>`:`${legElem(B.you.si)} vs ${legElem(B.foe.si)}`;
-      const tl=B._left!=null?B._left:TURN_SECONDS;
-      const timer=B.turn==="you"?`<span class="aTimer${tl<=10?' low':''}" id="aTimer">⏱ 0:${tl<10?'0':''}${tl}</span>`:'';
-      keyEl.innerHTML=`<div class="aEnergy"><span class="aEnLbl">⚡</span><span class="aEnNum">${remain}<small>/${cap}</small></span><span class="aEnBar">${pips}</span>${timer}</div><div class="aMatch">${matchTxt} &nbsp;·&nbsp; pick up to 3 cards, then End Turn</div>`;
+      const CELLX=[43.2,48.6,54.0,59.3,64.7,70.1,75.5,80.8,86.2,91.6];   /* pip centres over ui/energybar.png (10 cells) */
+      const pips=CELLX.map((x,i)=>{const cls=i<remain?"on":(i<B.you.energy?"used":"");return `<i class="${cls}" style="left:${x}%"></i>`;}).join("");
+      const matchTxt=em>1?`💪 ${legElem(B.you.si)} ▸ ${legElem(B.foe.si)} ×${em}`:em<1?`⚠️ ${legElem(B.you.si)} ▸ ${legElem(B.foe.si)} ×${em}`:`${legElem(B.you.si)} vs ${legElem(B.foe.si)}`;
+      const tl=B._left!=null?B._left:TURN_SECONDS, showT=B.turn==="you";
+      keyEl.innerHTML=`<div id="aEnergyBox"><div class="aEnPips">${pips}</div><div class="aEnNum2">${remain} / ${cap}</div></div>`+
+        `<div id="aTimerBox" class="${showT?'on':''}${tl<=10?' low':''}"><div class="tv" id="aTimer">0:${tl<10?'0':''}${tl}</div></div>`+
+        `<div class="aMatch2">${matchTxt}</div>`;
     }
     if(B.turn!=="you"){ if(ac)ac.innerHTML="<div style='font-size:13px;color:#8fa6c9'>🤖 Rival is planning…</div>"; return; }
     B.you.hand.forEach((slot,idx)=>{const t=cardTier(B.you.c,slot),k=ARCHK[slot];
@@ -2787,9 +2851,10 @@ setInterval(updateWhaleTab,1000);
         b.innerHTML=`<span class="apCost">${CARD_COST[slot]}</span><span class="apTier">T${t}</span><span class="apName">${ARCH_EMOJI[slot]} ${PN[B.you.si][slot][1]}</span><span class="apVal ${bigCls}">${big}${unit}</span><span class="apEff">${eff}</span>${selBadge}`;
       }
       if(canSelect)b.onclick=()=>toggleCard(idx);
+      b.onmouseenter=()=>showZoom(artKey); b.onmouseleave=hideZoom;
       pw.appendChild(b);
     });
-    if(ac){ac.innerHTML="";const et=document.createElement("button");et.className="aBtn";et.innerHTML=`▶ End Turn${q.length?` <small>(play ${q.length})</small>`:""}`;et.onclick=()=>resolveTurn();ac.appendChild(et);}
+    if(ac){ac.innerHTML=""; if(!B._resolving){const et=document.createElement("button");et.className="aLockBtn";et.setAttribute("aria-label","Lock in");et.innerHTML=q.length?`<span class="lkN">${q.length}</span>`:"";et.onclick=()=>resolveTurn();ac.appendChild(et);}}
   }
   function startBattle(){
     clearTurnTimer();
@@ -2797,8 +2862,8 @@ setInterval(updateWhaleTab,1000);
     const me=legs[0]; const foeC=aiFoe(me.br||1);
     B={you:makeSide(me,true),foe:makeSide(foeC,false),over:false,turn:null,foeBr:foeC.br};
     log(`A wild <b style="color:${SPECIES[B.foe.si].body}">${B.foe.name}</b> (BR ${B.foe.c.br}) challenges you!`);
-    B.turn=(B.you.st.spd>=B.foe.st.spd)?"you":"foe";
-    renderTeams(); setTimeout(()=>beginTurn(B.turn),650);
+    B.firstAttacker=(B.you.st.spd>=B.foe.st.spd)?"you":"foe";   /* faster strikes first; flips each round */
+    renderTeams(); setTimeout(beginRound,650);
   }
   function drawTo(side,n){for(let i=0;i<n;i++){ if(!side.draw.length){side.draw=side.disc;side.disc=[];for(let k=side.draw.length-1;k>0;k--){const j=ri(0,k);[side.draw[k],side.draw[j]]=[side.draw[j],side.draw[k]];}} if(!side.draw.length)break; side.hand.push(side.draw.pop()); }}
   const TURN_SECONDS=60; let _atimer=null;
@@ -2807,21 +2872,37 @@ setInterval(updateWhaleTab,1000);
     if(!B)return; B._left=TURN_SECONDS; clearTurnTimer();
     _atimer=setInterval(()=>{
       if(!B||B.over||B.turn!=="you"||B._resolving){clearTurnTimer();return;}
-      B._left--; const el=g("aTimer"); if(el){el.innerHTML=`⏱ 0:${B._left<10?'0':''}${Math.max(0,B._left)}`;el.className="aTimer"+(B._left<=10?" low":"");}
+      B._left--; const el=g("aTimer"); if(el)el.innerHTML=`0:${B._left<10?'0':''}${Math.max(0,B._left)}`; const bx=g("aTimerBox"); if(bx)bx.className="on"+(B._left<=10?" low":"");
       if(B._left<=0){ clearTurnTimer(); resolveTurn(); }
     },1000);
   }
-  function beginTurn(who){
-    if(!B||B.over)return; const side=B[who];
-    side.disc=side.disc.concat(side.hand); side.hand=[];
-    side.shield=0; side._reflect=0; side._turnBuff=1;                 /* shield/reflect/Rally reset each turn */
-    side.energy=Math.min(10,side.started?side.energy+1:3);
-    if(side._joltNext){side.energy=Math.max(0,side.energy-side._joltNext);side._joltNext=0;}  /* Jolt: lose energy this turn */
-    side.started=true; side.buff=1; side.playedThisTurn=0; side.queue=[];
-    drawTo(side,6); B.turn=who; B._resolving=false; clearTurnTimer();
+  /* ===== SIMULTANEOUS lock-in: both sides draw & plan within one timer, then trade blows ===== */
+  function beginRound(){
+    if(!B||B.over)return;
+    ["you","foe"].forEach(w=>{const s=B[w];
+      s.disc=s.disc.concat(s.hand); s.hand=[];
+      s.shield=0; s._reflect=0; s._turnBuff=1;                       /* shield/reflect/Rally last the round they're raised */
+      s.energy=Math.min(10,s.started?s.energy+1:3);
+      if(s._joltNext){s.energy=Math.max(0,s.energy-s._joltNext);s._joltNext=0;}
+      s.started=true; s.buff=1; s.playedThisTurn=0; s.queue=[];
+      drawTo(s,6);
+    });
+    B.turn="you"; B._resolving=false; B.round=(B.round||0)+1; clearTurnTimer();
+    aiPlan();                /* the rival secretly locks in its cards now */
     render();
-    if(who==="you")startTurnTimer();           /* 1-minute selection timer */
-    else setTimeout(aiTurn,900);
+    startTurnTimer();        /* one shared lock-in timer */
+  }
+  /* the rival plans up to 3 cards (stored as hand indices) within its energy */
+  function aiPlan(){
+    const me=B.foe; me.queue=[]; const used=new Set(); let budget=me.energy;
+    const takeIdx=pred=>{for(let i=0;i<me.hand.length;i++){if(used.has(i))continue;const s=me.hand[i];if(pred(s)&&CARD_COST[s]<=budget&&me.queue.length<3){used.add(i);me.queue.push(i);budget-=CARD_COST[s];if(s===4)budget+=1;return true;}}return false;};
+    if(me.hp/me.maxhp<.4){ if(!takeIdx(s=>s===3))takeIdx(s=>s===11); }                 /* guard/bulwark when low */
+    if(me.hand.some(s=>s===4)&&me.hand.some(s=>s===6||s===1))takeIdx(s=>s===4);          /* charge before a big hit */
+    while(me.queue.length<3){
+      let bi=-1,bd=-1;
+      for(let i=0;i<me.hand.length;i++){if(used.has(i))continue;const s=me.hand[i];if(KIND[s]==="atk"&&CARD_COST[s]<=budget&&cardDmgN(s,cardTier(me.c,s))>bd){bd=cardDmgN(s,cardTier(me.c,s));bi=i;}}
+      if(bi<0)break; used.add(bi);me.queue.push(bi);budget-=CARD_COST[me.hand[bi]];
+    }
   }
   function critRoll(side){return Math.random()<Math.min(.5,side.st.mor/240);}
   function applyHP(def,dmg){ if(def.ls>0){def.ls--;if(def.ls<=0)def.hp=-1;return;} def.hp-=dmg; if(def.hp<=0){ if(Math.random()<def.st.mor/255||def.st.mor>=120){def.ls=1+Math.floor(def.st.mor/60);def.hp=1;} } }
@@ -2872,43 +2953,28 @@ setInterval(updateWhaleTab,1000);
     if(window.playSfx)window.playSfx("click");
     render();
   }
-  /* RESOLVE: play the planned cards in sequence, then hand the turn to the rival */
+  /* RESOLVE: both lock-ins trade blows one card at a time, alternating who strikes first each round */
   function resolveTurn(){
-    if(!B||B.over||B._resolving)return; B._resolving=true; clearTurnTimer();
-    const slots=(B.you.queue||[]).map(i=>B.you.hand[i]);
+    if(!B||B.over||B.turn!=="you"||B._resolving)return; B._resolving=true; clearTurnTimer();
+    const yourSlots=(B.you.queue||[]).map(i=>B.you.hand[i]);
+    const foeSlots=(B.foe.queue||[]).map(i=>B.foe.hand[i]);
     (B.you.queue||[]).slice().sort((a,b)=>b-a).forEach(i=>{B.you.disc.push(B.you.hand[i]);B.you.hand.splice(i,1);});
-    B.you.queue=[]; render();
+    (B.foe.queue||[]).slice().sort((a,b)=>b-a).forEach(i=>{B.foe.disc.push(B.foe.hand[i]);B.foe.hand.splice(i,1);});
+    B.you.queue=[]; B.foe.queue=[];
+    const first=B.firstAttacker||"you", second=first==="you"?"foe":"you";
+    const lists={you:yourSlots,foe:foeSlots}, seq=[], mx=Math.max(yourSlots.length,foeSlots.length);
+    for(let i=0;i<mx;i++){ if(lists[first][i]!=null)seq.push([first,lists[first][i]]); if(lists[second][i]!=null)seq.push([second,lists[second][i]]); }
+    log(`⚔️ <b style="color:#ffd93d">${first==="you"?"You":"Rival"}</b> strike first this round!`);
+    render();
     let k=0;
     const step=()=>{
       if(!B||B.over){B._resolving=false;return;}
-      if(k>=slots.length){ B._resolving=false; render(); setTimeout(()=>endTurn("you"),500); return; }
-      const s=slots[k++]; flash("foe"); applyCard(B.you,B.foe,s,"you"); render(); checkEnd();
-      if(B.over){B._resolving=false;return;} setTimeout(step,760);
+      if(k>=seq.length){ B._resolving=false; B.firstAttacker=second; render(); if(!B.over)setTimeout(beginRound,700); return; }
+      const [who,slot]=seq[k++], att=B[who], def=B[who==="you"?"foe":"you"];
+      flash(who==="you"?"foe":"you"); applyCard(att,def,slot,who); render(); checkEnd();
+      if(B.over){B._resolving=false;return;} setTimeout(step,820);
     };
-    setTimeout(step, slots.length?340:200);
-  }
-  function endTurn(who){ if(!B||B.over)return; beginTurn(who==="you"?"foe":"you"); }
-  function aiTurn(){
-    if(!B||B.over)return; const me=B.foe,foe=B.you;
-    /* the rival plans up to 3 cards within its energy, then resolves them in sequence */
-    const picks=[], hand=me.hand.slice(); let budget=me.energy;
-    const take=slot=>{const hi=hand.indexOf(slot); if(hi>-1&&picks.length<3&&CARD_COST[slot]<=budget){hand.splice(hi,1);picks.push(slot);budget-=CARD_COST[slot];if(slot===4)budget+=1;return true;} return false;};
-    if(me.hp/me.maxhp<.4){ if(!take(3))take(11); }                 /* guard/bulwark when low */
-    if(hand.includes(4)&&(hand.includes(6)||hand.includes(1)))take(4);  /* charge before a big hit */
-    while(picks.length<3){
-      const atks=hand.filter(x=>CARD_COST[x]<=budget&&KIND[x]==="atk").sort((a,b)=>cardDmgN(b,cardTier(me.c,b))-cardDmgN(a,cardTier(me.c,a)));
-      if(!atks.length||!take(atks[0]))break;
-    }
-    if(!picks.length){ setTimeout(()=>endTurn("foe"),700); return; }
-    let k=0;
-    const step=()=>{
-      if(!B||B.over)return;
-      if(k>=picks.length){ setTimeout(()=>endTurn("foe"),500); return; }
-      const s=picks[k++], hi=me.hand.indexOf(s); if(hi>-1){me.disc.push(s);me.hand.splice(hi,1);}
-      flash("you"); applyCard(me,foe,s,"foe"); render(); checkEnd();
-      if(B.over)return; setTimeout(step,760);
-    };
-    setTimeout(step,650);
+    setTimeout(step, 520);
   }
   function checkEnd(){ if(!B||B.over)return; if(B.foe.hp<=0&&B.foe.ls<=0)return end(true); if(B.you.hp<=0&&B.you.ls<=0)return end(false); }
   function end(win){
@@ -2929,7 +2995,7 @@ setInterval(updateWhaleTab,1000);
       if(player&&typeof saveProfile==="function"&&player.pk)saveProfile(player);
       log("💀 Defeated… you earned a little Battle EXP. Upgrade your cards &amp; try again!"); }
     renderArenaMeta();
-    const again=document.createElement("button");again.className="aBtn";again.textContent="⚔️ Battle Again";again.onclick=findMatch;
+    const again=document.createElement("button");again.className="aAgainBtn";again.setAttribute("aria-label","Battle again");again.onclick=findMatch;hideZoom();
     g("arenaCenter").innerHTML=""; g("arenaCenter").appendChild(again);
   }
   const myLegends=()=>(typeof myChikis==="function")?myChikis().filter(c=>c.isLegend):[];
