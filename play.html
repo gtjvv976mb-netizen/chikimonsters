@@ -870,12 +870,12 @@ if(location.search.indexOf("embed")>-1){
   <div id="arenaZoom"></div>
   <div id="arenaIntro">
     <div class="aiTabs">
-      <button class="aiTab on" data-ai="welcome">📜 Welcome</button>
+      <button class="aiTab on" data-ai="cards">🃏 My Cards</button>
+      <button class="aiTab" data-ai="welcome">📜 Welcome</button>
       <button class="aiTab" data-ai="mech">⚙️ Mechanics</button>
       <button class="aiTab" data-ai="tok">🏆 Tokenomics</button>
-      <button class="aiTab" data-ai="cards">🃏 My Cards</button>
     </div>
-    <div class="aiPane on" data-aip="welcome">
+    <div class="aiPane" data-aip="welcome">
       <h3>Welcome to the Chikiseum ⚔️</h3>
       <p>Chikoria's grand arena, where <b>Legendary</b> Chikis wield the power of Chi and duel for <b>✨ Glory</b>. Only Legendaries can fight here — awaken one from a Legendary Egg at 🔮 <b>Mithra's Mystic Market</b>. Step in, battle rivals, earn Glory, and forge your 12-card deck into a champion's arsenal.</p>
       <div class="aiTrivia">🔺 Element triangle: 💧 Water ▸ 🔥 Fire ▸ 🐾 Beast ▸ ⚡ Storm ▸ ✨ Light ▸ Water. A strong matchup hits for <b>×1.5</b>, a weak one <b>×0.7</b>. A Legendary is born owning just <b>3 of its 12</b> skill cards.</div>
@@ -891,11 +891,14 @@ if(location.search.indexOf("embed")>-1){
       <div class="aiBlock"><h4>🪙 $CHIKI sinks</h4>Minting a new skill card costs <b>25,000 $CHIKI</b>; Tier 4→5 mastery costs <b>50,000 $CHIKI</b>; feeding restores stamina. Every $CHIKI spend: <b>1% burned</b>, 49.5% to the reward pool, 49.5% to the team.</div>
       <div class="aiBlock"><h4>🔮 Mystic Market</h4>Hatch Legendary Eggs and acquire skill cards at Mithra's Mystic Market.</div>
     </div>
-    <div class="aiPane" data-aip="cards">
+    <div class="aiPane on" data-aip="cards">
       <div style="font-size:12.5px;color:#aebbd6;margin-bottom:10px">Your full skill deck — owned cards show their Tier (◆), locked cards can be minted at the 🔮 Mystic Market. Tap any card to enlarge it.</div>
       <div id="hubCards"></div>
     </div>
-    <button class="aiEnter" id="arenaEnter">⚔️ Enter the Arena</button>
+    <div style="display:flex;gap:10px;margin-top:6px">
+      <button class="aiEnter" id="arenaHubFeed" style="flex:1;background:linear-gradient(180deg,#ffb15a,#e8590c);border-color:#a83e00;box-shadow:0 4px 0 #a83e00">🍖 Feed</button>
+      <button class="aiEnter" id="arenaEnter" style="flex:2;margin-top:0">⚔️ Enter the Arena</button>
+    </div>
   </div>
   <div id="arenaMeta"></div>
   <div id="arenaStage">
@@ -2858,7 +2861,9 @@ setInterval(updateWhaleTab,1000);
         else { const cost=upgCost(t),ct=(cost.sp?cost.sp+"pt":"")+(cost.glory?" "+cost.glory+"✨":"")+(cost.chiki?" "+(cost.chiki/1000)+"k":""); btn='<button class="hcBtn up" data-ci="'+creatures.indexOf(c)+'" data-slot="'+slot+'">⬆ '+ct.trim()+'</button>'; }
         cells+='<div class="hcard '+RAR[slot]+(has?"":" locked")+'"><div class="hcImg" data-key="'+key+'" style="'+(has?"background-image:url('ui/cards/"+key+".jpg')":"")+'">'+(has?"":'<div class="lk">🔒</div>')+'</div><div class="hcName">'+PN[si][slot][1]+'</div><div class="hcPips">'+pips+'</div>'+btn+'</div>';
       }
-      return '<div class="hubLeg"><div class="hubLegHd"><span style="color:'+c.sp.body+'">'+nameOf(c)+'</span><span>BR '+(c.br||1)+'</span><span class="gl">✨ '+(player&&player.glory||0)+' Glory</span><span>🎯 '+(c.skillPts||0)+' pts</span><span>Deck '+(c.arenaSkills||[]).length+'/12</span></div><div class="hubGrid">'+cells+'</div></div>';
+      const smax=legStamMax(c.level||1),scur=Math.round(c.arenaStam!=null?c.arenaStam:smax),slp=c.arenaSleepUntil&&c.arenaSleepUntil>Date.now();
+      const stam=slp?('💤 '+fmtSleep((c.arenaSleepUntil-Date.now())/1000)):('⚡ '+scur+'/'+smax);
+      return '<div class="hubLeg"><div class="hubLegHd"><span style="color:'+c.sp.body+'">'+nameOf(c)+'</span><span>BR '+(c.br||1)+'</span><span>'+stam+'</span><span class="gl">✨ '+(player&&player.glory||0)+' Glory</span><span>🎯 '+(c.skillPts||0)+' pts</span><span>Deck '+(c.arenaSkills||[]).length+'/12</span></div><div class="hubGrid">'+cells+'</div></div>';
     }).join("");
     host.querySelectorAll(".hcImg").forEach(el=>el.onclick=()=>showZoom(el.dataset.key));
     host.querySelectorAll(".hcBtn.up").forEach(b=>{if(!b.disabled)b.onclick=()=>doUpgrade(creatures[+b.dataset.ci],+b.dataset.slot);});
@@ -3067,7 +3072,7 @@ setInterval(updateWhaleTab,1000);
     if(player.pk&&typeof saveProfile==="function")saveProfile(player);
     if(typeof addFeed==="function")addFeed(`🍖 ${nameFor(player)} fed <b style="color:${c.sp.body}">${nameOf(c)}</b> ${cost.toLocaleString()} $CHIKI → arena stamina full (⚡${max}).`);
     if(typeof refreshUI==="function")refreshUI();
-    renderArenaMeta(); findMatch();
+    renderArenaMeta(); if(typeof renderHubCards==="function")renderHubCards();   /* refresh hub (stamina) — feeding no longer auto-starts a match */
   }
   window.feedLegendary=feedLegendary;
   async function findMatch(){
@@ -3113,11 +3118,8 @@ setInterval(updateWhaleTab,1000);
       legs.map(c=>{const max=legStamMax(c.level||1),cur=Math.round(c.arenaStam!=null?c.arenaStam:max);
         const sleeping=c.arenaSleepUntil&&c.arenaSleepUntil>now;
         const st=sleeping?`💤 ${fmtSleep((c.arenaSleepUntil-now)/1000)}`:`⚡${cur}/${max}`;
-        return `<span class="aMetaPill">${(typeof nameOf==="function"?nameOf(c):c.sp.names[0])}: BR ${c.br||1} · ${st}</span>`;}).join("")+
-      (legs.some(c=>!(c.arenaSleepUntil&&c.arenaSleepUntil>now)&&(c.arenaStam||0)<legStamMax(c.level||1))?`<button class="aMetaBtn" id="arenaFeed" style="background:linear-gradient(180deg,#ffb15a,#e8590c);box-shadow:0 3px 0 #a83e00">🍖 Feed</button>`:"")+
-      `<button class="aMetaBtn" id="arenaUpg">🃏 Upgrade Cards${sp?` (${sp})`:""}</button>`;
-    const ub=g("arenaUpg"); if(ub)ub.onclick=openUpgrade;
-    const fb=g("arenaFeed"); if(fb)fb.onclick=()=>{const c=legs.find(c=>!(c.arenaSleepUntil&&c.arenaSleepUntil>Date.now())&&(c.arenaStam||0)<legStamMax(c.level||1));if(c)feedLegendary(c);};
+        return `<span class="aMetaPill">${(typeof nameOf==="function"?nameOf(c):c.sp.names[0])}: BR ${c.br||1} · ${st}</span>`;}).join("");
+    /* Feed & Upgrade Cards now live in the Chikiseum hub — not in the battle screen */
   }
   window.renderArenaMeta=renderArenaMeta;
   /* ---- card upgrade panel ---- */
@@ -3198,12 +3200,19 @@ setInterval(updateWhaleTab,1000);
     if(aiEnterBtn)aiEnterBtn.onclick=()=>{ try{localStorage.setItem("csIntroSeen","1");}catch(e){} hideArenaIntro(); findMatch(); renderArenaMeta(); };
     const aiUpgBtn=g("arenaUpg");
     if(aiUpgBtn)aiUpgBtn.onclick=()=>{ if(typeof window.openUpgrade==="function")window.openUpgrade(); };
+    const hubFeedBtn=g("arenaHubFeed");
+    if(hubFeedBtn)hubFeedBtn.onclick=()=>{
+      const legs=(typeof myLegends==="function"?myLegends():[]).map(ensureLegendSkills);
+      const c=legs.find(c=>!(c.arenaSleepUntil&&c.arenaSleepUntil>Date.now())&&(c.arenaStam||0)<legStamMax(c.level||1));
+      if(!c){ showBanner("All your Legendaries are at full arena stamina. ⚡","info"); return; }
+      feedLegendary(c);
+    };
     const aiInfo=g("arenaInfo");
     if(aiInfo)aiInfo.onclick=()=>{ aiSelect("welcome"); showArenaIntro(); };
     ab.onclick=()=>{
       g("arenaOverlay").style.display="flex";
       if(typeof window.focusOnChikiseum==="function")window.focusOnChikiseum();   /* pan the camera to the arena in the world */
-      if(ARENA_ENABLED){ aiSelect("welcome"); showArenaIntro(); }   /* always land on the Chikiseum hub first — Battle starts from there */
+      if(ARENA_ENABLED){ aiSelect("cards"); showArenaIntro(); }   /* always land on the Chikiseum hub (My Cards) — Battle starts from there */
       else{   /* battles still being polished — show a notice, but the arena is now in the world */
         g("arenaResult").innerHTML="🛠️ <span style='color:#ffd93d'>The Chikiseum is being forged</span>";
         g("arenaLog").innerHTML="Battles open in the <b>Chikoria Cup</b> — but your arena now stands in the world. <b>Close this</b> to see it on the map! 👑";
