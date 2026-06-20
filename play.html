@@ -1826,7 +1826,7 @@ function saveProfile(h){
       ancientEgg:h.ancientEgg||null,                /* Sorceress: legendary egg incubation state */
       glory:h.glory||0,                             /* Chikoria Cup battle currency */
       taskCounts:h.taskCounts||null,                /* per-task completions by this player's Chikis (Done column) */
-      chikis:mine.map(c=>({sp:SPECIES.indexOf(c.sp),level:c.level,tasksDone:c.tasksDone||0,nick:c.nick||null,renames:c.renames||0,sleepCycles:c.sleepCycles||0,hungry:!!c.hungry,food:Math.round(c.food||0),stamina:Math.round(c.stamina||0),xp:Math.floor(c.xp||0),isLegend:!!c.isLegend,tending:!!c.tending,arenaSkills:c.arenaSkills||null,br:c.br||1,battleXp:Math.floor(c.battleXp||0),skillPts:c.skillPts||0,cardTier:c.cardTier||null,arenaStam:c.arenaStam!=null?Math.round(c.arenaStam):null,arenaSleepUntil:c.arenaSleepUntil||0}))};
+      chikis:mine.map(c=>({sp:SPECIES.indexOf(c.sp),level:c.level,tasksDone:c.tasksDone||0,nick:c.nick||null,renames:c.renames||0,sleepCycles:c.sleepCycles||0,hungry:!!c.hungry,food:Math.round(c.food||0),stamina:Math.round(c.stamina||0),xp:Math.floor(c.xp||0),isLegend:!!c.isLegend,tending:!!c.tending,arenaSkills:c.arenaSkills||null,br:c.br||1,battleXp:Math.floor(c.battleXp||0),skillPts:c.skillPts||0,cardTier:c.cardTier||null,arenaStam:c.arenaStam!=null?Math.round(c.arenaStam):null,arenaSleepUntil:c.arenaSleepUntil||0,sleeping:c.state==="sleeping",sleepUntil:c.sleepUntil||0}))};   /* persist the nap so a refresh RESUMES it instead of restarting */
     localStorage.setItem(profileKey(h.pk),JSON.stringify(data));
     if(CHAIN.BACKEND)fetch(CHAIN.BACKEND+"/profile",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:h.pk,profile:data})}).catch(()=>{});
   }catch(e){}
@@ -1887,6 +1887,7 @@ function restoreChikis(h,saved){
     if(cd.arenaSkills)c.arenaSkills=cd.arenaSkills;   /* legendary's 3-of-7 Chi skills */
     if(c.isLegend){ c.br=cd.br||1; c.battleXp=cd.battleXp||0; c.skillPts=cd.skillPts||0; c.cardTier=cd.cardTier||null; ensureBattle(c); }
     if(cd.hungry){c.hungry=true;c.state="sleeping";c.sleepT=0;}
+    else if(cd.sleeping&&cd.sleepUntil){c.state="sleeping";c.sleepUntil=cd.sleepUntil;c.sleepT=Math.max(0,(cd.sleepUntil-Date.now())/1000);}   /* RESUME the saved nap (wall-clock) — refresh no longer resets it; offlineProgress respects it */
     if(cd.nick){c.nick=cd.nick;c.named=true;}   /* already named — don't re-prompt onboarding */
     c.renames=cd.renames||0;                      /* per-Chiki rename budget */
     const before=c.level;
