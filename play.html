@@ -4015,14 +4015,14 @@ async function fetchWorld(){
       if(ghostMap.has(key)){const c=ghostMap.get(key);const want=Math.max(1,e.level||1);
         if(c.level!==want){const st=stageOf(c.level);c.level=want;if(stageOf(want)!==st&&typeof rebuildChiki==="function")rebuildChiki(c);}
         /* keep the real data fresh */
-        c.nick=e.nick||c.nick; if(c.nick)c.named=true; c.tasksDone=e.tasksDone||0; c.hungry=!!e.hungry; c.isLegend=!!e.isLegend;
+        c.nick=e.nick||c.nick; if(c.nick)c.named=true; c.tasksDone=e.tasksDone||0; c.hungry=!!e.hungry; c.isLegend=!!e.isLegend||LEGEND_IDXS.indexOf((e.sp|0)%SPECIES.length)>-1;   /* species is authority — a Legendary never does tasks even if its stored flag is missing */
         const h=c.holder; if(h){h.handle=e.handle||h.handle; if(e.bal)h.bal=e.bal;}
         continue;}
       if(count>=60)break;
       const h=ghostHolder(e.wallet); h.handle=e.handle||h.handle; if(e.bal)h.bal=e.bal;
       const c=spawnCreature(h,Math.max(1,e.level||1),(e.sp|0)%SPECIES.length);
       c.ghost=true; c.nick=e.nick||null; if(c.nick)c.named=true;
-      c.tasksDone=e.tasksDone||0; c.hungry=!!e.hungry; c.isLegend=!!e.isLegend;
+      c.tasksDone=e.tasksDone||0; c.hungry=!!e.hungry; c.isLegend=!!e.isLegend||LEGEND_IDXS.indexOf((e.sp|0)%SPECIES.length)>-1;   /* species is authority — a Legendary never does tasks even if its stored flag is missing */
       ghostMap.set(key,c);count++;
     }
   }catch(e){}
