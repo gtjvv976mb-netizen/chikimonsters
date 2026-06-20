@@ -1332,6 +1332,7 @@ const RARE_SET=["epic","mythic","shiny","legend"];
 /* task durations scale with rarity: 1 min (common) up to 30 min (legendary) */
 const DUR_BY_RARITY={common:60,uncommon:150,rare:300,epic:600,mythic:900,shiny:1200,legend:1800};
 TASKS.forEach(t=>{t.dur=DUR_BY_RARITY[t.rarity]||60;});
+const MIN_TASK_STAM=Math.min(...TASKS.map(t=>t.stam));   /* cheapest task's stamina cost — below this a Chiki can't do ANY task and must sleep */
 const fmtDur=s=>{s=Math.ceil(s);if(s<60)return s+"s";const m=Math.floor(s/60),ss=s%60;return ss?m+"m"+ss+"s":m+"m";};
 const ZONES={
   berry:[{x:16,y:15},{x:28,y:32},{x:44,y:11},{x:20,y:67},{x:48,y:88},{x:60,y:75}],
@@ -5707,6 +5708,8 @@ function tickCreature(c,dt){
       else { c.vx=0;c.vy=0; c.dir=Math.atan2(ex,ez); if(!c.say&&Math.random()<dt*0.02){c.say="🥚 tending…";c.sayUntil=performance.now()/1000+2.6;} }   /* parked at the nest, facing the egg */
       return;
     }
+    /* SAFETY NET: a fed, awake Chiki too drained to do ANY task must sleep to recover — never get stuck wandering with no stamina */
+    if(!c.isLegend&&!c.tending&&!c.hungry&&c.stamina<MIN_TASK_STAM){startSleep(c);return;}
     c.nextTaskIn-=dt;
     if(c.nextTaskIn<=0){assignTask(c,false);return;}
     if((c.vx===0&&c.vy===0)||Math.random()<dt*0.8)steerClear(c);
