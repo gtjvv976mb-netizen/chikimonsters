@@ -1051,7 +1051,7 @@ if(location.search.indexOf("embed")>-1){
     <li><b>🤝 Owner presence matters</b>: while you're <b>online</b>, your Chikis are motivated and work <b>20% faster</b>; while you're <b>away</b>, they grow lonely and work <b>60% slower</b> — so check in often!</li>
   </ul>
   <h3>⚡ Stamina, sleep &amp; the food bar</h3>
-  <p>Two bars keep your Chiki going. <b>Stamina</b> powers tasks — at zero your Chiki <b>sleeps</b> to recover it for free (higher level = shorter nap). The <b>food bar</b> drains in real time: it holds about <b>30 minutes</b> at Lv 1, growing to <b>12 hours</b> at Lv 50. When food runs out your Chiki is <b>famished</b> and won't work until you feed it. Refilling food costs about <b>68 $CHIKI/min at Lv 1, easing to ~34/min at Lv 50</b> (recently cut 15%) from the My Chiki panel (1% burned · 49.5% reward pool · 49.5% team) — this is the main way your Chiki spends $CHIKI to keep earning.</p>
+  <p>Two bars keep your Chiki going. <b>Stamina</b> powers tasks — at zero your Chiki <b>sleeps</b> to recover it for free (higher level = shorter nap). The <b>food bar</b> drains <b>while your Chiki is awake and working</b> (a sleeping Chiki rests for free and burns no food): it holds about <b>30 minutes</b> at Lv 1, growing to <b>12 hours</b> at Lv 50. When food runs out your Chiki is <b>famished</b> and won't work until you feed it. Refilling food costs about <b>68 $CHIKI/min at Lv 1, easing to ~34/min at Lv 50</b> (recently cut 15%) from the My Chiki panel (1% burned · 49.5% reward pool · 49.5% team) — this is the main way your Chiki spends $CHIKI to keep earning.</p>
   <h3>🌟 Levels &amp; evolution (max Lv 50)</h3>
   <ul>
     <li><b>Levels are earned with EXP</b>: every completed task grants EXP, and <b>rarer tasks give much more</b> — Common +5, Uncommon +8, Rare +14, Epic +24, Mythic +40, Shiny +65, Legendary +110. The My Chiki and details panels show an EXP bar to the next level.</li>
@@ -1305,7 +1305,15 @@ const SEED_TOTAL=SEED_DIST.reduce((s,r)=>s+r[1],0);
 function chikiHash(str){let h=1779033703^str.length;for(let i=0;i<str.length;i++){h=Math.imul(h^str.charCodeAt(i),3432918353);h=(h<<13)|(h>>>19);}h=Math.imul(h^(h>>>16),2246822507);h=Math.imul(h^(h>>>13),3266489909);return ((h^(h>>>16))>>>0)/4294967296;}
 function slotRarity(wallet,lastClaim,ci,slot){let x=chikiHash(wallet+"|"+lastClaim+"|"+ci+"|"+slot)*SEED_TOTAL;for(const [name,w] of SEED_DIST){x-=w;if(x<=0)return name;}return "common";}
 function seededEarn(wallet,lastClaim,chikis,minutes){const slots=Math.min(4000,Math.floor(minutes*60/SEED_CFG.taskSec));let sol=0;for(let ci=0;ci<chikis;ci++)for(let s=0;s<slots;s++)sol+=SEED_CFG.raritySol[slotRarity(wallet,lastClaim,ci,s)];return sol*SEED_CFG.mult*(SEED_CFG.poolFactor||1);}   /* ×poolFactor: mirrors server pool-scaling so the displayed pouch matches the actual payout */
-function localPouch(){if(!player||!player.pk||player._lastClaim==null)return null;const minutes=Math.min(SEED_CFG.accrualCap,(Date.now()-player._lastClaim)/60000);return seededEarn(player.pk,player._lastClaim,player._earnChikis||1,minutes)*(1-(SEED_CFG.claimTax||0));}   /* net after claim tax */
+/* Activity gating: a Chiki earns only while AWAKE + FED. We track active vs total seconds (online + the offline
+   catch-up) and report the fraction to the server, which clamps it to [0,1] (so it can only reduce earnings). */
+function earnActiveFrac(){
+  if(!player)return 1;
+  const a=(player._offlineActiveSec||0)+(player._onlineActiveSec||0);
+  const t=(player._offlineTotalSec||0)+(player._onlineTotalSec||0);
+  return t>0?Math.max(0,Math.min(1,a/t)):1;
+}
+function localPouch(){if(!player||!player.pk||player._lastClaim==null)return null;const minutes=Math.min(SEED_CFG.accrualCap,(Date.now()-player._lastClaim)/60000)*earnActiveFrac();return seededEarn(player.pk,player._lastClaim,player._earnChikis||1,minutes)*(1-(SEED_CFG.claimTax||0));}   /* net after claim tax · scaled by awake+fed fraction */
 const TASKS=[
   {id:0,name:"Berry Foraging",rarity:"common",chance:22,pct:0.0002,zone:"berry",emoji:"🍓",stam:8,dur:300,count:0,where:"🌸🍂"},
   {id:1,name:"Flower Picking",rarity:"common",chance:16,pct:0.0004,zone:"flowers",emoji:"💐",stam:9,dur:300,count:0,where:"🌸☀️"},
@@ -1833,22 +1841,24 @@ function offlineProgress(c,elapsedSec){
   if(c.isLegend)return 0;                                                     /* legendaries don't work/earn/eat */
   if(c.tending&&c.holder&&c.holder.ancientEgg&&!c.holder.ancientEgg.hatched)return 0;    /* tenders tend the Legendary Egg — tickCare spends their food */
   let t=Math.min(Math.max(0,elapsedSec),72*3600);   /* cap a long absence at 72h */
-  if(t<30){ c.food=Math.max(0,(c.food!=null?c.food:foodMaxSec(c.level))-t); return 0; }
+  if(t<30){ c.food=Math.max(0,(c.food!=null?c.food:foodMaxSec(c.level))-t); if(c.holder===player){c.holder._offlineActiveSec=(c.holder._offlineActiveSec||0)+t;c.holder._offlineTotalSec=(c.holder._offlineTotalSec||0)+t;} return 0; }
   const food0=(c.food!=null?c.food:foodMaxSec(c.level));
   let active=Math.min(t,food0);                       /* a Chiki only works while it still has FOOD */
-  let did=0,guard=0;const AVG=Math.round(45*1.6),COST=16,stage0=stageOf(c.level);   /* owner OFFLINE/away: Chikis work 60% slower */
+  let did=0,guard=0,awakeSec=0;const AVG=Math.round(45*1.6),COST=16,stage0=stageOf(c.level);   /* owner OFFLINE/away: Chikis work 60% slower · awakeSec = AWAKE+FED time (earns) */
   while(active>0&&guard++<6000){
-    if(c.stamina>=COST){                              /* working a task */
+    if(c.stamina>=COST){                              /* working a task — AWAKE + FED, so it earns */
       if(active<AVG)break;
-      active-=AVG;c.stamina-=COST;c.tasksDone++;did++;
+      active-=AVG;awakeSec+=AVG;c.stamina-=COST;c.tasksDone++;did++;
       c.xp=Math.min((c.xp||0)+COST*2, xpNeed(c.level));   /* XP fills toward "ready" — leveling is ALWAYS a paid action */
       const ht=c.holder; if(ht&&typeof rollTask==="function"){const tk=rollTask(c);if(tk){ht.taskCounts=ht.taskCounts||{};ht.taskCounts[tk.name]=(ht.taskCounts[tk.name]||0)+1;if(typeof tk.count==="number")tk.count++;}}  /* credit the Task Table for offline/background work */
-    }else{                                            /* stamina spent → naps, sleep restores stamina for free */
+    }else{                                            /* stamina spent → naps (sleep restores stamina for free, but does NOT earn) */
       const dur=sleepTimeOf(c.level);
       if(active<dur){c.state="sleeping";c.sleepT=dur-active;break;}
       active-=dur;c.sleepCycles=(c.sleepCycles||0)+1;c.stamina=maxStamOf(c.level);
     }
   }
+  /* Activity gating: of the whole absence, only awakeSec was AWAKE+FED (earned). Sleep + post-food famished time earn nothing. */
+  if(c.holder===player){ c.holder._offlineActiveSec=(c.holder._offlineActiveSec||0)+awakeSec; c.holder._offlineTotalSec=(c.holder._offlineTotalSec||0)+t; }
   c.food=Math.max(0,food0-t);                          /* food drained for the whole absence */
   if(c.food<=0){c.hungry=true;c.state="sleeping";c.sleepT=0;}   /* famished while away — rests until fed */
   c.stamina=Math.min(c.stamina,maxStamOf(c.level));
@@ -2105,7 +2115,7 @@ async function feedChiki(c){            /* refill the FOOD bar — foodPerMin(le
   c.food=foodMaxSec(c.level);
   addFeed(`🍖 ${nameFor(h)} fed <b>${nameOf(c)}</b> ${cost.toLocaleString()} $CHIKI → food full (${fmtFood(c.food)}) · 🔥${fmtK(burn)} burned · 💰${fmtK(toPool)}→pool · 🏦${fmtK(toTeam)}→team`);
   spawnBurst(c.x,c.y,"#ff922b",24);spawnFloat(c.x,c.y,"🍖 Yum!","#ff922b");
-  if(c.hungry||c.state==="sleeping")wakeUp(c); else refreshUI();
+  if(c.hungry)wakeUp(c); else refreshUI();   /* feeding only rouses a FAMISHED Chiki; a normal stamina nap is left to finish (constant feeding no longer blocks sleep) */
   if(typeof saveProfile==="function"&&h.pk)saveProfile(h);
 }
 
@@ -2334,7 +2344,7 @@ async function refreshChainBalances(){
     const mint=new w3.PublicKey(CHAIN.MINT);
     const ata=w3.PublicKey.findProgramAddressSync([owner.toBuffer(),TOKEN.toBuffer(),mint.toBuffer()],ATAP)[0];
     try{const r=await conn.getTokenAccountBalance(ata); if(r&&r.value&&r.value.uiAmount!=null)player.bal=Math.floor(r.value.uiAmount);}catch(e){}
-    try{if(CHAIN.BACKEND){const er=await fetch(CHAIN.BACKEND+"/claimable?wallet="+player.pk,{cache:"no-store"});const ej=await er.json();if(ej){
+    try{if(CHAIN.BACKEND){const er=await fetch(CHAIN.BACKEND+"/claimable?wallet="+player.pk+"&activeFrac="+earnActiveFrac().toFixed(4),{cache:"no-store"});const ej=await er.json();if(ej){
       if(ej.lifetimePaid!=null)player._paidSol=+Number(ej.lifetimePaid).toFixed(4);
       if(ej.claimableSol!=null)player._pouchSol=+Number(ej.claimableSol).toFixed(6);
       if(ej.lastClaim!=null)player._lastClaim=ej.lastClaim;
@@ -2574,7 +2584,7 @@ async function backendClaim(){
   showBanner("⏳ Claiming your SOL rewards… (the server may take a few seconds to wake up)","info");
   addFeed("⏳ Claiming SOL from the reward pool…");
   try{
-    const r=await fetch(CHAIN.BACKEND+"/claim",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:player.pk})});
+    const r=await fetch(CHAIN.BACKEND+"/claim",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:player.pk,activeFrac:earnActiveFrac()})});
     const j=await r.json();
     if(j.ok){
       player.sol=+(player.sol+j.amountSol).toFixed(4);player.earned=(player.earned||0)+j.amountSol;
@@ -2582,6 +2592,7 @@ async function backendClaim(){
       showBanner(`💰 Claimed <b>${j.amountSol} SOL</b> to your wallet!`,"");
       addFeed(`💰 Claimed <b>${j.amountSol} SOL</b> — <a href="${j.explorer}" target="_blank" style="color:#3ddc84">view tx</a>`);
       player._pouchSol=0;player._lastClaim=Date.now();              /* pouch empties; seed window restarts */
+      player._offlineActiveSec=0;player._offlineTotalSec=0;player._onlineActiveSec=0;player._onlineTotalSec=0;player._earnTickT=Date.now();   /* reset activity-gating counters for the new window */
       if(typeof refreshChainBalances==="function")setTimeout(refreshChainBalances,1500);  /* sync exact new last_claim from server */
       refreshUI();
     }else{
@@ -3999,12 +4010,18 @@ setInterval(fetchWorld,12000);
 /* live Chiki Pouch + reveal the SAME seeded rares the server is crediting (synced earnings) */
 setInterval(()=>{
   if(!player||!player.pk||player._lastClaim==null)return;
+  const mine=myChikis().filter(c=>!c.isLegend).slice(0,player._earnChikis||1);   /* Legendaries are defenders — they don't earn */
+  /* accumulate online AWAKE+FED time vs total for these earner Chikis (drives activeFrac) */
+  const _nt=Date.now();
+  if(player._earnTickT){ const _dt=Math.min(15,(_nt-player._earnTickT)/1000);
+    mine.forEach(c=>{ player._onlineTotalSec=(player._onlineTotalSec||0)+_dt;
+      if(c.state!=="sleeping"&&!c.hungry&&(c.food==null||c.food>0))player._onlineActiveSec=(player._onlineActiveSec||0)+_dt; }); }
+  player._earnTickT=_nt;
   /* live pouch number in the profile */
   const pv=document.getElementById("pouchVal"); if(pv){const lp=localPouch(); if(lp!=null)pv.textContent=lp.toFixed(5)+" ◎";}
-  /* reveal newly-due rarity slots as floats over the earning Chikis */
-  const elapsedMin=Math.min(SEED_CFG.accrualCap,(Date.now()-player._lastClaim)/60000);
+  /* reveal newly-due rarity slots as floats over the earning Chikis — scaled by the awake+fed fraction so reveals match the pouch */
+  const elapsedMin=Math.min(SEED_CFG.accrualCap,(Date.now()-player._lastClaim)/60000)*earnActiveFrac();
   const dueSlots=Math.min(4000,Math.floor(elapsedMin*60/SEED_CFG.taskSec));
-  const mine=myChikis().filter(c=>!c.isLegend).slice(0,player._earnChikis||1);   /* Legendaries are defenders — they don't earn */
   mine.forEach((c,ci)=>{
     if(c._revAnchor!==player._lastClaim){c._revAnchor=player._lastClaim;c._revealed=Math.max(0,dueSlots-1);}  /* start at "now", don't replay history */
     let shown=0;
@@ -4016,7 +4033,7 @@ setInterval(()=>{
         spawnFloat(c.x,c.y,`${RARITY[rar].label} +${val.toFixed(5)} ◎`,RARITY[rar].color);
         if(typeof spawnBurst==="function"&&["epic","mythic","shiny","legend"].includes(rar))spawnBurst(c.x,c.y,RARITY[rar].color,18);
       }
-      if(["epic","mythic","shiny","legend"].includes(rar)&&typeof addFeed==="function")
+      if(c.state!=="sleeping"&&["epic","mythic","shiny","legend"].includes(rar)&&typeof addFeed==="function")
         addFeed(`🪙 <b>${nameOf(c)}</b> earned a <span style="color:${RARITY[rar].color}">${RARITY[rar].label}</span> reward → <b style="color:#3ddc84">+${val.toFixed(5)} ◎</b> to your Pouch`,rar);
       c._revealed++; shown++;
     }
@@ -5663,7 +5680,7 @@ function tickCreature(c,dt){
     if(napping){ if(c.state!=="sleeping"){ if(typeof freeSpot==="function")freeSpot(c); c.task=null;c.target=null;c.state="sleeping";c.sleepT=0; } c._arenaNap=true; c.vx=0;c.vy=0; }
     else if(c._arenaNap){ c._arenaNap=false; if(c.state==="sleeping"){c.state="wander";c.nextTaskIn=rng(2,6);} }
   }
-  if(c.holder===player&&!c.isLegend&&!(c.tending&&player.ancientEgg&&!player.ancientEgg.hatched)){   /* FOOD drains in real time (workers); empty = FAMISHED. A tending Chiki's food is spent by tickCare instead. Legendaries never use food. */
+  if(c.holder===player&&!c.isLegend&&c.state!=="sleeping"&&!(c.tending&&player.ancientEgg&&!player.ancientEgg.hatched)){   /* FOOD drains in real time ONLY while awake (working/wandering); a sleeping Chiki rests for free and does NOT burn food. Tending Chikis are spent by tickCare; Legendaries never use food. */
     c.food=Math.max(0,(c.food||0)-dt);
     if(c.food<=0&&!c.hungry){
       c.hungry=true;freeSpot(c);c.task=null;c.target=null;c.state="sleeping";c.sleepT=0;
