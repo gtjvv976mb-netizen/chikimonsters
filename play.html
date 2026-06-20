@@ -1099,7 +1099,7 @@ if(location.search.indexOf("embed")>-1){
 </div>
 
 <div class="pop" id="tasksPop">
-  <h2>📋 Task Table — ranked by chance · reward = % of fee pool <span class="x" data-close="tasksPop">✕</span></h2>
+  <h2>📋 Task Table — ranked by chance · reward = SOL per task (scales with the live pool) <span class="x" data-close="tasksPop">✕</span></h2>
   <table id="taskTable">
     <tr><th>Task</th><th>Rarity</th><th>Where</th><th class="r">Base chance</th><th class="r">Reward</th><th class="r">EXP</th><th class="r">⚡</th><th class="r">⏱</th><th class="r" title="Times YOUR Chikis have completed this task">Done (you)</th></tr>
   </table>
@@ -1984,11 +1984,19 @@ function separateCreatures(){
     }
   }
 }
+/* earner index of one of YOUR Chikis (0-based), or -1 if it isn't an earner (legend/bot/extra/another wallet) */
+function earnerIndex(c){ if(!player||c.holder!==player||c.isLegend||c.bot)return -1; return myChikis().filter(x=>!x.isLegend).slice(0,player._earnChikis||1).indexOf(c); }
 function assignTask(c,forceRare){
   if(c.isLegend){ c.task=null;c.target=null;c.state="wander";c.nextTaskIn=rng(10,20); return; }   /* Legendaries are defenders of Chikoria — they don't do tasks or earn */
   if(c.tending&&c.holder&&c.holder.ancientEgg&&!c.holder.ancientEgg.hatched){ c.task=null;c.target=null;c.state="wander";c.nextTaskIn=rng(6,12); return; }   /* chosen tenders tend the egg instead of working */
   let t;
-  if(c.bot&&c.demoZone){                 /* showcase bot — demonstrate its assigned task */
+  const _ci=earnerIndex(c);
+  if(_ci>=0&&player.pk&&player._lastClaim!=null){   /* YOUR earner Chiki performs tasks IN ITS REWARD ORDER — the task you SEE is the reward you GET */
+    c._taskSlot=c._taskSlot||0;
+    const rar=slotRarity(player.pk,player._lastClaim,_ci,c._taskSlot);
+    const poolT=TASKS.filter(x=>x.rarity===rar);
+    t=poolT.length?poolT[ri(0,poolT.length-1)]:rollTask(c,forceRare);
+  }else if(c.bot&&c.demoZone){                 /* showcase bot — demonstrate its assigned task */
     const pool=TASKS.filter(x=>x.zone===c.demoZone);
     t=pool.length?pool[ri(0,pool.length-1)]:rollTask(c,forceRare);
   }else t=rollTask(c,forceRare);
@@ -2035,6 +2043,15 @@ function completeTask(c){
   if(c.holder===player&&!wasReady&&(c.xp||0)>=xpNeed(c.level)&&c.level<MAX_LEVEL)showBanner(`⭐ ${nameOf(c)} has enough XP — ready to Level Up to Lv ${c.level+1}!`,"");
   spawnBurst(c.x,c.y,col,RARE_SET.includes(t.rarity)?40:16);
   if(c.holder===player)addFeed(`${t.emoji} <b>${nameOf(c)}</b> completed <span style="color:${col}">${t.name}</span> · +${xpGain} XP`,t.rarity);
+  /* COUPLED REWARD: the SOL reward float matches the task just performed (same seeded slot), so "did a legendary task" = "got a legendary reward". Pouch total stays server-authoritative. */
+  const _ci=earnerIndex(c);
+  if(_ci>=0){
+    const val=(((SEED_CFG.raritySol&&SEED_CFG.raritySol[t.rarity])||0)*(SEED_CFG.mult||1)*(SEED_CFG.poolFactor||1));
+    c.lastReward=val;
+    spawnFloat(c.x,c.y,`${RARITY[t.rarity].label} +${val.toFixed(5)} ◎`,col);
+    if(RARE_SET.includes(t.rarity))addFeed(`🪙 <b>${nameOf(c)}</b> earned a <span style="color:${col}">${RARITY[t.rarity].label}</span> reward → <b style="color:#3ddc84">+${val.toFixed(5)} ◎</b> to your Pouch`,t.rarity);
+    c._taskSlot=(c._taskSlot||0)+1;
+  }
   checkAchievements(c,t);
   freeSpot(c);c.task=null;c.target=null;
   if(c.stamina<=0)startSleep(c);
@@ -2241,7 +2258,7 @@ function refreshUI(){
     r.innerHTML=`<td>${t.emoji} ${t.name}</td>
       <td><span class="tag" style="background:${col}22;color:${col}">${RARITY[t.rarity].label}</span></td>
       <td>${t.where}</td>
-      <td class="r">${t.chance}%</td><td class="r" style="color:${col}">${t.pct}% of pool</td>
+      <td class="r">${t.chance}%</td><td class="r" style="color:${col}">${(((SEED_CFG.raritySol&&SEED_CFG.raritySol[t.rarity])||0)*(SEED_CFG.mult||1)*(SEED_CFG.poolFactor||1)).toFixed(6)} ◎</td>
       <td class="r" style="color:#7c5cd6">+${xpForTask(t)}</td>
       <td class="r">${t.stam}</td><td class="r">${fmtDur(t.dur)}</td><td class="r" style="font-weight:800;color:#3ddc84">${(player&&player.taskCounts&&player.taskCounts[t.name])||0}</td>`;
   });
@@ -4022,27 +4039,11 @@ setInterval(()=>{
     mine.forEach(c=>{ player._onlineTotalSec=(player._onlineTotalSec||0)+_dt;
       if(c.state!=="sleeping"&&!c.hungry&&(c.food==null||c.food>0))player._onlineActiveSec=(player._onlineActiveSec||0)+_dt; }); }
   player._earnTickT=_nt;
-  /* live pouch number in the profile */
+  /* live pouch number (server-authoritative truth) */
   const pv=document.getElementById("pouchVal"); if(pv){const lp=localPouch(); if(lp!=null)pv.textContent=lp.toFixed(5)+" ◎";}
-  /* reveal newly-due rarity slots as floats — time-based (matches the pouch) */
-  const elapsedMin=Math.min(SEED_CFG.accrualCap,(Date.now()-player._lastClaim)/60000);
-  const dueSlots=Math.min(4000,Math.floor(elapsedMin*60/SEED_CFG.taskSec));
-  mine.forEach((c,ci)=>{
-    if(c._revAnchor!==player._lastClaim){c._revAnchor=player._lastClaim;c._revealed=Math.max(0,dueSlots-1);}  /* start at "now", don't replay history */
-    let shown=0;
-    while(c._revealed<dueSlots && shown<2){
-      const rar=slotRarity(player.pk,player._lastClaim,ci,c._revealed);
-      const val=(SEED_CFG.raritySol[rar]||0)*SEED_CFG.mult*(SEED_CFG.poolFactor||1);
-      c.lastReward=val;   /* real reward (matches the Pouch) */
-      if(c.mesh&&c.state!=="sleeping"&&typeof spawnFloat==="function"){
-        spawnFloat(c.x,c.y,`${RARITY[rar].label} +${val.toFixed(5)} ◎`,RARITY[rar].color);
-        if(typeof spawnBurst==="function"&&["epic","mythic","shiny","legend"].includes(rar))spawnBurst(c.x,c.y,RARITY[rar].color,18);
-      }
-      if(c.state!=="sleeping"&&["epic","mythic","shiny","legend"].includes(rar)&&typeof addFeed==="function")
-        addFeed(`🪙 <b>${nameOf(c)}</b> earned a <span style="color:${RARITY[rar].color}">${RARITY[rar].label}</span> reward → <b style="color:#3ddc84">+${val.toFixed(5)} ◎</b> to your Pouch`,rar);
-      c._revealed++; shown++;
-    }
-  });
+  /* reward FLOATS now come from completeTask (coupled to the task performed). Here we just reset the per-Chiki
+     reward sequence when a new claim window starts, so tasks resume from slot 0. */
+  mine.forEach(c=>{ if(c._revAnchor!==player._lastClaim){ c._revAnchor=player._lastClaim; c._taskSlot=0; } });
 }, 2000);
 
 /* autosave the connected wallet's Chikis + progress so a refresh never resets them */
