@@ -1841,6 +1841,11 @@ function loadProfile(pk){try{const s=localStorage.getItem(profileKey(pk));return
 function offlineProgress(c,elapsedSec){
   if(c.isLegend)return 0;                                                     /* legendaries don't work/earn/eat */
   if(c.tending&&c.holder&&c.holder.ancientEgg&&!c.holder.ancientEgg.hatched)return 0;    /* tenders tend the Legendary Egg — tickCare spends their food */
+  /* If mid timed-nap, let the WALL CLOCK finish it — don't re-simulate (that's what was resetting the timer on every return). */
+  if(c.state==="sleeping"&&!c.hungry&&c.sleepUntil){
+    if(Date.now()<c.sleepUntil)return 0;                                       /* still napping → leave it; the tick wakes it by real time */
+    c.sleepUntil=0;c.stamina=maxStamOf(c.level);c.state="wander";c.nextTaskIn=rng(2,8);   /* nap finished while away → wake, then catch up the rest */
+  }
   let t=Math.min(Math.max(0,elapsedSec),72*3600);   /* cap a long absence at 72h */
   if(t<30){ c.food=Math.max(0,(c.food!=null?c.food:foodMaxSec(c.level))-t); if(c.holder===player){c.holder._offlineActiveSec=(c.holder._offlineActiveSec||0)+t;c.holder._offlineTotalSec=(c.holder._offlineTotalSec||0)+t;} return 0; }
   const food0=(c.food!=null?c.food:foodMaxSec(c.level));
@@ -1856,7 +1861,7 @@ function offlineProgress(c,elapsedSec){
       const ht=c.holder; if(ht&&typeof rollTask==="function"){const tk=rollTask(c);if(tk){ht.taskCounts=ht.taskCounts||{};ht.taskCounts[tk.name]=(ht.taskCounts[tk.name]||0)+1;if(typeof tk.count==="number")tk.count++;}}  /* credit the Task Table for offline/background work */
     }else{                                            /* stamina spent → naps: restores stamina for free and burns NO food */
       const dur=sleepTimeOf(c.level);
-      if(remain<dur){c.state="sleeping";c.sleepT=dur-remain;break;}
+      if(remain<dur){c.state="sleeping";c.sleepT=dur-remain;c.sleepUntil=Date.now()+c.sleepT*1000;break;}   /* nap still running at return → wall-clock wake time */
       remain-=dur;c.sleepCycles=(c.sleepCycles||0)+1;c.stamina=maxStamOf(c.level);
     }
   }
@@ -2088,6 +2093,7 @@ function tickEvents(t){
 function startSleep(c){
   freeSpot(c);c.state="sleeping";c.task=null;c.target=null;
   c.sleepT=sleepTimeOf(c.level);
+  c.sleepUntil=Date.now()+c.sleepT*1000;   /* wall-clock wake time — lapses by real time, survives background tabs */
   if(!c.bot)addFeed(`💤 <b>${nameOf(c)}</b> is exhausted — sleeping for ${Math.round(c.sleepT)}s`);
   refreshUI();
 }
@@ -2096,7 +2102,7 @@ function finishSleep(c){
   wakeUp(c);   /* sleeping restores stamina for free; the FOOD bar (not sleep) is the $CHIKI gate now */
 }
 function wakeUp(c){
-  c.stamina=maxStamOf(c.level);
+  c.stamina=maxStamOf(c.level);c.sleepUntil=0;
   if((c.food||0)<=0){ c.hungry=true;c.state="sleeping";c.sleepT=0;refreshUI();return; }   /* famished — stays down until fed */
   c.hungry=false;
   c.state="wander";c.nextTaskIn=rng(2,8);
@@ -5694,7 +5700,9 @@ function tickCreature(c,dt){
   if(c.state==="sleeping"){
     if(c.hungry)return;                       /* famished — won't get up until its master refills its food */
     if(c._arenaNap)return;                    /* Legendary arena rest — wakes via the Chikiseum cooldown timer, not sleepT */
-    c.sleepT-=dt;
+    /* WALL-CLOCK sleep: the nap lapses by real time, not by render-loop dt — so it keeps counting down even when the
+       tab is backgrounded (rAF is throttled there) and never "resets" when you come back. */
+    if(c.sleepUntil)c.sleepT=Math.max(0,(c.sleepUntil-Date.now())/1000); else c.sleepT-=dt;
     if(c.sleepT<=0)finishSleep(c);
     return;
   }
