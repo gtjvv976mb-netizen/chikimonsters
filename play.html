@@ -1843,24 +1843,26 @@ function offlineProgress(c,elapsedSec){
   let t=Math.min(Math.max(0,elapsedSec),72*3600);   /* cap a long absence at 72h */
   if(t<30){ c.food=Math.max(0,(c.food!=null?c.food:foodMaxSec(c.level))-t); if(c.holder===player){c.holder._offlineActiveSec=(c.holder._offlineActiveSec||0)+t;c.holder._offlineTotalSec=(c.holder._offlineTotalSec||0)+t;} return 0; }
   const food0=(c.food!=null?c.food:foodMaxSec(c.level));
-  let active=Math.min(t,food0);                       /* a Chiki only works while it still has FOOD */
-  let did=0,guard=0,awakeSec=0;const AVG=Math.round(45*1.6),COST=16,stage0=stageOf(c.level);   /* owner OFFLINE/away: Chikis work 60% slower · awakeSec = AWAKE+FED time (earns) */
-  while(active>0&&guard++<6000){
-    if(c.stamina>=COST){                              /* working a task — AWAKE + FED, so it earns */
-      if(active<AVG)break;
-      active-=AVG;awakeSec+=AVG;c.stamina-=COST;c.tasksDone++;did++;
+  let remain=t, foodLeft=food0;                        /* simulate wall-time; FOOD drains ONLY while awake/working — sleep is free */
+  let did=0,guard=0,awakeSec=0;const AVG=Math.round(45*1.6),COST=16,stage0=stageOf(c.level);   /* owner OFFLINE/away: Chikis work 60% slower */
+  while(remain>0&&guard++<8000){
+    if(foodLeft<=0){ c.hungry=true;c.state="sleeping";c.sleepT=0; break; }   /* out of food → famished, rests until fed (earns nothing) */
+    if(c.stamina>=COST){                              /* working a task — AWAKE + FED: burns food AND earns */
+      if(remain<AVG)break;
+      const spend=Math.min(AVG,foodLeft);
+      remain-=AVG;foodLeft-=spend;awakeSec+=spend;c.stamina-=COST;c.tasksDone++;did++;
       c.xp=Math.min((c.xp||0)+COST*2, xpNeed(c.level));   /* XP fills toward "ready" — leveling is ALWAYS a paid action */
       const ht=c.holder; if(ht&&typeof rollTask==="function"){const tk=rollTask(c);if(tk){ht.taskCounts=ht.taskCounts||{};ht.taskCounts[tk.name]=(ht.taskCounts[tk.name]||0)+1;if(typeof tk.count==="number")tk.count++;}}  /* credit the Task Table for offline/background work */
-    }else{                                            /* stamina spent → naps (sleep restores stamina for free, but does NOT earn) */
+    }else{                                            /* stamina spent → naps: restores stamina for free and burns NO food */
       const dur=sleepTimeOf(c.level);
-      if(active<dur){c.state="sleeping";c.sleepT=dur-active;break;}
-      active-=dur;c.sleepCycles=(c.sleepCycles||0)+1;c.stamina=maxStamOf(c.level);
+      if(remain<dur){c.state="sleeping";c.sleepT=dur-remain;break;}
+      remain-=dur;c.sleepCycles=(c.sleepCycles||0)+1;c.stamina=maxStamOf(c.level);
     }
   }
-  /* Activity gating: of the whole absence, only awakeSec was AWAKE+FED (earned). Sleep + post-food famished time earn nothing. */
+  /* Activity gating: only awakeSec was AWAKE+FED (earned). Sleep + famished time earn nothing. */
   if(c.holder===player){ c.holder._offlineActiveSec=(c.holder._offlineActiveSec||0)+awakeSec; c.holder._offlineTotalSec=(c.holder._offlineTotalSec||0)+t; }
-  c.food=Math.max(0,food0-t);                          /* food drained for the whole absence */
-  if(c.food<=0){c.hungry=true;c.state="sleeping";c.sleepT=0;}   /* famished while away — rests until fed */
+  c.food=Math.max(0,foodLeft);                         /* food drained ONLY for awake/working time, never for sleep */
+  if(c.food<=0){c.hungry=true;c.state="sleeping";c.sleepT=0;}   /* ran out of food → famished, rests until fed */
   c.stamina=Math.min(c.stamina,maxStamOf(c.level));
   if(stageOf(c.level)>stage0&&typeof rebuildChiki==="function")rebuildChiki(c);  /* evolved while away */
   return did;
