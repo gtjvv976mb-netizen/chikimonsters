@@ -1307,8 +1307,8 @@ function slotRarity(wallet,lastClaim,ci,slot){let x=chikiHash(wallet+"|"+lastCla
 function seededEarn(wallet,lastClaim,chikis,minutes){const slots=Math.min(4000,Math.floor(minutes*60/SEED_CFG.taskSec));let sol=0;for(let ci=0;ci<chikis;ci++)for(let s=0;s<slots;s++)sol+=SEED_CFG.raritySol[slotRarity(wallet,lastClaim,ci,s)];return sol*SEED_CFG.mult*(SEED_CFG.poolFactor||1);}   /* ×poolFactor: mirrors server pool-scaling so the displayed pouch matches the actual payout */
 /* Activity gating: a Chiki earns only while AWAKE + FED. We track ABSOLUTE awake+fed seconds (online + offline catch-up).
    This only ever GROWS, so the pouch never shrinks when a Chiki later sleeps. The server caps it at wall-clock elapsed. */
-function earnActiveSec(){ if(!player)return 0; return Math.max(0,(player._offlineActiveSec||0)+(player._onlineActiveSec||0)); }
-function localPouch(){if(!player||!player.pk||player._lastClaim==null)return null;const elapsedMin=(Date.now()-player._lastClaim)/60000;const minutes=Math.min(SEED_CFG.accrualCap,elapsedMin,earnActiveSec()/60);return seededEarn(player.pk,player._lastClaim,player._earnChikis||1,minutes)*(1-(SEED_CFG.claimTax||0));}   /* net after claim tax · based on absolute awake+fed time (monotonic) */
+function earnActiveSec(){ if(!player)return 0; return Math.max(0,(player._offlineActiveSec||0)+(player._onlineActiveSec||0)); }   /* retained for a future server-side activity model; not used for the pouch now */
+function localPouch(){if(!player||!player.pk||player._lastClaim==null)return null;const minutes=Math.min(SEED_CFG.accrualCap,(Date.now()-player._lastClaim)/60000);return seededEarn(player.pk,player._lastClaim,player._earnChikis||1,minutes)*(1-(SEED_CFG.claimTax||0));}   /* net after claim tax · time-based (activity gating disabled — it was zeroing the pouch on load) */
 const TASKS=[
   {id:0,name:"Berry Foraging",rarity:"common",chance:22,pct:0.0002,zone:"berry",emoji:"🍓",stam:8,dur:300,count:0,where:"🌸🍂"},
   {id:1,name:"Flower Picking",rarity:"common",chance:16,pct:0.0004,zone:"flowers",emoji:"💐",stam:9,dur:300,count:0,where:"🌸☀️"},
@@ -2349,7 +2349,7 @@ async function refreshChainBalances(){
     const mint=new w3.PublicKey(CHAIN.MINT);
     const ata=w3.PublicKey.findProgramAddressSync([owner.toBuffer(),TOKEN.toBuffer(),mint.toBuffer()],ATAP)[0];
     try{const r=await conn.getTokenAccountBalance(ata); if(r&&r.value&&r.value.uiAmount!=null)player.bal=Math.floor(r.value.uiAmount);}catch(e){}
-    try{if(CHAIN.BACKEND){const er=await fetch(CHAIN.BACKEND+"/claimable?wallet="+player.pk+"&activeSec="+Math.round(earnActiveSec()),{cache:"no-store"});const ej=await er.json();if(ej){
+    try{if(CHAIN.BACKEND){const er=await fetch(CHAIN.BACKEND+"/claimable?wallet="+player.pk,{cache:"no-store"});const ej=await er.json();if(ej){
       if(ej.lifetimePaid!=null)player._paidSol=+Number(ej.lifetimePaid).toFixed(4);
       if(ej.claimableSol!=null)player._pouchSol=+Number(ej.claimableSol).toFixed(6);
       if(ej.lastClaim!=null)player._lastClaim=ej.lastClaim;
@@ -2589,7 +2589,7 @@ async function backendClaim(){
   showBanner("⏳ Claiming your SOL rewards… (the server may take a few seconds to wake up)","info");
   addFeed("⏳ Claiming SOL from the reward pool…");
   try{
-    const r=await fetch(CHAIN.BACKEND+"/claim",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:player.pk,activeSec:Math.round(earnActiveSec())})});
+    const r=await fetch(CHAIN.BACKEND+"/claim",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:player.pk})});
     const j=await r.json();
     if(j.ok){
       player.sol=+(player.sol+j.amountSol).toFixed(4);player.earned=(player.earned||0)+j.amountSol;
@@ -4024,8 +4024,8 @@ setInterval(()=>{
   player._earnTickT=_nt;
   /* live pouch number in the profile */
   const pv=document.getElementById("pouchVal"); if(pv){const lp=localPouch(); if(lp!=null)pv.textContent=lp.toFixed(5)+" ◎";}
-  /* reveal newly-due rarity slots as floats — based on absolute awake+fed time so reveals match the (monotonic) pouch */
-  const elapsedMin=Math.min(SEED_CFG.accrualCap,(Date.now()-player._lastClaim)/60000,earnActiveSec()/60);
+  /* reveal newly-due rarity slots as floats — time-based (matches the pouch) */
+  const elapsedMin=Math.min(SEED_CFG.accrualCap,(Date.now()-player._lastClaim)/60000);
   const dueSlots=Math.min(4000,Math.floor(elapsedMin*60/SEED_CFG.taskSec));
   mine.forEach((c,ci)=>{
     if(c._revAnchor!==player._lastClaim){c._revAnchor=player._lastClaim;c._revealed=Math.max(0,dueSlots-1);}  /* start at "now", don't replay history */
