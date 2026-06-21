@@ -6724,8 +6724,8 @@ requestAnimationFrame(frame);
       <video src="ui/chikoria-cup-intro.mp4" autoplay muted loop playsinline controls preload="metadata" style="width:100%;max-height:40vh;border-radius:12px;border:1px solid #1c3d2e;margin:0 0 12px;display:block;background:#0a1d15"></video>
       <div class="grid2" style="align-items:center">
         <div class="match" style="margin:0"><div class="mrow" id="cupxMine"></div></div>
-        <div><div class="sub">Entry: <b class="gold">100 ✨ Glory</b> · Pool: <b class="teal">4 SOL</b> · Champion <b class="gold">1 SOL</b></div>
-          <button class="b" id="cupxReg2" style="margin-top:10px">Register — 100 ✨</button>
+        <div><div class="sub">Entry: <b class="gold">Free</b> · Pool: <b class="teal">4 SOL</b> · Champion <b class="gold">1 SOL</b></div>
+          <button class="b" id="cupxReg2" style="margin-top:10px">Register — Free</button>
           <div class="sub" id="cupxRegMsg" style="margin-top:6px"></div></div></div></div>
     <div class="card" id="cupxLobby" style="display:none"><h3 style="margin-top:0">🛡 Lobby <span class="sub" id="cupxLobbyCount"></span></h3><div class="grid2" id="cupxLobbyList"></div></div>
     <div class="card" id="cupxRound" style="display:none"><div class="hd"><h3 style="margin:0" id="cupxRtitle"></h3>
@@ -6786,7 +6786,7 @@ requestAnimationFrame(frame);
       $("cupxMine").innerHTML=snap?legHTML(elObj(snap.name,snap.element,snap.br,true)):'<div class="sub">Hatch a Legendary at the Mystic Market to enter.</div>';
       const blocked=(!St.public&&!adm);
       $("cupxReg2").disabled=St.youRegistered||blocked||!snap||busy;
-      $("cupxReg2").textContent=St.youRegistered?"Registered ✓":("Register — "+St.entryGlory+" ✨");
+      $("cupxReg2").textContent=St.youRegistered?"Registered ✓":(St.entryGlory>0?("Register — "+St.entryGlory+" ✨"):"Register — Free");
       if(!St.youRegistered)regMsg(blocked?"Not open to the public yet.":(!snap?"Hatch a Legendary first.":""));
       else regMsg("You're in the lobby — wait for the Cup to start. 🛡"); }
 
