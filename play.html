@@ -24,18 +24,18 @@
 
   .topbar{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;align-items:center;gap:8px;
     padding:10px 16px;background:linear-gradient(180deg,rgba(8,12,20,.85),rgba(8,12,20,0));flex-wrap:wrap}
-  .logo{display:flex;flex-direction:column;line-height:.82;font-family:'Baloo 2',sans-serif;margin-right:4px}
+  .logo{display:flex;flex-direction:column;line-height:.82;font-family:'Nunito',sans-serif;margin-right:4px}
   .logo .l1{font-size:30px;font-weight:800;color:#ffd93d;letter-spacing:1px;
     -webkit-text-stroke:1.4px #35260f;text-shadow:0 3px 0 #35260f,0 5px 10px rgba(0,0,0,.45)}
   .logo .l2{font-size:14.5px;font-weight:800;color:#fff;letter-spacing:3.2px;
     -webkit-text-stroke:.8px #35260f;text-shadow:0 2px 0 #35260f}
   .chip{background:linear-gradient(180deg,#fff3c9,#ffd93d);border:2px solid #35260f;color:#4a2f00;
-    font-weight:800;font-family:'Baloo 2',sans-serif;box-shadow:0 2px 0 #35260f;
+    font-weight:800;font-family:'Nunito',sans-serif;box-shadow:0 2px 0 #35260f;
     border-radius:20px;padding:5px 13px;font-size:12px;display:flex;gap:6px;align-items:center}
   .chip b{color:#a35a00}
   .tagline{font-size:11.5px !important;text-transform:uppercase;letter-spacing:.6px}
 
-  button{font-family:'Baloo 2',sans-serif;font-weight:800;
+  button{font-family:'Nunito',sans-serif;font-weight:800;
     background:linear-gradient(180deg,#ffe26e,#ffb300);color:#4a2f00;
     border:2px solid #4a2f00;border-radius:13px;box-shadow:0 3px 0 #4a2f00;letter-spacing:.3px;
     padding:7px 13px;font-size:12.5px;cursor:pointer;transition:.15s}
@@ -51,7 +51,7 @@
   .botbar{position:fixed;bottom:0;left:0;right:0;z-index:20;display:flex;gap:8px;align-items:center;
     padding:12px 16px;background:linear-gradient(0deg,rgba(8,12,20,.85),rgba(8,12,20,0));flex-wrap:wrap}
   .hint{color:var(--dim);font-size:11px;margin-left:auto;text-shadow:0 1px 4px #000;max-width:430px}
-  .community{font-family:'Baloo 2',sans-serif;font-weight:800;color:#ffd93d;font-size:12px;
+  .community{font-family:'Nunito',sans-serif;font-weight:800;color:#ffd93d;font-size:12px;
     text-shadow:0 2px 0 #35260f;letter-spacing:.5px}
 
   .pop{position:fixed;z-index:30;--txt:#3a2c16;--dim:#8a7351;--glass2:#ffe9b8;--line:#d9bd85;
@@ -61,7 +61,7 @@
   .pop.show{display:block}
   .pop h2{background:linear-gradient(180deg,#ffe26e,#ffc63d);color:#4a2f00;
     margin:-14px -14px 12px;padding:9px 14px;border-bottom:3px solid #35260f;
-    border-radius:11px 11px 0 0;font-family:'Baloo 2',sans-serif;font-weight:800;
+    border-radius:11px 11px 0 0;font-family:'Nunito',sans-serif;font-weight:800;
     font-size:12px;text-transform:uppercase;letter-spacing:1.2px;
     display:flex;justify-content:space-between;align-items:center}
   .pop h2 .x{cursor:pointer;color:#7a5326;font-size:15px;padding:0 4px}
@@ -111,7 +111,7 @@
   .statgrid a.statLink{text-decoration:none;display:block}
   .statgrid a.statLink:hover .v{text-decoration:underline;filter:brightness(1.12)}
   .statgrid a.statLink .l u{color:#6fb1ff}
-  .mech h3{font-size:13px;color:#c47f00;margin:12px 0 5px;font-family:'Baloo 2',sans-serif}
+  .mech h3{font-size:13px;color:#c47f00;margin:12px 0 5px;font-family:'Nunito',sans-serif}
   .mech h3:first-child{margin-top:0}
   .mech p,.mech li{font-size:12px;line-height:1.55;color:#3a2c16}
   .mech ul{margin:4px 0 4px 18px}
@@ -138,9 +138,9 @@
     background:#fff6dd;border:3px solid #35260f;border-radius:18px;color:#3a2c16;
     padding:24px;width:400px;max-height:80vh;overflow-y:auto;
     box-shadow:0 12px 0 rgba(53,38,15,.4),0 26px 70px rgba(0,0,0,.6)}
-  .modal h3{margin-bottom:4px;font-size:18px;font-family:'Baloo 2',sans-serif;color:#4a2f00}
+  .modal h3{margin-bottom:4px;font-size:18px;font-family:'Nunito',sans-serif;color:#4a2f00}
   .modal .hint2{color:#8a7351;font-size:12px;margin-bottom:14px}
-  .legendBanner{display:inline-block;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:15px;
+  .legendBanner{display:inline-block;font-family:'Nunito',sans-serif;font-weight:800;font-size:15px;
     background:linear-gradient(180deg,#ff7a6e,#d72631);color:#ffd93d;border:2px solid #35260f;
     border-radius:9px;padding:4px 14px;transform:skew(-6deg);box-shadow:0 3px 0 #35260f;
     text-shadow:0 2px 0 #5e0a10;margin-bottom:10px;letter-spacing:.8px}
@@ -176,7 +176,7 @@
   @keyframes spinSlow{to{transform:rotate(360deg)}}
   .gemL,.gemR{position:absolute;font-size:56px;filter:drop-shadow(0 6px 0 rgba(0,0,0,.3));animation:bob2 2.4s ease-in-out infinite}
   @keyframes bob2{50%{transform:translateY(-14px)}}
-  #splashTag{margin-top:24px;font-family:'Baloo 2',sans-serif;font-weight:800;color:#fff;font-size:18px;
+  #splashTag{margin-top:24px;font-family:'Nunito',sans-serif;font-weight:800;color:#fff;font-size:18px;
     text-shadow:0 2px 0 #173a6e;letter-spacing:1px}
   #enterBtn{margin-top:30px;font-family:'Press Start 2P',monospace;font-size:14px;padding:18px 34px;
     background:linear-gradient(180deg,#ffe26e,#f5a623);color:#4a2d00;border:4px solid #3a2408;border-radius:10px;
@@ -234,7 +234,7 @@
   /* --- mechanics: chip headers + tinted season cards --- */
   .mech h3{display:inline-block;background:linear-gradient(180deg,#ffe26e,#f5a623);color:#4a2d00;
     border:2px solid #4a2d14;border-radius:7px;padding:3px 10px;box-shadow:0 2px 0 #4a2d14;
-    font-family:'Baloo 2',sans-serif;font-size:12.5px}
+    font-family:'Nunito',sans-serif;font-size:12.5px}
   .mech .seasons div{border:2px solid #4a2d14;border-radius:8px;box-shadow:0 2px 0 rgba(74,45,20,.35)}
   .mech .seasons div:nth-child(1){background:#ffeef5}
   .mech .seasons div:nth-child(2){background:#fff8dc}
@@ -260,7 +260,7 @@
   /* ---- plaque buttons: colored sign with stone corners + leaf accents ---- */
   button,.chip{
     --bA:#ffd34d;--bB:#e89a06;                       /* default: gold */
-    position:relative;font-family:'Baloo 2',sans-serif;font-weight:800;
+    position:relative;font-family:'Nunito',sans-serif;font-weight:800;
     color:#fff;font-size:13px;letter-spacing:.3px;text-transform:none;
     padding:10px 18px;border-radius:12px;border:3px solid #2a1a08;
     background:
@@ -466,7 +466,7 @@
   #chatBadge.show{display:flex}
   /* graphics quality toggle (below the chat tab) */
   #btnQuality{position:fixed;left:12px;top:174px;z-index:60;cursor:pointer;width:46px;height:46px;border-radius:50%;
-    background:#1f2430;border:2px solid #ffd166;color:#ffd166;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:13px;line-height:1;
+    background:#1f2430;border:2px solid #ffd166;color:#ffd166;font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;line-height:1;
     display:flex;align-items:center;justify-content:center;box-shadow:0 3px 0 #b88a2a,0 4px 10px rgba(0,0,0,.2)}
   #btnQuality:active{transform:translateY(2px);box-shadow:0 1px 0 #b88a2a}
   body.pre #btnQuality{display:none}
@@ -479,7 +479,7 @@
   /* "hold 500k to earn" HUD tag — shows when the wallet is below the earning threshold */
   #holdWarn{position:fixed;top:62px;left:50%;transform:translateX(-50%);z-index:62;display:none;
     background:linear-gradient(180deg,#3a2a12,#2a1d0c);border:2px solid #e8a33a;color:#ffd166;
-    font-family:'Baloo 2',sans-serif;font-weight:800;font-size:12px;padding:5px 13px;border-radius:20px;
+    font-family:'Nunito',sans-serif;font-weight:800;font-size:12px;padding:5px 13px;border-radius:20px;
     box-shadow:0 4px 12px rgba(0,0,0,.45);cursor:pointer;white-space:nowrap;max-width:92vw;overflow:hidden;text-overflow:ellipsis}
   #holdWarn.show{display:block}
   body.pre #holdWarn{display:none!important}
@@ -498,7 +498,7 @@
   #chatPop.show{display:flex}   /* hidden by default (.pop = display:none); flex only when opened */
   #chatPop h2{--bA:#6fb1ff;--bB:#2456b8}
   .chatTabs{display:flex;gap:6px;margin:6px 0}
-  .chatTabs button{flex:1;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:12px;padding:6px 4px;border-radius:8px;
+  .chatTabs button{flex:1;font-family:'Nunito',sans-serif;font-weight:800;font-size:12px;padding:6px 4px;border-radius:8px;
     border:2px solid #cdb585;background:#fff7e6;color:#6b4f23;cursor:pointer}
   .chatTabs button.on{background:#2a73c8;color:#fff;border-color:#1d5aa0}
   #chatPinned{display:none;background:#fff3c4;border:2px solid #e3b73a;border-radius:8px;padding:7px 9px;margin-bottom:6px;
@@ -515,8 +515,8 @@
   #chatDmBar{display:none;align-items:center;gap:6px;background:#efe6ff;border:2px solid #b89be6;border-radius:8px;padding:4px 8px;margin-bottom:6px;font-size:12px;color:#54309c;font-weight:700}
   #chatDmBar.show{display:flex} #chatDmBar .x{cursor:pointer;margin-left:auto;font-weight:900}
   #chatInputRow{display:flex;gap:6px;margin-top:7px}
-  #chatText{flex:1;font-family:'Baloo 2',sans-serif;font-size:13px;padding:8px 10px;border-radius:8px;border:2px solid #cdb585;background:#fff;color:#3a2c16}
-  #chatSend{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:13px;padding:8px 14px;border-radius:8px;border:none;background:#2a73c8;color:#fff;cursor:pointer}
+  #chatText{flex:1;font-family:'Nunito',sans-serif;font-size:13px;padding:8px 10px;border-radius:8px;border:2px solid #cdb585;background:#fff;color:#3a2c16}
+  #chatSend{font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;padding:8px 14px;border-radius:8px;border:none;background:#2a73c8;color:#fff;cursor:pointer}
   #chatSend:active{transform:scale(.94)}
   #chatInputRow{position:relative}
   #chatMentions{position:absolute;left:6px;right:6px;bottom:46px;background:#0c1a2e;border:1px solid #2a4a72;border-radius:9px;overflow:hidden;display:none;z-index:6;box-shadow:0 -6px 18px rgba(0,0,0,.4)}
@@ -526,7 +526,7 @@
   .cmsg .ment{color:#7fd0ff;font-weight:800}
   .cmsg.mentioned{background:rgba(42,115,200,.18);border-left:3px solid #2a73c8;padding-left:6px;border-radius:4px}
   /* floating private-chat window (maximize / minimize) */
-  #dmWin{position:fixed;right:16px;bottom:80px;z-index:1450;width:300px;max-width:92vw;background:#10243f;border:1px solid #2a73c8;border-radius:12px;box-shadow:0 16px 44px rgba(0,0,0,.6);display:none;flex-direction:column;overflow:hidden;font-family:'Baloo 2',sans-serif}
+  #dmWin{position:fixed;right:16px;bottom:80px;z-index:1450;width:300px;max-width:92vw;background:#10243f;border:1px solid #2a73c8;border-radius:12px;box-shadow:0 16px 44px rgba(0,0,0,.6);display:none;flex-direction:column;overflow:hidden;font-family:'Nunito',sans-serif}
   #dmWin.show{display:flex}
   #dmHead{display:flex;justify-content:space-between;align-items:center;background:linear-gradient(180deg,#2f7fd6,#2160a8);color:#fff;font-weight:800;font-size:13px;padding:9px 11px}
   #dmTitle{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -541,9 +541,9 @@
   #ctabAdmin{display:none} #ctabAdmin.show{display:block;background:#fbeaea;border-color:#d9a3a3;color:#a0322b}
   #ctabAdmin.on{background:#c0392b;color:#fff;border-color:#9c2a22}
   #adminView .ahint{font-size:12px;color:#8fa6c9;margin:2px 0 8px;line-height:1.4}
-  #adminText{width:100%;min-height:90px;resize:vertical;font-family:'Baloo 2',sans-serif;font-size:13px;padding:9px 10px;
+  #adminText{width:100%;min-height:90px;resize:vertical;font-family:'Nunito',sans-serif;font-size:13px;padding:9px 10px;
     border-radius:8px;border:2px solid #d9a3a3;background:#fffdf9;color:#3a2c16;box-sizing:border-box}
-  #adminPost{width:100%;margin-top:8px;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:13.5px;padding:10px;
+  #adminPost{width:100%;margin-top:8px;font-family:'Nunito',sans-serif;font-weight:800;font-size:13.5px;padding:10px;
     border-radius:9px;border:none;background:#c0392b;color:#fff;cursor:pointer}
   #adminPost:active{transform:scale(.97)}
   #adminCur{margin-top:10px;font-size:12px;color:#5b4715;background:#fff3c4;border:2px solid #e3b73a;border-radius:8px;padding:8px;display:none}
@@ -647,7 +647,7 @@ if(location.search.indexOf("embed")>-1){
 <!-- ===== Egg hatching mini-game ===== -->
 <style>
 #hatchOverlay{position:fixed;inset:0;z-index:2000;display:none;align-items:center;justify-content:center;
-  background:radial-gradient(circle at 50% 42%,rgba(60,30,110,.6),rgba(0,0,0,.85));font-family:'Baloo 2',sans-serif}
+  background:radial-gradient(circle at 50% 42%,rgba(60,30,110,.6),rgba(0,0,0,.85));font-family:'Nunito',sans-serif}
 #hatchInner{text-align:center;color:#fff;user-select:none;-webkit-user-select:none}
 #hatchTitle{font-weight:800;font-size:22px;text-shadow:0 2px 6px rgba(0,0,0,.6);margin-bottom:4px}
 #hatchEggWrap{position:relative;display:inline-block;cursor:pointer;padding:10px}
@@ -665,7 +665,7 @@ if(location.search.indexOf("embed")>-1){
   border-radius:8px;overflow:hidden;border:2px solid rgba(255,255,255,.35)}
 #hatchMeter{height:100%;width:0;background:linear-gradient(90deg,#7ee08a,#ffd93d,#ff7849);transition:width .12s}
 #hatchTaps{margin-top:6px;font-size:13px;color:#cdbff0;min-height:16px}
-#hatchBtn{margin-top:16px;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:17px;padding:12px 28px;border:none;
+#hatchBtn{margin-top:16px;font-family:'Nunito',sans-serif;font-weight:800;font-size:17px;padding:12px 28px;border:none;
   border-radius:12px;background:linear-gradient(180deg,#ffd93d,#f5a623);color:#4a2f00;cursor:pointer;box-shadow:0 5px 0 #b97e10;animation:hbpulse 1s infinite}
 #hatchBtn:active{transform:translateY(3px);box-shadow:0 2px 0 #b97e10}
 @keyframes hbpulse{50%{transform:scale(1.05)}}
@@ -690,14 +690,14 @@ if(location.search.indexOf("embed")>-1){
 <!-- ===== Chiki Arena (turn-based battle) ===== -->
 <style>
 #arenaOverlay{position:fixed;top:0;right:0;height:100vh;width:min(96vw,400px);z-index:1500;display:none;align-items:stretch;justify-content:flex-end;
-  background:transparent;font-family:'Baloo 2',sans-serif;color:#fff;pointer-events:none}   /* side panel — map stays visible & interactive */
+  background:transparent;font-family:'Nunito',sans-serif;color:#fff;pointer-events:none}   /* side panel — map stays visible & interactive */
 #arenaBox{pointer-events:auto;width:100%;height:100%;max-height:100vh;overflow-y:auto;background:rgba(8,14,28,.96);border-radius:16px 0 0 16px;
   padding:14px 16px 16px;box-shadow:-12px 0 44px rgba(0,0,0,.55);text-align:center;backdrop-filter:blur(3px);border-left:1px solid rgba(120,150,210,.25)}
 #arenaHead{display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:18px;margin-bottom:8px}
 #arenaHead .x{cursor:pointer;color:#ff8a8a;font-size:18px}
 #arenaMeta{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;align-items:center;margin-bottom:8px}
 .aMetaPill{background:#1b2740;border:1px solid #2c4470;border-radius:8px;padding:3px 9px;font-size:11.5px;font-weight:800;color:#dce8fa}
-.aMetaBtn{font-family:'Baloo 2';font-weight:800;font-size:12px;padding:4px 11px;border:none;border-radius:8px;cursor:pointer;
+.aMetaBtn{font-family:'Nunito';font-weight:800;font-size:12px;padding:4px 11px;border:none;border-radius:8px;cursor:pointer;
   background:linear-gradient(180deg,#b197fc,#7048e8);color:#fff;box-shadow:0 3px 0 #4a2390}
 .aMetaBtn:active{transform:translateY(2px);box-shadow:0 1px 0 #4a2390}
 #upgPanel{position:absolute;inset:0;z-index:5;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.6)}
@@ -706,11 +706,11 @@ if(location.search.indexOf("embed")>-1){
 .upgHead .x{cursor:pointer;color:#c79bff}
 .upgChiki{border:1px solid #3a2c5e;border-radius:12px;padding:9px 11px;margin:7px 0;font-size:12.5px}
 .upgRow{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:6px}
-.upgBtn{font-family:'Baloo 2';font-weight:800;font-size:11.5px;padding:5px 9px;border:none;border-radius:8px;cursor:pointer;white-space:nowrap;
+.upgBtn{font-family:'Nunito';font-weight:800;font-size:11.5px;padding:5px 9px;border:none;border-radius:8px;cursor:pointer;white-space:nowrap;
   background:linear-gradient(180deg,#ffd93d,#e0a800);color:#3a2a00;box-shadow:0 3px 0 #a87c00}
 .upgBtn:disabled{filter:grayscale(.7);opacity:.55;cursor:not-allowed}
 .upgSubHd{margin:11px 0 2px;font-weight:800;font-size:12px;color:#cdd8ee;border-top:1px solid rgba(255,255,255,.08);padding-top:9px}
-.buyBtn{font-family:'Baloo 2';font-weight:800;font-size:11.5px;padding:5px 9px;border:none;border-radius:8px;cursor:pointer;white-space:nowrap;
+.buyBtn{font-family:'Nunito';font-weight:800;font-size:11.5px;padding:5px 9px;border:none;border-radius:8px;cursor:pointer;white-space:nowrap;
   background:linear-gradient(180deg,#b197fc,#7c5cff);color:#fff;box-shadow:0 3px 0 #5b3ec9}
 .aSide{display:flex;align-items:center;gap:8px;margin:6px 0}
 .aSide.foe{flex-direction:row-reverse;text-align:right}
@@ -748,7 +748,7 @@ if(location.search.indexOf("embed")>-1){
 .aPow.art:hover{border-color:#ffd93d;transform:translateY(-5px) scale(1.03)}
 .aPow.art .apCost{top:5px;left:5px;width:27px;height:27px;font-size:15px;box-shadow:0 2px 5px rgba(0,0,0,.6),0 0 8px rgba(255,205,50,.7)}
 .aPow.art .apTier{top:6px;right:7px;font-size:11px;background:rgba(10,14,28,.7);padding:1px 5px;border-radius:6px}
-.aPow{position:relative;font-family:'Baloo 2',sans-serif;font-weight:700;padding:9px 8px 7px;border-radius:11px;border:2px solid #38507e;
+.aPow{position:relative;font-family:'Nunito',sans-serif;font-weight:700;padding:9px 8px 7px;border-radius:11px;border:2px solid #38507e;
   background:linear-gradient(180deg,#16244a,#0f1b34);color:#dce8fa;cursor:pointer;min-width:108px;display:flex;flex-direction:column;align-items:center;gap:1px}
 .aPow:hover{border-color:#ffd93d;transform:translateY(-2px)}.aPow:active{transform:scale(.96)}
 .aPow.dis{opacity:.42;cursor:not-allowed;filter:grayscale(.5)}
@@ -766,7 +766,7 @@ if(location.search.indexOf("embed")>-1){
 #arenaCenter{margin-top:12px}
 #arenaKey{font-size:10px;color:#8fa6c9;margin:4px 0 2px;line-height:1.5}
 #arenaKey b{color:#cdd8ee}
-.aBtn{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:16px;padding:11px 26px;border:none;border-radius:11px;
+.aBtn{font-family:'Nunito',sans-serif;font-weight:800;font-size:16px;padding:11px 26px;border:none;border-radius:11px;
   background:linear-gradient(180deg,#ff7849,#c0392b);color:#fff;cursor:pointer;box-shadow:0 4px 0 #8c2a22}
 .aBtn:active{transform:translateY(2px);box-shadow:0 1px 0 #8c2a22}
 .aBtn.ghost{background:#1b2740;box-shadow:0 4px 0 #0c1426}
@@ -1005,7 +1005,7 @@ if(location.search.indexOf("embed")>-1){
 <!-- ===== Immortal Sorceress — Ancient Eggs ===== -->
 <style>
 #sorcOverlay{position:fixed;inset:0;z-index:1500;display:none;align-items:center;justify-content:center;
-  background:radial-gradient(circle at 50% 26%,rgba(60,24,108,.62),rgba(0,0,0,.9));font-family:'Baloo 2',sans-serif;color:#fff}
+  background:radial-gradient(circle at 50% 26%,rgba(60,24,108,.62),rgba(0,0,0,.9));font-family:'Nunito',sans-serif;color:#fff}
 #sorcBox{width:min(94vw,520px);max-height:94vh;overflow-y:auto;background:rgba(14,10,28,.98);border:1px solid #5a3a9a;border-radius:16px;
   padding:16px 18px 18px;box-shadow:0 18px 50px rgba(0,0,0,.6);text-align:center}
 #sorcHead{display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:18px;margin-bottom:6px}
@@ -1034,7 +1034,7 @@ if(location.search.indexOf("embed")>-1){
 .sCarers{font-size:12px;color:#b9a6e6;margin:8px 0 4px;line-height:1.4}
 .sCost{font-size:13.5px;color:#ffd93d;font-weight:800;margin:6px 0}
 .sNote{font-size:11.5px;color:#9b89c4;line-height:1.4;margin-top:8px}
-.sBtn{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:16px;padding:12px 26px;border:none;border-radius:12px;
+.sBtn{font-family:'Nunito',sans-serif;font-weight:800;font-size:16px;padding:12px 26px;border:none;border-radius:12px;
   background:linear-gradient(180deg,#a86bff,#6a36c9);color:#fff;cursor:pointer;box-shadow:0 4px 0 #4a2390;margin-top:6px}
 .sBtn:active{transform:translateY(2px);box-shadow:0 1px 0 #4a2390}
 .sBtn.gold{background:linear-gradient(180deg,#ffd93d,#e0a800);color:#3a2a00;box-shadow:0 4px 0 #a87c00}
@@ -1185,7 +1185,7 @@ if(location.search.indexOf("embed")>-1){
 <style>
 #liveHud{position:fixed;top:96px;left:50%;transform:translateX(-50%);z-index:55;
   background:#16243fee;color:#ffe9a8;border:1.5px solid #ffd16699;border-radius:999px;
-  padding:5px 14px;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:12.5px;
+  padding:5px 14px;font-family:'Nunito',sans-serif;font-weight:800;font-size:12.5px;
   box-shadow:0 3px 12px rgba(0,0,0,.3);display:flex;gap:9px;align-items:center;white-space:nowrap;
   letter-spacing:.2px}
 #liveHud .ldot{width:7px;height:7px;border-radius:50%;background:#3ddc84;box-shadow:0 0 6px #3ddc84;animation:lpulse 1.6s ease-in-out infinite}
@@ -1202,11 +1202,11 @@ body.pre #liveHud{display:none}
 }
 #whaleTab{position:fixed;top:130px;left:50%;transform:translateX(-50%);z-index:54;display:none;
   background:#2a1b4dee;color:#e9d8ff;border:1.5px solid #b197fc;border-radius:999px;
-  padding:5px 14px;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:12px;
+  padding:5px 14px;font-family:'Nunito',sans-serif;font-weight:800;font-size:12px;
   box-shadow:0 3px 12px rgba(0,0,0,.3);white-space:nowrap}
 #welcomeBanner{position:fixed;top:118px;left:50%;transform:translateX(-50%) translateY(-14px);z-index:200;
   background:rgba(31,139,76,.95);color:#fff;border:2px solid #3ddc84;border-radius:14px;padding:12px 22px;
-  font-family:'Baloo 2',sans-serif;font-weight:800;font-size:15px;box-shadow:0 10px 30px rgba(0,0,0,.32);
+  font-family:'Nunito',sans-serif;font-weight:800;font-size:15px;box-shadow:0 10px 30px rgba(0,0,0,.32);
   opacity:0;pointer-events:none;transition:opacity .35s ease,transform .35s ease;max-width:82vw;text-align:center;line-height:1.35}
 #welcomeBanner.show{opacity:1;transform:translateX(-50%) translateY(0)}
 #welcomeBanner.err{background:rgba(122,31,31,.96);border-color:#ff6b6b}
@@ -1219,7 +1219,7 @@ body.pre #liveHud{display:none}
 
 <!-- ===== Audio: background music + Music / Sound controls ===== -->
 <style>
-#audioCtrl{position:fixed;left:12px;top:66px;z-index:60;font-family:'Baloo 2',sans-serif}
+#audioCtrl{position:fixed;left:12px;top:66px;z-index:60;font-family:'Nunito',sans-serif}
 #audioToggle{width:46px;height:46px;border-radius:50%;border:2px solid #ffd166;background:#fff;
   box-shadow:0 3px 0 #e0a93a,0 4px 10px rgba(0,0,0,.2);font-size:21px;cursor:pointer;line-height:1;
   display:flex;align-items:center;justify-content:center;padding:0;text-align:center}
@@ -2460,9 +2460,9 @@ function renderProfile(){
     <div class="row"><span>🪪 Player name</span><span><b>${player.handle||"(unnamed)"}</b></span></div>
     <div class="row"><span>Wallet</span><span style="font-size:11px">${player.addr}</span></div>
     <div style="margin:7px 0 2px"><a href="#" id="changeNameLink" style="color:#1f7bd6;text-decoration:underline;font-size:13px;font-weight:700">✏️ Change Name</a></div>
-    <h3 style="font-family:'Baloo 2';color:#b5803a;margin:12px 0 5px;font-size:13px">🐣 Your Chiki${chikis.length>1?"s":""}</h3>
+    <h3 style="font-family:'Nunito';color:#b5803a;margin:12px 0 5px;font-size:13px">🐣 Your Chiki${chikis.length>1?"s":""}</h3>
     ${cards}
-    <h3 style="font-family:'Baloo 2';color:#b5803a;margin:12px 0 5px;font-size:13px">📊 Player statistics</h3>
+    <h3 style="font-family:'Nunito';color:#b5803a;margin:12px 0 5px;font-size:13px">📊 Player statistics</h3>
     <div class="row"><span>💰 SOL earned (paid out) ${player.pk?'<span style="font-size:9px;color:#3ddc84">on-chain</span>':''}</span><span style="color:var(--green)">${player.pk?(player._paidSol!=null?player._paidSol:"…"):"0"} ◎</span></div>
     <div class="row"><span>$CHIKI balance ${player.pk?'<span style="font-size:9px;color:#3ddc84">on-chain</span>':''}</span><span><a href="https://solscan.io/account/${player.pk||player.addr}" target="_blank" rel="noopener" style="color:#6fb1ff;text-decoration:none">${player.bal.toLocaleString()} ↗</a></span></div>
     <div class="row"><span>Wallet SOL ${player.pk?'<span style="font-size:9px;color:#3ddc84">on-chain</span>':''}</span><span>${(player._chainSol!=null?player._chainSol:player.sol)} ◎</span></div>
@@ -2514,9 +2514,9 @@ function renderRename(){
         </div></div>`;
   }).join("");
   document.getElementById("renameBody").innerHTML=`
-    <h3 style="font-family:'Baloo 2';color:#b5803a;margin:2px 0 5px;font-size:13px">🪪 Player name</h3>
+    <h3 style="font-family:'Nunito';color:#b5803a;margin:2px 0 5px;font-size:13px">🪪 Player name</h3>
     <div style="display:flex;gap:6px"><input id="handleInp" maxlength="16" placeholder="Your name" value="${(player.handle||"").replace(/"/g,"&quot;")}" style="flex:1;border:2px solid #d9bd85;border-radius:8px;padding:6px 8px;font-family:inherit;font-size:12px;background:#fff;color:#3a2c16"><button id="handleBtn" style="font-size:11px;padding:5px 10px">Set</button></div>
-    <h3 style="font-family:'Baloo 2';color:#b5803a;margin:12px 0 4px;font-size:13px">🐣 Chiki names</h3>
+    <h3 style="font-family:'Nunito';color:#b5803a;margin:12px 0 4px;font-size:13px">🐣 Chiki names</h3>
     ${rows||"<div style='color:#8fa6c9;font-size:11px'>No Chikis yet.</div>"}
     <div style="font-size:10.5px;color:#8fa6c9;margin-top:8px">Unique names only — each Chiki needs its own name. First rename of a Chiki is free · a second costs 50,000 $CHIKI · then locked.</div>`;
   const hb=document.getElementById("handleBtn");
@@ -4166,13 +4166,13 @@ function showDisconnectConfirm(){
   let ov=document.getElementById("dcOverlay");
   if(!ov){
     ov=document.createElement("div");ov.id="dcOverlay";
-    ov.style.cssText="position:fixed;inset:0;z-index:2000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55);font-family:'Baloo 2',sans-serif";
+    ov.style.cssText="position:fixed;inset:0;z-index:2000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55);font-family:'Nunito',sans-serif";
     ov.innerHTML=`<div style="width:min(90vw,340px);background:rgba(8,14,28,.98);border:1px solid #2c4470;border-radius:16px;padding:20px;text-align:center;box-shadow:0 18px 50px rgba(0,0,0,.6);color:#dce8fa">
       <div style="font-size:34px;margin-bottom:6px">👛</div>
       <div style="font-size:16px;font-weight:800;margin-bottom:4px">You're connected</div>
       <div id="dcWho" style="font-size:12px;color:#8fa6c9;margin-bottom:16px"></div>
-      <button id="dcYes" style="width:100%;font-family:'Baloo 2';font-weight:800;font-size:15px;padding:12px;border:none;border-radius:12px;background:linear-gradient(180deg,#ff7a6e,#d72631);color:#fff;cursor:pointer;box-shadow:0 4px 0 #5e0a10">🔌 Disconnect Wallet</button>
-      <button id="dcNo" style="width:100%;margin-top:10px;font-family:'Baloo 2';font-weight:800;font-size:15px;padding:12px;border:none;border-radius:12px;background:#1b2740;color:#dce8fa;cursor:pointer;box-shadow:0 4px 0 #0c1426">Cancel</button>
+      <button id="dcYes" style="width:100%;font-family:'Nunito';font-weight:800;font-size:15px;padding:12px;border:none;border-radius:12px;background:linear-gradient(180deg,#ff7a6e,#d72631);color:#fff;cursor:pointer;box-shadow:0 4px 0 #5e0a10">🔌 Disconnect Wallet</button>
+      <button id="dcNo" style="width:100%;margin-top:10px;font-family:'Nunito';font-weight:800;font-size:15px;padding:12px;border:none;border-radius:12px;background:#1b2740;color:#dce8fa;cursor:pointer;box-shadow:0 4px 0 #0c1426">Cancel</button>
     </div>`;
     document.body.appendChild(ov);
     ov.addEventListener("click",e=>{if(e.target===ov)ov.style.display="none";});   /* tap backdrop to cancel */
@@ -5134,7 +5134,7 @@ ZONES.cave.forEach(z=>{
 function makeRegionLabel(txt){
   const cv2=document.createElement("canvas");cv2.width=512;cv2.height=80;
   const c2=cv2.getContext("2d");
-  c2.font="bold 38px 'Baloo 2',sans-serif";c2.textAlign="center";c2.textBaseline="middle";
+  c2.font="bold 38px 'Nunito',sans-serif";c2.textAlign="center";c2.textBaseline="middle";
   c2.lineWidth=8;c2.strokeStyle="rgba(18,12,38,.9)";c2.strokeText(txt,256,40);
   c2.fillStyle="#ffffff";c2.fillText(txt,256,40);
   const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(cv2),
@@ -5354,7 +5354,7 @@ setTimeout(placeChikiseum,950);
 function makeTextSprite(txt,scalePx,color){
   const c2v=document.createElement("canvas");c2v.width=256;c2v.height=64;
   const c2=c2v.getContext("2d");
-  c2.font="bold 42px 'Baloo 2',sans-serif";c2.textAlign="center";c2.textBaseline="middle";
+  c2.font="bold 42px 'Nunito',sans-serif";c2.textAlign="center";c2.textBaseline="middle";
   c2.strokeStyle="rgba(0,0,0,.8)";c2.lineWidth=7;c2.strokeText(txt,128,32);
   c2.fillStyle=color||"#fff";c2.fillText(txt,128,32);
   const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c2v),transparent:true,depthWrite:false}));
@@ -6660,8 +6660,9 @@ requestAnimationFrame(frame);
 
   const css=document.createElement("style");
   css.textContent=`
-  #cupxBtn{position:fixed;left:12px;bottom:108px;z-index:70;display:none;background:linear-gradient(180deg,#ffd166,#e0a93a);color:#3a2a06;border:none;border-radius:12px;padding:10px 14px;font-weight:800;cursor:pointer;box-shadow:0 4px 0 #a87f1f,0 6px 14px rgba(0,0,0,.3);font-family:inherit}
-  #cupx{position:fixed;inset:0;z-index:200;display:none;background:rgba(4,12,9,.94);overflow-y:auto;font-family:inherit;color:#dff5e8}
+  #cupxBtn{position:fixed;left:12px;bottom:108px;z-index:70;display:none;background:linear-gradient(180deg,#ffe08a,#e0a93a);color:#2a1d00;border:1px solid #a87f1f;border-radius:12px;padding:10px 15px;font-weight:700;font-size:14px;letter-spacing:.2px;cursor:pointer;box-shadow:0 4px 0 #a87f1f,0 6px 14px rgba(0,0,0,.3);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
+  #cupx{position:fixed;inset:0;z-index:200;display:none;background:rgba(4,12,9,.94);overflow-y:auto;color:#dff5e8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
+  #cupx button,#cupx h1,#cupx h3{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
   #cupx .wrap{max-width:880px;margin:0 auto;padding:18px 16px 50px}
   #cupx h1{font-size:22px;margin:0}#cupx .gold{color:#ffd166}#cupx .teal{color:#3ddc84}
   #cupx .hd{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
