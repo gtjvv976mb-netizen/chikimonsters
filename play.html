@@ -6684,7 +6684,7 @@ requestAnimationFrame(frame);
   const btn=document.createElement("button"); btn.id="cupxBtn"; btn.textContent="🏆 Cup Preview"; document.body.appendChild(btn);
   const $=id=>document.getElementById(id);
   // admin-only visibility
-  setInterval(()=>{ let adm=false; try{ adm=(typeof isCreator==="function"&&window.player&&player.pk&&isCreator(player.pk)); }catch(e){} btn.style.display=adm?"block":"none"; },1500);
+  setInterval(()=>{ let adm=false; try{ adm=(typeof isCreator==="function"&&typeof player!=="undefined"&&player&&player.pk&&isCreator(player.pk)); }catch(e){} btn.style.display=adm?"block":"none"; },1500);
 
   let St=null;
   function myLeg(){ try{ if(typeof myChikis==="function"){ const l=myChikis().filter(c=>c.isLegend)[0]; if(l){ const si=(typeof SPECIES!=="undefined")?SPECIES.indexOf(l.sp):-1; return {name:(typeof nameOf==="function"?nameOf(l):"Your Legendary"),el:LEGEL[si]||"Fire",br:l.br||10,mine:true}; } } }catch(e){} return {name:"Dragonos",el:"Fire",br:14,mine:true}; }
