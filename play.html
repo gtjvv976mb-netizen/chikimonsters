@@ -1188,6 +1188,14 @@ if(location.search.indexOf("embed")>-1){
 #liveHud .lsep{opacity:.45}
 @keyframes lpulse{50%{opacity:.35}}
 body.pre #liveHud{display:none}
+/* ===== PHONE: remove the verbose desktop control hint (it overlapped the world) + keep bars clear of the left buttons ===== */
+@media(max-width:600px){
+  .hint{display:none}
+  #liveHud{font-size:11px;padding:4px 10px;gap:6px;max-width:90vw}
+}
+@media(max-width:380px){
+  #liveHud{font-size:10px;padding:3px 8px}
+}
 #whaleTab{position:fixed;top:130px;left:50%;transform:translateX(-50%);z-index:54;display:none;
   background:#2a1b4dee;color:#e9d8ff;border:1.5px solid #b197fc;border-radius:999px;
   padding:5px 14px;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:12px;
