@@ -1912,9 +1912,10 @@ function restoreChikis(h,saved){
     if(typeof tickCare==="function")tickCare(h);
     const e=h.ancientEgg; if(e&&!e.hatched){ const need=e.need||1440, done=Math.min(need,e.careMin||0), careLeft=Math.max(0,need-done), ready=done>=need;
       const fed=creatures.filter(c=>c.holder===h&&!c.isLegend&&(c.food||0)>0).length;
+      const carerN=Math.max(1,creatures.filter(c=>c.holder===h&&!c.isLegend&&c.tending).length);
       if(ready)addFeed(`🔮 <b>Mithra:</b> your <b>Legendary Egg is ready to hatch!</b> Open the 🔮 Mystic Market to claim it. 👑`);
       else if(fed<=0)addFeed(`🔮 <b>Mithra:</b> your <b>Legendary Egg</b> is incubating but <b>paused</b> — your Chiki(s) ran out of food. Feed them to resume! 🍖`);
-      else { const left=careLeft/fed, lt=left>=60?Math.floor(left/60)+"h "+Math.round(left%60)+"m":Math.max(1,Math.ceil(left))+"m";
+      else { const left=careLeft/carerN, lt=left>=60?Math.floor(left/60)+"h "+Math.round(left%60)+"m":Math.max(1,Math.ceil(left))+"m";
         addFeed(`🔮 <b>Mithra:</b> your <b>Legendary Egg</b> is incubating — about <b>${lt}</b> of care left (keep your Chiki(s) fed). Tap the 🔮 Mystic Market to watch.`); }
     }
   }
@@ -3624,7 +3625,9 @@ setInterval(updateWhaleTab,1000);
     /* ---- a Legendary Egg is incubating / ready ---- */
     if(e&&!e.hatched){
       const need=e.need||CARE_NEED_24H, done=Math.min(need,e.careMin||0), pct=Math.round(done/need*100), ready=done>=need;
-      const careLeft=Math.max(0,need-done), fed=fedCarers(player), left=fed>0?careLeft/fed:Infinity;
+      /* STABLE ETA: base "time left" on the carer COUNT (the steady fed rate), not the momentary fed count —
+         otherwise the timer doubles/halves every time a carer's food dips and refills. */
+      const careLeft=Math.max(0,need-done), fed=fedCarers(player), carerN=Math.max(1,carers(player).length), left=careLeft/carerN;
       if(ready){
         body.innerHTML=`${PORTRAIT}<div id="sorcLore">“The Legendary Egg trembles with power — it is ready.” ✨</div>
           <img class="sEggImg shake" src="ui/legendary-egg.png" alt="Legendary Egg" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'sEgg shake',textContent:'🥚'}))"><div class="sCareWrap"><div class="sCare" style="width:100%"></div></div>
