@@ -6561,5 +6561,140 @@ refreshUI();
 updateCamera();
 requestAnimationFrame(frame);
 </script>
+
+<!-- ===== 🏆 Chikoria Cup — ADMIN PREVIEW (self-contained, additive; visible only to CHAIN.ADMINS) ===== -->
+<script>
+(function(){
+  if(window.__chikiCupInit)return; window.__chikiCupInit=true;
+  const ELEMS={Water:"💧",Fire:"🔥",Beast:"🐾",Storm:"⚡",Light:"✨"};
+  const NEXT={Water:"Fire",Fire:"Beast",Beast:"Storm",Storm:"Light",Light:"Water"};
+  const COL={Water:"#4dabf7",Fire:"#ff6b6b",Beast:"#69db7c",Storm:"#b197fc",Light:"#ffd166"};
+  const NAMES=["Galador","Dragonos","Tyrannos","Adalor","Grovador","Voltere","Aquilo","Pyrrhos","Umbros","Selka","Bronto","Lumix","Krait","Nyxa","Orrin","Wystan"];
+  const LEGEL={10:"Water",11:"Light",12:"Beast",13:"Storm",14:"Fire"};
+  const SEED16=[1,16,8,9,5,12,4,13,3,14,6,11,7,10,2,15];
+  const SCHEDULE=["WB1","LB1","WB2","LB2","WB3","LB3","WF","LB4","LB5","LF","GF"];
+  const RNAME={WB1:"Winners · Round 1",LB1:"Losers · Round 1",WB2:"Winners · Round 2",LB2:"Losers · Round 2",WB3:"Winners · Semis",LB3:"Losers · Round 3",WF:"Winners · Final",LB4:"Losers · Round 4",LB5:"Losers · Round 5",LF:"Losers · Final",GF:"🏆 GRAND FINAL"};
+  const payout=p=>p===1?1.0:p===2?.18:p===3?.12:p===4?.09:p<=6?.06:p<=8?.045:p<=12?.04:.025;
+  const elemMult=(a,b)=>NEXT[a]===b?1.15:NEXT[b]===a?0.9:1;
+  const fight=(a,b)=>{const sa=a.br*elemMult(a.el,b.el)*(0.8+Math.random()*0.5),sb=b.br*elemMult(b.el,a.el)*(0.8+Math.random()*0.5);return sa>=sb?[a,b,Math.round(Math.max(8,(1-sb/sa)*100))]:[b,a,Math.round(Math.max(8,(1-sa/sb)*100))];};
+
+  const css=document.createElement("style");
+  css.textContent=`
+  #cupxBtn{position:fixed;left:12px;bottom:108px;z-index:70;display:none;background:linear-gradient(180deg,#ffd166,#e0a93a);color:#3a2a06;border:none;border-radius:12px;padding:10px 14px;font-weight:800;cursor:pointer;box-shadow:0 4px 0 #a87f1f,0 6px 14px rgba(0,0,0,.3);font-family:inherit}
+  #cupx{position:fixed;inset:0;z-index:200;display:none;background:rgba(4,12,9,.94);overflow-y:auto;font-family:inherit;color:#dff5e8}
+  #cupx .wrap{max-width:880px;margin:0 auto;padding:18px 16px 50px}
+  #cupx h1{font-size:22px;margin:0}#cupx .gold{color:#ffd166}#cupx .teal{color:#3ddc84}
+  #cupx .hd{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+  #cupx .sub{color:#8fb8a3;font-size:12.5px}
+  #cupx .pill{padding:4px 12px;border-radius:999px;font-size:12px;font-weight:800;border:1px solid #1c3d2e;background:#0f2a1e}
+  #cupx .card{background:linear-gradient(180deg,#0c2118,#0f2a1e);border:1px solid #1c3d2e;border-radius:15px;padding:16px;margin:12px 0}
+  #cupx button.b{background:#ffd166;color:#3a2a06;border:none;border-radius:10px;padding:10px 16px;font-weight:800;cursor:pointer;font-family:inherit}
+  #cupx button.g{background:#0f2a1e;color:#dff5e8;border:1px solid #1c3d2e;border-radius:10px;padding:10px 16px;font-weight:800;cursor:pointer;font-family:inherit}
+  #cupx button:disabled{opacity:.45;cursor:default}
+  #cupx .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media(max-width:640px){#cupx .grid2{grid-template-columns:1fr}}
+  #cupx .orb{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;flex:0 0 auto}
+  #cupx .nm{font-weight:800;font-size:13px}#cupx .meta{color:#8fb8a3;font-size:11px}
+  #cupx .match{background:#0b1d15;border:1px solid #1c3d2e;border-radius:12px;padding:9px;margin:8px 0}
+  #cupx .mrow{display:flex;align-items:center;gap:8px}
+  #cupx .ftr{flex:1;display:flex;align-items:center;gap:8px;padding:4px}
+  #cupx .ftr.win .nm{color:#3ddc84}#cupx .ftr.lose{opacity:.45}
+  #cupx .vs{color:#8fb8a3;font-weight:800;font-size:11px}
+  #cupx .hp{height:7px;background:#06140f;border-radius:5px;overflow:hidden;border:1px solid #1c3d2e;margin-top:3px}
+  #cupx .hp i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#3ddc84,#7be37b);transition:width .25s}
+  #cupx .hp i.foe{background:linear-gradient(90deg,#ff6b6b,#ffa8a8)}
+  #cupx .stand{display:flex;justify-content:space-between;padding:6px 8px;border-bottom:1px solid #1c3d2e;font-size:12.5px}
+  #cupx .stand .s{color:#ffd166;font-weight:800}
+  #cupx .x{cursor:pointer;font-size:20px;color:#8fb8a3}
+  #cupx .champ{text-align:center;padding:22px}#cupx .champ .c{font-size:48px}#cupx .champ .w{font-size:24px;font-weight:900;color:#ffd166;margin:6px}`;
+  document.head.appendChild(css);
+
+  const ov=document.createElement("div"); ov.id="cupx";
+  ov.innerHTML=`<div class="wrap">
+    <div class="hd"><div><h1>🏆 <span class="gold">Chikoria Cup</span> <span class="sub">· admin preview</span></h1><div class="sub">16 Legendaries · double elimination · battles fought in the Chikiseum 🌊</div></div>
+      <div style="display:flex;gap:8px;align-items:center"><span id="cupxStatus" class="pill" style="color:#ffd166">REGISTRATION</span><span class="x" id="cupxClose">✕</span></div></div>
+    <div class="card" id="cupxReg"><h3 style="margin-top:0">⚔️ Enter the Cup</h3>
+      <div class="grid2" style="align-items:center">
+        <div class="match" style="margin:0"><div class="mrow" id="cupxMine"></div></div>
+        <div><div class="sub">Entry: <b class="gold">100 ✨ Glory</b> · Pool: <b class="teal">2 SOL</b> · Champion <b class="gold">1 SOL</b></div>
+          <button class="b" id="cupxReg2" style="margin-top:10px">Register & Start (preview) — 100 ✨</button></div></div></div>
+    <div class="card" id="cupxLobby" style="display:none"><h3 style="margin-top:0">🛡 Lobby — seeded by Battle Rank</h3><div class="grid2" id="cupxLobbyList"></div></div>
+    <div class="card" id="cupxRound" style="display:none"><div class="hd"><h3 style="margin:0" id="cupxRtitle"></h3>
+      <div><button class="g" id="cupxReady">✅ Ready Up</button> <button class="b" id="cupxResolve">⚔️ Fight Round</button></div></div>
+      <div id="cupxMatches"></div></div>
+    <div class="card champ" id="cupxChamp" style="display:none"><div class="c">👑</div><div class="w" id="cupxChampName"></div><div class="sub">Champion of the Chikoria Cup — <b class="gold">1 SOL</b> 🌊</div></div>
+    <div class="card" id="cupxStand" style="display:none"><h3 style="margin-top:0">🏅 Standings & Payouts</h3><div id="cupxStandings"></div><div class="sub" id="cupxPaid" style="margin-top:6px"></div></div>
+  </div>`;
+  document.body.appendChild(ov);
+
+  const btn=document.createElement("button"); btn.id="cupxBtn"; btn.textContent="🏆 Cup Preview"; document.body.appendChild(btn);
+  const $=id=>document.getElementById(id);
+  // admin-only visibility
+  setInterval(()=>{ let adm=false; try{ adm=(typeof isCreator==="function"&&window.player&&player.pk&&isCreator(player.pk)); }catch(e){} btn.style.display=adm?"block":"none"; },1500);
+
+  let St=null;
+  function myLeg(){ try{ if(typeof myChikis==="function"){ const l=myChikis().filter(c=>c.isLegend)[0]; if(l){ const si=(typeof SPECIES!=="undefined")?SPECIES.indexOf(l.sp):-1; return {name:(typeof nameOf==="function"?nameOf(l):"Your Legendary"),el:LEGEL[si]||"Fire",br:l.br||10,mine:true}; } } }catch(e){} return {name:"Dragonos",el:"Fire",br:14,mine:true}; }
+  function legHTML(e,cls){return `<div class="ftr ${cls||''}"><div class="orb" style="background:${COL[e.el]}22;color:${COL[e.el]}">${ELEMS[e.el]}</div><div><div class="nm">${e.name}${e.mine?' <span class="meta">(you)</span>':''}</div><div class="meta">${e.el} · BR ${e.br}</div></div></div>`;}
+
+  function openCup(){ St=mk(); ov.style.display="block"; $("cupxStatus").textContent="REGISTRATION"; $("cupxStatus").style.color="#ffd166";
+    $("cupxReg").style.display="block"; $("cupxLobby").style.display="none"; $("cupxRound").style.display="none"; $("cupxChamp").style.display="none"; $("cupxStand").style.display="none";
+    $("cupxReg2").disabled=false; $("cupxReg2").textContent="Register & Start (preview) — 100 ✨";
+    $("cupxMine").innerHTML=legHTML(St.ents[0]); }
+  btn.onclick=openCup;
+  $("cupxClose").onclick=()=>{ ov.style.display="none"; };
+
+  function mk(){ const els=Object.keys(ELEMS),e=[e0()]; for(let i=1;i<16;i++)e.push({name:NAMES[i],el:els[i%5],br:4+((i*5+3)%24)}); return {ents:e,roundIdx:-1,place:{},slot:[],wb1w:[],wb1l:[],wb2w:[],wb2l:[],wb3w:[],wb3l:[],wf:null,wfl:null,lb1:[],lb2:[],lb3:[],lb4:[],lb5:null,lbc:null,champ:null}; }
+  function e0(){ const m=myLeg(); m.id=0; return m; }
+
+  $("cupxReg2").onclick=()=>{ $("cupxReg2").textContent="Registered ✓ — starting…"; $("cupxReg2").disabled=true; setTimeout(start,500); };
+  function start(){ St.ents.forEach((e,i)=>e.id=i);
+    const seeded=St.ents.slice().sort((a,b)=>b.br-a.br); St.slot=SEED16.map(s=>seeded[s-1]);
+    $("cupxStatus").textContent="LIVE"; $("cupxStatus").style.color="#3ddc84";
+    $("cupxLobby").style.display="block"; $("cupxLobbyList").innerHTML=seeded.map((e,i)=>`<div class="match" style="margin:0"><div class="mrow">${legHTML(e)}<span class="meta">#${i+1}</span></div></div>`).join("");
+    St.roundIdx=0; showRound(); }
+
+  function pairs(){const r=SCHEDULE[St.roundIdx],P=[],pr=a=>{for(let i=0;i<a.length;i+=2)P.push([a[i],a[i+1]]);};
+    if(r==="WB1")pr(St.slot);else if(r==="LB1")pr(St.wb1l);else if(r==="WB2")pr(St.wb1w);
+    else if(r==="LB2"){for(let i=0;i<4;i++)P.push([St.lb1[i],St.wb2l[i]]);}else if(r==="WB3")pr(St.wb2w);
+    else if(r==="LB3")pr(St.lb2);else if(r==="WF")P.push([St.wb3w[0],St.wb3w[1]]);
+    else if(r==="LB4"){for(let i=0;i<2;i++)P.push([St.lb3[i],St.wb3l[i]]);}else if(r==="LB5")P.push([St.lb4[0],St.lb4[1]]);
+    else if(r==="LF")P.push([St.lb5,St.wfl]);else if(r==="GF")P.push([St.wf,St.lbc]);return P;}
+
+  function showRound(){ $("cupxRound").style.display="block"; $("cupxRtitle").textContent=RNAME[SCHEDULE[St.roundIdx]];
+    $("cupxResolve").disabled=false; $("cupxReady").disabled=false; $("cupxReady").textContent="✅ Ready Up";
+    $("cupxMatches").innerHTML=pairs().map((m,i)=>`<div class="match" id="cupxM${i}">
+      <div class="mrow">${legHTML(m[0])}<div class="vs">VS</div>${legHTML(m[1])}</div>
+      <div class="mrow" style="margin-top:5px"><div style="flex:1"><div class="hp"><i id="cupxH${i}a"></i></div></div><div style="flex:1"><div class="hp"><i class="foe" id="cupxH${i}b"></i></div></div></div></div>`).join(""); }
+  $("cupxReady").onclick=()=>{ $("cupxReady").textContent="✅ Ready — locked"; $("cupxReady").disabled=true; };
+
+  $("cupxResolve").onclick=()=>{ $("cupxResolve").disabled=true; $("cupxReady").disabled=true;
+    const r=SCHEDULE[St.roundIdx],P=pairs(),W=[],L=[]; const res=P.map(m=>fight(m[0],m[1]));
+    // animate HP drain ~1.6s
+    let t=0; const steps=16, iv=setInterval(()=>{ t++; const f=t/steps;
+      res.forEach((rr,i)=>{ const [w,l,rem]=rr,a=P[i][0],b=P[i][1]; const aWin=w===a;
+        const aHp=aWin?(100-(100-rem)*f):(100*(1-f)), bHp=aWin?(100*(1-f)):(100-(100-rem)*f);
+        const ea=$("cupxH"+i+"a"),eb=$("cupxH"+i+"b"); if(ea)ea.style.width=Math.max(0,aHp)+"%"; if(eb)eb.style.width=Math.max(0,bHp)+"%"; });
+      if(t>=steps){ clearInterval(iv);
+        res.forEach((rr,i)=>{ const [w,l]=rr; W.push(w); L.push(l); const el=$("cupxM"+i);
+          if(el)el.querySelector(".mrow").innerHTML=legHTML(w,"win")+'<div class="vs">won</div>'+legHTML(l,"lose"); });
+        consume(r,W,L); setTimeout(()=>{ if(r==="GF")finish(); else { St.roundIdx++; showRound(); } },700); }
+    },90); };
+
+  function consume(r,W,L){const sp=(a,p)=>a.forEach(e=>St.place[e.id]=p);
+    if(r==="WB1"){St.wb1w=W;St.wb1l=L;}else if(r==="LB1"){St.lb1=W;sp(L,13);}
+    else if(r==="WB2"){St.wb2w=W;St.wb2l=L;}else if(r==="LB2"){St.lb2=W;sp(L,9);}
+    else if(r==="WB3"){St.wb3w=W;St.wb3l=L;}else if(r==="LB3"){St.lb3=W;sp(L,7);}
+    else if(r==="WF"){St.wf=W[0];St.wfl=L[0];}else if(r==="LB4"){St.lb4=W;sp(L,5);}
+    else if(r==="LB5"){St.lb5=W[0];St.place[L[0].id]=4;}else if(r==="LF"){St.lbc=W[0];St.place[L[0].id]=3;}
+    else if(r==="GF"){St.champ=W[0];St.place[L[0].id]=2;St.place[W[0].id]=1;}}
+
+  function finish(){ $("cupxRound").style.display="none"; $("cupxChamp").style.display="block";
+    $("cupxChampName").textContent=ELEMS[St.champ.el]+" "+St.champ.name;
+    $("cupxStatus").textContent="FINISHED"; $("cupxStatus").style.color="#8fb8a3";
+    $("cupxStand").style.display="block"; let total=0;
+    const rows=St.ents.map(e=>({e,p:St.place[e.id],sol:payout(St.place[e.id])})).sort((a,b)=>a.p-b.p);
+    $("cupxStandings").innerHTML=rows.map(x=>{total+=x.sol;return `<div class="stand"><span>${x.p}. ${ELEMS[x.e.el]} ${x.e.name}${x.e.mine?' (you)':''} <span class="meta">BR ${x.e.br}</span></span><span class="s">${x.sol.toFixed(3)} ◎</span></div>`;}).join("");
+    $("cupxPaid").textContent=`Total paid: ${total.toFixed(3)} SOL of 2 SOL · 1,600 ✨ Glory sunk in entries.`; }
+})();
+</script>
 </body>
 </html>
