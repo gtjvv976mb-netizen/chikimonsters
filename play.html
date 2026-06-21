@@ -3150,13 +3150,14 @@ setInterval(updateWhaleTab,1000);
       drawTo(s,6);
     });
     B.turn="you"; B._resolving=false; B.round=(B.round||0)+1; clearTurnTimer();
+    if(B.spectate){ aiPlan(B.you); aiPlan(B.foe); render(); setTimeout(()=>{ if(B&&!B.over)resolveTurn(); },1000); return; }   /* SPECTATE: both sides auto-play, you watch */
     aiPlan();                /* the rival secretly locks in its cards now */
     render();
     startTurnTimer();        /* one shared lock-in timer */
   }
   /* the rival plans up to 3 cards (stored as hand indices) within its energy */
-  function aiPlan(){
-    const me=B.foe; me.queue=[]; const used=new Set(); let budget=me.energy;
+  function aiPlan(side){
+    const me=side||B.foe; me.queue=[]; const used=new Set(); let budget=me.energy;
     const takeIdx=pred=>{for(let i=0;i<me.hand.length;i++){if(used.has(i))continue;const s=me.hand[i];if(pred(s)&&CARD_COST[s]<=budget&&me.queue.length<3){used.add(i);me.queue.push(i);budget-=CARD_COST[s];if(s===4)budget+=1;return true;}}return false;};
     if(me.hp/me.maxhp<.4){ if(!takeIdx(s=>s===3))takeIdx(s=>s===11); }                 /* guard/bulwark when low */
     if(me.hand.some(s=>s===4)&&me.hand.some(s=>s===6||s===1))takeIdx(s=>s===4);          /* charge before a big hit */
@@ -3241,6 +3242,17 @@ setInterval(updateWhaleTab,1000);
   function checkEnd(){ if(!B||B.over)return; if(B.foe.hp<=0&&B.foe.ls<=0)return end(true); if(B.you.hp<=0&&B.you.ls<=0)return end(false); }
   function end(win){
     B.over=true; clearTurnTimer(); B._resolving=false; g("arenaPowers").innerHTML=""; const keyEl=g("arenaKey"); if(keyEl)keyEl.innerHTML="";
+    if(B.spectate){   /* Cup spectate: just show the outcome and hand control back to the Cup (no arena glory/stamina) */
+      g("arenaResult").innerHTML = win ? "🏆 <span style='color:#3ddc84'>YOU WIN!</span>" : "💀 <span style='color:#ff6b6b'>You lost…</span>";
+      log(win ? "🏆 You won this Cup match!" : "💀 You lost this Cup match.");
+      const cb=B.onEnd; g("arenaCenter").innerHTML="";
+      const back=document.createElement("button");
+      back.textContent="→ Back to Cup";
+      back.style.cssText="font-family:inherit;font-weight:800;font-size:15px;padding:11px 22px;border:none;border-radius:12px;background:linear-gradient(180deg,#ffd166,#e0a800);color:#3a2a06;cursor:pointer;box-shadow:0 4px 0 #a87c00";
+      back.onclick=()=>{ const ov=g("arenaOverlay"); if(ov)ov.style.display="none"; B=null; if(typeof cb==="function")cb(win); };
+      g("arenaCenter").appendChild(back);
+      return;
+    }
     const foeBr=B.foeBr||1, c=B.you.c; ensureBattle(c);
     c.arenaStam=Math.max(0,(c.arenaStam!=null?c.arenaStam:legStamMax(c.level||1))-ARENA_STAM);   /* spend 30 stamina */
     let slept=false;
@@ -3261,6 +3273,20 @@ setInterval(updateWhaleTab,1000);
     g("arenaCenter").innerHTML=""; g("arenaCenter").appendChild(again);
   }
   const myLegends=()=>(typeof myChikis==="function")?myChikis().filter(c=>c.isLegend):[];
+  /* Cup spectate: watch YOUR Legendary auto-battle a Cup opponent (BR foeBr) in the real arena; calls onEnd(youWon). */
+  function cupSpectate(foeBr, onEnd){
+    const legs=myLegends().map(ensureLegendSkills);
+    if(!legs.length){ if(typeof onEnd==="function")onEnd(true); return; }   /* no Legendary → can't show a battle, just advance */
+    const you=legs[0], foeC=aiFoe(Math.max(1, foeBr||1));
+    const bx=g("arenaBox"); if(bx)bx.classList.remove("introMode");
+    const ai=g("arenaIntro"); if(ai)ai.style.display="none";
+    const ov=g("arenaOverlay"); if(ov)ov.style.display="flex";
+    B={you:makeSide(you,true),foe:makeSide(foeC,false),over:false,turn:null,foeBr:foeC.br,spectate:true,onEnd};
+    log(`🏆 <b>Cup match</b> — <b style="color:#7fd0ff">${B.you.name}</b> vs <b style="color:#ffd93d">${B.foe.name}</b> (BR ${foeC.br})`);
+    B.firstAttacker=(B.you.st.spd>=B.foe.st.spd)?"you":"foe";
+    renderTeams(); setTimeout(beginRound,650);
+  }
+  window.cupSpectate=cupSpectate;
   const fmtSleep=s=>{s=Math.max(0,Math.ceil(s));return s>=60?Math.floor(s/60)+"m "+(s%60)+"s":s+"s";};
   /* Feed a Legendary to restore its arena stamina ($CHIKI per stamina, cheaper at higher level) */
   async function feedLegendary(c){
@@ -6721,18 +6747,32 @@ requestAnimationFrame(frame);
       <div class="mrow" style="margin-top:5px"><div style="flex:1"><div class="hp"><i id="cupxH${i}a"></i></div></div><div style="flex:1"><div class="hp"><i class="foe" id="cupxH${i}b"></i></div></div></div></div>`).join(""); }
   $("cupxReady").onclick=()=>{ $("cupxReady").textContent="✅ Ready — locked"; $("cupxReady").disabled=true; };
 
-  $("cupxResolve").onclick=()=>{ $("cupxResolve").disabled=true; $("cupxReady").disabled=true;
-    const r=SCHEDULE[St.roundIdx],P=pairs(),W=[],L=[]; const res=P.map(m=>fight(m[0],m[1]));
-    // animate HP drain ~1.6s
-    let t=0; const steps=16, iv=setInterval(()=>{ t++; const f=t/steps;
-      res.forEach((rr,i)=>{ const [w,l,rem]=rr,a=P[i][0],b=P[i][1]; const aWin=w===a;
+  function runRoundAnim(r,P,res){
+    const W=[],L=[]; let t=0; const steps=16, iv=setInterval(()=>{ t++; const f=t/steps;
+      res.forEach((rr,i)=>{ const [w,l,rem]=rr,a=P[i][0]; const aWin=w===a;
         const aHp=aWin?(100-(100-rem)*f):(100*(1-f)), bHp=aWin?(100*(1-f)):(100-(100-rem)*f);
         const ea=$("cupxH"+i+"a"),eb=$("cupxH"+i+"b"); if(ea)ea.style.width=Math.max(0,aHp)+"%"; if(eb)eb.style.width=Math.max(0,bHp)+"%"; });
       if(t>=steps){ clearInterval(iv);
         res.forEach((rr,i)=>{ const [w,l]=rr; W.push(w); L.push(l); const el=$("cupxM"+i);
           if(el)el.querySelector(".mrow").innerHTML=legHTML(w,"win")+'<div class="vs">won</div>'+legHTML(l,"lose"); });
         consume(r,W,L); setTimeout(()=>{ if(r==="GF")finish(); else { St.roundIdx++; showRound(); } },700); }
-    },90); };
+    },90);
+  }
+  $("cupxResolve").onclick=()=>{ $("cupxResolve").disabled=true; $("cupxReady").disabled=true;
+    const r=SCHEDULE[St.roundIdx], P=pairs();
+    const myIdx=P.findIndex(m=>m[0].id===0||m[1].id===0);   // the admin's own match (entrant #1)
+    if(myIdx>=0 && typeof window.cupSpectate==="function"){
+      const m=P[myIdx], me=(m[0].id===0?m[0]:m[1]), opp=(m[0].id===0?m[1]:m[0]);
+      ov.style.display="none";                               // hide the Cup, show the real arena
+      window.cupSpectate(opp.br, (youWon)=>{
+        ov.style.display="block";                            // back to the Cup
+        const res=P.map((mm,i)=>{ if(i===myIdx){ const w=youWon?me:opp, l=youWon?opp:me; return [w,l,40]; } return fight(mm[0],mm[1]); });
+        runRoundAnim(r,P,res);
+      });
+    } else {
+      runRoundAnim(r,P,P.map(m=>fight(m[0],m[1])));          // admin already out → auto-resolve all
+    }
+  };
 
   function consume(r,W,L){const sp=(a,p)=>a.forEach(e=>St.place[e.id]=p);
     if(r==="WB1"){St.wb1w=W;St.wb1l=L;}else if(r==="LB1"){St.lb1=W;sp(L,13);}
