@@ -803,6 +803,7 @@ if(location.search.indexOf("embed")>-1){
 .aiPane.on{display:block}
 .aiPane h3{font-size:18px;color:#ffe9b0;margin-bottom:6px}
 .aiPane b{color:#ffe27a}
+.aiVid{width:100%;max-height:46vh;border-radius:12px;border:1px solid #2c4470;margin:0 0 12px;background:#0a1020;display:block;box-shadow:0 6px 18px rgba(0,0,0,.4)}
 .aiBlock{background:rgba(0,0,0,.24);border:1px solid #2c4470;border-radius:10px;padding:10px 12px;margin-bottom:9px}
 .aiBlock h4{color:#ffd93d;font-size:14px;margin-bottom:3px}
 .aiBlock.glory{border-color:#b98a2e;background:linear-gradient(180deg,rgba(60,46,12,.4),rgba(0,0,0,.24))}
@@ -962,6 +963,7 @@ if(location.search.indexOf("embed")>-1){
     </div>
     <div class="aiPane" data-aip="welcome">
       <h3>Welcome to the Chikiseum ⚔️</h3>
+      <video class="aiVid" src="ui/chikiseum-intro.mp4" autoplay muted loop playsinline controls preload="metadata"></video>
       <p>Chikoria's grand arena, where <b>Legendary</b> Chikis wield the power of Chi and duel for <b>✨ Glory</b>. Only Legendaries can fight here — awaken one from a Legendary Egg at 🔮 <b>Mithra's Mystic Market</b>. Explore your Legendary and build your 12-card deck right here in the hub — <b>battles go live with the Chikoria Cup tomorrow.</b> ⚔️</p>
       <div class="aiTrivia">🔺 Element triangle: 💧 Water ▸ 🔥 Fire ▸ 🐾 Beast ▸ ⚡ Storm ▸ ✨ Light ▸ Water. A strong matchup hits for <b>×1.5</b>, a weak one <b>×0.7</b>. A Legendary is born owning just <b>3 of its 12</b> skill cards.</div>
     </div>
@@ -6663,6 +6665,7 @@ requestAnimationFrame(frame);
     <div class="hd"><div><h1>🏆 <span class="gold">Chikoria Cup</span> <span class="sub">· admin preview</span></h1><div class="sub">16 Legendaries · double elimination · battles fought in the Chikiseum 🌊</div></div>
       <div style="display:flex;gap:8px;align-items:center"><span id="cupxStatus" class="pill" style="color:#ffd166">REGISTRATION</span><span class="x" id="cupxClose">✕</span></div></div>
     <div class="card" id="cupxReg"><h3 style="margin-top:0">⚔️ Enter the Cup</h3>
+      <video src="ui/chikoria-cup-intro.mp4" autoplay muted loop playsinline controls preload="metadata" style="width:100%;max-height:40vh;border-radius:12px;border:1px solid #1c3d2e;margin:0 0 12px;display:block;background:#0a1d15"></video>
       <div class="grid2" style="align-items:center">
         <div class="match" style="margin:0"><div class="mrow" id="cupxMine"></div></div>
         <div><div class="sub">Entry: <b class="gold">100 ✨ Glory</b> · Pool: <b class="teal">2 SOL</b> · Champion <b class="gold">1 SOL</b></div>
