@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Chiki Monsters - Chikoria</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@600;700;800&family=Press+Start+2P&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
 <style>
   :root{
     --glass:rgba(17,24,39,.82); --glass2:rgba(29,39,64,.85); --line:#2a3654;
@@ -164,9 +164,9 @@
   .vlogo{text-align:center;animation:pop .9s cubic-bezier(.2,1.6,.4,1) both}
   @keyframes pop{from{transform:scale(.25);opacity:0}to{transform:scale(1);opacity:1}}
   .vlogo .lgTop{font-size:34px;display:block;margin-bottom:10px;filter:drop-shadow(0 4px 0 rgba(0,0,0,.3))}
-  .vlogo .lg1{display:block;font-family:'Press Start 2P',monospace;font-size:62px;color:#ffd93d;letter-spacing:6px;
+  .vlogo .lg1{display:block;font-family:'Nunito',sans-serif;font-weight:800;font-size:62px;color:#ffd93d;letter-spacing:6px;
     text-shadow:0 3px 0 #c98a00,0 6px 0 #8a5a00,0 9px 0 #4a2d00,4px 0 0 #c98a00,-4px 0 0 #c98a00,0 14px 22px rgba(0,0,0,.45)}
-  .vlogo .lg2{display:block;margin-top:16px;font-family:'Press Start 2P',monospace;font-size:27px;color:#dff0ff;letter-spacing:4px;
+  .vlogo .lg2{display:block;margin-top:16px;font-family:'Nunito',sans-serif;font-weight:800;font-size:27px;color:#dff0ff;letter-spacing:4px;
     text-shadow:0 3px 0 #7db5e8,0 6px 0 #2f6fd0,0 9px 0 #173a6e,3px 0 0 #7db5e8,-3px 0 0 #7db5e8}
   .medal{width:86px;height:86px;margin:30px auto 0;border-radius:50%;
     background:radial-gradient(circle at 35% 30%,#5ec1ff,#1b56b8 72%);
@@ -178,7 +178,7 @@
   @keyframes bob2{50%{transform:translateY(-14px)}}
   #splashTag{margin-top:24px;font-family:'Nunito',sans-serif;font-weight:800;color:#fff;font-size:18px;
     text-shadow:0 2px 0 #173a6e;letter-spacing:1px}
-  #enterBtn{margin-top:30px;font-family:'Press Start 2P',monospace;font-size:14px;padding:18px 34px;
+  #enterBtn{margin-top:30px;font-family:'Nunito',sans-serif;font-weight:800;font-size:14px;padding:18px 34px;
     background:linear-gradient(180deg,#ffe26e,#f5a623);color:#4a2d00;border:4px solid #3a2408;border-radius:10px;
     box-shadow:0 6px 0 #3a2408,0 0 0 3px #2f6fd0,0 12px 24px rgba(0,0,0,.45);
     text-shadow:0 2px 0 rgba(255,255,255,.35);letter-spacing:1px;
@@ -198,9 +198,9 @@
   body.pre .topbar,body.pre .botbar,body.pre #miniWrap,body.pre .pop,body.pre #btnMyFloat,body.pre #btnProfile{display:none !important}
 
   /* --- pixel logo in the top bar --- */
-  .logo .l1{font-family:'Press Start 2P',monospace;font-size:19px;-webkit-text-stroke:0;color:#ffd93d;
+  .logo .l1{font-family:'Nunito',sans-serif;font-weight:800;font-size:19px;-webkit-text-stroke:0;color:#ffd93d;
     text-shadow:0 2px 0 #8a5a00,0 4px 0 #4a2d00,2px 0 0 #c98a00,-2px 0 0 #c98a00;letter-spacing:2px}
-  .logo .l2{font-family:'Press Start 2P',monospace;font-size:8.5px;color:#dff0ff;letter-spacing:2px;-webkit-text-stroke:0;
+  .logo .l2{font-family:'Nunito',sans-serif;font-weight:700;font-size:12px;color:#dff0ff;letter-spacing:1px;-webkit-text-stroke:0;
     text-shadow:0 2px 0 #2f6fd0,0 3px 0 #173a6e;margin-top:5px}
 
   /* --- blocky craft chips & buttons --- */
@@ -215,7 +215,7 @@
   .pop{background:#f7ecd2;border:4px solid #4a2d14;border-radius:10px;
     box-shadow:0 0 0 4px #8a5a36,0 12px 0 rgba(0,0,0,.3),0 22px 50px rgba(0,0,0,.45)}
   .pop h2{background:linear-gradient(180deg,#79c96d,#3e8e38);color:#fff;
-    font-family:'Press Start 2P',monospace;font-size:8.5px;letter-spacing:1px;line-height:1.7;text-transform:none;
+    font-family:'Nunito',sans-serif;font-weight:800;font-size:15px;letter-spacing:.5px;line-height:1.5;text-transform:none;
     margin:-14px -14px 12px;padding:11px 14px;border-bottom:4px solid #1c4a18;border-radius:6px 6px 0 0;
     text-shadow:0 2px 0 #1c4a18}
   .pop h2 .x{color:#e8ffe2;font-size:14px}
@@ -3454,9 +3454,27 @@ setInterval(updateWhaleTab,1000);
     };
     const aiInfo=g("arenaInfo");
     if(aiInfo)aiInfo.onclick=()=>{ aiSelect("welcome"); showArenaIntro(); };
+    /* ---- Cinematic intro video: plays every time the Chikiseum is opened ---- */
+    function playChikiseumIntro(){
+      let ov=g("csIntroVid");
+      if(!ov){
+        ov=document.createElement("div"); ov.id="csIntroVid";
+        ov.style.cssText="position:fixed;inset:0;z-index:4000;background:#000;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .25s";
+        ov.innerHTML='<video id="csIntroVidEl" src="ui/chikiseum-intro.mp4" playsinline preload="auto" style="width:100%;height:100%;object-fit:contain;background:#000"></video>'
+          +'<button id="csIntroSkip" style="position:absolute;right:16px;bottom:16px;z-index:1;padding:9px 16px;border:none;border-radius:999px;background:rgba(0,0,0,.55);color:#fff;font:600 14px Nunito,sans-serif;cursor:pointer;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)">Skip ▸</button>';
+        document.body.appendChild(ov);
+      }
+      const vid=g("csIntroVidEl"), skip=g("csIntroSkip");
+      const close=()=>{ ov.style.opacity="0"; try{vid.pause();}catch(e){} setTimeout(()=>{ ov.style.display="none"; },250); };
+      ov.style.display="flex"; requestAnimationFrame(()=>{ ov.style.opacity="1"; });
+      vid.muted=false; try{vid.currentTime=0;}catch(e){}
+      const p=vid.play(); if(p&&p.catch)p.catch(()=>{ vid.muted=true; vid.play().catch(()=>{}); });
+      vid.onended=close; skip.onclick=close;
+    }
     ab.onclick=()=>{
       g("arenaOverlay").style.display="flex";
       if(typeof window.focusOnChikiseum==="function")window.focusOnChikiseum();   /* pan the camera to the arena in the world */
+      playChikiseumIntro();   /* cinematic curtain on top of the hub */
       if(ARENA_ENABLED){ showArenaIntro(); aiSelect("cards"); }   /* show the hub FIRST (so the 3D canvas has a size), then land on My Cards */
       else{   /* battles still being polished — show a notice, but the arena is now in the world */
         g("arenaResult").innerHTML="🛠️ <span style='color:#ffd93d'>The Chikiseum is being forged</span>";
