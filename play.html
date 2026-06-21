@@ -849,6 +849,28 @@ if(location.search.indexOf("embed")>-1){
 /* Mystic Market skill-card shop */
 .mskHd{font-size:12.5px;color:#c9b8ee;margin-bottom:8px;line-height:1.45}
 .mskGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+/* ===== Chikiseum HUB — tablet & phone responsiveness (cards grid, 3D viewer, market, tabs) ===== */
+@media(max-width:820px){
+  #arenaBox.introMode #arenaIntro{max-width:100%;margin:24px auto 20px;padding:0 12px 22px}
+  .mskGrid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:620px){
+  #arenaBox.introMode #arenaIntro{margin:14px auto 18px;padding:0 10px 20px}
+  #hubLeg3D{justify-content:center;text-align:center;padding:10px;gap:10px}
+  #hub3d{width:200px;height:200px;margin:0 auto}
+  #hubLegStats{flex:1 1 100%;min-width:0;width:100%}
+  .aiTabs{gap:5px}
+  .aiTab{font-size:11px;padding:6px 9px}
+  .aiPane{font-size:12.5px}
+  .aiPane h3{font-size:16px}
+  .aiBlock{padding:9px 10px}
+  .aiEnter{font-size:15px;padding:11px}
+}
+@media(max-width:420px){
+  .hubGrid{grid-template-columns:repeat(2,1fr);gap:7px}
+  #hub3d{width:168px;height:168px}
+  .mskNm{font-size:10px}
+}
 .mskCard{text-align:center}
 .mskImg{aspect-ratio:2/3;border-radius:8px;background:#0f1b34;background-size:cover;background-position:center;border:1px solid #6a4fb0}
 .mskNm{font-size:10.5px;font-weight:800;margin:5px 0 3px;color:#e7dcff;line-height:1.15}
@@ -909,6 +931,23 @@ if(location.search.indexOf("embed")>-1){
 #arenaZoom{position:absolute;bottom:20px;left:20px;z-index:30;width:300px;height:452px;border-radius:18px;overflow:hidden;background:#0f1b34 center/contain no-repeat;border:4px solid #ffe27a;box-shadow:0 16px 44px rgba(0,0,0,.75);pointer-events:none;opacity:0;transform:translateY(20px) scale(.92);transition:opacity .16s,transform .16s}
 #arenaZoom.on{opacity:1;transform:translateY(0) scale(1)}
 @media(max-width:760px){#aEnergyBox{width:180px;height:63px}#aTimerBox{width:132px;height:64px}.aFighter img{height:30vh}.aPow.art{width:92px;height:138px}#arenaZoom{width:200px;height:300px}}
+/* ===== PHONES: cards become one horizontal-scroll strip so they never wrap/overlap the battle ===== */
+@media(max-width:560px){
+  #arenaPowers{flex-wrap:nowrap!important;overflow-x:auto;overflow-y:visible;justify-content:flex-start;
+    left:0;right:0;transform:none;width:100vw;max-width:100vw;padding:4px 8px 6px;gap:6px;bottom:4px;
+    -webkit-overflow-scrolling:touch;scrollbar-width:none}
+  #arenaPowers::-webkit-scrollbar{display:none}
+  .aPow.art{width:62px;height:93px;border-width:1.5px;flex:0 0 auto}
+  .aPow.art:hover,.aPow.art.sel{transform:translateY(-6px) scale(1.04)}
+  #arenaCenter{bottom:110px}                 /* lock-in / battle-again sits ABOVE the card strip */
+  .aLockBtn{width:148px;height:50px}
+  .aAgainBtn{width:168px;height:60px}
+  .aFighter img{height:23vh}
+  #aEnergyBox{width:132px;height:46px}
+  #aTimerBox{width:98px;height:48px}
+  #arenaResult{font-size:22px}
+  #arenaZoom{display:none}                    /* the big card preview overlaps tiny screens — hide it */
+}
 </style>
 <div id="arenaOverlay"><div id="arenaBox">
   <div id="arenaHead">⚔️ The Chikiseum <span id="arenaInfo" title="Chikiseum guide">ℹ️</span><span class="x" id="arenaClose">✕</span></div>
