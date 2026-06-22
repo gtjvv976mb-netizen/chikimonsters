@@ -2332,8 +2332,7 @@ function refreshUI(){
     <div><div class="v b">${S.activeUsers??0}</div><div class="l">Chikorians online</div></div>
     <div><div class="v b">${(S.claimedChikis??0).toLocaleString()}</div><div class="l">🐣 Active Chikis</div></div>
     <div><a class="statLink" href="https://solscan.io/token/${CHAIN.MINT}#holders" target="_blank" rel="noopener" title="Verify $CHIKI holders on Solscan"><div class="v" style="color:#dce8fa">${(S.chikiHolders??0).toLocaleString()}</div><div class="l">💎 $CHIKI Holders · <u>verify ↗</u></div></a></div>
-    <div><div class="v" style="color:#dce8fa">${S.holders??0}</div><div class="l">🐾 Trainers</div></div>
-    <div><div class="v" style="color:#ffd166">${(S.cupPrizePool??4).toFixed(0)} ◎</div><div class="l">🏆 Chikoria Cup pool</div></div>` : `
+    <div><div class="v" style="color:#dce8fa">${S.holders??0}</div><div class="l">🐾 Trainers</div></div>` : `
     <div><div class="v">…</div><div class="l">Reward pool ◎ (live)</div></div>
     <div><div class="v g">…</div><div class="l">💰 SOL paid to Trainers (total)</div></div>
     <div><div class="v r">…</div><div class="l">🔥 $CHIKI burned</div></div>
@@ -2341,8 +2340,7 @@ function refreshUI(){
     <div><div class="v b">…</div><div class="l">Chikorians online</div></div>
     <div><div class="v b">…</div><div class="l">🐣 Active Chikis</div></div>
     <div><div class="v" style="color:#dce8fa">…</div><div class="l">💎 $CHIKI Holders</div></div>
-    <div><div class="v" style="color:#dce8fa">…</div><div class="l">🐾 Trainers</div></div>
-    <div><div class="v" style="color:#ffd166">4 ◎</div><div class="l">🏆 Chikoria Cup pool</div></div>`;
+    <div><div class="v" style="color:#dce8fa">…</div><div class="l">🐾 Trainers</div></div>`;
   document.getElementById("econNote").innerHTML=
     `Level costs grow 9%/level (Lv1→2: ${chikiCostOf(1).toLocaleString()} $CHIKI, Lv49→50: ${chikiCostOf(49).toLocaleString()} $CHIKI). $CHIKI is the sole in-game token — every spend burns 1%, funds the reward pool, and supports the team. See 📖 Mechanics.`;
   const tt=document.getElementById("taskTable");
