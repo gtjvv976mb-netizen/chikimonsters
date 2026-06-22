@@ -704,6 +704,12 @@ if(location.search.indexOf("embed")>-1){
   padding:14px 16px 16px;box-shadow:-12px 0 44px rgba(0,0,0,.55);text-align:center;backdrop-filter:blur(3px);border-left:1px solid rgba(120,150,210,.25)}
 #arenaHead{display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:18px;margin-bottom:8px}
 #arenaHead .x{cursor:pointer;color:#ff8a8a;font-size:18px}
+/* labeled exit buttons in the arena header */
+.aHeadBtn{font-family:inherit;font-weight:800;font-size:13px;padding:7px 13px;border-radius:999px;border:1px solid #2c4470;background:rgba(13,20,38,.85);color:#dbe6fb;cursor:pointer;white-space:nowrap}
+.aHeadBtn:hover{border-color:#3d5a8c;color:#fff}
+.aHeadBtn.danger{border-color:#a83232;color:#ffb3b3;background:rgba(40,12,12,.72)}
+.aHeadBtn.danger:hover{background:rgba(64,16,16,.9);color:#fff}
+#arenaBox.introMode #arenaExitBattle{display:none}   /* Exit Battle only shows during a fight, not in the hub */
 #arenaMeta{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;align-items:center;margin-bottom:8px}
 .aMetaPill{background:#1b2740;border:1px solid #2c4470;border-radius:8px;padding:3px 9px;font-size:11.5px;font-weight:800;color:#dce8fa}
 .aMetaBtn{font-family:'Nunito';font-weight:800;font-size:12px;padding:4px 11px;border:none;border-radius:8px;cursor:pointer;
@@ -974,7 +980,7 @@ if(location.search.indexOf("embed")>-1){
 }
 </style>
 <div id="arenaOverlay"><div id="arenaBox">
-  <div id="arenaHead">⚔️ The Chikiseum <span id="arenaInfo" title="Chikiseum guide">ℹ️</span><span class="x" id="arenaClose">✕</span></div>
+  <div id="arenaHead">⚔️ The Chikiseum <button id="arenaExitBattle" class="aHeadBtn danger" title="Leave this battle — back to the hub">🚪 Exit Battle</button> <span id="arenaInfo" title="Chikiseum guide">ℹ️</span> <button id="arenaClose" class="aHeadBtn" title="Leave the Chikiseum">✕ Exit Chikiseum</button></div>
   <img id="arenaBanner" src="ui/chikiseum-banner.png" alt="Chikiseum">
   <div id="arenaZoom"></div>
   <div id="arenaIntro">
@@ -3491,6 +3497,17 @@ setInterval(updateWhaleTab,1000);
     };
     const aiInfo=g("arenaInfo");
     if(aiInfo)aiInfo.onclick=()=>{ aiSelect("welcome"); showArenaIntro(); };
+    /* ---- Exit Battle: leave the current fight and return to the hub (hands control back if it's a Cup match) ---- */
+    const exitBattleBtn=g("arenaExitBattle");
+    if(exitBattleBtn)exitBattleBtn.onclick=()=>{
+      const cb = B && B.onEnd;            /* Cup spectate: return control to the Cup */
+      clearTurnTimer();
+      if(B){ B.over=true; B=null; }
+      ["arenaPowers","arenaResult","arenaLog","arenaCenter","arenaKey"].forEach(id=>{ const el=g(id); if(el)el.innerHTML=""; });
+      if(typeof cb==="function"){ cb(false); return; }
+      showArenaIntro(); aiSelect("cards");
+      if(typeof showBanner==="function")showBanner("Left the battle — back at the Chikiseum hub. ⚔️","info");
+    };
     /* ---- Cinematic intro video: plays every time the Chikiseum is opened ---- */
     function playChikiseumIntro(){
       let ov=g("csIntroVid");
