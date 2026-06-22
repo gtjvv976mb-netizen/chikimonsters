@@ -1324,7 +1324,7 @@ body.pre #audioCtrl{display:none}
   window.playSfx=function(type){ if(soundMuted||soundVol<=0)return; try{
     ac=ac||new (window.AudioContext||window.webkitAudioContext)();
     const t=ac.currentTime,o=ac.createOscillator(),g=ac.createGain();
-    const f={click:660,open:520,reward:880,level:990}[type]||600;
+    const f={click:660,open:520,reward:880,level:990,hit:300,crit:1180,lose:170}[type]||600;
     o.type="triangle"; o.frequency.setValueAtTime(f,t);
     if(type==="reward"||type==="level")o.frequency.exponentialRampToValueAtTime(f*1.5,t+0.12);
     g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.25*soundVol,t+0.012); g.gain.exponentialRampToValueAtTime(0.0001,t+0.16);
@@ -3349,7 +3349,25 @@ setInterval(updateWhaleTab,1000);
 
   /* ===================== LIVE PvP — same Chikiseum UI, real human opponent (server-authoritative) ===================== */
   const ELEM_SI={Water:10,Light:11,Beast:12,Storm:13,Fire:14};   /* element → a legendary species index (for foe colour/art) */
-  let _pvpPoll=null, _pvpAnimating=false, _pvpLastTurn=-1;
+  let _pvpPoll=null, _pvpAnimating=false, _pvpLastTurn=-1, _pvpClock=null;
+  /* smooth per-second turn clock (display only; the server decides timeouts) */
+  function pvpClockStart(){ if(_pvpClock)clearInterval(_pvpClock);
+    _pvpClock=setInterval(()=>{ if(!B||!B.pvp||B.over){ clearInterval(_pvpClock); _pvpClock=null; return; }
+      if(_pvpAnimating)return; if(B._left>0)B._left--;
+      const el=g("aTimer"); if(el)el.textContent="0:"+((B._left||0)<10?"0":"")+(B._left||0);
+      const bx=g("aTimerBox"); if(bx)bx.className="on"+((B._left||0)<=10?" low":""); },1000); }
+  function pvpClockStop(){ if(_pvpClock){ clearInterval(_pvpClock); _pvpClock=null; } }
+  /* floating damage/heal text over a fighter (DOM, arena-screen) */
+  function pvpFloat(who,txt,color){
+    const host=g(who==="foe"?"aFfoe":"aFyou"); if(!host)return;
+    if(getComputedStyle(host).position==="static")host.style.position="relative";
+    const f=document.createElement("div");
+    f.textContent=txt;
+    f.style.cssText="position:absolute;left:50%;top:26%;transform:translateX(-50%);font-family:'Nunito',sans-serif;font-weight:900;font-size:21px;color:"+(color||"#fff")+";text-shadow:0 2px 5px rgba(0,0,0,.75);pointer-events:none;z-index:30;transition:transform .85s ease-out,opacity .85s";
+    host.appendChild(f);
+    requestAnimationFrame(()=>{ f.style.transform="translateX(-50%) translateY(-46px)"; f.style.opacity="0"; });
+    setTimeout(()=>{ if(f.parentNode)f.parentNode.removeChild(f); },900);
+  }
   function pvpFoeSide(f){
     const si=ELEM_SI[f.element]!=null?ELEM_SI[f.element]:14;
     return { c:{br:f.br||1, sp:SPECIES[si]}, si, name:f.name||"Rival", img:"chikidex/"+(DEX_IMG[si]||"mushrow")+".png",
@@ -3372,13 +3390,14 @@ setInterval(updateWhaleTab,1000);
     };
     poll();
   }
-  function startPvp(matchId, side){
+  function startPvp(matchId, side, fromCup){
     clearTurnTimer(); const legs=myLegends().map(ensureLegendSkills); if(!legs.length)return;
-    B={ you:makeSide(legs[0],true), foe:null, over:false, turn:null, pvp:{matchId,side}, foeBr:1 };
+    B={ you:makeSide(legs[0],true), foe:null, over:false, turn:null, pvp:{matchId,side,fromCup:!!fromCup}, foeBr:1 };
     const bx=g("arenaBox"); if(bx)bx.classList.remove("introMode"); const ai=g("arenaIntro"); if(ai)ai.style.display="none";
     g("arenaOverlay").style.display="flex";
     log(`⚔️ <b style="color:#7fd0ff">${B.you.name}</b> faces a <b style="color:#ffd93d">LIVE</b> challenger! Lock in your cards.`);
-    _pvpLastTurn=-1; _pvpAnimating=false; pvpTickLoop();
+    if(window.playSfx)window.playSfx("level"); if(typeof showBanner==="function")showBanner("⚔️ Opponent found — live battle on!","info");
+    _pvpLastTurn=-1; _pvpAnimating=false; pvpClockStart(); pvpTickLoop();
   }
   async function pvpTickLoop(){
     if(!B||!B.pvp)return;
@@ -3390,7 +3409,7 @@ setInterval(updateWhaleTab,1000);
       if(s.lastTurn && s.lastTurn.turn!==_pvpLastTurn && Array.isArray(s.lastTurn.seq) && s.lastTurn.seq.length){
         _pvpLastTurn=s.lastTurn.turn; await pvpAnimate(s.lastTurn); if(!B||!B.pvp)return;
       } else if(s.lastTurn){ _pvpLastTurn=s.lastTurn.turn; }
-      if(s.over){ pvpFinish(s.result==="win"); return; }
+      if(s.over){ pvpFinish(s.result==="win", s.reason); return; }
     }catch(e){}
     if(B&&B.pvp&&!B.over)_pvpPoll=setTimeout(pvpTickLoop,1200);
   }
@@ -3400,11 +3419,15 @@ setInterval(updateWhaleTab,1000);
     B.you.hand=(s.you.hand||[]).map(card=>card.slot);
     B._left=Math.max(0,Math.ceil((s.deadlineInMs||0)/1000));
     if(!B.you.queue)B.you.queue=[]; B.you.queue=B.you.queue.filter(i=>i<B.you.hand.length);
+    B._foeSub=!!s.foeSubmitted;
     if(_pvpAnimating)return;
-    if(s.over){ B.turn=null; }
-    else if(s.youSubmitted){ B.turn="foe"; B._resolving=false; }   /* you locked in — waiting for the opponent */
-    else { B.turn="you"; B._resolving=false; }
-    render();
+    if(s.over){ B.turn=null; render(); }
+    else if(s.youSubmitted){ B.turn="foe"; B._resolving=false; render();
+      const ac=g("arenaCenter"); if(ac)ac.innerHTML=s.foeSubmitted
+        ?"<div style='font-size:13px;color:#3ddc84'>⚔️ Both locked in — resolving…</div>"
+        :"<div style='font-size:13px;color:#8fa6c9'>🔒 Locked in — waiting for opponent…</div>"; }
+    else { B.turn="you"; B._resolving=false; render();
+      if(s.foeSubmitted){ const ac=g("arenaCenter"); if(ac)ac.insertAdjacentHTML("afterbegin","<div style='font-size:12px;color:#ffd166;margin-bottom:4px'>⏳ Opponent locked in — your move!</div>"); } }
   }
   function pvpLockIn(){
     if(!B||!B.pvp||B.over||B.turn!=="you"||B._resolving)return;
@@ -3420,18 +3443,36 @@ setInterval(updateWhaleTab,1000);
     for(const step of lt.seq){
       if(!B||!B.pvp)break;
       const who=step.who===mySide?"you":"foe";
+      const prevMy=B.you.hp, prevFoe=B.foe?B.foe.hp:0;
       B.you.hp=mySide==="a"?step.aHp:step.bHp; if(B.foe)B.foe.hp=mySide==="a"?step.bHp:step.aHp;
+      const dMy=Math.round(prevMy-B.you.hp), dFoe=Math.round(prevFoe-(B.foe?B.foe.hp:0));
       const si=who==="you"?B.you.si:(B.foe?B.foe.si:14), nm=(PN[si]&&PN[si][step.slot])?PN[si][step.slot]:null;
       log(`${who==="you"?"You":"Rival"}: <b>${ARCH_EMOJI[step.slot]||""} ${nm?nm[1]:step.card}</b>${step.crit?" <span style='color:#ffd93d'>💥CRIT</span>":""}`);
       flash(who==="you"?"foe":"you"); renderTeams();
+      if(dFoe>0)pvpFloat("foe","−"+dFoe+(step.crit?"💥":""),"#ff6b6b");
+      if(dMy>0)pvpFloat("you","−"+dMy+(step.crit?"💥":""),"#ff6b6b");
+      if(dMy<0)pvpFloat("you","+"+(-dMy),"#3ddc84"); if(dFoe<0)pvpFloat("foe","+"+(-dFoe),"#3ddc84");
+      if(window.playSfx&&(dMy>0||dFoe>0))window.playSfx(step.crit?"crit":"hit");
       await new Promise(r=>setTimeout(r,720));
     }
     _pvpAnimating=false;
   }
-  function pvpFinish(win){
+  function pvpFinish(win,reason){
     if(_pvpPoll){clearTimeout(_pvpPoll);_pvpPoll=null;}
-    if(!B)return; const wasPvp=B.pvp; B.pvp=null; B.over=true;
+    pvpClockStop();
+    if(!B)return; const fromCup=B.pvp&&B.pvp.fromCup; B.pvp=null; B.over=true;
+    if(reason==="forfeit")log(win?"🏳️ <b style='color:#3ddc84'>Opponent forfeited — you win!</b>":"🏳️ You forfeited the match.");
+    else if(reason==="time")log(win?"⏱️ <b style='color:#3ddc84'>Time! You had more HP — you win!</b>":"⏱️ Time — your opponent had more HP.");
+    if(window.playSfx)window.playSfx(win?"reward":"lose");
     try{ end(win); }catch(e){ g("arenaResult").innerHTML=win?"🏆 <span style='color:#3ddc84'>VICTORY!</span>":"💀 <span style='color:#ff6b6b'>Defeated…</span>"; }
+    if(fromCup){   /* Cup match → don't offer "Battle again"; send the player back to the Cup to await the round result */
+      g("arenaResult").innerHTML=win?"🏆 <span style='color:#3ddc84'>YOU WIN!</span>":"💀 <span style='color:#ff6b6b'>You lost…</span>";
+      const back=document.createElement("button"); back.className="aAgainBtn"; back.setAttribute("aria-label","Back to Cup");
+      back.style.cssText="font-family:'Nunito',sans-serif;font-weight:800;font-size:15px;padding:11px 22px;border:none;border-radius:12px;background:linear-gradient(180deg,#ffd166,#e0a800);color:#3a2a06;cursor:pointer;box-shadow:0 4px 0 #a87c00";
+      back.textContent="→ Back to the Cup";
+      back.onclick=()=>{ g("arenaOverlay").style.display="none"; const cb=g("cupxBtn"); if(cb)cb.click(); };
+      const ac=g("arenaCenter"); if(ac){ ac.innerHTML=""; ac.appendChild(back); }
+    }
   }
   window.startPvp=startPvp;   /* the Cup uses this to drop a player straight into their bracket match */
   async function findMatch(){
@@ -3584,12 +3625,16 @@ setInterval(updateWhaleTab,1000);
     const exitBattleBtn=g("arenaExitBattle");
     if(exitBattleBtn)exitBattleBtn.onclick=()=>{
       const cb = B && B.onEnd;            /* Cup spectate: return control to the Cup */
+      const pvp = B && B.pvp;             /* LIVE PvP: forfeit so the opponent isn't left waiting */
+      if(pvp && CHAIN.BACKEND && player && player.pk){ try{ fetch(CHAIN.BACKEND+"/pvp/forfeit",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({matchId:pvp.matchId,wallet:player.pk})}); }catch(e){} }
+      if(typeof _pvpPoll!=="undefined"&&_pvpPoll){clearTimeout(_pvpPoll);_pvpPoll=null;}
+      if(typeof pvpClockStop==="function")pvpClockStop();
       clearTurnTimer();
-      if(B){ B.over=true; B=null; }
+      if(B){ B.over=true; B.pvp=null; B=null; }
       ["arenaPowers","arenaResult","arenaLog","arenaCenter","arenaKey"].forEach(id=>{ const el=g(id); if(el)el.innerHTML=""; });
       if(typeof cb==="function"){ cb(false); return; }
       showArenaIntro(); aiSelect("cards");
-      if(typeof showBanner==="function")showBanner("Left the battle — back at the Chikiseum hub. ⚔️","info");
+      if(typeof showBanner==="function")showBanner(pvp?"You forfeited the battle. ⚔️":"Left the battle — back at the Chikiseum hub. ⚔️","info");
     };
     /* ---- Cinematic intro video: plays every time the Chikiseum is opened ---- */
     function playChikiseumIntro(){
@@ -3608,11 +3653,17 @@ setInterval(updateWhaleTab,1000);
       const p=vid.play(); if(p&&p.catch)p.catch(()=>{ vid.muted=true; vid.play().catch(()=>{}); });
       vid.onended=close; skip.onclick=close;
     }
+    /* reconnect: if you have a LIVE PvP battle in progress (e.g. you refreshed), drop straight back into it */
+    async function checkPvpResume(){
+      if(!CHAIN.BACKEND||!player||!player.pk||B)return;
+      try{ const r=await fetch(CHAIN.BACKEND+"/pvp/queue?wallet="+player.pk,{cache:"no-store"}); const j=await r.json();
+        if(j&&j.status==="matched"&&!j.over&&typeof startPvp==="function"){ showArenaIntro&&showArenaIntro(); startPvp(j.matchId,j.side); } }catch(e){}
+    }
     ab.onclick=()=>{
       g("arenaOverlay").style.display="flex";
       if(typeof window.focusOnChikiseum==="function")window.focusOnChikiseum();   /* pan the camera to the arena in the world */
       playChikiseumIntro();   /* cinematic curtain on top of the hub */
-      if(ARENA_ENABLED){ showArenaIntro(); aiSelect("cards"); }   /* show the hub FIRST (so the 3D canvas has a size), then land on My Cards */
+      if(ARENA_ENABLED){ showArenaIntro(); aiSelect("cards"); setTimeout(checkPvpResume,400); }   /* show the hub FIRST, then resume any live battle */
       else{   /* battles still being polished — show a notice, but the arena is now in the world */
         g("arenaResult").innerHTML="🛠️ <span style='color:#ffd93d'>The Chikiseum is being forged</span>";
         g("arenaLog").innerHTML="Battles open in the <b>Chikoria Cup</b> — but your arena now stands in the world. <b>Close this</b> to see it on the map! 👑";
@@ -7001,7 +7052,7 @@ requestAnimationFrame(frame);
           : (mine&&St.roundBattling&&St.pvpOver) ? `<div style="margin-top:6px;text-align:center" class="sub">✅ Your match is done — waiting for the round to finalize…</div>`
           : (mine?`<div style="margin-top:6px;text-align:center"><button class="g" data-watch="${opp.br||10}">⚔️ Watch in the Chikiseum</button></div>`:"");
         return `<div class="match"><div class="mrow">${legHTML(elObj(m.a.name,m.a.element,m.a.br,m.a.wallet===myPk()))}<div class="vs">VS</div>${legHTML(elObj(m.b.name,m.b.element,m.b.br,m.b.wallet===myPk()))}</div>`+fightBtn+`</div>`; }).join("")||'<div class="sub">Pairing…</div>';
-      const fb=$("cupxFight"); if(fb)fb.onclick=()=>{ if(typeof window.startPvp==="function"){ ov.style.display="none"; window.startPvp(St.pvpMatchId, St.pvpSide); } };
+      const fb=$("cupxFight"); if(fb)fb.onclick=()=>{ if(typeof window.startPvp==="function"){ ov.style.display="none"; window.startPvp(St.pvpMatchId, St.pvpSide, true); } };
       $("cupxMatches").querySelectorAll("[data-watch]").forEach(b=>b.onclick=()=>{ const br=+b.getAttribute("data-watch"); if(typeof window.cupSpectate==="function"){ ov.style.display="none"; window.cupSpectate(br,()=>{ ov.style.display="block"; }); } }); }
 
     // finished
