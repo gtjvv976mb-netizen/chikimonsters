@@ -805,18 +805,28 @@ if(location.search.indexOf("embed")>-1){
 #arenaInfo{cursor:pointer;font-size:15px;margin-left:auto;margin-right:10px;opacity:.85}
 #arenaInfo:hover{opacity:1}
 #arenaIntro{display:none}
-.aiTabs{display:flex;gap:6px;margin:2px 0 10px;flex-wrap:wrap}
-.aiTab{font-family:inherit;font-weight:800;font-size:12px;padding:7px 11px;border-radius:9px;border:1px solid #2c4470;background:rgba(13,20,38,.7);color:#9fb3d6;cursor:pointer}
-.aiTab.on{background:linear-gradient(180deg,#2a3c64,#1a2744);color:#ffd93d;border-color:#b98a2e}
-.aiPane{display:none;font-size:13px;line-height:1.55;color:#dbe6fb}
+.aiTabs{display:flex;gap:7px;margin:2px 0 13px;flex-wrap:wrap}
+.aiTab{font-family:inherit;font-weight:800;font-size:13px;padding:9px 14px;border-radius:10px;border:1px solid #2c4470;background:rgba(13,20,38,.7);color:#9fb3d6;cursor:pointer;transition:background .12s,color .12s}
+.aiTab:hover{color:#dbe6fb;border-color:#3d5a8c}
+.aiTab.on{background:linear-gradient(180deg,#2a3c64,#1a2744);color:#ffd93d;border-color:#b98a2e;box-shadow:0 2px 0 #b98a2e}
+.aiPane{display:none;font-size:14px;line-height:1.62;color:#dde7fb}
 .aiPane.on{display:block}
-.aiPane h3{font-size:18px;color:#ffe9b0;margin-bottom:6px}
+.aiPane h3{font-size:20px;color:#ffe9b0;margin-bottom:8px;letter-spacing:.2px}
+.aiPane p{margin:0 0 10px}
 .aiPane b{color:#ffe27a}
 .aiVid{width:100%;max-height:46vh;border-radius:12px;border:1px solid #2c4470;margin:0 0 12px;background:#0a1020;display:block;box-shadow:0 6px 18px rgba(0,0,0,.4)}
-.aiBlock{background:rgba(0,0,0,.24);border:1px solid #2c4470;border-radius:10px;padding:10px 12px;margin-bottom:9px}
-.aiBlock h4{color:#ffd93d;font-size:14px;margin-bottom:3px}
+.aiBlock{background:rgba(0,0,0,.24);border:1px solid #2c4470;border-radius:12px;padding:12px 14px;margin-bottom:11px}
+.aiBlock h4{color:#ffd93d;font-size:15px;margin-bottom:5px}
 .aiBlock.glory{border-color:#b98a2e;background:linear-gradient(180deg,rgba(60,46,12,.4),rgba(0,0,0,.24))}
-.aiTrivia{margin-top:10px;background:rgba(0,0,0,.3);border-left:3px solid #ffd24a;border-radius:8px;padding:9px 11px;font-size:12.5px;color:#cfe0ff}
+.aiTrivia{margin-top:10px;background:rgba(0,0,0,.3);border-left:3px solid #ffd24a;border-radius:8px;padding:10px 12px;font-size:13px;color:#cfe0ff;line-height:1.55}
+/* element triangle visual */
+.aiTriLabel{font-weight:800;font-size:14px;color:#ffd93d;text-align:center;margin:0 0 8px}
+.aiTriRow{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:7px;margin:0 0 8px}
+.aiEl{font-weight:800;font-size:13px;padding:6px 11px;border-radius:999px;border:1px solid #2c4470;background:rgba(13,20,38,.75);white-space:nowrap}
+.aiEl.water{color:#6cc4ff;border-color:#2b6cb0}.aiEl.fire{color:#ff8585;border-color:#a83232}
+.aiEl.beast{color:#7ee68f;border-color:#2f8a3e}.aiEl.storm{color:#c0aaff;border-color:#6b4fbf}.aiEl.light{color:#ffd166;border-color:#b98a2e}
+.aiArr{color:#8fb0e0;font-weight:800;font-size:13px}
+.aiTriNote{text-align:center;font-size:12.5px;color:#cfe0ff;margin:0 0 14px;line-height:1.5}
 .aiEnter{font-family:inherit;font-weight:800;font-size:16px;width:100%;padding:12px;margin-top:8px;border:2px solid #b98a2e;border-radius:12px;background:linear-gradient(180deg,#ffd93d,#e0a800);color:#3a2a00;cursor:pointer;box-shadow:0 4px 0 #a87c00}
 .aiEnter:active{transform:translateY(2px);box-shadow:0 2px 0 #a87c00}
 /* ===================== CHIKISEUM REDESIGN — full-screen battle stage (matches the demo) ===================== */
@@ -869,11 +879,13 @@ if(location.search.indexOf("embed")>-1){
   #hubLeg3D{justify-content:center;text-align:center;padding:10px;gap:10px}
   #hub3d{width:200px;height:200px;margin:0 auto}
   #hubLegStats{flex:1 1 100%;min-width:0;width:100%}
-  .aiTabs{gap:5px}
-  .aiTab{font-size:11px;padding:6px 9px}
-  .aiPane{font-size:12.5px}
-  .aiPane h3{font-size:16px}
-  .aiBlock{padding:9px 10px}
+  .aiTabs{gap:6px}
+  .aiTab{font-size:12px;padding:8px 11px}
+  .aiPane{font-size:13.5px;line-height:1.6}
+  .aiPane h3{font-size:18px}
+  .aiBlock{padding:11px 12px}
+  .aiBlock h4{font-size:14.5px}
+  .aiEl{font-size:12px;padding:5px 9px}
   .aiEnter{font-size:15px;padding:11px}
 }
 @media(max-width:420px){
@@ -967,26 +979,36 @@ if(location.search.indexOf("embed")>-1){
   <div id="arenaZoom"></div>
   <div id="arenaIntro">
     <div class="aiTabs">
-      <button class="aiTab on" data-ai="cards">🃏 My Cards</button>
-      <button class="aiTab" data-ai="welcome">📜 Welcome</button>
-      <button class="aiTab" data-ai="mech">⚙️ Mechanics</button>
-      <button class="aiTab" data-ai="tok">🏆 Tokenomics</button>
+      <button class="aiTab on" data-ai="cards">🃏 My Deck</button>
+      <button class="aiTab" data-ai="mech">⚔️ How to Battle</button>
+      <button class="aiTab" data-ai="tok">✨ Rewards</button>
+      <button class="aiTab" data-ai="welcome">📖 Guide</button>
     </div>
     <div class="aiPane" data-aip="welcome">
-      <h3>Welcome to the Chikiseum ⚔️</h3>
+      <h3>The Chikiseum ⚔️</h3>
       <video class="aiVid" src="ui/chikiseum-intro.mp4" autoplay muted loop playsinline controls preload="metadata"></video>
-      <p>Chikoria's grand arena, where <b>Legendary</b> Chikis wield the power of Chi and duel for <b>✨ Glory</b>. Only Legendaries can fight here — awaken one from a Legendary Egg at 🔮 <b>Mithra's Mystic Market</b>. Explore your Legendary and build your 12-card deck right here in the hub — <b>battles go live with the Chikoria Cup tomorrow.</b> ⚔️</p>
-      <div class="aiTrivia">🔺 Element triangle: 💧 Water ▸ 🔥 Fire ▸ 🐾 Beast ▸ ⚡ Storm ▸ ✨ Light ▸ Water. A strong matchup hits for <b>×1.5</b>, a weak one <b>×0.7</b>. A Legendary is born owning just <b>3 of its 12</b> skill cards.</div>
+      <p>Chikoria's grand arena, where <b>Legendary</b> Chikis wield the power of Chi and duel for <b>✨ Glory</b>. Only Legendaries can fight — awaken one from a Legendary Egg at the 🔮 <b>Mystic Market</b>, then build your <b>12-card deck</b> right here in the hub.</p>
+      <div class="aiTrivia">👑 <b>New here?</b> Head to <b>🃏 My Deck</b> to see your Legendary and cards, <b>⚔️ How to Battle</b> to learn the fight, and <b>✨ Rewards</b> to see what you earn.</div>
     </div>
     <div class="aiPane" data-aip="mech">
-      <div class="aiBlock"><h4>⚔️ Battle</h4>Turn-based duels. Each turn you gain <b>Energy</b> (start 3, +1/turn). Plan up to <b>3 skill cards</b> (each costs energy), lock in, then both Chikis trade blows in sequence — alternating who strikes first.</div>
-      <div class="aiBlock"><h4>📈 Battle Rank</h4>BR 1–30 scales HP / Speed / Skill / Morale. Winning grants <b>Battle EXP</b>; ranking up gives <b>skill points</b> to master cards.</div>
-      <div class="aiBlock"><h4>⚡ Stamina &amp; 🍖 Feeding</h4>Each battle costs <b>30 ⚡ arena stamina</b>. An exhausted Legendary <b>sleeps</b> to recover — or feed it <b>$CHIKI</b> to restore stamina instantly.</div>
-      <div class="aiBlock"><h4>🃏 Cards</h4>All your skill cards can be played in-game; they resolve under the energy &amp; turn rules. Acquire new cards and upgrade them (Tier 1 → 5) for bigger effects.</div>
+      <div class="aiTriLabel">🔺 Element triangle — know your matchups</div>
+      <div class="aiTriRow">
+        <span class="aiEl water">💧 Water</span><span class="aiArr">▸</span>
+        <span class="aiEl fire">🔥 Fire</span><span class="aiArr">▸</span>
+        <span class="aiEl beast">🐾 Beast</span><span class="aiArr">▸</span>
+        <span class="aiEl storm">⚡ Storm</span><span class="aiArr">▸</span>
+        <span class="aiEl light">✨ Light</span><span class="aiArr">↺</span>
+      </div>
+      <div class="aiTriNote">Hit the element you beat for <b>×1.5</b> damage · take only <b>×0.7</b> from the one you beat. (Light loops back to Water.)</div>
+      <div class="aiBlock"><h4>⚔️ Turn-based duels</h4>Each turn you gain <b>Energy</b> (start <b>3</b>, +1 per turn). Plan up to <b>3 skill cards</b> (each costs energy), lock in, then both Chikis trade blows — alternating who strikes first.</div>
+      <div class="aiBlock"><h4>📈 Battle Rank (1–30)</h4>Scales your <b>HP, Speed, Skill &amp; Morale</b>. Wins grant <b>Battle EXP</b>; ranking up gives <b>skill points</b> to master cards.</div>
+      <div class="aiBlock"><h4>⚡ Stamina &amp; 🍖 Feeding</h4>Each battle costs <b>30 ⚡ stamina</b>. An exhausted Legendary <b>sleeps</b> to recover — or feed it <b>$CHIKI</b> to refill instantly.</div>
+      <div class="aiBlock"><h4>🃏 Cards</h4>A Legendary is born owning <b>3 of its 12</b> cards. Mint the rest and upgrade them <b>Tier 1 → 5</b> for bigger effects.</div>
     </div>
     <div class="aiPane" data-aip="tok">
-      <div class="aiBlock glory"><h4>✨ Glory — the Chikiseum token</h4>Earn Glory by <b>winning</b> battles: <b>+(6 + 2 × opponent BR)</b> per win, plus Battle EXP. A loss still earns a little EXP. Spend Glory to <b>acquire</b> new skill cards (from <b>150 ✨</b>, rising as your deck grows) and to <b>master</b> them (Tier 3→4: <b>120 ✨</b>, Tier 4→5: <b>300 ✨</b>).</div>
-      <div class="aiBlock"><h4>🪙 $CHIKI sinks</h4>Minting a new skill card costs <b>25,000 $CHIKI</b>; Tier 4→5 mastery costs <b>50,000 $CHIKI</b>; feeding restores stamina. Every $CHIKI spend: <b>1% burned</b>, 49.5% to the reward pool, 49.5% to the team.</div>
+      <div class="aiBlock glory"><h4>✨ Earn Glory</h4>Win a battle for <b>+(6 + 2 × opponent BR)</b> Glory, plus Battle EXP. Even a loss earns a little EXP — every fight is progress.</div>
+      <div class="aiBlock glory"><h4>✨ Spend Glory</h4>Mint new skill cards from <b>150 ✨</b> (cost rises as your deck grows). Master cards: Tier 3→4 <b>120 ✨</b> · Tier 4→5 <b>300 ✨</b>.</div>
+      <div class="aiBlock"><h4>🪙 $CHIKI costs</h4>Mint a card <b>25,000 $CHIKI</b> · Tier 4→5 mastery <b>50,000 $CHIKI</b> · feeding restores stamina. Every spend: <b>1% burned</b> · 49.5% reward pool · 49.5% team.</div>
       <div class="aiBlock"><h4>🔮 Mystic Market</h4>Hatch Legendary Eggs and acquire skill cards at Mithra's Mystic Market.</div>
     </div>
     <div class="aiPane on" data-aip="cards">
