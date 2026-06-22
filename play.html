@@ -2261,6 +2261,8 @@ function tickFees(dt){
 
 /* ================= UI (same as 2D) ================= */
 function addFeed(html,rarity){
+  if(!feedEl)feedEl=document.getElementById("feed");
+  if(!feedEl)return;                       // feed not mounted yet — skip rather than crash (prevents cascade failures)
   const d=document.createElement("div");
   const ts=new Date().toLocaleTimeString([],{hour12:false});
   d.innerHTML=`<span class="t">${ts}</span>${html}`;
@@ -6774,7 +6776,10 @@ requestAnimationFrame(frame);
     <div class="hd"><div><h1>🏆 <span class="gold">Chikoria Cup</span></h1><div class="sub" id="cupxSub">10 Legendaries · double elimination · battles fought in the Chikiseum 🌊</div></div>
       <div style="display:flex;gap:8px;align-items:center"><span id="cupxStatus" class="pill" style="color:#ffd166">—</span><span class="x" id="cupxClose">✕</span></div></div>
     <div class="card" id="cupxAdmin" style="display:none;border-color:#3ddc8455"><h3 style="margin-top:0">🛠 Admin controls</h3>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <select id="cupxSize" style="font-family:inherit;font-weight:800;font-size:13px;padding:9px 8px;border-radius:10px;border:1px solid #1c3d2e;background:#0f2a1e;color:#dff5e8;cursor:pointer">
+          <option value="8">8 players</option><option value="10" selected>10 players</option><option value="16">16 players</option>
+        </select>
         <button class="g" id="cupxCreate">＋ New Cup</button>
         <button class="g" id="cupxFill">🤖 Fill Bots</button>
         <button class="b" id="cupxStart">▶ Start Cup</button>
@@ -6786,8 +6791,8 @@ requestAnimationFrame(frame);
       <video src="ui/chikoria-cup-intro.mp4" autoplay muted loop playsinline controls preload="metadata" style="width:100%;max-height:40vh;border-radius:12px;border:1px solid #1c3d2e;margin:0 0 12px;display:block;background:#0a1d15"></video>
       <div class="grid2" style="align-items:center">
         <div class="match" style="margin:0"><div class="mrow" id="cupxMine"></div></div>
-        <div><div class="sub">Entry: <b class="gold">Free</b> · Pool: <b class="teal">4 SOL</b> · Champion <b class="gold">1 SOL</b></div>
-          <button class="b" id="cupxReg2" style="margin-top:10px">Register — Free</button>
+        <div><div class="sub">Entry: <b class="gold">100 ✨ Glory</b> · Pool: <b class="teal">4 SOL</b> · Champion <b class="gold">1 SOL</b></div>
+          <button class="b" id="cupxReg2" style="margin-top:10px">Register — 100 ✨</button>
           <div class="sub" id="cupxRegMsg" style="margin-top:6px"></div></div></div></div>
     <div class="card" id="cupxLobby" style="display:none"><h3 style="margin-top:0">🛡 Lobby <span class="sub" id="cupxLobbyCount"></span></h3><div class="grid2" id="cupxLobbyList"></div></div>
     <div class="card" id="cupxRound" style="display:none"><div class="hd"><h3 style="margin:0" id="cupxRtitle"></h3>
@@ -6824,6 +6829,7 @@ requestAnimationFrame(frame);
   function render(){ if(!St)return; const adm=isAdm();
     const PILL={none:["NO CUP","#8fb8a3"],registration:["REGISTRATION","#ffd166"],live:["LIVE","#3ddc84"],finished:["FINISHED","#8fb8a3"]};
     const pm=PILL[St.status]||["—","#ffd166"]; $("cupxStatus").textContent=pm[0]; $("cupxStatus").style.color=pm[1];
+    const sub=document.getElementById("cupxSub"); if(sub)sub.textContent=(St.cap||10)+" Legendaries · double elimination · battles fought in the Chikiseum 🌊";
     const reg=St.status==="registration", live=St.status==="live", fin=St.status==="finished";
 
     // admin controls
@@ -6908,7 +6914,7 @@ requestAnimationFrame(frame);
     try{ await apiPost("/cup/ready",{wallet:myPk()}); await refresh(); }catch(e){ admMsg("⚠️ "+e.message); } busy=false; };
 
   // ---- admin actions ----
-  $("cupxCreate").onclick=async ()=>{ try{ await apiPost("/cup/create",{wallet:myPk()}); admMsg("New Cup created — registration open."); await refresh(); }catch(e){ admMsg("⚠️ "+e.message); } };
+  $("cupxCreate").onclick=async ()=>{ try{ const cap=+(document.getElementById("cupxSize")&&document.getElementById("cupxSize").value||10); await apiPost("/cup/create",{wallet:myPk(),cap}); admMsg("New "+cap+"-player Cup created — registration open."); await refresh(); }catch(e){ admMsg("⚠️ "+e.message); } };
   $("cupxFill").onclick=async ()=>{ try{ const j=await apiPost("/cup/fill",{wallet:myPk()}); admMsg("Added "+j.added+" bot(s) — lobby "+j.entrants.length+"/"+j.cap+"."); await refresh(); }catch(e){ admMsg("⚠️ "+e.message); } };
   $("cupxStart").onclick=async ()=>{ try{ await apiPost("/cup/start",{wallet:myPk()}); admMsg("Cup started! ⚔️"); await refresh(); }catch(e){ admMsg("⚠️ "+e.message); } };
   $("cupxPublic").onclick=async ()=>{ try{ const j=await apiPost("/cup/public",{wallet:myPk(),public:!St.public}); admMsg(j.public?"🌐 Cup is now PUBLIC — open to all players.":"🔒 Cup is admin-only."); await refresh(); }catch(e){ admMsg("⚠️ "+e.message); } };
