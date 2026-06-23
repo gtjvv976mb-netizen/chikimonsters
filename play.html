@@ -3417,24 +3417,24 @@ setInterval(updateWhaleTab,1000);
   function pvpMatchmake(c){
     if(!CHAIN.BACKEND||!player||!player.pk){ startBattle(); return; }                 /* no backend / guest → AI rival */
     const snap={ name:nameOf(c), element:legElem(SPECIES.indexOf(c.sp)), br:c.br||1, arenaSkills:c.arenaSkills||[0,1,2], cardTier:c.cardTier||{} };
-    let cancelled=false; const ac=g("arenaCenter");
-    const stop=()=>{ cancelled=true; try{fetch(CHAIN.BACKEND+"/pvp/cancel",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:player.pk})});}catch(e){} };
+    let cancelled=false; const ac=g("arenaCenter"); _pvpSearching=true;
+    const stop=()=>{ cancelled=true; _pvpSearching=false; try{fetch(CHAIN.BACKEND+"/pvp/cancel",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:player.pk})});}catch(e){} };
     ac.innerHTML=`<div style="font-size:14px;color:#cdd8ee">🔎 Searching for a live opponent…</div>
       <div id="pvpOnline" style="font-size:12.5px;color:#3ddc84;font-weight:700;margin-top:4px">🟢 checking who's online…</div>
       <div style="margin-top:8px"><button class="aBtn" id="pvpCancel">Cancel</button> <button class="aBtn" id="pvpAi">⚔️ Battle a rival</button></div>`;
     const cb=g("pvpCancel"); if(cb)cb.onclick=()=>{ stop(); ac.innerHTML='<button class="aBtn" id="pvpRetry">⚔️ Find a Match</button>'; const rt=g("pvpRetry"); if(rt)rt.onclick=findMatch; };
     const ab=g("pvpAi"); if(ab)ab.onclick=()=>{ stop(); startBattle(); renderArenaMeta(); };
     const poll=async()=>{ if(cancelled)return;
-      try{ const r=await fetch(CHAIN.BACKEND+"/pvp/queue",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:player.pk,snap})});
-        const j=await r.json(); if(cancelled)return; if(j&&j.status==="matched"){ startPvp(j.matchId,j.side); return; }
-        const on=g("pvpOnline"); if(on&&j&&j.eligible!=null){ const e=j.eligible|0, q=j.queued|0;
-          on.innerHTML="🟢 <b>"+e+"</b> Trainer"+(e===1?"":"s")+" online & eligible"+(q>1?" · <b>"+q+"</b> searching":""); } }catch(e){}
+      try{ const r=await fetch(CHAIN.BACKEND+"/pvp/available",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:player.pk,name:(player.handle||player.addr||"Trainer"),snap,searching:true})});
+        const j=await r.json(); if(cancelled)return; if(j&&j.matched){ _pvpSearching=false; startPvp(j.matched.matchId,j.matched.side); return; }
+        const on=g("pvpOnline"); if(on){ const ps=(j&&j.players)||[]; const others=ps.length, searchers=ps.filter(p=>p.searching).length;
+          on.innerHTML=others?("🟢 <b>"+others+"</b> Trainer"+(others===1?"":"s")+" in the Chikiseum"+(searchers?" · <b>"+searchers+"</b> also searching ⚔️":" — challenge them or wait")):"🔎 Waiting for another Trainer to enter the Chikiseum…"; } }catch(e){}
       if(!cancelled)setTimeout(poll,2000);
     };
     poll();
   }
   /* ===== "Trainers ready to battle" lobby — see who's available & challenge them directly ===== */
-  let _lobbyChallenged={};
+  let _lobbyChallenged={}, _pvpSearching=false;
   function legendSnap(){ const ls=myLegends().map(ensureLegendSkills); if(!ls.length)return null; const c=ls[0]; return {name:nameOf(c),element:legElem(SPECIES.indexOf(c.sp)),br:c.br||1,arenaSkills:c.arenaSkills||[0,1,2],cardTier:c.cardTier||{}}; }
   function lobbyActive(){ const ov=g("arenaOverlay"),bx=g("arenaBox"); return !!(ov&&ov.style.display!=="none"&&bx&&bx.classList.contains("introMode")&&!B&&CHAIN.BACKEND&&player&&player.pk); }
   async function pvpLobbyTick(){
@@ -3443,7 +3443,7 @@ setInterval(updateWhaleTab,1000);
     const snap=legendSnap(); if(!snap){ if(panel)panel.style.display="none"; return; }
     const now=Date.now(); for(const k in _lobbyChallenged) if(now-_lobbyChallenged[k]>28000)delete _lobbyChallenged[k];
     try{
-      const r=await fetch(CHAIN.BACKEND+"/pvp/available",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:player.pk,name:(player.handle||player.addr||"Trainer"),snap})});
+      const r=await fetch(CHAIN.BACKEND+"/pvp/available",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:player.pk,name:(player.handle||player.addr||"Trainer"),snap,searching:_pvpSearching})});
       const j=await r.json(); if(!lobbyActive())return;
       if(j&&j.matched){ startPvp(j.matched.matchId,j.matched.side); return; }   /* a challenge you sent was accepted */
       pvpLobbyRender(j||{});
@@ -3454,7 +3454,7 @@ setInterval(updateWhaleTab,1000);
     const players=j.players||[], chs=j.challenges||[];
     let h='<div class="lobHd">⚔️ Trainers ready to battle <span class="lobN">'+players.length+'</span></div>';
     if(chs.length)h+=chs.map(c=>'<div class="lobRow chal"><span>🔔 <b>'+esc(c.fromName)+'</b> challenges you!</span><span><button class="lobBtn acc" data-acc="'+c.id+'">Accept</button> <button class="lobBtn dec" data-dec="'+c.id+'">✕</button></span></div>').join("");
-    if(players.length)h+=players.map(p=>{ const sent=!!_lobbyChallenged[p.wallet]; return '<div class="lobRow"><span>🟢 '+esc(p.name)+'</span><button class="lobBtn'+(sent?' sent':'')+'" data-ch="'+p.wallet+'" data-nm="'+esc(p.name)+'"'+(sent?' disabled':'')+'>'+(sent?'Challenged ✓':'⚔️ Challenge')+'</button></div>'; }).join("");
+    if(players.length)h+=players.map(p=>{ const sent=!!_lobbyChallenged[p.wallet]; return '<div class="lobRow"><span>'+(p.searching?"🔍":"🟢")+' '+esc(p.name)+(p.searching?' <small style="color:#ffd166;font-weight:700">searching</small>':'')+'</span><button class="lobBtn'+(sent?' sent':'')+'" data-ch="'+p.wallet+'" data-nm="'+esc(p.name)+'"'+(sent?' disabled':'')+'>'+(sent?'Challenged ✓':'⚔️ Challenge')+'</button></div>'; }).join("");
     else if(!chs.length)h+='<div class="lobEmpty">No other Trainers ready right now. Keep the Chikiseum open — anyone who opens it appears here, and you\'ll match instantly. 🌊</div>';
     panel.innerHTML=h;
     panel.querySelectorAll("[data-ch]").forEach(b=>b.onclick=()=>pvpChallengeSend(b.getAttribute("data-ch"),b.getAttribute("data-nm")));
