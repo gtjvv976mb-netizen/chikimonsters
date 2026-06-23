@@ -1368,6 +1368,7 @@ body.pre #audioCtrl{display:none}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/DRACOLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/meshoptimizer@0.20.0/meshopt_decoder.js"></script><!-- decodes EXT_meshopt_compression .glb (Meme Dynasty models) -->
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/utils/SkeletonUtils.js"></script>
 <script src="models.js"></script> <!-- built-in litematic chikimons (optional file) -->
 <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.95.8/lib/index.iife.min.js"></script> <!-- on-chain spends/burn -->
@@ -7178,7 +7179,9 @@ requestAnimationFrame(frame);
     _c=new THREE.PerspectiveCamera(45,w/h,0.1,1000); _c.position.set(0,0.6,4.2);
     try{ _r=new THREE.WebGLRenderer({antialias:true,alpha:true}); }catch(e){ return false; }
     _r.setPixelRatio(Math.min(2,window.devicePixelRatio||1)); _r.setSize(w,h);
-    _s.add(new THREE.AmbientLight(0xffffff,0.95)); const d=new THREE.DirectionalLight(0xffffff,0.8); d.position.set(3,5,4); _s.add(d);
+    _s.add(new THREE.AmbientLight(0xffffff,0.95));
+    const d1=new THREE.DirectionalLight(0xffffff,1.15); d1.position.set(3,6,5); _s.add(d1);
+    const d2=new THREE.DirectionalLight(0x88aaff,0.55); d2.position.set(-4,2,-3); _s.add(d2);
     const loop=()=>{ if(_model)_model.rotation.y+=0.012; if(_r)_r.render(_s,_c); _raf=requestAnimationFrame(loop); }; loop();
     return true;
   }
@@ -7193,10 +7196,20 @@ requestAnimationFrame(frame);
     if(_r&&!host.contains(_r.domElement)){ host.innerHTML=""; host.appendChild(_r.domElement); }
     const ld=document.createElement("div"); ld.className="ld"; ld.style.cssText="position:absolute"; ld.textContent=(view==="voxel"?"Loading voxel build…":"Loading 3D…"); host.appendChild(ld);
     const ck=key+"|"+view;
+    /* repair materials so nothing renders black: vertex-colored voxels → Lambert; PBR → de-metalize (no env map here) */
+    const fixMats=(root)=>{ root.traverse(o=>{ if(!o.isMesh)return;
+      const hasVC=o.geometry&&o.geometry.attributes&&o.geometry.attributes.color;
+      if(hasVC){ o.material=new THREE.MeshLambertMaterial({vertexColors:true}); return; }
+      const fix=mt=>{ if(!mt)return; if("metalness"in mt)mt.metalness=Math.min(mt.metalness==null?0:mt.metalness,0.15); if("roughness"in mt)mt.roughness=Math.max(mt.roughness==null?1:mt.roughness,0.55); mt.needsUpdate=true; };
+      Array.isArray(o.material)?o.material.forEach(fix):fix(o.material);
+    }); };
     const place=(scene)=>{ if(_cur!==key||_view!==view)return; if(_model)_s.remove(_model); _model=scene; _s.add(_model); fit(_model); if(ld.parentNode)ld.remove(); };
     if(_cache[ck]){ place(_cache[ck].clone()); return; }
-    new THREE.GLTFLoader().load(fileFor(key,view), g=>{ _cache[ck]=g.scene; place(g.scene.clone()); },
-      undefined, ()=>{ if(ld.parentNode)ld.remove(); host.innerHTML='<div class="big">'+(m?m.emoji:"❓")+'</div><div class="ld" style="position:absolute;bottom:10px">'+(view==="voxel"?"voxel build":"3D model")+' loads in-game</div>'; });
+    const loader=new THREE.GLTFLoader();
+    try{ if(window.MeshoptDecoder)loader.setMeshoptDecoder(window.MeshoptDecoder); }catch(e){}
+    try{ if(THREE.DRACOLoader){ const dl=new THREE.DRACOLoader(); dl.setDecoderPath("https://www.gstatic.com/draco/v1/decoders/"); loader.setDRACOLoader(dl); } }catch(e){}
+    loader.load(fileFor(key,view), g=>{ fixMats(g.scene); _cache[ck]=g.scene; place(g.scene.clone()); },
+      undefined, ()=>{ if(ld.parentNode)ld.remove(); host.innerHTML='<div class="big">'+(m?m.emoji:"❓")+'</div><div class="ld" style="position:absolute;bottom:10px">'+(view==="voxel"?"voxel build":"3D model")+' unavailable — check it\'s deployed</div>'; });
   }
   function renderTabs(m){
     const tabs=$("memeTabs");
