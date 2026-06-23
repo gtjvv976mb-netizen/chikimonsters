@@ -7216,7 +7216,8 @@ requestAnimationFrame(frame);
     /* repair materials so nothing renders black: vertex-colored voxels → Lambert; PBR → de-metalize (no env map here) */
     const fixMats=(root)=>{ root.traverse(o=>{ if(!o.isMesh)return;
       const hasVC=o.geometry&&o.geometry.attributes&&o.geometry.attributes.color;
-      if(hasVC){ o.material=new THREE.MeshLambertMaterial({vertexColors:true}); return; }
+      if(hasVC){ if(!o.geometry.attributes.normal){ try{ const ni=o.geometry.toNonIndexed(); ni.computeVertexNormals(); o.geometry=ni; }catch(e){} }   /* voxel GLBs ship without normals → flat-shade so lighting works */
+        o.material=new THREE.MeshLambertMaterial({vertexColors:true}); return; }
       const fix=mt=>{ if(!mt)return; if("metalness"in mt)mt.metalness=Math.min(mt.metalness==null?0:mt.metalness,0.15); if("roughness"in mt)mt.roughness=Math.max(mt.roughness==null?1:mt.roughness,0.55); mt.needsUpdate=true; };
       Array.isArray(o.material)?o.material.forEach(fix):fix(o.material);
     }); };
