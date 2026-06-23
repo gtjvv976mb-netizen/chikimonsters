@@ -835,9 +835,13 @@ if(location.search.indexOf("embed")>-1){
 .aiTriNote{text-align:center;font-size:12.5px;color:#cfe0ff;margin:0 0 14px;line-height:1.5}
 .aiEnter{font-family:inherit;font-weight:800;font-size:16px;width:100%;padding:12px;margin-top:8px;border:2px solid #b98a2e;border-radius:12px;background:linear-gradient(180deg,#ffd93d,#e0a800);color:#3a2a00;cursor:pointer;box-shadow:0 4px 0 #a87c00}
 .aiEnter:active{transform:translateY(2px);box-shadow:0 2px 0 #a87c00}
-/* ===================== CHIKISEUM — windowed pop-up (centered card over a dim backdrop) ===================== */
-#arenaOverlay{position:fixed!important;inset:0!important;left:0!important;right:0!important;width:100vw!important;max-width:none!important;height:100vh!important;z-index:1500;align-items:center!important;justify-content:center!important;padding:16px!important;background:rgba(5,8,15,.72)!important;-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);pointer-events:auto!important}
-#arenaBox{width:min(96vw,1000px)!important;max-width:96vw!important;height:min(95vh,820px)!important;max-height:95vh!important;border-radius:18px!important;border:1px solid rgba(120,150,210,.3)!important;box-shadow:0 26px 70px rgba(0,0,0,.62)!important}
+/* ===================== CHIKISEUM — hub is a windowed pop-up, BATTLES are full screen ===================== */
+#arenaOverlay{position:fixed!important;inset:0!important;left:0!important;right:0!important;width:100vw!important;max-width:none!important;height:100vh!important;z-index:1500;align-items:center!important;justify-content:center!important;background:rgba(5,8,15,.72)!important;-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);pointer-events:auto!important}
+/* HUB (introMode) = centered windowed card over the dim backdrop */
+#arenaBox.introMode{width:min(96vw,1000px)!important;max-width:96vw!important;height:min(95vh,820px)!important;max-height:95vh!important;border-radius:18px!important;border:1px solid rgba(120,150,210,.3)!important;box-shadow:0 26px 70px rgba(0,0,0,.62)!important;margin:16px!important}
+/* BATTLE (no introMode) = full screen */
+#arenaBox:not(.introMode){width:100vw!important;max-width:100vw!important;height:100vh!important;max-height:100vh!important;border-radius:0!important;border:none!important;box-shadow:none!important;margin:0!important}
+#arenaOverlay:has(#arenaBox:not(.introMode)){background:#05080f!important;-webkit-backdrop-filter:none;backdrop-filter:none}
 #upgPanel{z-index:200!important}   /* card verify/upgrade panel must sit above the reskinned arena UI */
 #upgPanel .upgBox{box-shadow:0 24px 60px rgba(0,0,0,.7)}
 #arenaBox.introMode>#arenaZoom{display:block!important}   /* allow the card zoom preview inside the hub */
@@ -3413,8 +3417,8 @@ setInterval(updateWhaleTab,1000);
   }
   function startPvp(matchId, side, fromCup){
     clearTurnTimer(); const legs=myLegends().map(ensureLegendSkills); if(!legs.length)return;
-    B={ you:makeSide(legs[0],true), foe:null, over:false, turn:null, pvp:{matchId,side,fromCup:!!fromCup}, foeBr:1, series:null, _lastGameShown:-1 };
-    const sp0=g("pvpSeries"); if(sp0)sp0.style.display="none";
+    B={ you:makeSide(legs[0],true), foe:null, over:false, turn:null, pvp:{matchId,side,fromCup:!!fromCup}, foeBr:1, series:null, _lastGameShown:-1, _pvpStatus:"" };
+    const sp0=g("pvpSeries"); if(sp0){ sp0.style.display="none"; sp0.innerHTML=""; }
     const bx=g("arenaBox"); if(bx)bx.classList.remove("introMode"); const ai=g("arenaIntro"); if(ai)ai.style.display="none";
     g("arenaOverlay").style.display="flex";
     log(`⚔️ <b style="color:#7fd0ff">${B.you.name}</b> faces a <b style="color:#ffd93d">LIVE</b> challenger! Lock in your cards.`);
@@ -3435,13 +3439,17 @@ setInterval(updateWhaleTab,1000);
     }catch(e){}
     if(B&&B.pvp&&!B.over)_pvpPoll=setTimeout(pvpTickLoop,1200);
   }
-  function pvpSeriesPill(){
-    if(!B||!B.series)return; let el=g("pvpSeries");
+  /* top-center info panel: round/series number (line 1) + live status (line 2) */
+  function pvpTop(){
+    if(!B||!B.pvp)return; let el=g("pvpSeries");
     if(!el){ const box=g("arenaBox"); if(!box)return; el=document.createElement("div"); el.id="pvpSeries";
-      el.style.cssText="position:absolute;top:104px;left:50%;transform:translateX(-50%);z-index:8;font-size:12px;font-weight:800;color:#ffe27a;background:rgba(10,14,30,.74);border:1px solid #b98a2e;border-radius:14px;padding:3px 12px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.4)"; box.appendChild(el); }
-    el.textContent="🏆 Best of "+B.series.bestOf+" · Game "+B.series.game+" · You "+B.series.you+" – "+B.series.foe+" Foe";
+      el.style.cssText="position:absolute;top:94px;left:50%;transform:translateX(-50%);z-index:13;text-align:center;min-width:210px;max-width:92vw;background:rgba(10,14,30,.8);border:1px solid #b98a2e;border-radius:15px;padding:7px 18px;box-shadow:0 5px 16px rgba(0,0,0,.5);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)"; box.appendChild(el); }
+    const r=B.series?("🏆 Best of "+B.series.bestOf+" · <b style='color:#fff'>Game "+B.series.game+"</b> · You <b style='color:#fff'>"+B.series.you+"</b> – <b style='color:#fff'>"+B.series.foe+"</b> Foe"):"⚔️ Live PvP Battle";
+    el.innerHTML="<div style='font-size:12.5px;font-weight:800;color:#ffe27a;letter-spacing:.2px'>"+r+"</div>"+
+      (B._pvpStatus?"<div style='font-size:12.5px;font-weight:700;margin-top:3px;color:"+(B._pvpStatusCol||"#cfe0ff")+"'>"+B._pvpStatus+"</div>":"");
     el.style.display="block";
   }
+  function pvpStatus(txt,col){ if(!B)return; B._pvpStatus=txt||""; B._pvpStatusCol=col||"#cfe0ff"; pvpTop(); }
   function applyPvpState(s){
     B.foe=pvpFoeSide(s.foe); B.foeBr=s.foe.br||1;
     B.you.hp=s.you.hp; B.you.maxhp=s.you.maxhp; B.you.shield=s.you.shield||0; B.you.energy=s.you.energy;
@@ -3449,7 +3457,8 @@ setInterval(updateWhaleTab,1000);
     B._left=Math.max(0,Math.ceil((s.deadlineInMs||0)/1000));
     if(!B.you.queue)B.you.queue=[]; B.you.queue=B.you.queue.filter(i=>i<B.you.hand.length);
     B._foeSub=!!s.foeSubmitted;
-    if(s.bestOf>1){ B.series={bestOf:s.bestOf,game:s.game,you:(s.score&&s.score.you)||0,foe:(s.score&&s.score.foe)||0}; pvpSeriesPill(); }
+    if(s.bestOf>1){ B.series={bestOf:s.bestOf,game:s.game,you:(s.score&&s.score.you)||0,foe:(s.score&&s.score.foe)||0}; }
+    pvpTop();
     if(_pvpAnimating)return;
     if(s.between){   /* inter-game break in the best-of series */
       if(s.gameResult && B._lastGameShown!==s.game){ B._lastGameShown=s.game; const won=!!s.gameResult.youWonGame;
@@ -3457,23 +3466,24 @@ setInterval(updateWhaleTab,1000);
         if(window.playSfx)window.playSfx(won?"reward":"lose"); }
       B.turn=null; B._resolving=false;
       const secs=Math.max(1,Math.ceil((s.breakInMs||0)/1000));
-      const ac=g("arenaCenter"); if(ac)ac.innerHTML="<div style='font-size:14px;color:#ffd166;font-weight:800'>Game "+B.series.game+" of "+B.series.bestOf+" · Series "+B.series.you+"–"+B.series.foe+"</div><div style='font-size:12px;color:#8fa6c9;margin-top:3px'>⚔️ Next game starting in "+secs+"s…</div>";
+      pvpStatus("⚔️ Next game starting in "+secs+"s…","#ffd166");
+      const ac=g("arenaCenter"); if(ac)ac.innerHTML="";
       render(); return;
     }
     if(s.over){ B.turn=null; render(); }
-    else if(s.youSubmitted){ B.turn="foe"; B._resolving=false; render();
-      const ac=g("arenaCenter"); if(ac)ac.innerHTML=s.foeSubmitted
-        ?"<div style='font-size:13px;color:#3ddc84'>⚔️ Both locked in — resolving…</div>"
-        :"<div style='font-size:13px;color:#8fa6c9'>🔒 Locked in — waiting for opponent…</div>"; }
-    else { B.turn="you"; B._resolving=false; render();
-      if(s.foeSubmitted){ const ac=g("arenaCenter"); if(ac)ac.insertAdjacentHTML("afterbegin","<div style='font-size:12px;color:#ffd166;margin-bottom:4px'>⏳ Opponent locked in — your move!</div>"); } }
+    else if(s.youSubmitted){ B.turn="foe"; B._resolving=false;
+      pvpStatus(s.foeSubmitted?"⚔️ Both locked in — resolving…":"🔒 Locked in — waiting for opponent…", s.foeSubmitted?"#3ddc84":"#8fa6c9");
+      const ac=g("arenaCenter"); if(ac)ac.innerHTML=""; render(); }
+    else { B.turn="you"; B._resolving=false;
+      pvpStatus(s.foeSubmitted?"⏳ Opponent locked in — your move!":"🎯 Your move — plan up to 3 cards", s.foeSubmitted?"#ffd166":"#9fc4ff");
+      const ac=g("arenaCenter"); if(ac)ac.innerHTML=""; render(); }
   }
   function pvpLockIn(){
     if(!B||!B.pvp||B.over||B.turn!=="you"||B._resolving)return;
     const cards=(B.you.queue||[]).slice(); B._resolving=true; render();
     fetch(CHAIN.BACKEND+"/pvp/move",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({matchId:B.pvp.matchId,wallet:player.pk,cards})})
       .then(r=>r.json()).then(j=>{ if(!B||!B.pvp)return; if(j&&j.error){ showBanner("⚠️ "+j.error,"error"); B._resolving=false; render(); return; }
-        B.you.queue=[]; B.turn="foe"; B._resolving=false; if(g("arenaCenter"))g("arenaCenter").innerHTML="<div style='font-size:13px;color:#8fa6c9'>🔒 Locked in — waiting for your opponent…</div>"; })
+        B.you.queue=[]; B.turn="foe"; B._resolving=false; if(g("arenaCenter"))g("arenaCenter").innerHTML=""; pvpStatus("🔒 Locked in — waiting for your opponent…","#8fa6c9"); })
       .catch(()=>{ if(B){B._resolving=false;render();} });
   }
   async function pvpAnimate(lt){
