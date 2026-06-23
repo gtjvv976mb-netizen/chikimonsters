@@ -7118,10 +7118,10 @@ requestAnimationFrame(frame);
   const GLB_VER="1";
   /* The Meme Dynasty roster (the new generation). Add a row here as each member is confirmed. */
   const ROSTER=[
-    {key:"popcat",  name:"Popcat",  emoji:"😺", tag:"the Click King", confirmed:true},
-    {key:"moodeng", name:"Moo Deng",emoji:"🦛", tag:"the Bouncy One", confirmed:true},
-    {key:"doge",    name:"Doge",    emoji:"🐕", tag:"the OG", confirmed:true},
-    {key:"pepe",    name:"Pepe",    emoji:"🐸", tag:"the Legend", confirmed:true},
+    {key:"popcat",  name:"Popcat",  emoji:"😺", tag:"the Click King", confirmed:true, voxel:true},
+    {key:"moodeng", name:"Moo Deng",emoji:"🦛", tag:"the Bouncy One", confirmed:true, voxel:true},
+    {key:"doge",    name:"Doge",    emoji:"🐕", tag:"the OG", confirmed:true, voxel:true},
+    {key:"pepe",    name:"Pepe",    emoji:"🐸", tag:"the Legend", confirmed:true, voxel:false},
   ];
 
   const css=document.createElement("style");
@@ -7138,9 +7138,14 @@ requestAnimationFrame(frame);
   #memeStage{width:100%;height:min(46vh,360px);background:radial-gradient(circle at 50% 40%,#3a2a66,#160f2e 72%);border:1px solid #4a3a80;border-radius:16px;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden}
   #memeStage .ld{color:#b9a4ff;font-weight:800;font-size:14px}
   #memeStage .big{font-size:96px;filter:drop-shadow(0 8px 14px rgba(0,0,0,.5))}
+  #memeStage .memeArt{max-width:94%;max-height:94%;object-fit:contain;border-radius:16px;filter:drop-shadow(0 10px 24px rgba(0,0,0,.55))}
   #memeName{text-align:center;margin:12px 0 4px;font-weight:900;font-size:22px;color:#fff}
   #memeName .vf{display:inline-block;margin-left:8px;font-size:12px;font-weight:800;color:#7ee68f;background:rgba(50,180,90,.16);border:1px solid #2f8a3e;border-radius:999px;padding:3px 9px;vertical-align:middle}
   #memeName .tg{display:block;font-size:13px;color:#a99cd6;font-weight:700;margin-top:2px}
+  #memeTabs{display:flex;gap:8px;justify-content:center;margin:10px 0 8px}
+  .memeTab{font-family:inherit;font-weight:800;font-size:13px;padding:8px 16px;border-radius:11px 11px 0 0;border:1px solid #4a3a80;border-bottom:none;background:rgba(30,20,55,.6);color:#b9a4ff;cursor:pointer}
+  .memeTab.on{background:radial-gradient(circle at 50% 120%,#4a3a80,#2a1a4d);color:#fff;border-color:#7a5ad0}
+  .memeTab[disabled]{opacity:.4;cursor:not-allowed}
   #memeChips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:14px 0 6px}
   .memeChip{font-family:inherit;font-weight:800;font-size:13.5px;padding:9px 14px;border-radius:12px;border:1px solid #4a3a80;background:rgba(40,28,70,.7);color:#d9c6ff;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .12s}
   .memeChip:hover{border-color:#7a5ad0;color:#fff}
@@ -7153,9 +7158,10 @@ requestAnimationFrame(frame);
   const ov=document.createElement("div"); ov.id="memeDex";
   ov.innerHTML=`<div class="wrap">
     <div class="hd"><div><h1>🧬 Meme Dynasty <small>Generation Roster · verify the new Chikis</small></h1></div><span class="x" id="memeClose">✕</span></div>
-    <div class="sub">The newest generation of Chikis — born from the memes that built crypto. Tap a name to view its <b>official 3D model</b> and verify it's part of the dynasty. The roster is <b>still being completed</b>. 🌊</div>
-    <div id="memeStage"><div class="ld">Select a Chiki below ▾</div></div>
+    <div class="sub">The newest generation of Chikis — born from the memes that built crypto. Pick a member, then switch between its <b>🖼️ Art</b>, <b>✨ 3D Model</b>, and <b>🧱 Voxel Build</b> — models viewable in full 3D. The roster is <b>still being completed</b>. 🌊</div>
     <div id="memeName"></div>
+    <div id="memeTabs"></div>
+    <div id="memeStage"><div class="ld">Select a Chiki below ▾</div></div>
     <div id="memeChips"></div>
     <div id="memeFoot">🎨 <b>The roster isn't finished.</b> Want your favourite meme immortalised as a Chiki? Submit fan art or a suggestion with <b>#MemeDynasty</b> — the best picks join the dynasty, locked in forever. 🐾👑</div>
   </div>`;
@@ -7178,21 +7184,38 @@ requestAnimationFrame(frame);
   }
   function fit(model){ const box=new THREE.Box3().setFromObject(model),sz=box.getSize(new THREE.Vector3()),ce=box.getCenter(new THREE.Vector3());
     const md=Math.max(sz.x,sz.y,sz.z)||1,sc=2.4/md; model.scale.setScalar(sc); model.position.sub(ce.multiplyScalar(sc)); }
-  function showModel(key){
-    _cur=key; const host=$("memeStage");
-    if(!ensure3D()||typeof THREE.GLTFLoader==="undefined"){ const m=ROSTER.find(x=>x.key===key); host.innerHTML='<div class="big">'+(m?m.emoji:"❓")+'</div>'; return; }
+  let _view="model";
+  function fileFor(key,view){ return (view==="voxel"? key+"_voxel.glb" : key+".glb")+"?v="+GLB_VER; }
+  function showModel(key,view){
+    _cur=key; _view=view; const host=$("memeStage"); const m=ROSTER.find(x=>x.key===key);
+    if(view==="art"){ host.innerHTML='<img class="memeArt" src="'+key+'_art.png" alt="'+(m?m.name:'')+'" onerror="this.outerHTML=\'<div class=&quot;big&quot;>'+(m?m.emoji:'❓')+'</div>\'">'; return; }
+    if(!ensure3D()||typeof THREE.GLTFLoader==="undefined"){ host.innerHTML='<div class="big">'+(m?m.emoji:"❓")+'</div>'; return; }
     if(_r&&!host.contains(_r.domElement)){ host.innerHTML=""; host.appendChild(_r.domElement); }
-    const ld=document.createElement("div"); ld.className="ld"; ld.style.cssText="position:absolute"; ld.textContent="Loading 3D…"; host.appendChild(ld);
-    const place=(scene)=>{ if(_cur!==key)return; if(_model)_s.remove(_model); _model=scene; _s.add(_model); fit(_model); if(ld.parentNode)ld.remove(); };
-    if(_cache[key]){ place(_cache[key].clone()); return; }
-    new THREE.GLTFLoader().load(key+".glb?v="+GLB_VER, g=>{ _cache[key]=g.scene; place(g.scene.clone()); },
-      undefined, ()=>{ if(ld.parentNode)ld.remove(); const m=ROSTER.find(x=>x.key===key); host.innerHTML='<div class="big">'+(m?m.emoji:"❓")+'</div><div class="ld" style="position:absolute;bottom:10px">3D model loads in-game</div>'; });
+    const ld=document.createElement("div"); ld.className="ld"; ld.style.cssText="position:absolute"; ld.textContent=(view==="voxel"?"Loading voxel build…":"Loading 3D…"); host.appendChild(ld);
+    const ck=key+"|"+view;
+    const place=(scene)=>{ if(_cur!==key||_view!==view)return; if(_model)_s.remove(_model); _model=scene; _s.add(_model); fit(_model); if(ld.parentNode)ld.remove(); };
+    if(_cache[ck]){ place(_cache[ck].clone()); return; }
+    new THREE.GLTFLoader().load(fileFor(key,view), g=>{ _cache[ck]=g.scene; place(g.scene.clone()); },
+      undefined, ()=>{ if(ld.parentNode)ld.remove(); host.innerHTML='<div class="big">'+(m?m.emoji:"❓")+'</div><div class="ld" style="position:absolute;bottom:10px">'+(view==="voxel"?"voxel build":"3D model")+' loads in-game</div>'; });
+  }
+  function renderTabs(m){
+    const tabs=$("memeTabs");
+    tabs.innerHTML='<button class="memeTab" data-v="art">🖼️ Art</button>'
+      +'<button class="memeTab" data-v="model">✨ 3D Model</button>'
+      +'<button class="memeTab" data-v="voxel"'+(m.voxel?'':' disabled title="Voxel build coming soon"')+'>🧱 Voxel Build</button>';
+    tabs.querySelectorAll(".memeTab").forEach(b=>{ b.classList.toggle("on", b.dataset.v===_view); if(!b.hasAttribute("disabled")) b.onclick=()=>setView(m.key,b.dataset.v); });
+  }
+  function setView(key,view){
+    _view=view;
+    $("memeTabs").querySelectorAll(".memeTab").forEach(b=>b.classList.toggle("on",b.dataset.v===view));
+    showModel(key,view);
   }
   function select(key){
     const m=ROSTER.find(x=>x.key===key); if(!m)return;
+    _view="art";
     document.querySelectorAll(".memeChip").forEach(c=>c.classList.toggle("on",c.dataset.k===key));
     $("memeName").innerHTML=m.emoji+" "+m.name+'<span class="vf">✅ Verified · Meme Dynasty</span><span class="tg">'+m.tag+'</span>';
-    showModel(key);
+    renderTabs(m); showModel(key,"art");
   }
   function renderChips(){
     $("memeChips").innerHTML=ROSTER.map(m=>`<button class="memeChip" data-k="${m.key}">${m.emoji} ${m.name}</button>`).join("")
