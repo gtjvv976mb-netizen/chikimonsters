@@ -7311,12 +7311,12 @@ requestAnimationFrame(frame);
   const GLB_VER="4";
   /* The Meme Dynasty roster (the new generation). Add a row here as each member is confirmed. */
   const ROSTER=[
-    {key:"popcat",  name:"Popcat",  emoji:"😺", tag:"the Click King", element:"Storm", desc:"Oatmeal the wide-mouth cat — one POP launched a worldwide clicking craze with national leaderboards.", confirmed:true, voxel:true},
-    {key:"moodeng", name:"Moo Deng",emoji:"🦛", tag:"the Bouncy One", element:"Water", desc:"The chaotic baby pygmy hippo with the famous shocked face — slippery, bouncy, and quick to bite.", confirmed:true, voxel:true},
-    {key:"doge",    name:"Doge",    emoji:"🐕", tag:"the OG", element:"Beast", desc:"Kabosu the Shiba Inu — much wow, very speed, the original meme dog that started crypto culture.", confirmed:true, voxel:true},
-    {key:"pepe",    name:"Pepe",    emoji:"🐸", tag:"the Legend", element:"Light", desc:"Pepe the Frog — feels good man. Rare, smug, and the most remixed face on the internet.", confirmed:true, voxel:true},
-    {key:"chillguy",name:"Chill Guy",emoji:"😎", tag:"just a chill guy", element:"Fire", desc:"An unbothered dog in a grey sweater — hands in his pockets, lowkey doesn't give a care.", confirmed:true, voxel:true},
-    {key:"alon",    name:"Alon",     emoji:"🧢", tag:"stop being poor", element:"Storm", desc:"Pure pump.fun founder energy — bonding curves, instant launches, and weathering every wave of FUD.", confirmed:true, voxel:true},
+    {key:"pepe",    name:"Pepe",    emoji:"🐸", tag:"the Legend", element:"Light", cap:25, rarity:"Meme Legendary", desc:"Pepe the Frog — feels good man. Rare, smug, and the most remixed face on the internet.", confirmed:true, voxel:true},
+    {key:"popcat",  name:"Popcat",  emoji:"😺", tag:"the Click King", element:"Storm", cap:20, rarity:"Meme Legendary", desc:"Oatmeal the wide-mouth cat — one POP launched a worldwide clicking craze with national leaderboards.", confirmed:true, voxel:true},
+    {key:"moodeng", name:"Moo Deng",emoji:"🦛", tag:"the Bouncy One", element:"Water", cap:20, rarity:"Meme Legendary", desc:"The chaotic baby pygmy hippo with the famous shocked face — slippery, bouncy, and quick to bite.", confirmed:true, voxel:true},
+    {key:"doge",    name:"Doge",    emoji:"🐕", tag:"the OG", element:"Beast", cap:15, rarity:"Meme Legendary", desc:"Kabosu the Shiba Inu — much wow, very speed, the original meme dog that started crypto culture.", confirmed:true, voxel:true},
+    {key:"chillguy",name:"Chill Guy",emoji:"😎", tag:"just a chill guy", element:"Fire", cap:15, rarity:"Meme Legendary", desc:"An unbothered dog in a grey sweater — hands in his pockets, lowkey doesn't give a care.", confirmed:true, voxel:true},
+    {key:"alon",    name:"Alon",     emoji:"🧢", tag:"stop being poor", element:"Storm", cap:10, rarity:"Founder's Edition", desc:"Pure pump.fun founder energy — bonding curves, instant launches, and weathering every wave of FUD. The rarest of the dynasty.", confirmed:true, voxel:true},
   ];
 
   const css=document.createElement("style");
@@ -7430,7 +7430,7 @@ requestAnimationFrame(frame);
       <div id="memeEgg">
         <div class="meRow"><div class="meEgg" id="memeEggHost"></div>
           <div class="meInfo"><div class="meTitle">Meme Legendary Egg</div>
-            <div class="meSub">Hatch a <b>random</b> Meme Dynasty Chiki — minted as a <b>tradable NFT</b> on Solana. <b>Only 10 of each</b> — ultra-limited. 🌊</div>
+            <div class="meSub">Hatch a <b>random</b> Meme Dynasty Chiki — minted as a <b>tradable NFT</b> on Solana. <b>10–25 editions each · 105 total</b> — rarer ones pull less often. 🌊</div>
             <div class="meSupply" id="meSupply">Loading supply…</div></div></div>
         <div class="meBtns"><button id="meHatch">🥚 Hatch Egg · <span id="meCost"></span></button></div>
         <div class="meBtns"><button id="meMine" class="meGhost">🎒 My NFTs</button><button id="meBazaar" class="meGhost">🏪 NFT Bazaar</button></div>
@@ -7520,8 +7520,9 @@ requestAnimationFrame(frame);
     const m=ROSTER.find(x=>x.key===key); if(!m)return;
     $("memeGrid").style.display="none"; $("memeDetail").style.display="block";
     _view = m.voxel ? "voxel" : "art";                 /* the voxel build appears automatically */
+    const rTag=m.rarity?'<span class="tg" style="'+(m.rarity==="Founder\'s Edition"?'background:linear-gradient(90deg,#ffd54a,#ff9d2e);color:#3a2a06':'background:rgba(155,107,255,.28);color:#d7c2ff')+'">'+(m.rarity==="Founder\'s Edition"?'👑 ':'💎 ')+m.rarity+(m.cap?' · '+m.cap+' only':'')+'</span>':'';
     $("memeName").innerHTML=m.emoji+" "+m.name+'<span class="vf">✅ Verified · Meme Dynasty</span><span class="tg">'+m.tag+'</span>'
-      +(m.element?'<span class="tg" style="background:rgba(120,90,220,.28);color:#d7c9ff">'+m.element+'</span>':'')
+      +(m.element?'<span class="tg" style="background:rgba(120,90,220,.28);color:#d7c9ff">'+m.element+'</span>':'')+rTag
       +(m.desc?'<div style="font-size:12.5px;color:#c9bdf0;line-height:1.5;margin-top:7px;font-weight:600;max-width:520px">'+m.desc+'</div>':'');
     renderTabs(m); showModel(key,_view);
     requestAnimationFrame(_resize); setTimeout(_resize,140);
@@ -7536,14 +7537,17 @@ requestAnimationFrame(frame);
   function eggRefresh(){
     const cost=$("meCost"); if(cost)cost.textContent=EGG_PRICE.toLocaleString()+" $CHIKI";
     const BK=(window.CHAIN&&CHAIN.BACKEND)||""; if(!BK)return;
-    fetch(BK+"/meme/supply").then(r=>r.json()).then(s=>{ if(s){ _memeCfg.tradeTensor=!!s.tradeTensor; _memeCfg.tensorUrl=s.tensorUrl||null; } const el=$("meSupply"); if(el&&s&&s.totalLeft!=null) el.textContent="🥚 "+s.totalLeft.toLocaleString()+" of "+(s.cap*ROSTER.length).toLocaleString()+" eggs left to hatch"; }).catch(()=>{});
+    fetch(BK+"/meme/supply").then(r=>r.json()).then(s=>{ if(s){ _memeCfg.tradeTensor=!!s.tradeTensor; _memeCfg.tensorUrl=s.tensorUrl||null; } const el=$("meSupply"); const total=(s&&s.total)||ROSTER.reduce((a,m)=>a+(m.cap||10),0); if(el&&s&&s.totalLeft!=null) el.textContent="🥚 "+s.totalLeft.toLocaleString()+" of "+total.toLocaleString()+" eggs left to hatch"; }).catch(()=>{});
   }
   function testHatch(){   /* 🧪 full hatch experience — no payment, no backend, no real NFT */
-    const avail=ROSTER.filter(m=>( _testSupply[m.key]||0)<10);
-    if(!avail.length){ if(typeof showBanner==="function")showBanner("🧪 Test sold out — all 60 test editions hatched. Refresh to reset.","info"); return; }
-    const m=avail[Math.floor(Math.random()*avail.length)];
+    const avail=ROSTER.filter(m=>( _testSupply[m.key]||0)<(m.cap||10));
+    const total=ROSTER.reduce((a,m)=>a+(m.cap||10),0);
+    if(!avail.length){ if(typeof showBanner==="function")showBanner("🧪 Test sold out — all "+total+" test editions hatched. Refresh to reset.","info"); return; }
+    /* weighted by remaining cap so rarer ones (Alon) pull less often, like the real drop */
+    let pool=0; avail.forEach(m=>pool+=(m.cap||10)); let r=Math.random()*pool, m=avail[0];
+    for(const x of avail){ r-=(x.cap||10); if(r<=0){ m=x; break; } }
     const edition=( _testSupply[m.key]||0)+1; _testSupply[m.key]=edition;
-    const h={ id:"test_"+Date.now().toString(36), char:m.key, name:m.name, edition, cap:10, test:true };
+    const h={ id:"test_"+Date.now().toString(36), char:m.key, name:m.name, edition, cap:(m.cap||10), rarity:m.rarity, test:true };
     _testNfts.unshift(h);
     showReveal(h, true);   /* animated hatch + PNG/3D reveal + grants the playable Legendary */
   }
@@ -7636,6 +7640,7 @@ requestAnimationFrame(frame);
         +'</div>'
         +(isTest?'<div style="margin-top:10px;display:inline-block;background:rgba(155,107,255,.2);border:1px dashed #9b6bff;color:#cdbcff;font-weight:800;font-size:12px;padding:4px 12px;border-radius:20px">🧪 TEST HATCH — no $CHIKI spent, no real NFT</div>':'')
         +'<div class="rvName">'+(m.emoji||"")+' '+h.name+'</div>'
+        +(m.rarity?'<div style="display:inline-block;margin-top:6px;font-weight:800;font-size:12px;padding:3px 12px;border-radius:20px;'+(m.rarity==="Founder\'s Edition"?'background:linear-gradient(90deg,#ffd54a,#ff9d2e);color:#3a2a06':'background:rgba(155,107,255,.25);color:#d7c2ff;border:1px solid #9b6bff')+'">'+(m.rarity==="Founder\'s Edition"?'👑 ':'💎 ')+m.rarity+'</div>':'')
         +'<div class="rvEd">'+(m.element?m.element+' · ':'')+'Edition #'+String(h.edition).padStart(3,"0")+' / '+h.cap+'</div>'
         +(m.desc?'<div class="rvMsg" style="color:#dcd2ff;font-style:italic;margin-top:7px">'+m.desc+'</div>':'')
         +(isTest
@@ -7710,7 +7715,7 @@ requestAnimationFrame(frame);
   }
   function unlistNft(id){ const BK=(window.CHAIN&&CHAIN.BACKEND)||""; fetch(BK+"/meme/unlist",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:player.pk,hatchId:id})}).then(r=>r.json()).then(()=>showMyNfts()).catch(()=>{}); }
   function renderGrid(){
-    $("mgCards").innerHTML=ROSTER.map(m=>`<div class="mgCard" data-k="${m.key}"><img src="${m.key}_art.png?v=meme4" alt="${m.name}" onerror="this.style.visibility='hidden'"><div class="nm">${m.emoji} ${m.name}</div><div class="tg">${m.tag}</div><div class="vf">✅ Verified</div></div>`).join("")
+    $("mgCards").innerHTML=ROSTER.map(m=>`<div class="mgCard" data-k="${m.key}"><img src="${m.key}_art.png?v=meme4" alt="${m.name}" onerror="this.style.visibility='hidden'"><div class="nm">${m.emoji} ${m.name}</div><div class="tg">${m.tag}</div><div class="vf">${m.rarity==="Founder's Edition"?'👑':'💎'} ${m.cap} only</div></div>`).join("")
       +`<div class="mgCard soon" id="memeSoon">❓<div>More coming…</div><div style="font-size:11px;opacity:.8">#MemeDynasty</div></div>`;
     $("mgCards").querySelectorAll(".mgCard[data-k]").forEach(c=>c.onclick=()=>openDetail(c.dataset.k));
     const sn=$("memeSoon"); if(sn)sn.onclick=()=>{ if(typeof showBanner==="function")showBanner("🎨 The roster's still open — submit your meme legend with #MemeDynasty!","info"); };
