@@ -14,8 +14,11 @@
   #hero{position:fixed;inset:0;background:url("homepage-hero.png") center center/cover no-repeat;transition:opacity .6s}
 
   /* ---- image tab bar ---- */
-  #tabbar{position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:30;
-    display:flex;gap:0.8vw;align-items:center;justify-content:center;filter:drop-shadow(0 6px 12px rgba(0,0,0,.4))}
+  #tabbar{position:fixed;bottom:8px;left:50%;transform:translateX(-50%);z-index:30;
+    display:flex;gap:0.6vw;align-items:center;justify-content:center;flex-wrap:wrap;max-width:97vw;
+    background:rgba(8,16,30,.5);border:1px solid rgba(255,233,120,.3);border-radius:999px;padding:5px 12px;
+    -webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);filter:drop-shadow(0 6px 14px rgba(0,0,0,.55))}
+  .mtab{height:clamp(28px,3.6vw,48px) !important}
   .mtab{height:clamp(34px,4.4vw,60px);width:auto;cursor:pointer;
     transition:transform .07s ease,filter .07s ease;-webkit-user-drag:none;user-select:none}
   .mtab:hover{transform:scale(1.05)}
@@ -23,10 +26,10 @@
   .mtab.active{filter:brightness(1.12) drop-shadow(0 0 9px rgba(255,233,120,.92))}
   /* accurate pointer arrow under the active tab */
   #pointer{position:fixed;z-index:31;width:0;height:0;border-left:11px solid transparent;border-right:11px solid transparent;
-    border-top:14px solid var(--gold);filter:drop-shadow(0 3px 3px rgba(0,0,0,.5));
+    border-bottom:14px solid var(--gold);filter:drop-shadow(0 -3px 3px rgba(0,0,0,.5));transform:translateX(-50%);
     opacity:0;transition:left .28s cubic-bezier(.34,1.56,.64,1),opacity .2s;pointer-events:none}
   #pointer.show{opacity:1;animation:bobp 1s ease-in-out infinite}
-  @keyframes bobp{50%{transform:translate(-50%,4px)}}
+  @keyframes bobp{50%{transform:translate(-50%,-4px)}}
 
   /* ---- hero play button ---- */
   #playBtn{position:absolute;left:calc(50% - 1.4vw);top:0;width:min(280px,29vw);cursor:pointer;transform:translate(-50%,-50%);
@@ -207,7 +210,7 @@
   function movePointer(z){
     var r=z.getBoundingClientRect();
     ptr.style.left=(r.left+r.width/2)+"px";
-    ptr.style.top=(r.bottom+2)+"px";
+    ptr.style.top=(r.top-16)+"px";   /* bar sits at the bottom → arrow points UP above the active tab */
     ptr.classList.add("show");
   }
   zones.forEach(function(z){
@@ -233,7 +236,7 @@
   }
   btn.onclick=start;
 
-  var QUOTE_Y=0.74, probe=new Image();
+  var QUOTE_Y=0.46, probe=new Image();   /* PLAY sits in the clear gap between the logo (top) and the characters (bottom) */
   function place(){if(!probe.naturalWidth)return;
     var vw=innerWidth,vh=innerHeight,iw=probe.naturalWidth,ih=probe.naturalHeight;
     var s=Math.max(vw/iw,vh/ih),yOff=(vh-ih*s)/2;
