@@ -912,7 +912,7 @@ if(location.search.indexOf("embed")>-1){
 #arenaBox.introMode #arenaHead{position:absolute}
 #arenaHead .x{font-size:22px;color:#ffd9d9;cursor:pointer}#arenaInfo{font-size:18px}
 /* banner */
-#arenaBanner{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:min(30vw,330px);height:auto;z-index:6;filter:drop-shadow(0 4px 10px rgba(0,0,0,.6));pointer-events:none}
+#arenaBanner{display:none!important}   /* logo removed from the battle stage to free up space */
 #arenaBox.introMode #arenaBanner{display:none}
 /* energy bar art + pips */
 #aEnergyBox{position:absolute;top:14px;left:16px;width:240px;height:84px;background:url("ui/energybar.png") center/contain no-repeat;z-index:7}
@@ -3413,7 +3413,8 @@ setInterval(updateWhaleTab,1000);
   }
   function startPvp(matchId, side, fromCup){
     clearTurnTimer(); const legs=myLegends().map(ensureLegendSkills); if(!legs.length)return;
-    B={ you:makeSide(legs[0],true), foe:null, over:false, turn:null, pvp:{matchId,side,fromCup:!!fromCup}, foeBr:1 };
+    B={ you:makeSide(legs[0],true), foe:null, over:false, turn:null, pvp:{matchId,side,fromCup:!!fromCup}, foeBr:1, series:null, _lastGameShown:-1 };
+    const sp0=g("pvpSeries"); if(sp0)sp0.style.display="none";
     const bx=g("arenaBox"); if(bx)bx.classList.remove("introMode"); const ai=g("arenaIntro"); if(ai)ai.style.display="none";
     g("arenaOverlay").style.display="flex";
     log(`⚔️ <b style="color:#7fd0ff">${B.you.name}</b> faces a <b style="color:#ffd93d">LIVE</b> challenger! Lock in your cards.`);
@@ -3434,6 +3435,13 @@ setInterval(updateWhaleTab,1000);
     }catch(e){}
     if(B&&B.pvp&&!B.over)_pvpPoll=setTimeout(pvpTickLoop,1200);
   }
+  function pvpSeriesPill(){
+    if(!B||!B.series)return; let el=g("pvpSeries");
+    if(!el){ const box=g("arenaBox"); if(!box)return; el=document.createElement("div"); el.id="pvpSeries";
+      el.style.cssText="position:absolute;top:104px;left:50%;transform:translateX(-50%);z-index:8;font-size:12px;font-weight:800;color:#ffe27a;background:rgba(10,14,30,.74);border:1px solid #b98a2e;border-radius:14px;padding:3px 12px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.4)"; box.appendChild(el); }
+    el.textContent="🏆 Best of "+B.series.bestOf+" · Game "+B.series.game+" · You "+B.series.you+" – "+B.series.foe+" Foe";
+    el.style.display="block";
+  }
   function applyPvpState(s){
     B.foe=pvpFoeSide(s.foe); B.foeBr=s.foe.br||1;
     B.you.hp=s.you.hp; B.you.maxhp=s.you.maxhp; B.you.shield=s.you.shield||0; B.you.energy=s.you.energy;
@@ -3441,7 +3449,17 @@ setInterval(updateWhaleTab,1000);
     B._left=Math.max(0,Math.ceil((s.deadlineInMs||0)/1000));
     if(!B.you.queue)B.you.queue=[]; B.you.queue=B.you.queue.filter(i=>i<B.you.hand.length);
     B._foeSub=!!s.foeSubmitted;
+    if(s.bestOf>1){ B.series={bestOf:s.bestOf,game:s.game,you:(s.score&&s.score.you)||0,foe:(s.score&&s.score.foe)||0}; pvpSeriesPill(); }
     if(_pvpAnimating)return;
+    if(s.between){   /* inter-game break in the best-of series */
+      if(s.gameResult && B._lastGameShown!==s.game){ B._lastGameShown=s.game; const won=!!s.gameResult.youWonGame;
+        if(typeof showBanner==="function")showBanner((won?"🏆 You won game "+s.gameResult.game+"!":"💢 You lost game "+s.gameResult.game)+" — Series "+B.series.you+"–"+B.series.foe,"info");
+        if(window.playSfx)window.playSfx(won?"reward":"lose"); }
+      B.turn=null; B._resolving=false;
+      const secs=Math.max(1,Math.ceil((s.breakInMs||0)/1000));
+      const ac=g("arenaCenter"); if(ac)ac.innerHTML="<div style='font-size:14px;color:#ffd166;font-weight:800'>Game "+B.series.game+" of "+B.series.bestOf+" · Series "+B.series.you+"–"+B.series.foe+"</div><div style='font-size:12px;color:#8fa6c9;margin-top:3px'>⚔️ Next game starting in "+secs+"s…</div>";
+      render(); return;
+    }
     if(s.over){ B.turn=null; render(); }
     else if(s.youSubmitted){ B.turn="foe"; B._resolving=false; render();
       const ac=g("arenaCenter"); if(ac)ac.innerHTML=s.foeSubmitted
@@ -3482,6 +3500,8 @@ setInterval(updateWhaleTab,1000);
     if(_pvpPoll){clearTimeout(_pvpPoll);_pvpPoll=null;}
     pvpClockStop();
     if(!B)return; const fromCup=B.pvp&&B.pvp.fromCup; B.pvp=null; B.over=true;
+    const sp=g("pvpSeries"); if(sp)sp.style.display="none";
+    if(B.series&&B.series.bestOf>1)log("🏁 <b>Best-of-"+B.series.bestOf+" series:</b> "+B.series.you+"–"+B.series.foe+(win?" — series won! 🏆":" — series lost."));
     if(reason==="forfeit")log(win?"🏳️ <b style='color:#3ddc84'>Opponent forfeited — you win!</b>":"🏳️ You forfeited the match.");
     else if(reason==="time")log(win?"⏱️ <b style='color:#3ddc84'>Time! You had more HP — you win!</b>":"⏱️ Time — your opponent had more HP.");
     if(window.playSfx)window.playSfx(win?"reward":"lose");
