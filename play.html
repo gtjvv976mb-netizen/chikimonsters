@@ -7311,12 +7311,12 @@ requestAnimationFrame(frame);
   const GLB_VER="4";
   /* The Meme Dynasty roster (the new generation). Add a row here as each member is confirmed. */
   const ROSTER=[
-    {key:"popcat",  name:"Popcat",  emoji:"😺", tag:"the Click King", confirmed:true, voxel:true},
-    {key:"moodeng", name:"Moo Deng",emoji:"🦛", tag:"the Bouncy One", confirmed:true, voxel:true},
-    {key:"doge",    name:"Doge",    emoji:"🐕", tag:"the OG", confirmed:true, voxel:true},
-    {key:"pepe",    name:"Pepe",    emoji:"🐸", tag:"the Legend", confirmed:true, voxel:true},
-    {key:"chillguy",name:"Chill Guy",emoji:"😎", tag:"just a chill guy", confirmed:true, voxel:true},
-    {key:"alon",    name:"Alon",     emoji:"🧢", tag:"stop being poor", confirmed:true, voxel:true},
+    {key:"popcat",  name:"Popcat",  emoji:"😺", tag:"the Click King", element:"Storm", desc:"Oatmeal the wide-mouth cat — one POP launched a worldwide clicking craze with national leaderboards.", confirmed:true, voxel:true},
+    {key:"moodeng", name:"Moo Deng",emoji:"🦛", tag:"the Bouncy One", element:"Water", desc:"The chaotic baby pygmy hippo with the famous shocked face — slippery, bouncy, and quick to bite.", confirmed:true, voxel:true},
+    {key:"doge",    name:"Doge",    emoji:"🐕", tag:"the OG", element:"Beast", desc:"Kabosu the Shiba Inu — much wow, very speed, the original meme dog that started crypto culture.", confirmed:true, voxel:true},
+    {key:"pepe",    name:"Pepe",    emoji:"🐸", tag:"the Legend", element:"Light", desc:"Pepe the Frog — feels good man. Rare, smug, and the most remixed face on the internet.", confirmed:true, voxel:true},
+    {key:"chillguy",name:"Chill Guy",emoji:"😎", tag:"just a chill guy", element:"Fire", desc:"An unbothered dog in a grey sweater — hands in his pockets, lowkey doesn't give a care.", confirmed:true, voxel:true},
+    {key:"alon",    name:"Alon",     emoji:"🧢", tag:"stop being poor", element:"Storm", desc:"Pure pump.fun founder energy — bonding curves, instant launches, and weathering every wave of FUD.", confirmed:true, voxel:true},
   ];
 
   const css=document.createElement("style");
@@ -7381,15 +7381,37 @@ requestAnimationFrame(frame);
   .meNft .ns{margin-left:auto;font-size:11px;font-weight:800;padding:4px 9px;border-radius:999px;white-space:nowrap}
   .meNft .ns.minted{color:#7ee68f;background:rgba(50,180,90,.16);border:1px solid #2f8a3e}
   .meNft .ns.pending{color:#ffd166;background:rgba(180,140,40,.16);border:1px solid #8a6a2f}
-  #memeReveal{position:fixed;inset:0;z-index:240;display:none;align-items:center;justify-content:center;background:rgba(6,4,16,.86);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
-  #memeReveal .rv{text-align:center;color:#fff;font-family:'Nunito',sans-serif;max-width:340px;padding:20px}
-  #memeReveal .egg{font-size:120px;animation:shake .5s ease-in-out infinite}
-  #memeReveal img.egg{width:160px;height:auto;font-size:0;filter:drop-shadow(0 10px 22px rgba(0,0,0,.5))}
-  @keyframes shake{0%,100%{transform:rotate(-9deg)}50%{transform:rotate(9deg)}}
-  #memeReveal img{width:210px;max-width:72vw;filter:drop-shadow(0 12px 28px rgba(0,0,0,.6));animation:pop .5s cubic-bezier(.2,1.4,.4,1)}
+  #memeReveal{position:fixed;inset:0;z-index:240;display:none;align-items:center;justify-content:center;background:rgba(6,4,16,.9);-webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px)}
+  #memeReveal .rv{text-align:center;color:#fff;font-family:'Nunito',sans-serif;max-width:540px;width:94vw;padding:18px}
+  /* ---- hatching phase (escalating shake → burst) ---- */
+  #memeReveal .hatchStage{position:relative;display:inline-block;padding:30px}
+  #memeReveal .hatchStage img,#memeReveal .hatchStage .eggEmoji{width:190px;max-width:54vw;height:auto;display:block;filter:drop-shadow(0 10px 26px rgba(0,0,0,.55));-webkit-user-drag:none;will-change:transform}
+  #memeReveal .hatchStage .eggEmoji{font-size:150px;line-height:1}
+  #memeReveal .hatchStage.s1 img,#memeReveal .hatchStage.s1 .eggEmoji{animation:eggWobble 1.05s ease-in-out infinite}
+  #memeReveal .hatchStage.s2 img,#memeReveal .hatchStage.s2 .eggEmoji{animation:eggShakeHard .26s ease-in-out infinite}
+  #memeReveal .hatchStage.s3 img,#memeReveal .hatchStage.s3 .eggEmoji{animation:eggShakeMax .1s linear infinite}
+  #memeReveal .glowRing{position:absolute;inset:6px;border-radius:50%;pointer-events:none;opacity:0;background:radial-gradient(circle,transparent 46%,rgba(155,107,255,.35) 66%,transparent 74%);transition:opacity .4s}
+  #memeReveal .hatchStage.s2 .glowRing{opacity:.75}
+  #memeReveal .hatchStage.s3 .glowRing{opacity:1;animation:glowPulse .5s ease-in-out infinite}
+  #memeReveal .burst{position:absolute;inset:-50px;border-radius:50%;pointer-events:none;opacity:0;background:radial-gradient(circle,#fff,#ffe9a8 24%,#9b6bff 54%,transparent 70%)}
+  #memeReveal .burst.go{animation:burstFlash .6s ease-out forwards}
+  @keyframes eggWobble{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
+  @keyframes eggShakeHard{0%,100%{transform:translateX(-5px) rotate(-7deg)}50%{transform:translateX(5px) rotate(7deg)}}
+  @keyframes eggShakeMax{0%{transform:translate(-4px,1px) rotate(-9deg)}25%{transform:translate(4px,-1px) rotate(9deg)}50%{transform:translate(-3px,2px) rotate(-7deg)}75%{transform:translate(3px,-2px) rotate(7deg)}100%{transform:translate(-4px,1px) rotate(-9deg)}}
+  @keyframes glowPulse{0%,100%{opacity:.55}50%{opacity:1}}
+  @keyframes burstFlash{0%{opacity:0;transform:scale(.4)}28%{opacity:1}100%{opacity:0;transform:scale(1.7)}}
   @keyframes pop{0%{transform:scale(.3);opacity:0}100%{transform:scale(1);opacity:1}}
-  #memeReveal .rvName{font-size:24px;font-weight:900;margin-top:8px}
-  #memeReveal .rvEd{font-size:14px;color:#ffd966;font-weight:800}
+  /* ---- reveal phase (PNG + live 3D, side by side) ---- */
+  #memeReveal .reveal2{display:flex;gap:14px;justify-content:center;align-items:stretch;flex-wrap:wrap;animation:pop .5s cubic-bezier(.2,1.4,.4,1)}
+  #memeReveal .vcard{background:rgba(30,20,56,.72);border:1px solid #5a47a0;border-radius:16px;padding:10px 10px 9px;width:212px;max-width:43vw;display:flex;flex-direction:column}
+  #memeReveal .vcard .vlabel{font-size:11px;font-weight:800;color:#c9bdf0;letter-spacing:.5px;margin-bottom:7px;text-transform:uppercase}
+  #memeReveal .vcard img.art{width:100%;height:188px;object-fit:contain;filter:drop-shadow(0 8px 20px rgba(0,0,0,.5))}
+  #memeReveal .vcard .stage3d{width:100%;height:188px;position:relative;border-radius:12px;overflow:hidden;background:radial-gradient(120% 100% at 50% 0%,#241a44,#140e29)}
+  #memeReveal .vcard .stage3d canvas{width:100%!important;height:100%!important;display:block}
+  #memeReveal .vcard .vsmall{font-size:10.5px;color:#8fe6a6;margin-top:6px;font-weight:700}
+  #memeReveal .vcard .ld3{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:12px;color:#b9a4ff;text-align:center;padding:8px}
+  #memeReveal .rvName{font-size:24px;font-weight:900;margin-top:15px}
+  #memeReveal .rvEd{font-size:14px;color:#ffd966;font-weight:800;margin-top:2px}
   #memeReveal .rvMsg{font-size:13px;color:#b9a4ff;margin-top:8px;line-height:1.5}
   #memeReveal button{margin-top:16px;font-family:inherit;font-weight:800;font-size:15px;padding:11px 26px;border:none;border-radius:12px;background:linear-gradient(180deg,#9b6bff,#6a3ad0);color:#fff;cursor:pointer;box-shadow:0 4px 0 #4a25a0}`;
   document.head.appendChild(css);
@@ -7403,7 +7425,7 @@ requestAnimationFrame(frame);
       <div id="memeEgg">
         <div class="meRow"><div class="meEgg" id="memeEggHost"></div>
           <div class="meInfo"><div class="meTitle">Meme Legendary Egg</div>
-            <div class="meSub">Hatch a <b>random</b> Meme Dynasty Chiki — minted as a <b>tradable NFT</b> on Solana. Limited editions each. 🌊</div>
+            <div class="meSub">Hatch a <b>random</b> Meme Dynasty Chiki — minted as a <b>tradable NFT</b> on Solana. <b>Only 10 of each</b> — ultra-limited. 🌊</div>
             <div class="meSupply" id="meSupply">Loading supply…</div></div></div>
         <div class="meBtns"><button id="meHatch">🥚 Hatch Egg · <span id="meCost"></span></button></div>
         <div class="meBtns"><button id="meMine" class="meGhost">🎒 My NFTs</button><button id="meBazaar" class="meGhost">🏪 NFT Bazaar</button></div>
@@ -7492,7 +7514,9 @@ requestAnimationFrame(frame);
     const m=ROSTER.find(x=>x.key===key); if(!m)return;
     $("memeGrid").style.display="none"; $("memeDetail").style.display="block";
     _view = m.voxel ? "voxel" : "art";                 /* the voxel build appears automatically */
-    $("memeName").innerHTML=m.emoji+" "+m.name+'<span class="vf">✅ Verified · Meme Dynasty</span><span class="tg">'+m.tag+'</span>';
+    $("memeName").innerHTML=m.emoji+" "+m.name+'<span class="vf">✅ Verified · Meme Dynasty</span><span class="tg">'+m.tag+'</span>'
+      +(m.element?'<span class="tg" style="background:rgba(120,90,220,.28);color:#d7c9ff">'+m.element+'</span>':'')
+      +(m.desc?'<div style="font-size:12.5px;color:#c9bdf0;line-height:1.5;margin-top:7px;font-weight:600;max-width:520px">'+m.desc+'</div>':'');
     renderTabs(m); showModel(key,_view);
     requestAnimationFrame(_resize); setTimeout(_resize,140);
   }
@@ -7500,10 +7524,11 @@ requestAnimationFrame(frame);
   /* ===== Meme Legendary Egg → hatch a random Meme Dynasty NFT ===== */
   const EGG_PRICE=1000000;   // $CHIKI per egg
   const ROSTER_BY=Object.fromEntries(ROSTER.map(m=>[m.key,m]));
+  let _memeCfg={tradeTensor:false,tensorUrl:null};   // populated from the backend (mainnet routes trading to Tensor)
   function eggRefresh(){
     const cost=$("meCost"); if(cost)cost.textContent=EGG_PRICE.toLocaleString()+" $CHIKI";
     const BK=(window.CHAIN&&CHAIN.BACKEND)||""; if(!BK)return;
-    fetch(BK+"/meme/supply").then(r=>r.json()).then(s=>{ const el=$("meSupply"); if(el&&s&&s.totalLeft!=null) el.textContent="🥚 "+s.totalLeft.toLocaleString()+" of "+(s.cap*ROSTER.length).toLocaleString()+" eggs left to hatch"; }).catch(()=>{});
+    fetch(BK+"/meme/supply").then(r=>r.json()).then(s=>{ if(s){ _memeCfg.tradeTensor=!!s.tradeTensor; _memeCfg.tensorUrl=s.tensorUrl||null; } const el=$("meSupply"); if(el&&s&&s.totalLeft!=null) el.textContent="🥚 "+s.totalLeft.toLocaleString()+" of "+(s.cap*ROSTER.length).toLocaleString()+" eggs left to hatch"; }).catch(()=>{});
   }
   async function hatchEgg(){
     const BK=(window.CHAIN&&CHAIN.BACKEND)||"";
@@ -7513,10 +7538,11 @@ requestAnimationFrame(frame);
     if((player.bal||0)-EGG_PRICE<minHold){ if(typeof showBanner==="function")showBanner("Need "+EGG_PRICE.toLocaleString()+" $CHIKI (keep ≥"+minHold.toLocaleString()+") to hatch.","error"); return; }
     const hb=$("meHatch"); if(hb)hb.disabled=true;
     try{
-      if(window.CHAIN&&CHAIN.ONCHAIN_SPENDS&&player.pk){ try{ await chikiSpend(EGG_PRICE,"Meme Legendary Egg"); }catch(e){ if(typeof showBanner==="function")showBanner("Payment failed: "+(e.message||e),"error"); if(hb)hb.disabled=false; return; } }
+      let paySig=null;
+      if(window.CHAIN&&CHAIN.ONCHAIN_SPENDS&&player.pk){ try{ const pay=await chikiSpend(EGG_PRICE,"Meme Legendary Egg"); paySig=pay&&pay.signature||null; }catch(e){ if(typeof showBanner==="function")showBanner("Payment failed: "+(e.message||e),"error"); if(hb)hb.disabled=false; return; } }
       try{ player.bal-=EGG_PRICE; if(typeof burnedChiki!=="undefined")burnedChiki+=EGG_PRICE*0.01; }catch(e){}
       if(typeof refreshUI==="function")refreshUI();
-      const r=await fetch(BK+"/meme/hatch",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:player.pk})});
+      const r=await fetch(BK+"/meme/hatch",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:player.pk,paySig})});
       const j=await r.json();
       if(!j||j.error){ if(typeof showBanner==="function")showBanner("⚠️ "+((j&&j.error)||"hatch failed"),"error"); if(hb)hb.disabled=false; return; }
       showReveal(j.hatch); eggRefresh();
@@ -7539,20 +7565,65 @@ requestAnimationFrame(frame);
       return c;
     }catch(e){ return null; }
   }
+  /* dedicated, self-contained 3D viewer for the reveal (its own renderer so it never clashes with the dex viewer) */
+  let _rvViewer=null;
+  function disposeRevealViewer(){ if(_rvViewer){ try{cancelAnimationFrame(_rvViewer.raf);}catch(e){} try{_rvViewer.r.forceContextLoss&&_rvViewer.r.forceContextLoss();}catch(e){} try{_rvViewer.r.dispose();}catch(e){} _rvViewer=null; } }
+  function mountRevealModel(key,host){
+    disposeRevealViewer(); if(!host)return;
+    if(typeof THREE==="undefined"||!THREE.WebGLRenderer||typeof THREE.GLTFLoader==="undefined"){ host.innerHTML='<div class="ld3">3D unavailable here</div>'; return; }
+    const w=host.clientWidth||200,hh=host.clientHeight||188;
+    const sc=new THREE.Scene();
+    const cam=new THREE.PerspectiveCamera(42,w/hh,0.1,1000); cam.position.set(0,0,4.8); cam.lookAt(0,0,0);
+    let r; try{ r=new THREE.WebGLRenderer({antialias:true,alpha:true}); }catch(e){ host.innerHTML='<div class="ld3">3D unavailable here</div>'; return; }
+    r.setPixelRatio(Math.min(2,window.devicePixelRatio||1)); r.setSize(w,hh);
+    sc.add(new THREE.AmbientLight(0xffffff,0.95));
+    const d1=new THREE.DirectionalLight(0xffffff,1.15); d1.position.set(3,6,5); sc.add(d1);
+    const d2=new THREE.DirectionalLight(0x88aaff,0.55); d2.position.set(-4,2,-3); sc.add(d2);
+    const ld=document.createElement("div"); ld.className="ld3"; ld.textContent="Loading 3D…"; host.appendChild(ld);
+    host.appendChild(r.domElement);
+    let model=null; const v={r,raf:0};
+    const loop=()=>{ if(model)model.rotation.y+=0.014; r.render(sc,cam); v.raf=requestAnimationFrame(loop); }; loop(); _rvViewer=v;
+    const fixMats=(root)=>{ root.traverse(o=>{ if(!o.isMesh)return; const hasVC=o.geometry&&o.geometry.attributes&&o.geometry.attributes.color;
+      if(hasVC){ if(!o.geometry.attributes.normal){ try{const ni=o.geometry.toNonIndexed();ni.computeVertexNormals();o.geometry=ni;}catch(e){} } o.material=new THREE.MeshLambertMaterial({vertexColors:true}); return; }
+      const fix=mt=>{ if(!mt)return; if("metalness"in mt)mt.metalness=Math.min(mt.metalness==null?0:mt.metalness,0.15); if("roughness"in mt)mt.roughness=Math.max(mt.roughness==null?1:mt.roughness,0.55); mt.needsUpdate=true; };
+      Array.isArray(o.material)?o.material.forEach(fix):fix(o.material); }); };
+    const fit=(m)=>{ const box=new THREE.Box3().setFromObject(m),s=box.getSize(new THREE.Vector3()),ce=box.getCenter(new THREE.Vector3()); const md=Math.max(s.x,s.y,s.z)||1,k=2.0/md; m.scale.setScalar(k); m.position.set(-ce.x*k,-ce.y*k,-ce.z*k); };
+    const loader=new THREE.GLTFLoader();
+    try{ if(window.MeshoptDecoder)loader.setMeshoptDecoder(window.MeshoptDecoder); }catch(e){}
+    try{ if(THREE.DRACOLoader){ const dl=new THREE.DRACOLoader(); dl.setDecoderPath("https://www.gstatic.com/draco/v1/decoders/"); loader.setDRACOLoader(dl); } }catch(e){}
+    const load=(file,next)=>loader.load(file, g=>{ fixMats(g.scene); model=g.scene; sc.add(model); fit(model); if(ld.parentNode)ld.remove(); },
+      undefined, ()=>{ if(next)next(); else { if(ld.parentNode)ld.remove(); host.innerHTML='<div class="ld3">3D model unavailable —<br>check it\'s deployed</div>'; } });
+    load(key+"_build.glb?v="+GLB_VER, ()=>load(key+".glb?v="+GLB_VER, null));   /* prefer the in-game voxel build, fall back to the smooth GLB */
+  }
   function showReveal(h){
     let r2=$("memeReveal"); if(!r2){ r2=document.createElement("div"); r2.id="memeReveal"; document.body.appendChild(r2); }
-    r2.innerHTML='<div class="rv"><img class="egg" src="ui/meme-egg.png?v=meme4" onerror="this.outerHTML=\'<div class=&quot;egg&quot;>🥚</div>\'"><div class="rvMsg">Hatching your Meme Legendary Egg…</div></div>';
-    r2.style.display="flex"; if(window.playSfx)window.playSfx("open");
+    const m=ROSTER_BY[h.char]||{name:h.name,emoji:"❓"};
+    r2.style.display="flex";
+    r2.innerHTML='<div class="rv"><div class="hatchStage s1" id="hxStage"><div class="glowRing"></div><div class="burst" id="hxBurst"></div>'
+      +'<img src="ui/meme-egg.png?v=meme4" alt="egg" onerror="this.outerHTML=\'<div class=&quot;eggEmoji&quot;>🥚</div>\'"></div>'
+      +'<div class="rvMsg" id="hxMsg">Your Meme Legendary Egg is hatching…</div></div>';
+    if(window.playSfx)window.playSfx("open");
     const granted=grantMemeLegendary(h.char);
-    setTimeout(()=>{ const m=ROSTER_BY[h.char]||{name:h.name,emoji:"❓"};
-      r2.innerHTML='<div class="rv"><img src="'+h.char+'_art.png?v=meme4" alt="'+h.name+'" onerror="this.style.display=\'none\'">'
+    const stage=$("hxStage"), msg=$("hxMsg");
+    /* escalate the shake, then burst — a real hatch, not an instant pop */
+    setTimeout(()=>{ if(stage){stage.classList.remove("s1");stage.classList.add("s2");} if(msg)msg.textContent="The shell is cracking…"; if(window.playSfx)window.playSfx("open"); },1100);
+    setTimeout(()=>{ if(stage){stage.classList.remove("s2");stage.classList.add("s3");} if(msg)msg.textContent="Almost there…"; },2150);
+    setTimeout(()=>{ const b=$("hxBurst"); if(b)b.classList.add("go"); if(window.playSfx)window.playSfx("reward"); },2950);
+    setTimeout(()=>{
+      r2.innerHTML='<div class="rv">'
+        +'<div class="reveal2">'
+        +  '<div class="vcard"><div class="vlabel">🖼️ Art (PNG)</div><img class="art" src="'+h.char+'_art.png?v=meme4" alt="'+h.name+'" onerror="this.parentNode.innerHTML=\'<div class=&quot;vlabel&quot;>🖼️ Art</div><div class=&quot;ld3&quot; style=&quot;position:static;height:188px&quot;>'+(m.emoji||'❓')+'</div>\'"></div>'
+        +  '<div class="vcard"><div class="vlabel">🧱 3D Voxel Model</div><div class="stage3d" id="rvStage3d"></div><div class="vsmall">↻ live &middot; verify your NFT</div></div>'
+        +'</div>'
         +'<div class="rvName">'+(m.emoji||"")+' '+h.name+'</div>'
-        +'<div class="rvEd">Edition #'+String(h.edition).padStart(3,"0")+' / '+h.cap+'</div>'
+        +'<div class="rvEd">'+(m.element?m.element+' · ':'')+'Edition #'+String(h.edition).padStart(3,"0")+' / '+h.cap+'</div>'
+        +(m.desc?'<div class="rvMsg" style="color:#dcd2ff;font-style:italic;margin-top:7px">'+m.desc+'</div>':'')
         +'<div class="rvMsg">🎉 A <b>Meme Dynasty Legendary</b> is yours!'+(granted?'<br>⚔️ It\'s in your roster — battle it in the Chikiseum.':'')+'<br>💎 Minting as an NFT on-chain — see <b>🎒 My Meme NFTs</b>.</div>'
         +'<button id="rvClose">Awesome ✨</button></div>';
+      requestAnimationFrame(()=>mountRevealModel(h.char,$("rvStage3d")));
       if(window.playSfx)window.playSfx("reward");
-      const rc=$("rvClose"); if(rc)rc.onclick=()=>{ r2.style.display="none"; };
-    },1700);
+      const rc=$("rvClose"); if(rc)rc.onclick=()=>{ disposeRevealViewer(); r2.style.display="none"; eggRefresh(); };
+    },3100);
   }
   function showMyNfts(){
     $("memeGrid").style.display="none"; $("memeDetail").style.display="none"; $("memeMine").style.display="block";
@@ -7572,6 +7643,18 @@ requestAnimationFrame(frame);
   function showBazaar(){
     $("memeGrid").style.display="none"; $("memeDetail").style.display="none"; $("memeMine").style.display="none"; $("memeBazaar").style.display="block";
     const list=$("memeBazaarList"), BK=(window.CHAIN&&CHAIN.BACKEND)||"";
+    /* MAINNET: real trading happens on Tensor / Magic Eden (safe on-chain escrow + royalties) — not an in-game ledger */
+    if(_memeCfg.tradeTensor){
+      const url=_memeCfg.tensorUrl;
+      list.innerHTML='<div style="text-align:center;padding:14px 6px">'
+        +'<div style="font-size:40px;margin-bottom:6px">🛒</div>'
+        +'<div style="font-weight:900;font-size:17px;color:#ffd966">Trade on Tensor</div>'
+        +'<div style="font-size:13px;color:#c9bdf0;line-height:1.55;margin:8px auto 14px;max-width:340px">Meme Dynasty NFTs are real Metaplex Core assets in your wallet. Buy, sell, and bid on the open market — trades settle safely on-chain with creator royalties.</div>'
+        +(url?'<a href="'+url+'" target="_blank" rel="noopener" class="meSell buy" style="display:inline-block;text-decoration:none">🌊 Open the Collection on Tensor →</a>'
+             :'<div style="font-size:12.5px;color:#ffb3b3">Marketplace link coming at launch — your NFTs are already tradable on Tensor &amp; Magic Eden by searching the collection.</div>')
+        +'</div>';
+      return;
+    }
     list.innerHTML="<div style='color:#a99cd6;font-size:13px'>Loading the Bazaar…</div>";
     fetch(BK+"/meme/market").then(r=>r.json()).then(j=>{ const items=(j&&j.items)||[];
       if(!items.length){ list.innerHTML="<div style='color:#a99cd6;font-size:13px'>No NFTs listed yet. List one of yours from <b>🎒 My NFTs</b>! 🌊</div>"; return; }
@@ -7590,6 +7673,7 @@ requestAnimationFrame(frame);
         else if(typeof showBanner==="function")showBanner("⚠️ "+((j&&j.error)||"buy failed"),"error"); }).catch(()=>{});
   }
   function listNft(id){
+    if(_memeCfg.tradeTensor){ if(_memeCfg.tensorUrl)window.open(_memeCfg.tensorUrl,"_blank","noopener"); else if(typeof showBanner==="function")showBanner("List on Tensor or Magic Eden — search the Meme Dynasty collection.","info"); return; }
     const px=prompt("List this NFT for how many SOL? (e.g. 0.25)"); if(px==null)return; const p=Number(px);
     if(!(p>0)){ if(typeof showBanner==="function")showBanner("Enter a price greater than 0.","error"); return; }
     const BK=(window.CHAIN&&CHAIN.BACKEND)||"";
