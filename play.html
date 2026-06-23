@@ -7116,13 +7116,13 @@ requestAnimationFrame(frame);
 <script>
 (function(){
   if(window.__memeDexInit)return; window.__memeDexInit=true;
-  const GLB_VER="2";
+  const GLB_VER="3";
   /* The Meme Dynasty roster (the new generation). Add a row here as each member is confirmed. */
   const ROSTER=[
     {key:"popcat",  name:"Popcat",  emoji:"😺", tag:"the Click King", confirmed:true, voxel:true},
     {key:"moodeng", name:"Moo Deng",emoji:"🦛", tag:"the Bouncy One", confirmed:true, voxel:true},
     {key:"doge",    name:"Doge",    emoji:"🐕", tag:"the OG", confirmed:true, voxel:true},
-    {key:"pepe",    name:"Pepe",    emoji:"🐸", tag:"the Legend", confirmed:true, voxel:false},
+    {key:"pepe",    name:"Pepe",    emoji:"🐸", tag:"the Legend", confirmed:true, voxel:true},
   ];
 
   const css=document.createElement("style");
@@ -7152,19 +7152,34 @@ requestAnimationFrame(frame);
   .memeChip:hover{border-color:#7a5ad0;color:#fff}
   .memeChip.on{background:linear-gradient(180deg,#7a4ad0,#5a2fb0);color:#fff;border-color:#9b6bff;box-shadow:0 2px 0 #4a25a0}
   .memeChip.soon{border-style:dashed;opacity:.85;cursor:pointer}
-  #memeFoot{margin-top:16px;background:rgba(0,0,0,.28);border:1px solid #4a3a80;border-left:3px solid #9b6bff;border-radius:10px;padding:11px 13px;font-size:13px;color:#cfc4ee;line-height:1.55}`;
+  #memeFoot{margin-top:16px;background:rgba(0,0,0,.28);border:1px solid #4a3a80;border-left:3px solid #9b6bff;border-radius:10px;padding:11px 13px;font-size:13px;color:#cfc4ee;line-height:1.55}
+  .mgCards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:4px 0}
+  .mgCard{background:radial-gradient(120% 90% at 50% 0%,#3a2a66,#1c1436);border:1px solid #5a47a0;border-radius:16px;padding:10px 10px 12px;cursor:pointer;text-align:center;transition:transform .12s,border-color .12s,box-shadow .12s}
+  .mgCard:hover{transform:translateY(-3px);border-color:#9b6bff;box-shadow:0 8px 20px rgba(0,0,0,.4)}
+  .mgCard img{width:100%;aspect-ratio:1/1;object-fit:contain;border-radius:12px;background:rgba(0,0,0,.22)}
+  .mgCard .nm{font-weight:900;color:#fff;font-size:15px;margin-top:8px}
+  .mgCard .tg{font-size:11.5px;color:#a99cd6;font-weight:700;margin-top:1px}
+  .mgCard .vf{display:inline-block;margin-top:6px;font-size:10px;font-weight:800;color:#7ee68f;background:rgba(50,180,90,.16);border:1px solid #2f8a3e;border-radius:999px;padding:2px 8px}
+  .mgCard.soon{display:flex;flex-direction:column;align-items:center;justify-content:center;border-style:dashed;color:#b9a4ff;font-weight:800;font-size:13px;min-height:150px;line-height:1.4}
+  #memeBack{display:inline-flex;align-items:center;gap:6px;background:rgba(40,28,70,.7);border:1px solid #5a47a0;color:#d9c6ff;font-family:inherit;font-weight:800;font-size:13px;padding:8px 14px;border-radius:11px;cursor:pointer;margin-bottom:6px}
+  #memeBack:hover{border-color:#9b6bff;color:#fff}`;
   document.head.appendChild(css);
 
   const btn=document.createElement("div"); btn.id="memeDexBtn"; btn.innerHTML="🧬 Meme Dex"; document.body.appendChild(btn);
   const ov=document.createElement("div"); ov.id="memeDex";
   ov.innerHTML=`<div class="wrap">
-    <div class="hd"><div><h1>🧬 Meme Dynasty <small>Generation Roster · verify the new Chikis</small></h1></div><span class="x" id="memeClose">✕</span></div>
-    <div class="sub">The newest generation of Chikis — born from the memes that built crypto. Pick a member, then switch between its <b>🖼️ Art</b>, <b>✨ 3D Model</b>, and <b>🧱 Voxel Build</b> — models viewable in full 3D. The roster is <b>still being completed</b>. 🌊</div>
-    <div id="memeName"></div>
-    <div id="memeTabs"></div>
-    <div id="memeStage"><div class="ld">Select a Chiki below ▾</div></div>
-    <div id="memeChips"></div>
-    <div id="memeFoot">🎨 <b>The roster isn't finished.</b> Want your favourite meme immortalised as a Chiki? Submit fan art or a suggestion with <b>#MemeDynasty</b> — the best picks join the dynasty, locked in forever. 🐾👑</div>
+    <div class="hd"><div><h1>🧬 Meme Dynasty <small>Generation Roster · tap a Chiki to verify</small></h1></div><span class="x" id="memeClose">✕</span></div>
+    <div id="memeGrid">
+      <div class="sub">The newest generation of Chikis — born from the memes that built crypto. Tap a card to view its <b>voxel build</b> in full 3D. 🌊</div>
+      <div class="mgCards" id="mgCards"></div>
+      <div id="memeFoot">🎨 <b>The roster isn't finished.</b> Want your favourite meme immortalised as a Chiki? Submit fan art or a suggestion with <b>#MemeDynasty</b> — the best picks join the dynasty, locked in forever. 🐾👑</div>
+    </div>
+    <div id="memeDetail" style="display:none">
+      <button id="memeBack">← All Chikis</button>
+      <div id="memeName"></div>
+      <div id="memeTabs"></div>
+      <div id="memeStage"><div class="ld">Loading…</div></div>
+    </div>
   </div>`;
   document.body.appendChild(ov);
   const $=id=>document.getElementById(id);
@@ -7190,7 +7205,7 @@ requestAnimationFrame(frame);
     const md=Math.max(sz.x,sz.y,sz.z)||1,sc=2.0/md; model.scale.setScalar(sc);
     model.position.set(-ce.x*sc,-ce.y*sc,-ce.z*sc); }   /* center the bounding box exactly at the origin (camera looks at 0,0,0) */
   let _view="model";
-  function fileFor(key,view){ return (view==="voxel"? key+"_voxel.glb" : key+".glb")+"?v="+GLB_VER; }
+  function fileFor(key,view){ return (view==="voxel"? key+"_build.glb" : key+".glb")+"?v="+GLB_VER; }
   function showModel(key,view){
     _cur=key; _view=view; const host=$("memeStage"); const m=ROSTER.find(x=>x.key===key);
     if(view==="art"){ host.innerHTML='<img class="memeArt" src="'+key+'_art.png" alt="'+(m?m.name:'')+'" onerror="this.outerHTML=\'<div class=&quot;big&quot;>'+(m?m.emoji:'❓')+'</div>\'">'; return; }
@@ -7215,9 +7230,8 @@ requestAnimationFrame(frame);
   }
   function renderTabs(m){
     const tabs=$("memeTabs");
-    tabs.innerHTML='<button class="memeTab" data-v="art">🖼️ Art</button>'
-      +'<button class="memeTab" data-v="model">✨ 3D Model</button>'
-      +'<button class="memeTab" data-v="voxel"'+(m.voxel?'':' disabled title="Voxel build coming soon"')+'>🧱 Voxel Build</button>';
+    tabs.innerHTML='<button class="memeTab" data-v="voxel"'+(m.voxel?'':' disabled title="Voxel build coming soon"')+'>🧱 Voxel Build</button>'
+      +'<button class="memeTab" data-v="art">🖼️ Art</button>';
     tabs.querySelectorAll(".memeTab").forEach(b=>{ b.classList.toggle("on", b.dataset.v===_view); if(!b.hasAttribute("disabled")) b.onclick=()=>setView(m.key,b.dataset.v); });
   }
   function setView(key,view){
@@ -7225,25 +7239,28 @@ requestAnimationFrame(frame);
     $("memeTabs").querySelectorAll(".memeTab").forEach(b=>b.classList.toggle("on",b.dataset.v===view));
     showModel(key,view);
   }
-  function select(key){
+  function openDetail(key){
     const m=ROSTER.find(x=>x.key===key); if(!m)return;
-    _view="art";
-    document.querySelectorAll(".memeChip").forEach(c=>c.classList.toggle("on",c.dataset.k===key));
+    $("memeGrid").style.display="none"; $("memeDetail").style.display="block";
+    _view = m.voxel ? "voxel" : "art";                 /* the voxel build appears automatically */
     $("memeName").innerHTML=m.emoji+" "+m.name+'<span class="vf">✅ Verified · Meme Dynasty</span><span class="tg">'+m.tag+'</span>';
-    renderTabs(m); showModel(key,"art");
+    renderTabs(m); showModel(key,_view);
+    requestAnimationFrame(_resize); setTimeout(_resize,140);
   }
-  function renderChips(){
-    $("memeChips").innerHTML=ROSTER.map(m=>`<button class="memeChip" data-k="${m.key}">${m.emoji} ${m.name}</button>`).join("")
-      +`<button class="memeChip soon" id="memeSoon">❓ More coming…</button>`;
-    document.querySelectorAll(".memeChip[data-k]").forEach(b=>b.onclick=()=>select(b.dataset.k));
+  function backToGrid(){ $("memeDetail").style.display="none"; $("memeGrid").style.display="block"; if(_model){ try{_s.remove(_model);}catch(e){} _model=null; } _cur=null; }
+  function renderGrid(){
+    $("mgCards").innerHTML=ROSTER.map(m=>`<div class="mgCard" data-k="${m.key}"><img src="${m.key}_art.png" alt="${m.name}" onerror="this.style.visibility='hidden'"><div class="nm">${m.emoji} ${m.name}</div><div class="tg">${m.tag}</div><div class="vf">✅ Verified</div></div>`).join("")
+      +`<div class="mgCard soon" id="memeSoon">❓<div>More coming…</div><div style="font-size:11px;opacity:.8">#MemeDynasty</div></div>`;
+    $("mgCards").querySelectorAll(".mgCard[data-k]").forEach(c=>c.onclick=()=>openDetail(c.dataset.k));
     const sn=$("memeSoon"); if(sn)sn.onclick=()=>{ if(typeof showBanner==="function")showBanner("🎨 The roster's still open — submit your meme legend with #MemeDynasty!","info"); };
   }
 
-  function open(){ ov.style.display="flex"; renderChips(); select(ROSTER[0].key); requestAnimationFrame(_resize); setTimeout(_resize,140); }
+  function open(){ ov.style.display="flex"; backToGrid(); renderGrid(); }
   function close(){ ov.style.display="none"; }
   btn.onclick=open; $("memeClose").onclick=close;
+  $("memeBack").onclick=backToGrid;
   ov.addEventListener("click",e=>{ if(e.target===ov)close(); });   /* tap the dim backdrop to close */
-  window.addEventListener("resize",()=>{ if(ov.style.display!=="none")_resize(); });
+  window.addEventListener("resize",()=>{ if(ov.style.display!=="none"&&$("memeDetail").style.display!=="none")_resize(); });
 
   /* ---- in-game announcement (once) ---- */
   function announce(){
