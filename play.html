@@ -7374,6 +7374,11 @@ requestAnimationFrame(frame);
   #memeEgg button:active{transform:translateY(2px);box-shadow:0 2px 0 #a87c00}
   #memeEgg button.meGhost{background:rgba(40,28,70,.8);color:#d9c6ff;border:1px solid #5a47a0;box-shadow:none}
   #memeEgg button:disabled{opacity:.55;cursor:not-allowed}
+  #meTestRow{display:none;align-items:center;gap:7px;margin-top:9px;font-size:11.5px;color:#c9bdf0;cursor:pointer;user-select:none}   /* hidden unless admin / ?memetest=1 */
+  #meTestRow input{width:15px;height:15px;accent-color:#9b6bff;cursor:pointer;flex:0 0 auto}
+  #meTestRow span{color:#9a8fc4}
+  #memeEgg.testOn{outline:2px dashed #9b6bff;outline-offset:3px}
+  #memeEgg.testOn .meTitle::after{content:" · 🧪 TEST";color:#b69bff;font-size:12px}
   .meNft{display:flex;gap:11px;align-items:center;background:rgba(20,15,40,.7);border:1px solid #4a3a80;border-radius:12px;padding:9px;margin-bottom:8px}
   .meNft img{width:52px;height:52px;border-radius:9px;object-fit:contain;background:rgba(0,0,0,.25)}
   .meNft .nn{font-weight:800;color:#fff;font-size:14px}
@@ -7429,6 +7434,7 @@ requestAnimationFrame(frame);
             <div class="meSupply" id="meSupply">Loading supply…</div></div></div>
         <div class="meBtns"><button id="meHatch">🥚 Hatch Egg · <span id="meCost"></span></button></div>
         <div class="meBtns"><button id="meMine" class="meGhost">🎒 My NFTs</button><button id="meBazaar" class="meGhost">🏪 NFT Bazaar</button></div>
+        <label id="meTestRow"><input type="checkbox" id="meTest"> 🧪 <b>Test Mode</b> <span>— hatch free, no $CHIKI spent, no real NFT minted</span></label>
       </div>
       <div class="mgCards" id="mgCards"></div>
       <div id="memeFoot">🎨 <b>The roster isn't finished.</b> Want your favourite meme immortalised as a Chiki? Submit fan art or a suggestion with <b>#MemeDynasty</b> — the best picks join the dynasty, locked in forever. 🐾👑</div>
@@ -7525,12 +7531,24 @@ requestAnimationFrame(frame);
   const EGG_PRICE=1000000;   // $CHIKI per egg
   const ROSTER_BY=Object.fromEntries(ROSTER.map(m=>[m.key,m]));
   let _memeCfg={tradeTensor:false,tensorUrl:null};   // populated from the backend (mainnet routes trading to Tensor)
+  let _testMode=false;                               // 🧪 Test Mode: hatch the full UX for free, no $CHIKI, no real NFT
+  const _testNfts=[]; const _testSupply={};          // local-only test inventory + per-character test supply (10 each)
   function eggRefresh(){
     const cost=$("meCost"); if(cost)cost.textContent=EGG_PRICE.toLocaleString()+" $CHIKI";
     const BK=(window.CHAIN&&CHAIN.BACKEND)||""; if(!BK)return;
     fetch(BK+"/meme/supply").then(r=>r.json()).then(s=>{ if(s){ _memeCfg.tradeTensor=!!s.tradeTensor; _memeCfg.tensorUrl=s.tensorUrl||null; } const el=$("meSupply"); if(el&&s&&s.totalLeft!=null) el.textContent="🥚 "+s.totalLeft.toLocaleString()+" of "+(s.cap*ROSTER.length).toLocaleString()+" eggs left to hatch"; }).catch(()=>{});
   }
+  function testHatch(){   /* 🧪 full hatch experience — no payment, no backend, no real NFT */
+    const avail=ROSTER.filter(m=>( _testSupply[m.key]||0)<10);
+    if(!avail.length){ if(typeof showBanner==="function")showBanner("🧪 Test sold out — all 60 test editions hatched. Refresh to reset.","info"); return; }
+    const m=avail[Math.floor(Math.random()*avail.length)];
+    const edition=( _testSupply[m.key]||0)+1; _testSupply[m.key]=edition;
+    const h={ id:"test_"+Date.now().toString(36), char:m.key, name:m.name, edition, cap:10, test:true };
+    _testNfts.unshift(h);
+    showReveal(h, true);   /* animated hatch + PNG/3D reveal + grants the playable Legendary */
+  }
   async function hatchEgg(){
+    if(_testMode){ testHatch(); return; }
     const BK=(window.CHAIN&&CHAIN.BACKEND)||"";
     if(!BK){ if(typeof showBanner==="function")showBanner("Backend offline — try again later.","error"); return; }
     if(!window.player||!player.pk){ if(typeof showBanner==="function")showBanner("👛 Connect your wallet to hatch a Meme Egg.","error"); return; }
@@ -7595,7 +7613,8 @@ requestAnimationFrame(frame);
       undefined, ()=>{ if(next)next(); else { if(ld.parentNode)ld.remove(); host.innerHTML='<div class="ld3">3D model unavailable —<br>check it\'s deployed</div>'; } });
     load(key+"_build.glb?v="+GLB_VER, ()=>load(key+".glb?v="+GLB_VER, null));   /* prefer the in-game voxel build, fall back to the smooth GLB */
   }
-  function showReveal(h){
+  function showReveal(h,isTest){
+    isTest=isTest||h.test;
     let r2=$("memeReveal"); if(!r2){ r2=document.createElement("div"); r2.id="memeReveal"; document.body.appendChild(r2); }
     const m=ROSTER_BY[h.char]||{name:h.name,emoji:"❓"};
     r2.style.display="flex";
@@ -7615,10 +7634,13 @@ requestAnimationFrame(frame);
         +  '<div class="vcard"><div class="vlabel">🖼️ Art (PNG)</div><img class="art" src="'+h.char+'_art.png?v=meme4" alt="'+h.name+'" onerror="this.parentNode.innerHTML=\'<div class=&quot;vlabel&quot;>🖼️ Art</div><div class=&quot;ld3&quot; style=&quot;position:static;height:188px&quot;>'+(m.emoji||'❓')+'</div>\'"></div>'
         +  '<div class="vcard"><div class="vlabel">🧱 3D Voxel Model</div><div class="stage3d" id="rvStage3d"></div><div class="vsmall">↻ live &middot; verify your NFT</div></div>'
         +'</div>'
+        +(isTest?'<div style="margin-top:10px;display:inline-block;background:rgba(155,107,255,.2);border:1px dashed #9b6bff;color:#cdbcff;font-weight:800;font-size:12px;padding:4px 12px;border-radius:20px">🧪 TEST HATCH — no $CHIKI spent, no real NFT</div>':'')
         +'<div class="rvName">'+(m.emoji||"")+' '+h.name+'</div>'
         +'<div class="rvEd">'+(m.element?m.element+' · ':'')+'Edition #'+String(h.edition).padStart(3,"0")+' / '+h.cap+'</div>'
         +(m.desc?'<div class="rvMsg" style="color:#dcd2ff;font-style:italic;margin-top:7px">'+m.desc+'</div>':'')
-        +'<div class="rvMsg">🎉 A <b>Meme Dynasty Legendary</b> is yours!'+(granted?'<br>⚔️ It\'s in your roster — battle it in the Chikiseum.':'')+'<br>💎 Minting as an NFT on-chain — see <b>🎒 My Meme NFTs</b>.</div>'
+        +(isTest
+            ?'<div class="rvMsg">🎉 A <b>Meme Dynasty Legendary</b> joined your roster!'+(granted?'<br>⚔️ Battle it now in the Chikiseum.':'')+'<br>🧪 This was a <b>free test</b> — the real flow mints an on-chain NFT.</div>'
+            :'<div class="rvMsg">🎉 A <b>Meme Dynasty Legendary</b> is yours!'+(granted?'<br>⚔️ It\'s in your roster — battle it in the Chikiseum.':'')+'<br>💎 Minting as an NFT on-chain — see <b>🎒 My Meme NFTs</b>.</div>')
         +'<button id="rvClose">Awesome ✨</button></div>';
       requestAnimationFrame(()=>mountRevealModel(h.char,$("rvStage3d")));
       if(window.playSfx)window.playSfx("reward");
@@ -7628,6 +7650,12 @@ requestAnimationFrame(frame);
   function showMyNfts(){
     $("memeGrid").style.display="none"; $("memeDetail").style.display="none"; $("memeMine").style.display="block";
     const list=$("memeMineList"), BK=(window.CHAIN&&CHAIN.BACKEND)||"";
+    if(_testMode){
+      if(!_testNfts.length){ list.innerHTML="<div style='color:#a99cd6;font-size:13px'>🧪 Test Mode — no test hatches yet. Hit 🧪 Test Hatch to try the flow.</div>"; return; }
+      list.innerHTML='<div style="font-size:12px;color:#b69bff;margin-bottom:8px">🧪 Test inventory (local only — not real NFTs)</div>'+_testNfts.map(it=>{ const m=ROSTER_BY[it.char]||{emoji:"❓"};
+        return '<div class="meNft"><img src="'+it.char+'_art.png?v=meme4" onerror="this.style.visibility=\'hidden\'"><div style="flex:1"><div class="nn">'+(m.emoji||"")+' '+it.name+'</div><div class="ne">Edition #'+String(it.edition).padStart(3,"0")+' / '+it.cap+'</div></div><span class="ns pending">🧪 Test</span></div>'; }).join("");
+      return;
+    }
     if(!window.player||!player.pk){ list.innerHTML="<div style='color:#a99cd6;font-size:13px'>Connect your wallet to see your Meme NFTs.</div>"; return; }
     list.innerHTML="<div style='color:#a99cd6;font-size:13px'>Loading…</div>";
     fetch(BK+"/meme/mine?wallet="+player.pk).then(r=>r.json()).then(j=>{ const items=(j&&j.items)||[];
@@ -7702,12 +7730,14 @@ requestAnimationFrame(frame);
       m=root; sc.add(m); host.style.backgroundImage="none"; }, undefined, ()=>{});
     (function loop(){ if(!host.isConnected){ try{r.forceContextLoss&&r.forceContextLoss();r.dispose();}catch(e){} host._egg=false; return; } if(m)m.rotation.y+=0.012; r.render(sc,cam); requestAnimationFrame(loop); })();
   }
-  function open(){ ov.style.display="flex"; backToGrid(); renderGrid(); eggRefresh(); requestAnimationFrame(mountEgg); setTimeout(mountEgg,120); }
+  function canTest(){ try{ return /[?&]memetest=1/.test(location.search) || (window.CHAIN&&CHAIN.ADMINS&&window.player&&player.pk&&CHAIN.ADMINS.indexOf(player.pk)>=0); }catch(e){ return false; } }
+  function open(){ ov.style.display="flex"; backToGrid(); renderGrid(); eggRefresh(); const tr=$("meTestRow"); if(tr)tr.style.display=canTest()?"flex":"none"; requestAnimationFrame(mountEgg); setTimeout(mountEgg,120); }
   function close(){ ov.style.display="none"; }
   btn.onclick=open; $("memeClose").onclick=close;
   $("memeBack").onclick=backToGrid;
   { const hb=$("meHatch"); if(hb)hb.onclick=hatchEgg; const mb=$("meMine"); if(mb)mb.onclick=showMyNfts; const mbk=$("memeMineBack"); if(mbk)mbk.onclick=backToGrid;
-    const bz=$("meBazaar"); if(bz)bz.onclick=showBazaar; const bzk=$("memeBazaarBack"); if(bzk)bzk.onclick=backToGrid; }
+    const bz=$("meBazaar"); if(bz)bz.onclick=showBazaar; const bzk=$("memeBazaarBack"); if(bzk)bzk.onclick=backToGrid;
+    const tt=$("meTest"); if(tt)tt.onchange=()=>{ _testMode=tt.checked; const eggBox=$("memeEgg"); if(eggBox)eggBox.classList.toggle("testOn",_testMode); const cost=$("meCost"); if(cost)cost.textContent=_testMode?"FREE 🧪":EGG_PRICE.toLocaleString()+" $CHIKI"; if(hb)hb.innerHTML=_testMode?"🧪 Test Hatch · <span id='meCost'>FREE</span>":"🥚 Hatch Egg · <span id='meCost'>"+EGG_PRICE.toLocaleString()+" $CHIKI</span>"; }; }
   ov.addEventListener("click",e=>{ if(e.target===ov)close(); });   /* tap the dim backdrop to close */
   window.addEventListener("resize",()=>{ if(ov.style.display!=="none"&&$("memeDetail").style.display!=="none")_resize(); });
 
