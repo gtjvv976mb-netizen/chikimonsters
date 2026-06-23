@@ -931,6 +931,16 @@ if(location.search.indexOf("embed")>-1){
 #aTimerBox .tv{position:absolute;left:60%;top:49%;transform:translate(-50%,-50%);font-weight:800;font-size:22px;color:#ffe9b0;letter-spacing:1px;text-shadow:0 1px 3px #000,0 0 9px rgba(255,200,80,.55);white-space:nowrap}
 #aTimerBox.low .tv{color:#ff8a8a}
 .aMatch2{display:none}   /* matchup/element now lives in the top-center info panel */
+#pvpLobby{background:rgba(8,14,28,.78);border:1px solid #2c4470;border-radius:13px;padding:11px 13px;margin:0 0 13px}
+#pvpLobby .lobHd{font-weight:800;font-size:14px;color:#cfe0ff;margin-bottom:7px;display:flex;align-items:center;gap:7px}
+#pvpLobby .lobN{background:#1f7bd6;color:#fff;font-size:11px;border-radius:999px;padding:1px 8px}
+#pvpLobby .lobRow{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-top:1px solid #1c2c48;font-size:13px;color:#e7eefb;font-weight:700}
+#pvpLobby .lobRow.chal{color:#ffd166}
+#pvpLobby .lobEmpty{font-size:12.5px;color:#8fa6c9;line-height:1.5;padding:4px 0}
+#pvpLobby .lobBtn{font-family:inherit;font-weight:800;font-size:12px;padding:7px 12px;border:none;border-radius:9px;cursor:pointer;background:linear-gradient(180deg,#5aa9ff,#1f7bd6);color:#fff}
+#pvpLobby .lobBtn.acc{background:linear-gradient(180deg,#5fe08a,#28a55a)}
+#pvpLobby .lobBtn.dec{background:rgba(40,20,20,.8);color:#ff9a9a;padding:7px 10px}
+#pvpLobby .lobBtn.sent,#pvpLobby .lobBtn:disabled{background:#2c4470;color:#9fb3d6;cursor:default}
 /* stage + fighters */
 #arenaStage{position:absolute;inset:0;width:100%;height:100%;aspect-ratio:auto;background:none;border-radius:0;margin:0;box-shadow:none;z-index:1}
 .aFighter{position:absolute;bottom:30%;width:auto;gap:6px}
@@ -989,6 +999,7 @@ if(location.search.indexOf("embed")>-1){
   <div id="arenaZoom"></div>
   <div id="arenaIntro">
     <div id="hubChampBanner" style="display:none"></div>
+    <div id="pvpLobby" style="display:none"></div>
     <div class="aiTabs">
       <button class="aiTab on" data-ai="cards">🃏 My Deck</button>
       <button class="aiTab" data-ai="mech">⚔️ How to Battle</button>
@@ -3422,6 +3433,45 @@ setInterval(updateWhaleTab,1000);
     };
     poll();
   }
+  /* ===== "Trainers ready to battle" lobby — see who's available & challenge them directly ===== */
+  let _lobbyChallenged={};
+  function legendSnap(){ const ls=myLegends().map(ensureLegendSkills); if(!ls.length)return null; const c=ls[0]; return {name:nameOf(c),element:legElem(SPECIES.indexOf(c.sp)),br:c.br||1,arenaSkills:c.arenaSkills||[0,1,2],cardTier:c.cardTier||{}}; }
+  function lobbyActive(){ const ov=g("arenaOverlay"),bx=g("arenaBox"); return !!(ov&&ov.style.display!=="none"&&bx&&bx.classList.contains("introMode")&&!B&&CHAIN.BACKEND&&player&&player.pk); }
+  async function pvpLobbyTick(){
+    const panel=g("pvpLobby");
+    if(!lobbyActive()){ if(panel)panel.style.display="none"; return; }
+    const snap=legendSnap(); if(!snap){ if(panel)panel.style.display="none"; return; }
+    const now=Date.now(); for(const k in _lobbyChallenged) if(now-_lobbyChallenged[k]>28000)delete _lobbyChallenged[k];
+    try{
+      const r=await fetch(CHAIN.BACKEND+"/pvp/available",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:player.pk,name:(player.handle||player.addr||"Trainer"),snap})});
+      const j=await r.json(); if(!lobbyActive())return;
+      if(j&&j.matched){ startPvp(j.matched.matchId,j.matched.side); return; }   /* a challenge you sent was accepted */
+      pvpLobbyRender(j||{});
+    }catch(e){}
+  }
+  function pvpLobbyRender(j){
+    const panel=g("pvpLobby"); if(!panel)return; panel.style.display="block";
+    const players=j.players||[], chs=j.challenges||[];
+    let h='<div class="lobHd">⚔️ Trainers ready to battle <span class="lobN">'+players.length+'</span></div>';
+    if(chs.length)h+=chs.map(c=>'<div class="lobRow chal"><span>🔔 <b>'+esc(c.fromName)+'</b> challenges you!</span><span><button class="lobBtn acc" data-acc="'+c.id+'">Accept</button> <button class="lobBtn dec" data-dec="'+c.id+'">✕</button></span></div>').join("");
+    if(players.length)h+=players.map(p=>{ const sent=!!_lobbyChallenged[p.wallet]; return '<div class="lobRow"><span>🟢 '+esc(p.name)+'</span><button class="lobBtn'+(sent?' sent':'')+'" data-ch="'+p.wallet+'" data-nm="'+esc(p.name)+'"'+(sent?' disabled':'')+'>'+(sent?'Challenged ✓':'⚔️ Challenge')+'</button></div>'; }).join("");
+    else if(!chs.length)h+='<div class="lobEmpty">No other Trainers ready right now. Keep the Chikiseum open — anyone who opens it appears here, and you\'ll match instantly. 🌊</div>';
+    panel.innerHTML=h;
+    panel.querySelectorAll("[data-ch]").forEach(b=>b.onclick=()=>pvpChallengeSend(b.getAttribute("data-ch"),b.getAttribute("data-nm")));
+    panel.querySelectorAll("[data-acc]").forEach(b=>b.onclick=()=>pvpChallengeAccept(b.getAttribute("data-acc")));
+    panel.querySelectorAll("[data-dec]").forEach(b=>b.onclick=()=>pvpChallengeDecline(b.getAttribute("data-dec")));
+  }
+  function pvpChallengeSend(to,nm){ const snap=legendSnap(); if(!snap||!player)return; _lobbyChallenged[to]=Date.now();
+    fetch(CHAIN.BACKEND+"/pvp/challenge",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({from:player.pk,fromName:(player.handle||player.addr||"Trainer"),to,snap})}).catch(()=>{});
+    if(typeof showBanner==="function")showBanner("⚔️ Challenge sent to "+nm+"! Waiting for them to accept…","info"); pvpLobbyTick();
+  }
+  function pvpChallengeAccept(id){ const snap=legendSnap(); if(!snap||!player)return;
+    fetch(CHAIN.BACKEND+"/pvp/challenge/accept",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:player.pk,challengeId:id,snap})})
+      .then(r=>r.json()).then(j=>{ if(j&&j.matchId)startPvp(j.matchId,j.side); else if(typeof showBanner==="function")showBanner("⚠️ "+((j&&j.error)||"challenge expired"),"error"); }).catch(()=>{});
+  }
+  function pvpChallengeDecline(id){ if(player)fetch(CHAIN.BACKEND+"/pvp/challenge/decline",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:player.pk,challengeId:id})}).catch(()=>{}); pvpLobbyTick(); }
+  setInterval(pvpLobbyTick, 4000);
+
   function startPvp(matchId, side, fromCup, skipIntro){
     if(!skipIntro){ playBattleIntro(()=>startPvp(matchId, side, fromCup, true)); return; }   /* play the battle intro first */
     clearTurnTimer(); const legs=myLegends().map(ensureLegendSkills); if(!legs.length)return;
@@ -7250,8 +7300,37 @@ requestAnimationFrame(frame);
   .mgCard .tg{font-size:11.5px;color:#a99cd6;font-weight:700;margin-top:1px}
   .mgCard .vf{display:inline-block;margin-top:6px;font-size:10px;font-weight:800;color:#7ee68f;background:rgba(50,180,90,.16);border:1px solid #2f8a3e;border-radius:999px;padding:2px 8px}
   .mgCard.soon{display:flex;flex-direction:column;align-items:center;justify-content:center;border-style:dashed;color:#b9a4ff;font-weight:800;font-size:13px;min-height:150px;line-height:1.4}
-  #memeBack{display:inline-flex;align-items:center;gap:6px;background:rgba(40,28,70,.7);border:1px solid #5a47a0;color:#d9c6ff;font-family:inherit;font-weight:800;font-size:13px;padding:8px 14px;border-radius:11px;cursor:pointer;margin-bottom:6px}
-  #memeBack:hover{border-color:#9b6bff;color:#fff}`;
+  #memeBack,#memeMineBack{display:inline-flex;align-items:center;gap:6px;background:rgba(40,28,70,.7);border:1px solid #5a47a0;color:#d9c6ff;font-family:inherit;font-weight:800;font-size:13px;padding:8px 14px;border-radius:11px;cursor:pointer;margin-bottom:6px}
+  #memeBack:hover,#memeMineBack:hover{border-color:#9b6bff;color:#fff}
+  #memeEgg{background:radial-gradient(120% 100% at 50% 0%,#3a2a66,#1c1436);border:1px solid #7a5ad0;border-radius:16px;padding:13px;margin:0 0 14px}
+  #memeEgg .meRow{display:flex;gap:12px;align-items:center}
+  #memeEgg .meEgg{font-size:42px;flex:0 0 auto;animation:meBob 2.4s ease-in-out infinite}
+  @keyframes meBob{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-5px) rotate(4deg)}}
+  #memeEgg .meTitle{font-weight:900;color:#ffd966;font-size:16px}
+  #memeEgg .meSub{font-size:12px;color:#c9bdf0;line-height:1.45;margin-top:1px}
+  #memeEgg .meSupply{font-size:11.5px;color:#9fe6b0;font-weight:700;margin-top:5px}
+  #memeEgg .meBtns{display:flex;gap:8px;margin-top:11px}
+  #memeEgg button{flex:1;font-family:inherit;font-weight:800;font-size:13.5px;padding:11px;border-radius:12px;border:none;cursor:pointer;background:linear-gradient(180deg,#ffd54a,#e0a800);color:#3a2a06;box-shadow:0 4px 0 #a87c00}
+  #memeEgg button:active{transform:translateY(2px);box-shadow:0 2px 0 #a87c00}
+  #memeEgg button.meGhost{background:rgba(40,28,70,.8);color:#d9c6ff;border:1px solid #5a47a0;box-shadow:none}
+  #memeEgg button:disabled{opacity:.55;cursor:not-allowed}
+  .meNft{display:flex;gap:11px;align-items:center;background:rgba(20,15,40,.7);border:1px solid #4a3a80;border-radius:12px;padding:9px;margin-bottom:8px}
+  .meNft img{width:52px;height:52px;border-radius:9px;object-fit:contain;background:rgba(0,0,0,.25)}
+  .meNft .nn{font-weight:800;color:#fff;font-size:14px}
+  .meNft .ne{font-size:11.5px;color:#a99cd6}
+  .meNft .ns{margin-left:auto;font-size:11px;font-weight:800;padding:4px 9px;border-radius:999px;white-space:nowrap}
+  .meNft .ns.minted{color:#7ee68f;background:rgba(50,180,90,.16);border:1px solid #2f8a3e}
+  .meNft .ns.pending{color:#ffd166;background:rgba(180,140,40,.16);border:1px solid #8a6a2f}
+  #memeReveal{position:fixed;inset:0;z-index:240;display:none;align-items:center;justify-content:center;background:rgba(6,4,16,.86);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+  #memeReveal .rv{text-align:center;color:#fff;font-family:'Nunito',sans-serif;max-width:340px;padding:20px}
+  #memeReveal .egg{font-size:120px;animation:shake .5s ease-in-out infinite}
+  @keyframes shake{0%,100%{transform:rotate(-9deg)}50%{transform:rotate(9deg)}}
+  #memeReveal img{width:210px;max-width:72vw;filter:drop-shadow(0 12px 28px rgba(0,0,0,.6));animation:pop .5s cubic-bezier(.2,1.4,.4,1)}
+  @keyframes pop{0%{transform:scale(.3);opacity:0}100%{transform:scale(1);opacity:1}}
+  #memeReveal .rvName{font-size:24px;font-weight:900;margin-top:8px}
+  #memeReveal .rvEd{font-size:14px;color:#ffd966;font-weight:800}
+  #memeReveal .rvMsg{font-size:13px;color:#b9a4ff;margin-top:8px;line-height:1.5}
+  #memeReveal button{margin-top:16px;font-family:inherit;font-weight:800;font-size:15px;padding:11px 26px;border:none;border-radius:12px;background:linear-gradient(180deg,#9b6bff,#6a3ad0);color:#fff;cursor:pointer;box-shadow:0 4px 0 #4a25a0}`;
   document.head.appendChild(css);
 
   const btn=document.createElement("div"); btn.id="memeDexBtn"; btn.innerHTML="🧬 Meme Dex"; document.body.appendChild(btn);
@@ -7260,6 +7339,14 @@ requestAnimationFrame(frame);
     <div class="hd"><div><h1>🧬 Meme Dynasty <small>Generation Roster · tap a Chiki to verify</small></h1></div><span class="x" id="memeClose">✕</span></div>
     <div id="memeGrid">
       <div class="sub">The newest generation of Chikis — born from the memes that built crypto. Tap a card to view its <b>voxel build</b> in full 3D. 🌊</div>
+      <div id="memeEgg">
+        <div class="meRow"><div class="meEgg">🥚</div>
+          <div class="meInfo"><div class="meTitle">Meme Legendary Egg</div>
+            <div class="meSub">Hatch a <b>random</b> Meme Dynasty Chiki — minted as a <b>tradable NFT</b> on Solana. Limited editions each. 🌊</div>
+            <div class="meSupply" id="meSupply">Loading supply…</div></div></div>
+        <div class="meBtns"><button id="meHatch">🥚 Hatch Egg · <span id="meCost"></span></button>
+          <button id="meMine" class="meGhost">🎒 My Meme NFTs</button></div>
+      </div>
       <div class="mgCards" id="mgCards"></div>
       <div id="memeFoot">🎨 <b>The roster isn't finished.</b> Want your favourite meme immortalised as a Chiki? Submit fan art or a suggestion with <b>#MemeDynasty</b> — the best picks join the dynasty, locked in forever. 🐾👑</div>
     </div>
@@ -7268,6 +7355,11 @@ requestAnimationFrame(frame);
       <div id="memeName"></div>
       <div id="memeTabs"></div>
       <div id="memeStage"><div class="ld">Loading…</div></div>
+    </div>
+    <div id="memeMine" style="display:none">
+      <button id="memeMineBack">← Back</button>
+      <h3 style="margin:8px 0 2px;color:#d9c6ff;font-size:18px">🎒 My Meme NFTs</h3>
+      <div id="memeMineList" style="margin-top:8px"></div>
     </div>
   </div>`;
   document.body.appendChild(ov);
@@ -7337,7 +7429,59 @@ requestAnimationFrame(frame);
     renderTabs(m); showModel(key,_view);
     requestAnimationFrame(_resize); setTimeout(_resize,140);
   }
-  function backToGrid(){ $("memeDetail").style.display="none"; $("memeGrid").style.display="block"; if(_model){ try{_s.remove(_model);}catch(e){} _model=null; } _cur=null; }
+  function backToGrid(){ $("memeDetail").style.display="none"; const mm=$("memeMine"); if(mm)mm.style.display="none"; $("memeGrid").style.display="block"; if(_model){ try{_s.remove(_model);}catch(e){} _model=null; } _cur=null; }
+  /* ===== Meme Legendary Egg → hatch a random Meme Dynasty NFT ===== */
+  const EGG_PRICE=1000000;   // $CHIKI per egg
+  const ROSTER_BY=Object.fromEntries(ROSTER.map(m=>[m.key,m]));
+  function eggRefresh(){
+    const cost=$("meCost"); if(cost)cost.textContent=EGG_PRICE.toLocaleString()+" $CHIKI";
+    const BK=(window.CHAIN&&CHAIN.BACKEND)||""; if(!BK)return;
+    fetch(BK+"/meme/supply").then(r=>r.json()).then(s=>{ const el=$("meSupply"); if(el&&s&&s.totalLeft!=null) el.textContent="🥚 "+s.totalLeft.toLocaleString()+" of "+(s.cap*ROSTER.length).toLocaleString()+" eggs left to hatch"; }).catch(()=>{});
+  }
+  async function hatchEgg(){
+    const BK=(window.CHAIN&&CHAIN.BACKEND)||"";
+    if(!BK){ if(typeof showBanner==="function")showBanner("Backend offline — try again later.","error"); return; }
+    if(!window.player||!player.pk){ if(typeof showBanner==="function")showBanner("👛 Connect your wallet to hatch a Meme Egg.","error"); return; }
+    const minHold=(typeof MIN_HOLD!=="undefined")?MIN_HOLD:0;
+    if((player.bal||0)-EGG_PRICE<minHold){ if(typeof showBanner==="function")showBanner("Need "+EGG_PRICE.toLocaleString()+" $CHIKI (keep ≥"+minHold.toLocaleString()+") to hatch.","error"); return; }
+    const hb=$("meHatch"); if(hb)hb.disabled=true;
+    try{
+      if(window.CHAIN&&CHAIN.ONCHAIN_SPENDS&&player.pk){ try{ await chikiSpend(EGG_PRICE,"Meme Legendary Egg"); }catch(e){ if(typeof showBanner==="function")showBanner("Payment failed: "+(e.message||e),"error"); if(hb)hb.disabled=false; return; } }
+      try{ player.bal-=EGG_PRICE; if(typeof burnedChiki!=="undefined")burnedChiki+=EGG_PRICE*0.01; }catch(e){}
+      if(typeof refreshUI==="function")refreshUI();
+      const r=await fetch(BK+"/meme/hatch",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:player.pk})});
+      const j=await r.json();
+      if(!j||j.error){ if(typeof showBanner==="function")showBanner("⚠️ "+((j&&j.error)||"hatch failed"),"error"); if(hb)hb.disabled=false; return; }
+      showReveal(j.hatch); eggRefresh();
+    }catch(e){ if(typeof showBanner==="function")showBanner("⚠️ "+(e.message||e),"error"); }
+    if(hb)hb.disabled=false;
+  }
+  function showReveal(h){
+    let r2=$("memeReveal"); if(!r2){ r2=document.createElement("div"); r2.id="memeReveal"; document.body.appendChild(r2); }
+    r2.innerHTML='<div class="rv"><div class="egg">🥚</div><div class="rvMsg">Hatching your Meme Legendary Egg…</div></div>';
+    r2.style.display="flex"; if(window.playSfx)window.playSfx("open");
+    setTimeout(()=>{ const m=ROSTER_BY[h.char]||{name:h.name,emoji:"❓"};
+      r2.innerHTML='<div class="rv"><img src="'+h.char+'_art.png" alt="'+h.name+'" onerror="this.style.display=\'none\'">'
+        +'<div class="rvName">'+(m.emoji||"")+' '+h.name+'</div>'
+        +'<div class="rvEd">Edition #'+String(h.edition).padStart(3,"0")+' / '+h.cap+'</div>'
+        +'<div class="rvMsg">🎉 You hatched a <b>Meme Dynasty NFT</b>!<br>It\'s being minted on-chain — see it in <b>🎒 My Meme NFTs</b> shortly.</div>'
+        +'<button id="rvClose">Awesome ✨</button></div>';
+      if(window.playSfx)window.playSfx("reward");
+      const rc=$("rvClose"); if(rc)rc.onclick=()=>{ r2.style.display="none"; };
+    },1700);
+  }
+  function showMyNfts(){
+    $("memeGrid").style.display="none"; $("memeDetail").style.display="none"; $("memeMine").style.display="block";
+    const list=$("memeMineList"), BK=(window.CHAIN&&CHAIN.BACKEND)||"";
+    if(!window.player||!player.pk){ list.innerHTML="<div style='color:#a99cd6;font-size:13px'>Connect your wallet to see your Meme NFTs.</div>"; return; }
+    list.innerHTML="<div style='color:#a99cd6;font-size:13px'>Loading…</div>";
+    fetch(BK+"/meme/mine?wallet="+player.pk).then(r=>r.json()).then(j=>{ const items=(j&&j.items)||[];
+      if(!items.length){ list.innerHTML="<div style='color:#a99cd6;font-size:13px'>No Meme NFTs yet — hatch a Meme Legendary Egg! 🥚</div>"; return; }
+      list.innerHTML=items.map(it=>{ const m=ROSTER_BY[it.char]||{emoji:"❓"};
+        const st=it.status==="minted"?'<a class="ns minted" href="https://explorer.solana.com/address/'+(it.mintAddr||"")+'?cluster=devnet" target="_blank" rel="noopener" style="text-decoration:none">✅ On-chain ↗</a>':'<span class="ns pending">⏳ Minting…</span>';
+        return '<div class="meNft"><img src="'+it.char+'_art.png" onerror="this.style.visibility=\'hidden\'"><div><div class="nn">'+(m.emoji||"")+' '+it.name+'</div><div class="ne">Edition #'+String(it.edition).padStart(3,"0")+'</div></div>'+st+'</div>'; }).join("");
+    }).catch(()=>{ list.innerHTML="<div style='color:#ff8a8a;font-size:13px'>Couldn't load your NFTs.</div>"; });
+  }
   function renderGrid(){
     $("mgCards").innerHTML=ROSTER.map(m=>`<div class="mgCard" data-k="${m.key}"><img src="${m.key}_art.png" alt="${m.name}" onerror="this.style.visibility='hidden'"><div class="nm">${m.emoji} ${m.name}</div><div class="tg">${m.tag}</div><div class="vf">✅ Verified</div></div>`).join("")
       +`<div class="mgCard soon" id="memeSoon">❓<div>More coming…</div><div style="font-size:11px;opacity:.8">#MemeDynasty</div></div>`;
@@ -7345,10 +7489,11 @@ requestAnimationFrame(frame);
     const sn=$("memeSoon"); if(sn)sn.onclick=()=>{ if(typeof showBanner==="function")showBanner("🎨 The roster's still open — submit your meme legend with #MemeDynasty!","info"); };
   }
 
-  function open(){ ov.style.display="flex"; backToGrid(); renderGrid(); }
+  function open(){ ov.style.display="flex"; backToGrid(); renderGrid(); eggRefresh(); }
   function close(){ ov.style.display="none"; }
   btn.onclick=open; $("memeClose").onclick=close;
   $("memeBack").onclick=backToGrid;
+  { const hb=$("meHatch"); if(hb)hb.onclick=hatchEgg; const mb=$("meMine"); if(mb)mb.onclick=showMyNfts; const mbk=$("memeMineBack"); if(mbk)mbk.onclick=backToGrid; }
   ov.addEventListener("click",e=>{ if(e.target===ov)close(); });   /* tap the dim backdrop to close */
   window.addEventListener("resize",()=>{ if(ov.style.display!=="none"&&$("memeDetail").style.display!=="none")_resize(); });
 
