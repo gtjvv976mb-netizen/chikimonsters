@@ -1037,7 +1037,7 @@ if(location.search.indexOf("embed")>-1){
     <div class="aiPane" data-aip="cup">
       <h3>🏆 The Chikoria Cup</h3>
       <p>Chikoria's grand tournament. Legendaries clash in <b>live PvP</b> for real <b>SOL</b> — and the winner is crowned <b>Champion</b>, taking home the legendary <b>Chikoria Cup trophy</b>. 🌊</p>
-      <div style="text-align:center;margin:4px 0 12px"><img src="chikoriacup_art.png" alt="Chikoria Cup Trophy" style="width:150px;height:auto;filter:drop-shadow(0 8px 18px rgba(0,0,0,.55))"></div>
+      <div style="text-align:center;margin:4px 0 12px"><img src="chikoriacup_art.png?v=meme4" alt="Chikoria Cup Trophy" style="width:150px;height:auto;filter:drop-shadow(0 8px 18px rgba(0,0,0,.55))"></div>
       <div class="aiBlock"><h4>🥇 The Trophy</h4>The Champion is awarded the <b>Chikoria Cup</b> in full 3D. It <b>floats and spins above their Legendary</b> for the whole world to see, and shines in their <b>profile</b>. Only the <b>reigning champion</b> holds it — win the next Cup to take it.</div>
       <div class="aiBlock"><h4>🗺️ Format</h4><b>Double-elimination</b> bracket of <b>8, 10, or 16</b> Legendaries. Lose twice and you're out — one loss still leaves a path through the lower bracket.</div>
       <div class="aiBlock"><h4>🎟️ Entry</h4><b>100 ✨ Glory</b> to register. Open the <b>🏆 Chikoria Cup</b> button (upper-right) when a Cup is live to claim your seat.</div>
@@ -1688,7 +1688,7 @@ function hatchEgg(noLegend){   /* noLegend=true → guaranteed normal (no legend
       if(window.playSfx)window.playSfx("reward");
       setTimeout(()=>{                                   /* transition: egg → the actual Chiki */
         egg.style.display="none";
-        rev.src="chikidex/"+(DEX_IMG[sp]||"mushrow")+".png";
+        rev.src="chikidex/"+(DEX_IMG[sp]||"mushrow")+".png?v=meme4";
         rev.className="revealIn"+(legend?" legendary":"");rev.style.display="block";
         title.innerHTML="🎉 You hatched <b style='color:"+SPECIES[sp].body+"'>"+SPECIES[sp].names[0]+"</b>!"+(legend?" 🌟 LEGENDARY!":"");
         hint.textContent=SPECIES[sp].type+" type";
@@ -3049,7 +3049,7 @@ setInterval(updateWhaleTab,1000);
     const owned=(c.arenaSkills&&c.arenaSkills.length)?c.arenaSkills:roll3();
     const deck=[]; for(let i=0;i<12;i++)deck.push(owned[i%owned.length]);
     for(let i=deck.length-1;i>0;i--){const j=ri(0,i);[deck[i],deck[j]]=[deck[j],deck[i]];}
-    return {c,si,name:(typeof nameOf==="function"?nameOf(c):c.sp.names[0]),img:"chikidex/"+(DEX_IMG[si]||"mushrow")+".png",
+    return {c,si,name:(typeof nameOf==="function"?nameOf(c):c.sp.names[0]),img:"chikidex/"+(DEX_IMG[si]||"mushrow")+".png?v=meme4",
       st,hp:st.hp,maxhp:st.hp,shield:0,energy:0,buff:1,draw:deck,hand:[],disc:[],ls:0,started:false,isYou,playedThisTurn:0};
   }
   function aiFoe(br){const sp=SPECIES[CORE_LEGEND_IDXS[ri(0,CORE_LEGEND_IDXS.length-1)]];const c={sp,isLegend:true,br:Math.max(1,br+ri(-2,2))};c.arenaSkills=roll3();ensureBattle(c);const tier=Math.min(5,1+Math.floor(c.br/6));c.arenaSkills.forEach(s=>c.cardTier[s]=tier);return c;}
@@ -3443,7 +3443,7 @@ setInterval(updateWhaleTab,1000);
   }
   function pvpFoeSide(f){
     const si=ELEM_SI[f.element]!=null?ELEM_SI[f.element]:14;
-    return { c:{br:f.br||1, sp:SPECIES[si]}, si, name:f.name||"Opponent", handle:f.handle||null, img:"chikidex/"+(DEX_IMG[si]||"mushrow")+".png",
+    return { c:{br:f.br||1, sp:SPECIES[si]}, si, name:f.name||"Opponent", handle:f.handle||null, img:"chikidex/"+(DEX_IMG[si]||"mushrow")+".png?v=meme4",
       st:{spd:42+(f.br||1)*2, mor:30, hp:f.maxhp, skill:30}, hp:f.hp, maxhp:f.maxhp, shield:f.shield||0, energy:0, buff:1, draw:[], hand:[], disc:[], ls:0, started:true, isYou:false, playedThisTurn:0 };
   }
   /* find a live opponent, then run the battle */
@@ -3948,7 +3948,7 @@ setInterval(updateWhaleTab,1000);
     if(!c){renderSorc();return;}
     const si=SPECIES.indexOf(c.sp), body=g("sorcBody");
     body.innerHTML=`${PORTRAIT}<div id="sorcLore">A new <b style="color:${c.sp.body}">${c.sp.names[0]}</b> has hatched! Give your companion a name.</div>
-      <div class="sReveal"><img src="chikidex/${DEX_IMG[si]||'mushrow'}.png" alt="${c.sp.names[0]}" style="width:118px;height:118px;object-fit:contain" onerror="this.outerHTML='🐣'"></div>
+      <div class="sReveal"><img src="chikidex/${DEX_IMG[si]||'mushrow'}.png?v=meme4" alt="${c.sp.names[0]}" style="width:118px;height:118px;object-fit:contain" onerror="this.outerHTML='🐣'"></div>
       <div class="sStat">🪪 Name your Chiki:</div>
       <input id="newNm" class="onbInp" maxlength="16" value="${c.sp.names[0]}" placeholder="Name your Chiki…" style="margin:6px 0;color:${c.sp.body};font-weight:800">
       <div id="newNmErr" class="onbErr"></div>
@@ -4054,7 +4054,7 @@ setInterval(updateWhaleTab,1000);
     setTimeout(()=>{
       const sp=SPECIES[idx], defName=sp.names[0];
       const lore=LEGEND_LORE[defName]||{ep:"Descendant of the Ancient Bloodline",lore:"Sworn to defend Chikoria with the power of Chi.",tag:""};
-      body.innerHTML=`<div class="sReveal"><img src="chikidex/${DEX_IMG[idx]}.png" alt="${defName}" style="width:130px;height:130px;object-fit:contain" onerror="this.outerHTML='👑'"></div>
+      body.innerHTML=`<div class="sReveal"><img src="chikidex/${DEX_IMG[idx]}.png?v=meme4" alt="${defName}" style="width:130px;height:130px;object-fit:contain" onerror="this.outerHTML='👑'"></div>
         <div style="font-size:20px;font-weight:800;color:#ffd93d">LEGENDARY!</div>
         <div style="font-size:17px;font-weight:800;color:${sp.body};margin:3px 0">${defName} — <span style="color:${sp.body}">${lore.ep}</span></div>
         <div style="font-size:11px;color:#8fa6c9;margin-bottom:6px">${sp.type} · descendant of the ancient bloodline</div>
@@ -7166,7 +7166,7 @@ requestAnimationFrame(frame);
     <div class="card" id="cupxRound" style="display:none"><div class="hd"><h3 style="margin:0" id="cupxRtitle"></h3>
       <div><button class="g" id="cupxReady">✅ Ready Up</button></div></div>
       <div id="cupxMatches"></div></div>
-    <div class="card champ" id="cupxChamp" style="display:none"><img src="chikoriacup_art.png" alt="Chikoria Cup" style="width:104px;height:auto;margin:0 auto 4px;display:block;filter:drop-shadow(0 6px 14px rgba(0,0,0,.55))"><div class="w" id="cupxChampName"></div><div class="sub">Champion of the Chikoria Cup — wins the <b class="gold">Chikoria Cup trophy</b> 🏆 (floats above their Legendary) + <b class="gold">1 SOL</b> 🌊</div></div>
+    <div class="card champ" id="cupxChamp" style="display:none"><img src="chikoriacup_art.png?v=meme4" alt="Chikoria Cup" style="width:104px;height:auto;margin:0 auto 4px;display:block;filter:drop-shadow(0 6px 14px rgba(0,0,0,.55))"><div class="w" id="cupxChampName"></div><div class="sub">Champion of the Chikoria Cup — wins the <b class="gold">Chikoria Cup trophy</b> 🏆 (floats above their Legendary) + <b class="gold">1 SOL</b> 🌊</div></div>
     <div class="card" id="cupxStand" style="display:none"><h3 style="margin-top:0">🏅 Standings & Payouts</h3><div id="cupxStandings"></div><div class="sub" id="cupxPaid" style="margin-top:6px"></div></div>
   </div>`;
   document.body.appendChild(ov);
@@ -7363,7 +7363,7 @@ requestAnimationFrame(frame);
   .meNft .meSell.buy{background:linear-gradient(180deg,#5fe08a,#28a55a);color:#06210f;border:none;font-size:13px;padding:8px 14px}
   #memeEgg{background:radial-gradient(120% 100% at 50% 0%,#3a2a66,#1c1436);border:1px solid #7a5ad0;border-radius:16px;padding:13px;margin:0 0 14px}
   #memeEgg .meRow{display:flex;gap:12px;align-items:center}
-  #memeEgg .meEgg{width:92px;height:92px;flex:0 0 auto;background:url('ui/meme-egg.png') center/contain no-repeat;animation:meBob 2.4s ease-in-out infinite;position:relative}
+  #memeEgg .meEgg{width:92px;height:92px;flex:0 0 auto;background:url('ui/meme-egg.png?v=meme4') center/contain no-repeat;animation:meBob 2.4s ease-in-out infinite;position:relative}
   #memeEgg .meEgg canvas{position:absolute;inset:0}
   @keyframes meBob{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-5px) rotate(4deg)}}
   #memeEgg .meTitle{font-weight:900;color:#ffd966;font-size:16px}
@@ -7456,7 +7456,7 @@ requestAnimationFrame(frame);
   function fileFor(key,view){ return (view==="voxel"? key+"_build.glb" : key+".glb")+"?v="+GLB_VER; }
   function showModel(key,view){
     _cur=key; _view=view; const host=$("memeStage"); const m=ROSTER.find(x=>x.key===key);
-    if(view==="art"){ host.innerHTML='<img class="memeArt" src="'+key+'_art.png" alt="'+(m?m.name:'')+'" onerror="this.outerHTML=\'<div class=&quot;big&quot;>'+(m?m.emoji:'❓')+'</div>\'">'; return; }
+    if(view==="art"){ host.innerHTML='<img class="memeArt" src="'+key+'_art.png?v=meme4" alt="'+(m?m.name:'')+'" onerror="this.outerHTML=\'<div class=&quot;big&quot;>'+(m?m.emoji:'❓')+'</div>\'">'; return; }
     if(!ensure3D()||typeof THREE.GLTFLoader==="undefined"){ host.innerHTML='<div class="big">'+(m?m.emoji:"❓")+'</div>'; return; }
     if(_r&&!host.contains(_r.domElement)){ host.innerHTML=""; host.appendChild(_r.domElement); }
     const ld=document.createElement("div"); ld.className="ld"; ld.style.cssText="position:absolute"; ld.textContent=(view==="voxel"?"Loading voxel build…":"Loading 3D…"); host.appendChild(ld);
@@ -7541,11 +7541,11 @@ requestAnimationFrame(frame);
   }
   function showReveal(h){
     let r2=$("memeReveal"); if(!r2){ r2=document.createElement("div"); r2.id="memeReveal"; document.body.appendChild(r2); }
-    r2.innerHTML='<div class="rv"><img class="egg" src="ui/meme-egg.png" onerror="this.outerHTML=\'<div class=&quot;egg&quot;>🥚</div>\'"><div class="rvMsg">Hatching your Meme Legendary Egg…</div></div>';
+    r2.innerHTML='<div class="rv"><img class="egg" src="ui/meme-egg.png?v=meme4" onerror="this.outerHTML=\'<div class=&quot;egg&quot;>🥚</div>\'"><div class="rvMsg">Hatching your Meme Legendary Egg…</div></div>';
     r2.style.display="flex"; if(window.playSfx)window.playSfx("open");
     const granted=grantMemeLegendary(h.char);
     setTimeout(()=>{ const m=ROSTER_BY[h.char]||{name:h.name,emoji:"❓"};
-      r2.innerHTML='<div class="rv"><img src="'+h.char+'_art.png" alt="'+h.name+'" onerror="this.style.display=\'none\'">'
+      r2.innerHTML='<div class="rv"><img src="'+h.char+'_art.png?v=meme4" alt="'+h.name+'" onerror="this.style.display=\'none\'">'
         +'<div class="rvName">'+(m.emoji||"")+' '+h.name+'</div>'
         +'<div class="rvEd">Edition #'+String(h.edition).padStart(3,"0")+' / '+h.cap+'</div>'
         +'<div class="rvMsg">🎉 A <b>Meme Dynasty Legendary</b> is yours!'+(granted?'<br>⚔️ It\'s in your roster — battle it in the Chikiseum.':'')+'<br>💎 Minting as an NFT on-chain — see <b>🎒 My Meme NFTs</b>.</div>'
@@ -7564,7 +7564,7 @@ requestAnimationFrame(frame);
       list.innerHTML=items.map(it=>{ const m=ROSTER_BY[it.char]||{emoji:"❓"};
         const st=it.status==="minted"?'<a class="ns minted" href="https://explorer.solana.com/address/'+(it.mintAddr||"")+'?cluster=devnet" target="_blank" rel="noopener" style="text-decoration:none">✅ On-chain ↗</a>':'<span class="ns pending">⏳ Minting…</span>';
         const trade=it.listed?'<button class="meSell unlist" data-unlist="'+it.id+'">🏷️ Listed '+it.listed.price+' ◎ · Unlist</button>':'<button class="meSell" data-list="'+it.id+'">🏪 List for sale</button>';
-        return '<div class="meNft"><img src="'+it.char+'_art.png" onerror="this.style.visibility=\'hidden\'"><div style="flex:1"><div class="nn">'+(m.emoji||"")+' '+it.name+'</div><div class="ne">Edition #'+String(it.edition).padStart(3,"0")+'</div><div style="margin-top:5px">'+trade+'</div></div>'+st+'</div>'; }).join("");
+        return '<div class="meNft"><img src="'+it.char+'_art.png?v=meme4" onerror="this.style.visibility=\'hidden\'"><div style="flex:1"><div class="nn">'+(m.emoji||"")+' '+it.name+'</div><div class="ne">Edition #'+String(it.edition).padStart(3,"0")+'</div><div style="margin-top:5px">'+trade+'</div></div>'+st+'</div>'; }).join("");
       list.querySelectorAll("[data-list]").forEach(b=>b.onclick=()=>listNft(b.getAttribute("data-list")));
       list.querySelectorAll("[data-unlist]").forEach(b=>b.onclick=()=>unlistNft(b.getAttribute("data-unlist")));
     }).catch(()=>{ list.innerHTML="<div style='color:#ff8a8a;font-size:13px'>Couldn't load your NFTs.</div>"; });
@@ -7578,7 +7578,7 @@ requestAnimationFrame(frame);
       const mine=window.player&&player.pk;
       list.innerHTML=items.map(it=>{ const m=ROSTER_BY[it.char]||{emoji:"❓"}; const own=mine&&it.seller===player.pk;
         const btn=own?'<span class="ns pending">your listing</span>':'<button class="meSell buy" data-buy="'+it.id+'">Buy · '+it.price+' ◎</button>';
-        return '<div class="meNft"><img src="'+it.char+'_art.png" onerror="this.style.visibility=\'hidden\'"><div style="flex:1"><div class="nn">'+(m.emoji||"")+' '+it.name+'</div><div class="ne">Edition #'+String(it.edition).padStart(3,"0")+' · <b style="color:#ffd966">'+it.price+' ◎</b></div></div>'+btn+'</div>'; }).join("");
+        return '<div class="meNft"><img src="'+it.char+'_art.png?v=meme4" onerror="this.style.visibility=\'hidden\'"><div style="flex:1"><div class="nn">'+(m.emoji||"")+' '+it.name+'</div><div class="ne">Edition #'+String(it.edition).padStart(3,"0")+' · <b style="color:#ffd966">'+it.price+' ◎</b></div></div>'+btn+'</div>'; }).join("");
       list.querySelectorAll("[data-buy]").forEach(b=>b.onclick=()=>buyNft(b.getAttribute("data-buy")));
     }).catch(()=>{ list.innerHTML="<div style='color:#ff8a8a;font-size:13px'>Couldn't load the Bazaar.</div>"; });
   }
@@ -7598,7 +7598,7 @@ requestAnimationFrame(frame);
   }
   function unlistNft(id){ const BK=(window.CHAIN&&CHAIN.BACKEND)||""; fetch(BK+"/meme/unlist",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:player.pk,hatchId:id})}).then(r=>r.json()).then(()=>showMyNfts()).catch(()=>{}); }
   function renderGrid(){
-    $("mgCards").innerHTML=ROSTER.map(m=>`<div class="mgCard" data-k="${m.key}"><img src="${m.key}_art.png" alt="${m.name}" onerror="this.style.visibility='hidden'"><div class="nm">${m.emoji} ${m.name}</div><div class="tg">${m.tag}</div><div class="vf">✅ Verified</div></div>`).join("")
+    $("mgCards").innerHTML=ROSTER.map(m=>`<div class="mgCard" data-k="${m.key}"><img src="${m.key}_art.png?v=meme4" alt="${m.name}" onerror="this.style.visibility='hidden'"><div class="nm">${m.emoji} ${m.name}</div><div class="tg">${m.tag}</div><div class="vf">✅ Verified</div></div>`).join("")
       +`<div class="mgCard soon" id="memeSoon">❓<div>More coming…</div><div style="font-size:11px;opacity:.8">#MemeDynasty</div></div>`;
     $("mgCards").querySelectorAll(".mgCard[data-k]").forEach(c=>c.onclick=()=>openDetail(c.dataset.k));
     const sn=$("memeSoon"); if(sn)sn.onclick=()=>{ if(typeof showBanner==="function")showBanner("🎨 The roster's still open — submit your meme legend with #MemeDynasty!","info"); };
@@ -7651,7 +7651,7 @@ requestAnimationFrame(frame);
   function bannerHTML(){
     if(!champ||!champ.name)return "";
     return '<div style="display:flex;align-items:center;gap:10px;background:linear-gradient(180deg,#2c2208,#1a1305);border:1px solid #ffce4d;border-radius:12px;padding:8px 12px;margin:0 0 12px">'
-      +'<img src="chikoriacup_art.png" alt="Chikoria Cup" style="width:42px;height:auto;flex:0 0 auto;filter:drop-shadow(0 3px 6px rgba(0,0,0,.5))">'
+      +'<img src="chikoriacup_art.png?v=meme4" alt="Chikoria Cup" style="width:42px;height:auto;flex:0 0 auto;filter:drop-shadow(0 3px 6px rgba(0,0,0,.5))">'
       +'<div style="text-align:left;line-height:1.25"><div style="font-weight:900;color:#ffd966;font-size:13px">🏆 Reigning Chikoria Cup Champion</div>'
       +'<div style="font-size:14px;color:#f3e6bd;font-weight:800">'+esc(champ.name)+'</div></div></div>';
   }
