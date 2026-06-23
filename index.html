@@ -13,30 +13,26 @@
   a{color:inherit;text-decoration:none}
   #hero{position:fixed;inset:0;background:url("homepage-hero.png?v=meme2") center center/cover no-repeat;transition:opacity .6s}
 
-  /* ---- image tab bar ---- */
-  #tabbar{position:fixed;bottom:8px;left:50%;transform:translateX(-50%);z-index:30;
-    display:flex;gap:0.6vw;align-items:center;justify-content:center;flex-wrap:wrap;max-width:97vw;
-    background:rgba(8,16,30,.5);border:1px solid rgba(255,233,120,.3);border-radius:999px;padding:5px 12px;
+  /* ---- vertical side tab bars ---- */
+  .sidebar{position:fixed;top:50%;transform:translateY(-50%);z-index:30;
+    display:flex;flex-direction:column;gap:clamp(10px,1.6vh,20px);align-items:center;
+    background:rgba(8,16,30,.5);border:1px solid rgba(255,233,120,.3);border-radius:20px;padding:14px 9px;
     -webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);filter:drop-shadow(0 6px 14px rgba(0,0,0,.55))}
-  .mtab{height:clamp(28px,3.6vw,48px) !important}
-  .mtab{height:clamp(34px,4.4vw,60px);width:auto;cursor:pointer;
+  #tabL{left:14px}
+  #tabR{right:14px}
+  .mtab{height:clamp(30px,4vw,54px);width:auto;cursor:pointer;
     transition:transform .07s ease,filter .07s ease;-webkit-user-drag:none;user-select:none}
-  .mtab:hover{transform:scale(1.05)}
+  .mtab:hover{transform:scale(1.08)}
   .mtab:active{transform:scale(.93)}
   .mtab.active{filter:brightness(1.12) drop-shadow(0 0 9px rgba(255,233,120,.92))}
-  /* accurate pointer arrow under the active tab */
-  #pointer{position:fixed;z-index:31;width:0;height:0;border-left:11px solid transparent;border-right:11px solid transparent;
-    border-bottom:14px solid var(--gold);filter:drop-shadow(0 -3px 3px rgba(0,0,0,.5));transform:translateX(-50%);
-    opacity:0;transition:left .28s cubic-bezier(.34,1.56,.64,1),opacity .2s;pointer-events:none}
-  #pointer.show{opacity:1;animation:bobp 1s ease-in-out infinite}
-  @keyframes bobp{50%{transform:translate(-50%,-4px)}}
+  #pointer{display:none}
 
-  /* ---- hero play button ---- */
-  #playBtn{position:absolute;left:calc(50% - 1.4vw);top:0;width:min(280px,29vw);cursor:pointer;transform:translate(-50%,-50%);
-    filter:drop-shadow(0 8px 16px rgba(0,0,0,.5));transition:filter .15s,opacity .5s;animation:throb 1.8s ease-in-out infinite;z-index:10}
-  #playBtn:hover{animation:none;transform:translate(-50%,-50%) scale(1.06)}
-  #playBtn:active{transform:translate(-50%,-50%) scale(.96)}
-  @keyframes throb{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.03)}}
+  /* ---- hero play button (smaller, bottom-center) ---- */
+  #playBtn{position:fixed;left:50%;bottom:clamp(14px,3vh,30px);width:min(180px,32vw);cursor:pointer;transform:translateX(-50%);
+    filter:drop-shadow(0 8px 16px rgba(0,0,0,.5));transition:filter .15s,opacity .5s;animation:throb 1.8s ease-in-out infinite;z-index:30}
+  #playBtn:hover{animation:none;transform:translateX(-50%) scale(1.06)}
+  #playBtn:active{transform:translateX(-50%) scale(.96)}
+  @keyframes throb{0%,100%{transform:translateX(-50%) scale(1)}50%{transform:translateX(-50%) scale(1.03)}}
 
   /* ---- panels ---- */
   .panel{position:fixed;left:50%;top:50%;transform:translate(-50%,calc(-50% - 12px));z-index:25;
@@ -62,14 +58,14 @@
   #tokimg{width:100%;border-radius:12px;border:1px solid #29476f;margin-top:6px;display:block}
 
   .fading{opacity:0 !important;pointer-events:none}
-  body.intro #hero,body.intro #tabbar,body.intro .panel,body.intro #pointer{opacity:0;pointer-events:none}
+  body.intro #hero,body.intro .sidebar,body.intro #playBtn,body.intro .panel,body.intro #pointer{opacity:0;pointer-events:none}
   #introVid{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;background:#000;display:none;z-index:50}
   body.intro #introVid{display:block}
   #skipHint{position:fixed;right:22px;bottom:18px;z-index:51;display:none;font-family:'Baloo 2';font-weight:800;font-size:13px;
     color:rgba(255,255,255,.85);background:rgba(0,0,0,.45);padding:7px 16px;border-radius:999px;border:1px solid rgba(255,255,255,.3);cursor:pointer}
   body.intro #skipHint{display:block}
   #gameFrame{position:fixed;inset:0;width:100%;height:100%;border:0;display:none;background:#061426}
-  body.playing #hero,body.playing #tabbar,body.playing #introVid,body.playing #skipHint,body.playing .panel,body.playing #pointer{display:none}
+  body.playing #hero,body.playing .sidebar,body.playing #introVid,body.playing #skipHint,body.playing .panel,body.playing #pointer{display:none}
   body.playing #gameFrame{display:block}
   ::-webkit-scrollbar{width:9px}::-webkit-scrollbar-thumb{background:#29476f;border-radius:5px}
   /* ChikiDex 3D viewer */
@@ -94,10 +90,12 @@
 </div>
 
 <!-- ===== image tab bar (Main Tab Bar.png) with accurate click zones ===== -->
-<div id="tabbar">
+<div id="tabL" class="sidebar">
   <img class="mtab" data-tab="about"     src="ui/mt-about.png"     alt="About">
   <img class="mtab" data-tab="chikis"    src="ui/mt-chikis.png"    alt="ChikiDex">
   <img class="mtab" data-tab="play2"     src="ui/mt-play2.png"     alt="How to Play">
+</div>
+<div id="tabR" class="sidebar">
   <img class="mtab" data-tab="regions"   src="ui/mt-regions.png"   alt="Regions">
   <img class="mtab" data-tab="token"     src="ui/mt-token.png"     alt="$CHIKI">
   <img class="mtab" data-tab="community" src="ui/mt-community.png" alt="Community">
@@ -236,12 +234,7 @@
   }
   btn.onclick=start;
 
-  var QUOTE_Y=0.46, probe=new Image();   /* PLAY sits in the clear gap between the logo (top) and the characters (bottom) */
-  function place(){if(!probe.naturalWidth)return;
-    var vw=innerWidth,vh=innerHeight,iw=probe.naturalWidth,ih=probe.naturalHeight;
-    var s=Math.max(vw/iw,vh/ih),yOff=(vh-ih*s)/2;
-    btn.style.top=(yOff+QUOTE_Y*ih*s)+"px";}
-  probe.onload=place;probe.src="homepage-hero.png?v=meme2";addEventListener("resize",place);
+  /* PLAY button is anchored bottom-center via CSS — no JS positioning needed */
 })();
 </script>
 <script>
