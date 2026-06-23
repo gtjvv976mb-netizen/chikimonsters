@@ -3405,12 +3405,15 @@ setInterval(updateWhaleTab,1000);
     let cancelled=false; const ac=g("arenaCenter");
     const stop=()=>{ cancelled=true; try{fetch(CHAIN.BACKEND+"/pvp/cancel",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:player.pk})});}catch(e){} };
     ac.innerHTML=`<div style="font-size:14px;color:#cdd8ee">🔎 Searching for a live opponent…</div>
+      <div id="pvpOnline" style="font-size:12.5px;color:#3ddc84;font-weight:700;margin-top:4px">🟢 checking who's online…</div>
       <div style="margin-top:8px"><button class="aBtn" id="pvpCancel">Cancel</button> <button class="aBtn" id="pvpAi">⚔️ Battle a rival</button></div>`;
     const cb=g("pvpCancel"); if(cb)cb.onclick=()=>{ stop(); ac.innerHTML='<button class="aBtn" id="pvpRetry">⚔️ Find a Match</button>'; const rt=g("pvpRetry"); if(rt)rt.onclick=findMatch; };
     const ab=g("pvpAi"); if(ab)ab.onclick=()=>{ stop(); startBattle(); renderArenaMeta(); };
     const poll=async()=>{ if(cancelled)return;
       try{ const r=await fetch(CHAIN.BACKEND+"/pvp/queue",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:player.pk,snap})});
-        const j=await r.json(); if(cancelled)return; if(j&&j.status==="matched"){ startPvp(j.matchId,j.side); return; } }catch(e){}
+        const j=await r.json(); if(cancelled)return; if(j&&j.status==="matched"){ startPvp(j.matchId,j.side); return; }
+        const on=g("pvpOnline"); if(on&&j&&j.eligible!=null){ const e=j.eligible|0, q=j.queued|0;
+          on.innerHTML="🟢 <b>"+e+"</b> Trainer"+(e===1?"":"s")+" online & eligible"+(q>1?" · <b>"+q+"</b> searching":""); } }catch(e){}
       if(!cancelled)setTimeout(poll,2000);
     };
     poll();
@@ -3444,9 +3447,13 @@ setInterval(updateWhaleTab,1000);
     if(!B||!B.pvp)return; let el=g("pvpSeries");
     if(!el){ const box=g("arenaBox"); if(!box)return; el=document.createElement("div"); el.id="pvpSeries";
       el.style.cssText="position:absolute;top:94px;left:50%;transform:translateX(-50%);z-index:13;text-align:center;min-width:210px;max-width:92vw;background:rgba(10,14,30,.8);border:1px solid #b98a2e;border-radius:15px;padding:7px 18px;box-shadow:0 5px 16px rgba(0,0,0,.5);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)"; box.appendChild(el); }
+    const foeNm=(B.foe&&B.foe.name)?(typeof esc==="function"?esc(B.foe.name):B.foe.name):"Opponent";
+    const youNm=(B.you&&B.you.name)?(typeof esc==="function"?esc(B.you.name):B.you.name):"You";
+    const vs="<div style='font-size:13px;font-weight:800;color:#fff'>⚔️ "+youNm+" <span style='color:#9fb3d6;font-weight:700'>vs</span> <span style='color:#ff9a6b'>"+foeNm+"</span></div>";
     const r=B.series?("🏆 Best of "+B.series.bestOf+" · <b style='color:#fff'>Game "+B.series.game+"</b> · You <b style='color:#fff'>"+B.series.you+"</b> – <b style='color:#fff'>"+B.series.foe+"</b> Foe"):"⚔️ Live PvP Battle";
-    el.innerHTML="<div style='font-size:12.5px;font-weight:800;color:#ffe27a;letter-spacing:.2px'>"+r+"</div>"+
-      (B._pvpStatus?"<div style='font-size:12.5px;font-weight:700;margin-top:3px;color:"+(B._pvpStatusCol||"#cfe0ff")+"'>"+B._pvpStatus+"</div>":"");
+    el.innerHTML=vs+
+      "<div style='font-size:11.5px;font-weight:800;color:#ffe27a;letter-spacing:.2px;margin-top:2px'>"+r+"</div>"+
+      (B._pvpStatus?"<div style='font-size:12px;font-weight:700;margin-top:3px;color:"+(B._pvpStatusCol||"#cfe0ff")+"'>"+B._pvpStatus+"</div>":"");
     el.style.display="block";
   }
   function pvpStatus(txt,col){ if(!B)return; B._pvpStatus=txt||""; B._pvpStatusCol=col||"#cfe0ff"; pvpTop(); }
