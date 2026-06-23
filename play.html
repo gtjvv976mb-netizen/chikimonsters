@@ -7110,5 +7110,112 @@ requestAnimationFrame(frame);
     catch(e){ admMsg("⚠️ "+e.message); } busy=false; };
 })();
 </script>
+
+<!-- ===================== MEME DYNASTY — separate Chikidex (roster viewer) ===================== -->
+<script>
+(function(){
+  if(window.__memeDexInit)return; window.__memeDexInit=true;
+  const GLB_VER="1";
+  /* The Meme Dynasty roster (the new generation). Add a row here as each member is confirmed. */
+  const ROSTER=[
+    {key:"popcat",  name:"Popcat",  emoji:"😺", tag:"the Click King", confirmed:true},
+    {key:"moodeng", name:"Moo Deng",emoji:"🦛", tag:"the Bouncy One", confirmed:true},
+    {key:"doge",    name:"Doge",    emoji:"🐕", tag:"the OG", confirmed:true},
+    {key:"pepe",    name:"Pepe",    emoji:"🐸", tag:"the Legend", confirmed:true},
+  ];
+
+  const css=document.createElement("style");
+  css.textContent=`
+  #memeDexBtn{position:fixed;left:12px;bottom:108px;z-index:70;background:linear-gradient(180deg,#9b6bff,#6a3ad0);color:#fff;border:1px solid #4a25a0;border-radius:12px;padding:10px 15px;font-family:'Nunito',sans-serif;font-weight:800;font-size:14px;cursor:pointer;box-shadow:0 4px 0 #4a25a0,0 6px 14px rgba(0,0,0,.3)}
+  #memeDexBtn:active{transform:translateY(2px);box-shadow:0 2px 0 #4a25a0}
+  body.pre #memeDexBtn{display:none}
+  #memeDex{position:fixed;inset:0;z-index:210;display:none;background:radial-gradient(120% 80% at 50% 0%,#2a1a4d,#0c0a1a 78%);overflow-y:auto;color:#ece6ff;font-family:'Nunito',sans-serif}
+  #memeDex .wrap{max-width:760px;margin:0 auto;padding:18px 16px 50px}
+  #memeDex .hd{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
+  #memeDex h1{font-size:23px;margin:0;color:#d9c6ff}#memeDex h1 small{color:#b9a4ff;font-size:13px;font-weight:700;display:block}
+  #memeDex .x{cursor:pointer;font-size:22px;color:#b9a4ff}
+  #memeDex .sub{color:#a99cd6;font-size:13px;margin:8px 0 14px;line-height:1.55}
+  #memeStage{width:100%;height:min(46vh,360px);background:radial-gradient(circle at 50% 40%,#3a2a66,#160f2e 72%);border:1px solid #4a3a80;border-radius:16px;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  #memeStage .ld{color:#b9a4ff;font-weight:800;font-size:14px}
+  #memeStage .big{font-size:96px;filter:drop-shadow(0 8px 14px rgba(0,0,0,.5))}
+  #memeName{text-align:center;margin:12px 0 4px;font-weight:900;font-size:22px;color:#fff}
+  #memeName .vf{display:inline-block;margin-left:8px;font-size:12px;font-weight:800;color:#7ee68f;background:rgba(50,180,90,.16);border:1px solid #2f8a3e;border-radius:999px;padding:3px 9px;vertical-align:middle}
+  #memeName .tg{display:block;font-size:13px;color:#a99cd6;font-weight:700;margin-top:2px}
+  #memeChips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:14px 0 6px}
+  .memeChip{font-family:inherit;font-weight:800;font-size:13.5px;padding:9px 14px;border-radius:12px;border:1px solid #4a3a80;background:rgba(40,28,70,.7);color:#d9c6ff;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .12s}
+  .memeChip:hover{border-color:#7a5ad0;color:#fff}
+  .memeChip.on{background:linear-gradient(180deg,#7a4ad0,#5a2fb0);color:#fff;border-color:#9b6bff;box-shadow:0 2px 0 #4a25a0}
+  .memeChip.soon{border-style:dashed;opacity:.85;cursor:pointer}
+  #memeFoot{margin-top:16px;background:rgba(0,0,0,.28);border:1px solid #4a3a80;border-left:3px solid #9b6bff;border-radius:10px;padding:11px 13px;font-size:13px;color:#cfc4ee;line-height:1.55}`;
+  document.head.appendChild(css);
+
+  const btn=document.createElement("div"); btn.id="memeDexBtn"; btn.innerHTML="🧬 Meme Dex"; document.body.appendChild(btn);
+  const ov=document.createElement("div"); ov.id="memeDex";
+  ov.innerHTML=`<div class="wrap">
+    <div class="hd"><div><h1>🧬 Meme Dynasty <small>Generation Roster · verify the new Chikis</small></h1></div><span class="x" id="memeClose">✕</span></div>
+    <div class="sub">The newest generation of Chikis — born from the memes that built crypto. Tap a name to view its <b>official 3D model</b> and verify it's part of the dynasty. The roster is <b>still being completed</b>. 🌊</div>
+    <div id="memeStage"><div class="ld">Select a Chiki below ▾</div></div>
+    <div id="memeName"></div>
+    <div id="memeChips"></div>
+    <div id="memeFoot">🎨 <b>The roster isn't finished.</b> Want your favourite meme immortalised as a Chiki? Submit fan art or a suggestion with <b>#MemeDynasty</b> — the best picks join the dynasty, locked in forever. 🐾👑</div>
+  </div>`;
+  document.body.appendChild(ov);
+  const $=id=>document.getElementById(id);
+
+  /* ---- one shared 3D viewer (lazy-loads the selected model) ---- */
+  let _r,_s,_c,_raf,_model,_cache={},_cur=null;
+  function ensure3D(){
+    const host=$("memeStage"); if(!host||typeof THREE==="undefined"||typeof THREE.WebGLRenderer==="undefined")return false;
+    if(_r)return true;
+    const w=host.clientWidth||340,h=host.clientHeight||320;
+    _s=new THREE.Scene();
+    _c=new THREE.PerspectiveCamera(45,w/h,0.1,1000); _c.position.set(0,0.6,4.2);
+    try{ _r=new THREE.WebGLRenderer({antialias:true,alpha:true}); }catch(e){ return false; }
+    _r.setPixelRatio(Math.min(2,window.devicePixelRatio||1)); _r.setSize(w,h);
+    _s.add(new THREE.AmbientLight(0xffffff,0.95)); const d=new THREE.DirectionalLight(0xffffff,0.8); d.position.set(3,5,4); _s.add(d);
+    const loop=()=>{ if(_model)_model.rotation.y+=0.012; if(_r)_r.render(_s,_c); _raf=requestAnimationFrame(loop); }; loop();
+    return true;
+  }
+  function fit(model){ const box=new THREE.Box3().setFromObject(model),sz=box.getSize(new THREE.Vector3()),ce=box.getCenter(new THREE.Vector3());
+    const md=Math.max(sz.x,sz.y,sz.z)||1,sc=2.4/md; model.scale.setScalar(sc); model.position.sub(ce.multiplyScalar(sc)); }
+  function showModel(key){
+    _cur=key; const host=$("memeStage");
+    if(!ensure3D()||typeof THREE.GLTFLoader==="undefined"){ const m=ROSTER.find(x=>x.key===key); host.innerHTML='<div class="big">'+(m?m.emoji:"❓")+'</div>'; return; }
+    if(_r&&!host.contains(_r.domElement)){ host.innerHTML=""; host.appendChild(_r.domElement); }
+    const ld=document.createElement("div"); ld.className="ld"; ld.style.cssText="position:absolute"; ld.textContent="Loading 3D…"; host.appendChild(ld);
+    const place=(scene)=>{ if(_cur!==key)return; if(_model)_s.remove(_model); _model=scene; _s.add(_model); fit(_model); if(ld.parentNode)ld.remove(); };
+    if(_cache[key]){ place(_cache[key].clone()); return; }
+    new THREE.GLTFLoader().load(key+".glb?v="+GLB_VER, g=>{ _cache[key]=g.scene; place(g.scene.clone()); },
+      undefined, ()=>{ if(ld.parentNode)ld.remove(); const m=ROSTER.find(x=>x.key===key); host.innerHTML='<div class="big">'+(m?m.emoji:"❓")+'</div><div class="ld" style="position:absolute;bottom:10px">3D model loads in-game</div>'; });
+  }
+  function select(key){
+    const m=ROSTER.find(x=>x.key===key); if(!m)return;
+    document.querySelectorAll(".memeChip").forEach(c=>c.classList.toggle("on",c.dataset.k===key));
+    $("memeName").innerHTML=m.emoji+" "+m.name+'<span class="vf">✅ Verified · Meme Dynasty</span><span class="tg">'+m.tag+'</span>';
+    showModel(key);
+  }
+  function renderChips(){
+    $("memeChips").innerHTML=ROSTER.map(m=>`<button class="memeChip" data-k="${m.key}">${m.emoji} ${m.name}</button>`).join("")
+      +`<button class="memeChip soon" id="memeSoon">❓ More coming…</button>`;
+    document.querySelectorAll(".memeChip[data-k]").forEach(b=>b.onclick=()=>select(b.dataset.k));
+    const sn=$("memeSoon"); if(sn)sn.onclick=()=>{ if(typeof showBanner==="function")showBanner("🎨 The roster's still open — submit your meme legend with #MemeDynasty!","info"); };
+  }
+
+  function open(){ ov.style.display="block"; renderChips(); select(ROSTER[0].key); }
+  function close(){ ov.style.display="none"; }
+  btn.onclick=open; $("memeClose").onclick=close;
+
+  /* ---- in-game announcement (once) ---- */
+  function announce(){
+    try{ if(localStorage.getItem("memeDexAnnounced"))return; }catch(e){}
+    setTimeout(()=>{
+      if(typeof showBanner==="function")showBanner("🧬 NEW: The Meme Dynasty roster has arrived — tap 🧬 Meme Dex to verify the new generation!","info");
+      if(typeof addFeed==="function")addFeed("🧬 <b>Meme Dynasty</b> — the new Chiki generation is taking shape! Tap <b>🧬 Meme Dex</b> to verify the roster (Popcat, Moo Deng, Doge, Pepe… more coming). Submit yours with #MemeDynasty!");
+      try{ localStorage.setItem("memeDexAnnounced","1"); }catch(e){}
+    }, 4000);
+  }
+  announce();
+})();
+</script>
 </body>
 </html>
