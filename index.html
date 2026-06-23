@@ -11,7 +11,7 @@
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%;overflow:hidden;background:#061426;font-family:'Nunito',system-ui,sans-serif;color:#fff}
   a{color:inherit;text-decoration:none}
-  #hero{position:fixed;inset:0;background:url("homepage-hero.png") center center/cover no-repeat;transition:opacity .6s}
+  #hero{position:fixed;inset:0;background:url("homepage-hero.png?v=meme2") center center/cover no-repeat;transition:opacity .6s}
 
   /* ---- image tab bar ---- */
   #tabbar{position:fixed;bottom:8px;left:50%;transform:translateX(-50%);z-index:30;
@@ -191,7 +191,7 @@
   </div>
 </div>
 
-<video id="introVid" src="intro.mp4" playsinline preload="auto"></video>
+<video id="introVid" src="intro.mp4?v=meme2" playsinline preload="auto"></video>
 <div id="skipHint">Skip ▶</div>
 <iframe id="gameFrame" title="Chiki Monsters" allow="clipboard-write"></iframe>
 
@@ -241,7 +241,7 @@
     var vw=innerWidth,vh=innerHeight,iw=probe.naturalWidth,ih=probe.naturalHeight;
     var s=Math.max(vw/iw,vh/ih),yOff=(vh-ih*s)/2;
     btn.style.top=(yOff+QUOTE_Y*ih*s)+"px";}
-  probe.onload=place;probe.src="homepage-hero.png";addEventListener("resize",place);
+  probe.onload=place;probe.src="homepage-hero.png?v=meme2";addEventListener("resize",place);
 })();
 </script>
 <script>
