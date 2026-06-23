@@ -1479,8 +1479,15 @@ const SPECIES=[
   {names:["Tyrannos","Tyrannos","Tyrannos"],type:"Legendary",body:"#5b7a3a",accent:"#c4d97a",mane:"shadow",maneCols:["#5b7a3a","#3d4f28","#c4d97a"],aura:"green"},   /* Tyrannos — apex predator, green aura */
   {names:["Grovador","Grovador","Grovador"],type:"Legendary",body:"#2e8b57",accent:"#9be38f",mane:"shadow",maneCols:["#2e8b57","#1f5e3a","#9be38f"],aura:"purple"},   /* Grovador — grove guardian, purple aura */
   {names:["Dragonos","Dragonos","Dragonos"],type:"Legendary",body:"#c0392b",accent:"#ff9f43",mane:"shadow",maneCols:["#c0392b","#7a1f12","#ff9f43"],aura:"red"},   /* Dragonos — fire dragon, red aura */
+  /* ===== Meme Dynasty legendaries (idx 15–20) — same battle mechanics, obtained from Meme Legendary Eggs ===== */
+  {names:["Popcat","Popcat","Popcat"],type:"Legendary",body:"#c98b5e",accent:"#ffffff",mane:"shadow",maneCols:["#c98b5e","#7a4a2a","#ffffff"],aura:"purple"},
+  {names:["Moo Deng","Moo Deng","Moo Deng"],type:"Legendary",body:"#8a8f99",accent:"#c9b3e0",mane:"shadow",maneCols:["#8a8f99","#5a5f69","#c9b3e0"],aura:"blue"},
+  {names:["Doge","Doge","Doge"],type:"Legendary",body:"#d9a441",accent:"#fff3b0",mane:"shadow",maneCols:["#d9a441","#a97b25","#fff3b0"],aura:"green"},
+  {names:["Pepe","Pepe","Pepe"],type:"Legendary",body:"#5fa830",accent:"#d7f59a",mane:"shadow",maneCols:["#5fa830","#3a6b1d","#d7f59a"],aura:"gold"},
+  {names:["Chill Guy","Chill Guy","Chill Guy"],type:"Legendary",body:"#b98a5e",accent:"#9fb0d8",mane:"shadow",maneCols:["#b98a5e","#7a553a","#9fb0d8"],aura:"red"},
+  {names:["Alon","Alon","Alon"],type:"Legendary",body:"#caa54a",accent:"#222222",mane:"shadow",maneCols:["#caa54a","#8a6f2a","#f0e2b8"],aura:"purple"},
 ];
-const DEX_IMG=["mushrow","electrox","jellox","firix","owzard","forestle","drolax","healix","solarix","scorplex","galador","adalor","tyrannos","grovador","dragonos"];  /* species idx -> chikidex png */
+const DEX_IMG=["mushrow","electrox","jellox","firix","owzard","forestle","drolax","healix","solarix","scorplex","galador","adalor","tyrannos","grovador","dragonos","popcat","moodeng","doge","pepe","chillguy","alon"];  /* species idx -> chikidex png */
 /* shared Chi-skill names per species (emoji,name) + descriptions — used by the Arena and Ancient-Egg hatch */
 const CHI_DESC=["Reliable hit","Big hit · blocked by Guard","Ignores Guard","Block 60% + reflect","Next hit +70%","Heal 60% of dmg","Huge hit · 7 recoil"];
 const CHI_PN=[
@@ -1498,9 +1505,18 @@ const CHI_PN=[
  [["✨","Holy Smite"],["♨️","Intense Heat"],["🌟","Blinding Light"],["🛡️","Radiant Shield"],["☀️","Solar Charge"],["💖","Divine Heal"],["💥","Sunburst"],["☀️","Searing Ray"],["✨","Flash Bang"],["🌟","Ascension"],["🌑","Eclipse Veil"],["🛡️","Aegis of Dawn"]],
  [["🦷","Bite"],["🦶","Trample"],["💨","Tail Whip"],["😱","Fear"],["🗣️","Savage Roar"],["🩸","Devour"],["💥","Apex Crush"],["🐾","Claw Rake"],["🦶","Ground Stomp"],["🩸","Bloodlust"],["😱","Terrify"],["🛡️","Thick Hide"]],
  [["🌑","Ambush"],["⚡","Roar of Thunder"],["🐺","Pack Attack"],["🛡️","Howl"],["🔋","Storm Surge"],["🩸","Thunder Fang"],["🌩️","Thunderstorm"],["⚡","Lightning Rend"],["🔌","Static Shock"],["🌩️","Gathering Storm"],["🌑","Gloom"],["🛡️","Stormwall"]],
- [["🔥","Fire Whip"],["🐉","Breath of Fire"],["💨","Fire Dash"],["🛡️","Scale Guard"],["🔥","Blaze Charge"],["🔥","Ember Drain"],["💥","Inferno"],["🔥","Searing Claw"],["⚡","Spark Lash"],["♨️","Overheat"],["🌑","Smolder"],["🛡️","Magma Shell"]]
+ [["🔥","Fire Whip"],["🐉","Breath of Fire"],["💨","Fire Dash"],["🛡️","Scale Guard"],["🔥","Blaze Charge"],["🔥","Ember Drain"],["💥","Inferno"],["🔥","Searing Claw"],["⚡","Spark Lash"],["♨️","Overheat"],["🌑","Smolder"],["🛡️","Magma Shell"]],
+ /* 15 Popcat (Storm) */   [["⚡","Click Strike"],["💥","Pop Blast"],["🐾","Quick Paws"],["🛡️","Lid Guard"],["🔋","Charge Up"],["💧","Meme Drain"],["🌟","Mega Pop"],["⚡","Static Claw"],["🔌","Jolt"],["📣","Hype Roar"],["😾","Hiss"],["🛡️","Popwall"]],
+ /* 16 Moo Deng (Water) */ [["💧","Splash"],["🌊","Tidal Bonk"],["💨","Bouncy Dash"],["🛡️","Mud Guard"],["🔋","Soak Up"],["💦","Hydro Drain"],["🌊","Tsunami Bonk"],["🦛","Chomp"],["⚡","Splash Jolt"],["📣","Cute Roar"],["🌀","Whirl"],["🛡️","Hide Shell"]],
+ /* 17 Doge (Beast) */     [["🐕","Wow Bite"],["💥","Much Blast"],["💨","Such Speed"],["🛡️","Doge Guard"],["🔋","Very Charge"],["🩸","Bork Drain"],["🌟","Amaze Nova"],["🦴","Bone Rend"],["⚡","Zoomies"],["📣","Loud Bork"],["😤","Grr"],["🛡️","Shibe Wall"]],
+ /* 18 Pepe (Light) */     [["✨","Feels Smite"],["🔆","Rare Beam"],["💨","Sad Hop"],["🛡️","Smug Guard"],["☀️","Hope Charge"],["💚","Copium Drain"],["💥","Rare Burst"],["🐸","Tongue Lash"],["⚡","Kek Jolt"],["📣","Ribbit Roar"],["😢","Despair"],["🛡️","Feelswall"]],
+ /* 19 Chill Guy (Fire) */ [["🔥","Chill Jab"],["☄️","Hot Take"],["💨","Casual Dash"],["🛡️","Hoodie Guard"],["♨️","Warm Up"],["🔥","Vibe Drain"],["💥","Unbothered Blast"],["😎","Cool Strike"],["⚡","Spark"],["📣","Whatever Roar"],["🥶","Cold Shoulder"],["🛡️","Chillwall"]],
+ /* 20 Alon (Storm) */     [["⚡","Cap Snap"],["💥","Rich Blast"],["💨","Hustle Dash"],["🛡️","Cap Guard"],["🔋","Grind Charge"],["💸","Wealth Drain"],["🌩️","Tendie Storm"],["🧢","Cap Bonk"],["🔌","Static"],["📣","Flex Roar"],["😤","Poor Shame"],["🛡️","Cashwall"]]
 ];
 const LEGEND_IDXS=SPECIES.map((s,i)=>s.type==="Legendary"?i:-1).filter(i=>i>=0);   /* legendary species indices */
+const MEME_IDXS=[15,16,17,18,19,20];                                                /* Meme Dynasty legendaries — full battle mechanics, but obtained ONLY from Meme Legendary Eggs */
+const MEME_KEY_SP={popcat:15,moodeng:16,doge:17,pepe:18,chillguy:19,alon:20};
+const CORE_LEGEND_IDXS=LEGEND_IDXS.filter(i=>MEME_IDXS.indexOf(i)<0);               /* the 5 original legendaries — used for random/free grants */
 const LEGEND_SCALE=1.0;                                                            /* legendaries are the SAME size as normal Chikis */
 const LEGEND_SCALE_ADJ={13:0.82};                                                 /* Grovador's model is long — trim it so no Chiki towers over the rest */
 const legendScale=spIdx=>LEGEND_IDXS.indexOf(spIdx)>=0?LEGEND_SCALE*(LEGEND_SCALE_ADJ[spIdx]||1):1;
@@ -1660,7 +1676,7 @@ function hatchEgg(noLegend){   /* noLegend=true → guaranteed normal (no legend
     }
     function hatch(){ if(hatched)return; hatched=true;
       const legend=!noLegend && lucky.indexOf(taps)>-1;
-      const sp=legend?LEGEND_IDXS[ri(0,LEGEND_IDXS.length-1)]:NONLEGEND_IDXS[ri(0,NONLEGEND_IDXS.length-1)];
+      const sp=legend?CORE_LEGEND_IDXS[ri(0,CORE_LEGEND_IDXS.length-1)]:NONLEGEND_IDXS[ri(0,NONLEGEND_IDXS.length-1)];
       egg.classList.add("pop");btn.style.display="none";hint.textContent="";tapsEl.style.display="none";mw.style.display="none";
       if(window.playSfx)window.playSfx("reward");
       setTimeout(()=>{                                   /* transition: egg → the actual Chiki */
@@ -3014,7 +3030,7 @@ setInterval(updateWhaleTab,1000);
   const g=id=>document.getElementById(id);
   /* ===== DRAWN-HAND battle (Axie-style): energy · draw a hand · Attack vs Shield · combos · crits · Last Stand. 1 Legendary each. ===== */
   const KIND=["atk","atk","atk","shi","util","atk","atk","atk","atk","util","atk","shi"];   /* +Rend/Jolt/Wither=atk, Rally=util, Bulwark=shi */
-  const LEG_ELEM={10:"Water",11:"Light",12:"Beast",13:"Storm",14:"Fire"};
+  const LEG_ELEM={10:"Water",11:"Light",12:"Beast",13:"Storm",14:"Fire",15:"Storm",16:"Water",17:"Beast",18:"Light",19:"Fire",20:"Storm"};
   const ELEM_NEXT={Water:"Fire",Fire:"Beast",Beast:"Storm",Storm:"Light",Light:"Water"};   /* triangle: Water→Fire→Beast→Storm→Light→(Water); each beats the next */
   const legElem=si=>LEG_ELEM[si]||"Chi";
   const elemMult=(a,b)=>ELEM_NEXT[a]===b?1.5:ELEM_NEXT[b]===a?0.7:1;
@@ -3029,7 +3045,7 @@ setInterval(updateWhaleTab,1000);
     return {c,si,name:(typeof nameOf==="function"?nameOf(c):c.sp.names[0]),img:"chikidex/"+(DEX_IMG[si]||"mushrow")+".png",
       st,hp:st.hp,maxhp:st.hp,shield:0,energy:0,buff:1,draw:deck,hand:[],disc:[],ls:0,started:false,isYou,playedThisTurn:0};
   }
-  function aiFoe(br){const sp=SPECIES[LEGEND_IDXS[ri(0,LEGEND_IDXS.length-1)]];const c={sp,isLegend:true,br:Math.max(1,br+ri(-2,2))};c.arenaSkills=roll3();ensureBattle(c);const tier=Math.min(5,1+Math.floor(c.br/6));c.arenaSkills.forEach(s=>c.cardTier[s]=tier);return c;}
+  function aiFoe(br){const sp=SPECIES[CORE_LEGEND_IDXS[ri(0,CORE_LEGEND_IDXS.length-1)]];const c={sp,isLegend:true,br:Math.max(1,br+ri(-2,2))};c.arenaSkills=roll3();ensureBattle(c);const tier=Math.min(5,1+Math.floor(c.br/6));c.arenaSkills.forEach(s=>c.cardTier[s]=tier);return c;}
   let B=null;
   function log(h){g("arenaLog").innerHTML=h;}
   function sideHTML(side,who,label){
@@ -3085,7 +3101,7 @@ setInterval(updateWhaleTab,1000);
   }
   /* ---- hub 3D legendary viewer (HD .glb) ---- */
   let _h3dR,_h3dS,_h3dC,_h3dM,_h3dRAF,_h3dSi=null;
-  const LEG_GLB=["galador","adalor","tyrannos","grovador","dragonos"];
+  const LEG_GLB=["galador","adalor","tyrannos","grovador","dragonos","popcat_build","moodeng_build","doge_build","pepe_build","chillguy_build","alon_build"];   /* idx 5–10 = Meme Dynasty voxel builds */
   function initHub3D(si){
     const host=g("hub3d"); if(!host||typeof THREE==="undefined"||typeof THREE.GLTFLoader==="undefined")return;
     const sz=()=>[host.clientWidth||260, host.clientHeight||260];
@@ -3109,8 +3125,11 @@ setInterval(updateWhaleTab,1000);
       const onFail=()=>{ const l=host.querySelector(".ld"); if(l){ l.textContent=""; l.style.background="url('chikidex/"+spriteName+".png') center/contain no-repeat"; l.style.display="flex"; } };   /* fall back to the 2D portrait so something always shows */
       const loader=new THREE.GLTFLoader();
       try{ if(THREE.DRACOLoader){ const dl=new THREE.DRACOLoader(); dl.setDecoderPath("https://www.gstatic.com/draco/v1/decoders/"); loader.setDRACOLoader(dl); } }catch(e){}
+      try{ if(window.MeshoptDecoder)loader.setMeshoptDecoder(window.MeshoptDecoder); }catch(e){}
       loader.load(LEG_GLB[si-10]+".glb?v="+(window.GLB_VER||"1"),gltf=>{
         const m=gltf.scene;
+        m.traverse(o=>{ if(!o.isMesh)return; const hasVC=o.geometry&&o.geometry.attributes&&o.geometry.attributes.color;   /* Meme voxel builds ship without normals → flat-shade so they aren't dark */
+          if(hasVC){ if(!o.geometry.attributes.normal){ try{ const ni=o.geometry.toNonIndexed(); ni.computeVertexNormals(); o.geometry=ni; }catch(e){} } o.material=new THREE.MeshLambertMaterial({vertexColors:true}); } });
         const box=new THREE.Box3().setFromObject(m),size=box.getSize(new THREE.Vector3()),ctr=box.getCenter(new THREE.Vector3());
         const md=Math.max(size.x,size.y,size.z)||1;
         m.position.sub(ctr);                                  /* center the model's geometry at origin */
@@ -3350,7 +3369,12 @@ setInterval(updateWhaleTab,1000);
       log("💀 Defeated… you earned a little Battle EXP. Upgrade your cards &amp; try again!"); }
     renderArenaMeta();
     const again=document.createElement("button");again.className="aAgainBtn";again.setAttribute("aria-label","Battle again");again.onclick=findMatch;hideZoom();
-    g("arenaCenter").innerHTML=""; g("arenaCenter").appendChild(again);
+    const hub=document.createElement("button");
+    hub.textContent="🏛️ Chikiseum Hub";
+    hub.style.cssText="font-family:'Nunito',sans-serif;font-weight:800;font-size:14px;padding:11px 20px;border:none;border-radius:12px;background:linear-gradient(180deg,#7aa9ff,#3a6ad0);color:#fff;cursor:pointer;box-shadow:0 4px 0 #2a4a9a;margin-top:10px";
+    hub.onclick=()=>{ B=null; const ar=g("arenaResult"); if(ar)ar.innerHTML=""; const ac0=g("arenaCenter"); if(ac0)ac0.innerHTML=""; const sp2=g("pvpSeries"); if(sp2)sp2.style.display="none"; showArenaIntro(); if(typeof renderHubCards==="function")renderHubCards(); if(typeof renderArenaMeta==="function")renderArenaMeta(); };
+    const ac=g("arenaCenter"); ac.innerHTML="";
+    const wrap=document.createElement("div"); wrap.style.cssText="display:flex;flex-direction:column;align-items:center;gap:2px"; wrap.appendChild(again); wrap.appendChild(hub); ac.appendChild(wrap);
   }
   const myLegends=()=>(typeof myChikis==="function")?myChikis().filter(c=>c.isLegend):[];
   /* Cup spectate: watch YOUR Legendary auto-battle a Cup opponent (BR foeBr) in the real arena; calls onEnd(youWon). */
@@ -3425,10 +3449,18 @@ setInterval(updateWhaleTab,1000);
     const cb=g("pvpCancel"); if(cb)cb.onclick=()=>{ stop(); ac.innerHTML='<button class="aBtn" id="pvpRetry">⚔️ Find a Match</button>'; const rt=g("pvpRetry"); if(rt)rt.onclick=findMatch; };
     const ab=g("pvpAi"); if(ab)ab.onclick=()=>{ stop(); startBattle(); renderArenaMeta(); };
     const poll=async()=>{ if(cancelled)return;
-      try{ const r=await fetch(CHAIN.BACKEND+"/pvp/available",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:player.pk,name:(player.handle||player.addr||"Trainer"),snap,searching:true})});
-        const j=await r.json(); if(cancelled)return; if(j&&j.matched){ _pvpSearching=false; startPvp(j.matched.matchId,j.matched.side); return; }
-        const on=g("pvpOnline"); if(on){ const ps=(j&&j.players)||[]; const others=ps.length, searchers=ps.filter(p=>p.searching).length;
-          on.innerHTML=others?("🟢 <b>"+others+"</b> Trainer"+(others===1?"":"s")+" in the Chikiseum"+(searchers?" · <b>"+searchers+"</b> also searching ⚔️":" — challenge them or wait")):"🔎 Waiting for another Trainer to enter the Chikiseum…"; } }catch(e){}
+      try{
+        let r=await fetch(CHAIN.BACKEND+"/pvp/available",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:player.pk,name:(player.handle||player.addr||"Trainer"),snap,searching:true})});
+        if(r.ok){ const j=await r.json(); if(cancelled)return;
+          if(j&&j.matched){ _pvpSearching=false; startPvp(j.matched.matchId,j.matched.side); return; }
+          const on=g("pvpOnline"); if(on){ const ps=(j&&j.players)||[]; const others=ps.length, searchers=ps.filter(p=>p.searching).length;
+            on.innerHTML=others?("🟢 <b>"+others+"</b> Trainer"+(others===1?"":"s")+" in the Chikiseum"+(searchers?" · <b>"+searchers+"</b> also searching ⚔️":" — challenge them or wait")):"🔎 Waiting for another Trainer to enter the Chikiseum…"; }
+        } else {   /* older backend without /pvp/available → fall back to the classic queue (always pairs two searchers) */
+          const r2=await fetch(CHAIN.BACKEND+"/pvp/queue",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:player.pk,snap})});
+          const j2=await r2.json(); if(cancelled)return; if(j2&&j2.status==="matched"){ _pvpSearching=false; startPvp(j2.matchId,j2.side); return; }
+          const on=g("pvpOnline"); if(on&&j2){ const e=j2.eligible|0,q=j2.queued|0; on.innerHTML="🟢 <b>"+e+"</b> eligible online"+(q>1?" · <b>"+q+"</b> searching ⚔️":" · waiting for an opponent…"); }
+        }
+      }catch(e){}
       if(!cancelled)setTimeout(poll,2000);
     };
     poll();
@@ -3502,7 +3534,7 @@ setInterval(updateWhaleTab,1000);
     if(!B||!B.foe){ const old=g("pvpSeries"); if(old)old.style.display="none"; return; }
     let el=g("pvpSeries");
     if(!el){ const box=g("arenaBox"); if(!box)return; el=document.createElement("div"); el.id="pvpSeries";
-      el.style.cssText="position:absolute;top:94px;left:50%;transform:translateX(-50%);z-index:13;text-align:center;min-width:210px;max-width:92vw;background:rgba(10,14,30,.8);border:1px solid #b98a2e;border-radius:15px;padding:7px 18px;box-shadow:0 5px 16px rgba(0,0,0,.5);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)"; box.appendChild(el); }
+      el.style.cssText="position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:20;text-align:center;min-width:200px;max-width:min(56vw,440px);background:rgba(10,14,30,.86);border:1px solid #b98a2e;border-radius:0 0 15px 15px;padding:6px 18px 8px;box-shadow:0 6px 16px rgba(0,0,0,.55);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)"; box.appendChild(el); }
     const foeNm=(B.foe&&B.foe.name)?(typeof esc==="function"?esc(B.foe.name):B.foe.name):"Opponent";
     const youNm=(B.you&&B.you.name)?(typeof esc==="function"?esc(B.you.name):B.you.name):"You";
     const vs="<div style='font-size:13px;font-weight:800;color:#fff'>⚔️ "+youNm+" <span style='color:#9fb3d6;font-weight:700'>vs</span> <span style='color:#ff9a6b'>"+foeNm+"</span></div>";
@@ -3582,7 +3614,14 @@ setInterval(updateWhaleTab,1000);
     if(reason==="forfeit")log(win?"🏳️ <b style='color:#3ddc84'>Opponent forfeited — you win!</b>":"🏳️ You forfeited the match.");
     else if(reason==="time")log(win?"⏱️ <b style='color:#3ddc84'>Time! You had more HP — you win!</b>":"⏱️ Time — your opponent had more HP.");
     if(window.playSfx)window.playSfx(win?"reward":"lose");
-    try{ end(win); }catch(e){ g("arenaResult").innerHTML=win?"🏆 <span style='color:#3ddc84'>VICTORY!</span>":"💀 <span style='color:#ff6b6b'>Defeated…</span>"; }
+    try{ end(win); }catch(e){
+      const ar=g("arenaResult"); if(ar)ar.innerHTML=win?"🏆 <span style='color:#3ddc84'>VICTORY!</span>":"💀 <span style='color:#ff6b6b'>Defeated…</span>";
+      const ac=g("arenaCenter"); if(ac){ ac.innerHTML="";
+        const hub=document.createElement("button"); hub.textContent="🏛️ Back to Chikiseum";
+        hub.style.cssText="font-family:'Nunito',sans-serif;font-weight:800;font-size:15px;padding:11px 22px;border:none;border-radius:12px;background:linear-gradient(180deg,#7aa9ff,#3a6ad0);color:#fff;cursor:pointer;box-shadow:0 4px 0 #2a4a9a";
+        hub.onclick=()=>{ B=null; if(ar)ar.innerHTML=""; ac.innerHTML=""; const sp2=g("pvpSeries"); if(sp2)sp2.style.display="none"; showArenaIntro(); };
+        ac.appendChild(hub); }
+    }
     if(fromCup){   /* Cup match → don't offer "Battle again"; send the player back to the Cup to await the round result */
       g("arenaResult").innerHTML=win?"🏆 <span style='color:#3ddc84'>YOU WIN!</span>":"💀 <span style='color:#ff6b6b'>You lost…</span>";
       const back=document.createElement("button"); back.className="aAgainBtn"; back.setAttribute("aria-label","Back to Cup");
@@ -3986,7 +4025,7 @@ setInterval(updateWhaleTab,1000);
     const e=player&&player.ancientEgg; if(!e||(e.careMin||0)<(e.need||careNeed(player))||revealing)return;
     if(!isCreator(player.pk)&&holderCounts(player).legend>=MAX_LEGEND){showBanner("You already have a Legendary (max 1) — cannot hatch another.","error");return;}
     revealing=true;
-    const idx=LEGEND_IDXS[ri(0,LEGEND_IDXS.length-1)];
+    const idx=CORE_LEGEND_IDXS[ri(0,CORE_LEGEND_IDXS.length-1)];
     const c=spawnCreature(player,10,idx);
     c.isLegend=true; c.arenaSkills=rollSkills();
     c.nick=SPECIES[idx].names[stageOf(10)-1]; c.named=true;
@@ -7456,15 +7495,30 @@ requestAnimationFrame(frame);
     }catch(e){ if(typeof showBanner==="function")showBanner("⚠️ "+(e.message||e),"error"); }
     if(hb)hb.disabled=false;
   }
+  function grantMemeLegendary(key){   /* the hatched Chiki becomes a real, playable Legendary in your roster */
+    try{
+      if(!window.player||typeof spawnCreature!=="function"||typeof MEME_KEY_SP==="undefined")return null;
+      const idx=MEME_KEY_SP[key]; if(idx==null)return null;
+      const c=spawnCreature(player,10,idx);
+      c.isLegend=true; if(typeof ensureLegendSkills==="function")ensureLegendSkills(c);
+      try{ c.nick=SPECIES[idx].names[0]; c.named=true; }catch(e){}
+      if(player.pk&&typeof saveProfile==="function")saveProfile(player);
+      if(typeof refreshUI==="function")refreshUI();
+      if(typeof updateLegendHud==="function")updateLegendHud();
+      if(typeof addFeed==="function")addFeed("🧬 A <b>Meme Dynasty Legendary</b> joined your roster — battle it in the ⚔️ Chikiseum!");
+      return c;
+    }catch(e){ return null; }
+  }
   function showReveal(h){
     let r2=$("memeReveal"); if(!r2){ r2=document.createElement("div"); r2.id="memeReveal"; document.body.appendChild(r2); }
     r2.innerHTML='<div class="rv"><div class="egg">🥚</div><div class="rvMsg">Hatching your Meme Legendary Egg…</div></div>';
     r2.style.display="flex"; if(window.playSfx)window.playSfx("open");
+    const granted=grantMemeLegendary(h.char);
     setTimeout(()=>{ const m=ROSTER_BY[h.char]||{name:h.name,emoji:"❓"};
       r2.innerHTML='<div class="rv"><img src="'+h.char+'_art.png" alt="'+h.name+'" onerror="this.style.display=\'none\'">'
         +'<div class="rvName">'+(m.emoji||"")+' '+h.name+'</div>'
         +'<div class="rvEd">Edition #'+String(h.edition).padStart(3,"0")+' / '+h.cap+'</div>'
-        +'<div class="rvMsg">🎉 You hatched a <b>Meme Dynasty NFT</b>!<br>It\'s being minted on-chain — see it in <b>🎒 My Meme NFTs</b> shortly.</div>'
+        +'<div class="rvMsg">🎉 A <b>Meme Dynasty Legendary</b> is yours!'+(granted?'<br>⚔️ It\'s in your roster — battle it in the Chikiseum.':'')+'<br>💎 Minting as an NFT on-chain — see <b>🎒 My Meme NFTs</b>.</div>'
         +'<button id="rvClose">Awesome ✨</button></div>';
       if(window.playSfx)window.playSfx("reward");
       const rc=$("rvClose"); if(rc)rc.onclick=()=>{ r2.style.display="none"; };
