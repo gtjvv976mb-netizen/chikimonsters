@@ -3182,7 +3182,8 @@ setInterval(updateWhaleTab,1000);
     });
     if(ac){ac.innerHTML=""; if(!B._resolving){const et=document.createElement("button");et.className="aLockBtn";et.setAttribute("aria-label","Lock in");et.innerHTML=q.length?`<span class="lkN">${q.length}</span>`:"";et.onclick=()=>resolveTurn();ac.appendChild(et);}}
   }
-  function startBattle(){
+  function startBattle(skipIntro){
+    if(!skipIntro){ playBattleIntro(()=>startBattle(true)); return; }   /* play the battle intro first */
     clearTurnTimer();
     const legs=myLegends().map(ensureLegendSkills); if(!legs.length)return;
     const me=legs[0]; const foeC=aiFoe(me.br||1);
@@ -3418,7 +3419,8 @@ setInterval(updateWhaleTab,1000);
     };
     poll();
   }
-  function startPvp(matchId, side, fromCup){
+  function startPvp(matchId, side, fromCup, skipIntro){
+    if(!skipIntro){ playBattleIntro(()=>startPvp(matchId, side, fromCup, true)); return; }   /* play the battle intro first */
     clearTurnTimer(); const legs=myLegends().map(ensureLegendSkills); if(!legs.length)return;
     B={ you:makeSide(legs[0],true), foe:null, over:false, turn:null, pvp:{matchId,side,fromCup:!!fromCup}, foeBr:1, series:null, _lastGameShown:-1, _pvpStatus:"" };
     const sp0=g("pvpSeries"); if(sp0){ sp0.style.display="none"; sp0.innerHTML=""; }
@@ -3711,11 +3713,30 @@ setInterval(updateWhaleTab,1000);
       const p=vid.play(); if(p&&p.catch)p.catch(()=>{ vid.muted=true; vid.play().catch(()=>{}); });
       vid.onended=close; skip.onclick=close;
     }
+    /* fullscreen "battle intro" movie played right before every fight (Chikiseum + Cup), then runs done() */
+    function playBattleIntro(done){
+      const run=()=>{ if(typeof done==="function")done(); };
+      let ov=g("battleIntroVid");
+      if(!ov){
+        ov=document.createElement("div"); ov.id="battleIntroVid";
+        ov.style.cssText="position:fixed;inset:0;z-index:4200;background:#000;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s";
+        ov.innerHTML='<video id="battleIntroVidEl" src="ui/battle-intro.mp4" playsinline preload="auto" style="width:100%;height:100%;object-fit:contain;background:#000"></video>'
+          +'<button id="battleIntroSkip" style="position:absolute;right:16px;bottom:16px;z-index:1;padding:9px 16px;border:none;border-radius:999px;background:rgba(0,0,0,.55);color:#fff;font:600 14px Nunito,sans-serif;cursor:pointer;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)">Skip ▸</button>';
+        document.body.appendChild(ov);
+      }
+      const vid=g("battleIntroVidEl"), skip=g("battleIntroSkip");
+      let ended=false; const finish=()=>{ if(ended)return; ended=true; ov.style.opacity="0"; try{vid.pause();}catch(e){} setTimeout(()=>{ ov.style.display="none"; run(); },200); };
+      ov.style.display="flex"; requestAnimationFrame(()=>{ ov.style.opacity="1"; });
+      vid.muted=false; try{vid.currentTime=0;}catch(e){}
+      const p=vid.play(); if(p&&p.catch)p.catch(()=>{ vid.muted=true; vid.play().catch(()=>{}); });
+      vid.onended=finish; skip.onclick=finish;
+      setTimeout(()=>{ if(!ended && (vid.error|| (vid.readyState===0 && vid.networkState===3))) finish(); }, 1200);   /* fail-safe: if the video can't load, don't block the battle */
+    }
     /* reconnect: if you have a LIVE PvP battle in progress (e.g. you refreshed), drop straight back into it */
     async function checkPvpResume(){
       if(!CHAIN.BACKEND||!player||!player.pk||B)return;
       try{ const r=await fetch(CHAIN.BACKEND+"/pvp/queue?wallet="+player.pk,{cache:"no-store"}); const j=await r.json();
-        if(j&&j.status==="matched"&&!j.over&&typeof startPvp==="function"){ showArenaIntro&&showArenaIntro(); startPvp(j.matchId,j.side); } }catch(e){}
+        if(j&&j.status==="matched"&&!j.over&&typeof startPvp==="function"){ showArenaIntro&&showArenaIntro(); startPvp(j.matchId,j.side,false,true); } }catch(e){}   /* skipIntro on reconnect */
     }
     ab.onclick=()=>{
       g("arenaOverlay").style.display="flex";
