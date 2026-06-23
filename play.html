@@ -912,7 +912,7 @@ if(location.search.indexOf("embed")>-1){
 #arenaBox::after{content:"";position:absolute;inset:0;background:rgba(5,8,15,.30);pointer-events:none;z-index:0}
 #arenaBox.introMode{background:radial-gradient(120% 80% at 50% 0%,#243a63,#0d1426 75%);overflow-y:auto}
 #arenaBox.introMode #arenaIntro{position:relative;z-index:2;max-width:780px;margin:46px auto 24px;padding:0 16px 24px}
-#arenaHead{position:absolute;top:10px;right:14px;left:auto;z-index:46;background:none;border:none;padding:0;margin:0;font-size:0;width:auto;display:flex;gap:10px;align-items:center}
+#arenaHead{position:absolute;bottom:16px;right:14px;top:auto;left:auto;z-index:46;background:none;border:none;padding:0;margin:0;font-size:0;width:auto;display:flex;flex-direction:column;gap:9px;align-items:flex-end}
 #arenaBox.introMode #arenaHead{position:absolute}
 #arenaHead .x{font-size:22px;color:#ffd9d9;cursor:pointer}#arenaInfo{font-size:18px}
 /* banner */
@@ -930,7 +930,7 @@ if(location.search.indexOf("embed")>-1){
 #aTimerBox.on{display:block}
 #aTimerBox .tv{position:absolute;left:60%;top:49%;transform:translate(-50%,-50%);font-weight:800;font-size:22px;color:#ffe9b0;letter-spacing:1px;text-shadow:0 1px 3px #000,0 0 9px rgba(255,200,80,.55);white-space:nowrap}
 #aTimerBox.low .tv{color:#ff8a8a}
-.aMatch2{position:absolute;top:108px;left:50%;transform:translateX(-50%);z-index:6;font-size:12px;font-weight:700;color:#eaf2ff;background:rgba(10,14,30,.7);border:1px solid #2c4470;border-radius:16px;padding:4px 14px;white-space:nowrap}
+.aMatch2{display:none}   /* matchup/element now lives in the top-center info panel */
 /* stage + fighters */
 #arenaStage{position:absolute;inset:0;width:100%;height:100%;aspect-ratio:auto;background:none;border-radius:0;margin:0;box-shadow:none;z-index:1}
 .aFighter{position:absolute;bottom:30%;width:auto;gap:6px}
@@ -984,7 +984,7 @@ if(location.search.indexOf("embed")>-1){
 }
 </style>
 <div id="arenaOverlay"><div id="arenaBox">
-  <div id="arenaHead">⚔️ The Chikiseum <button id="arenaExitBattle" class="aHeadBtn danger" title="Leave this battle — back to the hub">🚪 Exit Battle</button> <span id="arenaInfo" title="Chikiseum guide">ℹ️</span> <button id="arenaClose" class="aHeadBtn" title="Leave the Chikiseum">✕ Exit Chikiseum</button></div>
+  <div id="arenaHead"><button id="arenaExitBattle" class="aHeadBtn danger" title="Leave this battle — back to the hub">🚪 Exit Battle</button> <button id="arenaClose" class="aHeadBtn" title="Leave the Chikiseum">✕ Exit Chikiseum</button></div>
   <img id="arenaBanner" src="ui/chikiseum-banner.png" alt="Chikiseum">
   <div id="arenaZoom"></div>
   <div id="arenaIntro">
@@ -3157,7 +3157,9 @@ setInterval(updateWhaleTab,1000);
         `<div id="aTimerBox" class="${showT?'on':''}${tl<=10?' low':''}"><div class="tv" id="aTimer">0:${tl<10?'0':''}${tl}</div></div>`+
         `<div class="aMatch2">${matchTxt}</div>`;
     }
-    if(B.turn!=="you"){ if(ac)ac.innerHTML="<div style='font-size:13px;color:#8fa6c9'>🤖 Rival is planning…</div>"; return; }
+    pvpTop();   /* keep the top-center info panel current (matchup + status) for AI & PvP */
+    if(B.turn!=="you"){ if(!B.pvp)pvpStatus("🤖 Rival is planning…","#8fa6c9"); if(ac)ac.innerHTML=""; return; }
+    if(!B.pvp)pvpStatus("🎯 Your move — plan up to 3 cards","#9fc4ff");
     B.you.hand.forEach((slot,idx)=>{const t=cardTier(B.you.c,slot),k=ARCHK[slot];
       const qpos=q.indexOf(idx), selected=qpos>-1;
       const canSelect=selected||(q.length<3&&remain>=CARD_COST[slot]&&!B._resolving);
@@ -3308,6 +3310,7 @@ setInterval(updateWhaleTab,1000);
   function checkEnd(){ if(!B||B.over)return; if(B.foe.hp<=0&&B.foe.ls<=0)return end(true); if(B.you.hp<=0&&B.you.ls<=0)return end(false); }
   function end(win){
     B.over=true; clearTurnTimer(); B._resolving=false; g("arenaPowers").innerHTML=""; const keyEl=g("arenaKey"); if(keyEl)keyEl.innerHTML="";
+    const sp=g("pvpSeries"); if(sp)sp.style.display="none";   /* clear the top-center info panel when the battle ends */
     if(B.spectate){   /* Cup spectate: just show the outcome and hand control back to the Cup (no arena glory/stamina) */
       g("arenaResult").innerHTML = win ? "🏆 <span style='color:#3ddc84'>YOU WIN!</span>" : "💀 <span style='color:#ff6b6b'>You lost…</span>";
       log(win ? "🏆 You won this Cup match!" : "💀 You lost this Cup match.");
@@ -3444,17 +3447,22 @@ setInterval(updateWhaleTab,1000);
     }catch(e){}
     if(B&&B.pvp&&!B.over)_pvpPoll=setTimeout(pvpTickLoop,1200);
   }
-  /* top-center info panel: round/series number (line 1) + live status (line 2) */
+  /* top-center info panel for ANY battle (AI + PvP): matchup + round/element (line 2) + live status (line 3) */
   function pvpTop(){
-    if(!B||!B.pvp)return; let el=g("pvpSeries");
+    if(!B||!B.foe){ const old=g("pvpSeries"); if(old)old.style.display="none"; return; }
+    let el=g("pvpSeries");
     if(!el){ const box=g("arenaBox"); if(!box)return; el=document.createElement("div"); el.id="pvpSeries";
       el.style.cssText="position:absolute;top:94px;left:50%;transform:translateX(-50%);z-index:13;text-align:center;min-width:210px;max-width:92vw;background:rgba(10,14,30,.8);border:1px solid #b98a2e;border-radius:15px;padding:7px 18px;box-shadow:0 5px 16px rgba(0,0,0,.5);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)"; box.appendChild(el); }
     const foeNm=(B.foe&&B.foe.name)?(typeof esc==="function"?esc(B.foe.name):B.foe.name):"Opponent";
     const youNm=(B.you&&B.you.name)?(typeof esc==="function"?esc(B.you.name):B.you.name):"You";
     const vs="<div style='font-size:13px;font-weight:800;color:#fff'>⚔️ "+youNm+" <span style='color:#9fb3d6;font-weight:700'>vs</span> <span style='color:#ff9a6b'>"+foeNm+"</span></div>";
-    const r=B.series?("🏆 Best of "+B.series.bestOf+" · <b style='color:#fff'>Game "+B.series.game+"</b> · You <b style='color:#fff'>"+B.series.you+"</b> – <b style='color:#fff'>"+B.series.foe+"</b> Foe"):"⚔️ Live PvP Battle";
+    let mid;
+    if(B.series){ mid="🏆 Best of "+B.series.bestOf+" · <b style='color:#fff'>Game "+B.series.game+"</b> · You <b style='color:#fff'>"+B.series.you+"</b> – <b style='color:#fff'>"+B.series.foe+"</b> Foe"; }
+    else { let em=1; try{ em=elemMult(legElem(B.you.si),legElem(B.foe.si)); }catch(e){}
+      const emc=em>1?"#3ddc84":em<1?"#ff8a8a":"#cfe0ff";
+      mid=legElem(B.you.si)+" <span style='color:#9fb3d6'>▸</span> "+legElem(B.foe.si)+(em!==1?" <span style='color:"+emc+"'>×"+em+"</span>":""); }
     el.innerHTML=vs+
-      "<div style='font-size:11.5px;font-weight:800;color:#ffe27a;letter-spacing:.2px;margin-top:2px'>"+r+"</div>"+
+      "<div style='font-size:11.5px;font-weight:800;color:#ffe27a;letter-spacing:.2px;margin-top:2px'>"+mid+"</div>"+
       (B._pvpStatus?"<div style='font-size:12px;font-weight:700;margin-top:3px;color:"+(B._pvpStatusCol||"#cfe0ff")+"'>"+B._pvpStatus+"</div>":"");
     el.style.display="block";
   }
