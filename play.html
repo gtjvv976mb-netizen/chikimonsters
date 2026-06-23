@@ -3048,15 +3048,17 @@ setInterval(updateWhaleTab,1000);
   function aiFoe(br){const sp=SPECIES[CORE_LEGEND_IDXS[ri(0,CORE_LEGEND_IDXS.length-1)]];const c={sp,isLegend:true,br:Math.max(1,br+ri(-2,2))};c.arenaSkills=roll3();ensureBattle(c);const tier=Math.min(5,1+Math.floor(c.br/6));c.arenaSkills.forEach(s=>c.cardTier[s]=tier);return c;}
   let B=null;
   function log(h){g("arenaLog").innerHTML=h;}
-  function sideHTML(side,who,label){
+  function sideHTML(side,who,playerName){
     const pct=Math.max(0,side.hp/side.maxhp*100);
     const ls=side.ls>0?` · <span style="color:#ff7a7a">🛡LS ${side.ls}</span>`:"";
+    const chiki=side.name||(side.c&&typeof nameOf==="function"?nameOf(side.c):"Chiki");
+    const sub=(playerName?("👤 "+playerName+" · "):"")+"BR "+(side.c.br||1);
     return `<div class="aPlate">
-        <div class="aNm" style="color:${who==='foe'?'#ffd93d':'#7fd0ff'}">${label} <small>${legElem(side.si)} · BR ${side.c.br||1}</small></div>
+        <div class="aNm" style="color:${who==='foe'?'#ffd93d':'#7fd0ff'}">${chiki} <small>${sub}</small></div>
         <div class="aHPbar"><div class="aHP ${who==='foe'?'foe':''}" style="width:${pct}%"></div><span class="aHPtxt">${Math.max(0,Math.round(side.hp))}/${side.maxhp}</span></div>
         <div class="aBadges"><span style="color:#62b9ff">🛡${side.shield}</span> &nbsp; <span style="color:#ffd93d">⚡${side.energy}</span>${ls}</div>
       </div>
-      <img src="${side.img}" alt="${side.name}">
+      <img src="${side.img}" alt="${chiki}">
       <div class="aShadow"></div>`;
   }
   const LEFT_FACERS=new Set([10]);   /* Galador's art faces LEFT; everyone else faces RIGHT */
@@ -3064,7 +3066,7 @@ setInterval(updateWhaleTab,1000);
     const yEl=g("aFyou"),fEl=g("aFfoe"); if(!yEl||!fEl)return;
     if(!B){yEl.innerHTML="";fEl.innerHTML="";return;}
     yEl.innerHTML=sideHTML(B.you,"you",(player&&player.handle)?player.handle:"You");
-    fEl.innerHTML=sideHTML(B.foe,"foe","🤖 Rival");
+    fEl.innerHTML=sideHTML(B.foe,"foe", B.foe.handle||(B.pvp?"Opponent":null));
     /* you must face RIGHT, foe must face LEFT — flip per the sprite's natural direction */
     yEl.style.setProperty("--face", LEFT_FACERS.has(B.you.si)? -1 : 1);
     fEl.style.setProperty("--face", LEFT_FACERS.has(B.foe.si)? 1 : -1);
@@ -3188,7 +3190,7 @@ setInterval(updateWhaleTab,1000);
         `<div class="aMatch2">${matchTxt}</div>`;
     }
     pvpTop();   /* keep the top-center info panel current (matchup + status) for AI & PvP */
-    if(B.turn!=="you"){ if(!B.pvp)pvpStatus("🤖 Rival is planning…","#8fa6c9"); if(ac)ac.innerHTML=""; return; }
+    if(B.turn!=="you"){ if(!B.pvp)pvpStatus("🤖 "+((B.foe&&B.foe.name)||"Opponent")+" is planning…","#8fa6c9"); if(ac)ac.innerHTML=""; return; }
     if(!B.pvp)pvpStatus("🎯 Your move — plan up to 3 cards","#9fc4ff");
     B.you.hand.forEach((slot,idx)=>{const t=cardTier(B.you.c,slot),k=ARCHK[slot];
       const qpos=q.indexOf(idx), selected=qpos>-1;
@@ -3296,7 +3298,7 @@ setInterval(updateWhaleTab,1000);
     else if(k==="jolt"){r=dealDamage(side,foe,TVAL.joltDmg[t],0);foe._joltNext=(foe._joltNext||0)+1;r+=` · ⚡drain`;}
     else if(k==="wither"){r=dealDamage(side,foe,TVAL.witherDmg[t],0);foe._weaken=Math.max(foe._weaken||0,TVAL.witherAmt[t]);r+=` · −${Math.round(TVAL.witherAmt[t]*100)}% next`;}
     else {r=dealDamage(side,foe,(k==="strike"?TVAL.strike[t]:TVAL.blast[t]),0);}
-    log(`${side.isYou?"You":"Rival"}: <b>${nm[0]} ${nm[1]}</b> ${r}`);
+    log(`${side.isYou?"You":((B.foe&&B.foe.name)||"Opponent")}: <b>${nm[0]} ${nm[1]}</b> ${r}`);
   }
   function flash(targetWho){const a=g(targetWho==="foe"?"aFfoe":"aFyou");if(a){a.classList.add("hit");setTimeout(()=>a.classList.remove("hit"),300);} const at=g(targetWho==="foe"?"aFyou":"aFfoe");if(at){at.classList.add("lunge");setTimeout(()=>at.classList.remove("lunge"),200);}}
   /* SELECTION: tap a card to add it to your turn plan (max 3, limited by energy); tap again to remove */
@@ -3325,7 +3327,7 @@ setInterval(updateWhaleTab,1000);
     const first=B.firstAttacker||"you", second=first==="you"?"foe":"you";
     const lists={you:yourSlots,foe:foeSlots}, seq=[], mx=Math.max(yourSlots.length,foeSlots.length);
     for(let i=0;i<mx;i++){ if(lists[first][i]!=null)seq.push([first,lists[first][i]]); if(lists[second][i]!=null)seq.push([second,lists[second][i]]); }
-    log(`⚔️ <b style="color:#ffd93d">${first==="you"?"You":"Rival"}</b> strike first this round!`);
+    log(`⚔️ <b style="color:#ffd93d">${first==="you"?"You":((B.foe&&B.foe.name)||"Opponent")}</b> strike first this round!`);
     render();
     let k=0;
     const step=()=>{
@@ -3434,13 +3436,13 @@ setInterval(updateWhaleTab,1000);
   }
   function pvpFoeSide(f){
     const si=ELEM_SI[f.element]!=null?ELEM_SI[f.element]:14;
-    return { c:{br:f.br||1, sp:SPECIES[si]}, si, name:f.name||"Rival", img:"chikidex/"+(DEX_IMG[si]||"mushrow")+".png",
+    return { c:{br:f.br||1, sp:SPECIES[si]}, si, name:f.name||"Opponent", handle:f.handle||null, img:"chikidex/"+(DEX_IMG[si]||"mushrow")+".png",
       st:{spd:42+(f.br||1)*2, mor:30, hp:f.maxhp, skill:30}, hp:f.hp, maxhp:f.maxhp, shield:f.shield||0, energy:0, buff:1, draw:[], hand:[], disc:[], ls:0, started:true, isYou:false, playedThisTurn:0 };
   }
   /* find a live opponent, then run the battle */
   function pvpMatchmake(c){
     if(!CHAIN.BACKEND||!player||!player.pk){ startBattle(); return; }                 /* no backend / guest → AI rival */
-    const snap={ name:nameOf(c), element:legElem(SPECIES.indexOf(c.sp)), br:c.br||1, arenaSkills:c.arenaSkills||[0,1,2], cardTier:c.cardTier||{} };
+    const snap={ name:nameOf(c), handle:(player.handle||player.addr||"Trainer"), element:legElem(SPECIES.indexOf(c.sp)), br:c.br||1, arenaSkills:c.arenaSkills||[0,1,2], cardTier:c.cardTier||{} };
     let cancelled=false; const ac=g("arenaCenter"); _pvpSearching=true;
     const stop=()=>{ cancelled=true; _pvpSearching=false; try{fetch(CHAIN.BACKEND+"/pvp/cancel",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:player.pk})});}catch(e){} };
     ac.innerHTML=`<div style="font-size:14px;color:#cdd8ee">🔎 Searching for a live opponent…</div>
@@ -3467,7 +3469,7 @@ setInterval(updateWhaleTab,1000);
   }
   /* ===== "Trainers ready to battle" lobby — see who's available & challenge them directly ===== */
   let _lobbyChallenged={}, _pvpSearching=false;
-  function legendSnap(){ const ls=myLegends().map(ensureLegendSkills); if(!ls.length)return null; const c=ls[0]; return {name:nameOf(c),element:legElem(SPECIES.indexOf(c.sp)),br:c.br||1,arenaSkills:c.arenaSkills||[0,1,2],cardTier:c.cardTier||{}}; }
+  function legendSnap(){ const ls=myLegends().map(ensureLegendSkills); if(!ls.length)return null; const c=ls[0]; return {name:nameOf(c),handle:(player.handle||player.addr||"Trainer"),element:legElem(SPECIES.indexOf(c.sp)),br:c.br||1,arenaSkills:c.arenaSkills||[0,1,2],cardTier:c.cardTier||{}}; }
   function lobbyActive(){ const ov=g("arenaOverlay"),bx=g("arenaBox"); return !!(ov&&ov.style.display!=="none"&&bx&&bx.classList.contains("introMode")&&!B&&CHAIN.BACKEND&&player&&player.pk); }
   async function pvpLobbyTick(){
     const panel=g("pvpLobby");
@@ -3595,7 +3597,7 @@ setInterval(updateWhaleTab,1000);
       B.you.hp=mySide==="a"?step.aHp:step.bHp; if(B.foe)B.foe.hp=mySide==="a"?step.bHp:step.aHp;
       const dMy=Math.round(prevMy-B.you.hp), dFoe=Math.round(prevFoe-(B.foe?B.foe.hp:0));
       const si=who==="you"?B.you.si:(B.foe?B.foe.si:14), nm=(PN[si]&&PN[si][step.slot])?PN[si][step.slot]:null;
-      log(`${who==="you"?"You":"Rival"}: <b>${ARCH_EMOJI[step.slot]||""} ${nm?nm[1]:step.card}</b>${step.crit?" <span style='color:#ffd93d'>💥CRIT</span>":""}`);
+      log(`${who==="you"?"You":((B.foe&&B.foe.name)||"Opponent")}: <b>${ARCH_EMOJI[step.slot]||""} ${nm?nm[1]:step.card}</b>${step.crit?" <span style='color:#ffd93d'>💥CRIT</span>":""}`);
       flash(who==="you"?"foe":"you"); renderTeams();
       if(dFoe>0)pvpFloat("foe","−"+dFoe+(step.crit?"💥":""),"#ff6b6b");
       if(dMy>0)pvpFloat("you","−"+dMy+(step.crit?"💥":""),"#ff6b6b");
