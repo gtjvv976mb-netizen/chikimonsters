@@ -7116,7 +7116,7 @@ requestAnimationFrame(frame);
 <script>
 (function(){
   if(window.__memeDexInit)return; window.__memeDexInit=true;
-  const GLB_VER="1";
+  const GLB_VER="2";
   /* The Meme Dynasty roster (the new generation). Add a row here as each member is confirmed. */
   const ROSTER=[
     {key:"popcat",  name:"Popcat",  emoji:"😺", tag:"the Click King", confirmed:true, voxel:true},
@@ -7130,13 +7130,13 @@ requestAnimationFrame(frame);
   #memeDexBtn{position:fixed;left:12px;bottom:108px;z-index:70;background:linear-gradient(180deg,#9b6bff,#6a3ad0);color:#fff;border:1px solid #4a25a0;border-radius:12px;padding:10px 15px;font-family:'Nunito',sans-serif;font-weight:800;font-size:14px;cursor:pointer;box-shadow:0 4px 0 #4a25a0,0 6px 14px rgba(0,0,0,.3)}
   #memeDexBtn:active{transform:translateY(2px);box-shadow:0 2px 0 #4a25a0}
   body.pre #memeDexBtn{display:none}
-  #memeDex{position:fixed;inset:0;z-index:210;display:none;background:radial-gradient(120% 80% at 50% 0%,#2a1a4d,#0c0a1a 78%);overflow-y:auto;color:#ece6ff;font-family:'Nunito',sans-serif}
-  #memeDex .wrap{max-width:760px;margin:0 auto;padding:18px 16px 50px}
+  #memeDex{position:fixed;inset:0;z-index:210;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(8,6,20,.74);-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);color:#ece6ff;font-family:'Nunito',sans-serif}
+  #memeDex .wrap{width:min(94vw,520px);max-height:90vh;overflow-y:auto;background:radial-gradient(120% 70% at 50% 0%,#2c1c52,#140f28 82%);border:1px solid #5a47a0;border-radius:20px;padding:16px 16px 20px;box-shadow:0 22px 60px rgba(0,0,0,.62)}
   #memeDex .hd{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
   #memeDex h1{font-size:23px;margin:0;color:#d9c6ff}#memeDex h1 small{color:#b9a4ff;font-size:13px;font-weight:700;display:block}
   #memeDex .x{cursor:pointer;font-size:22px;color:#b9a4ff}
   #memeDex .sub{color:#a99cd6;font-size:13px;margin:8px 0 14px;line-height:1.55}
-  #memeStage{width:100%;height:min(46vh,360px);background:radial-gradient(circle at 50% 40%,#3a2a66,#160f2e 72%);border:1px solid #4a3a80;border-radius:16px;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  #memeStage{width:100%;height:min(38vh,290px);background:radial-gradient(circle at 50% 42%,#3a2a66,#160f2e 72%);border:1px solid #4a3a80;border-radius:14px;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden}
   #memeStage .ld{color:#b9a4ff;font-weight:800;font-size:14px}
   #memeStage .big{font-size:96px;filter:drop-shadow(0 8px 14px rgba(0,0,0,.5))}
   #memeStage .memeArt{max-width:94%;max-height:94%;object-fit:contain;border-radius:16px;filter:drop-shadow(0 10px 24px rgba(0,0,0,.55))}
@@ -7176,7 +7176,7 @@ requestAnimationFrame(frame);
     if(_r)return true;
     const w=host.clientWidth||340,h=host.clientHeight||320;
     _s=new THREE.Scene();
-    _c=new THREE.PerspectiveCamera(45,w/h,0.1,1000); _c.position.set(0,0.6,4.2);
+    _c=new THREE.PerspectiveCamera(42,w/h,0.1,1000); _c.position.set(0,0,4.8); _c.lookAt(0,0,0);
     try{ _r=new THREE.WebGLRenderer({antialias:true,alpha:true}); }catch(e){ return false; }
     _r.setPixelRatio(Math.min(2,window.devicePixelRatio||1)); _r.setSize(w,h);
     _s.add(new THREE.AmbientLight(0xffffff,0.95));
@@ -7185,8 +7185,10 @@ requestAnimationFrame(frame);
     const loop=()=>{ if(_model)_model.rotation.y+=0.012; if(_r)_r.render(_s,_c); _raf=requestAnimationFrame(loop); }; loop();
     return true;
   }
+  function _resize(){ const host=$("memeStage"); if(!host||!_r)return; const w=host.clientWidth||340,h=host.clientHeight||300; _r.setSize(w,h); _c.aspect=w/h; _c.updateProjectionMatrix(); }
   function fit(model){ const box=new THREE.Box3().setFromObject(model),sz=box.getSize(new THREE.Vector3()),ce=box.getCenter(new THREE.Vector3());
-    const md=Math.max(sz.x,sz.y,sz.z)||1,sc=2.4/md; model.scale.setScalar(sc); model.position.sub(ce.multiplyScalar(sc)); }
+    const md=Math.max(sz.x,sz.y,sz.z)||1,sc=2.0/md; model.scale.setScalar(sc);
+    model.position.set(-ce.x*sc,-ce.y*sc,-ce.z*sc); }   /* center the bounding box exactly at the origin (camera looks at 0,0,0) */
   let _view="model";
   function fileFor(key,view){ return (view==="voxel"? key+"_voxel.glb" : key+".glb")+"?v="+GLB_VER; }
   function showModel(key,view){
@@ -7237,9 +7239,11 @@ requestAnimationFrame(frame);
     const sn=$("memeSoon"); if(sn)sn.onclick=()=>{ if(typeof showBanner==="function")showBanner("🎨 The roster's still open — submit your meme legend with #MemeDynasty!","info"); };
   }
 
-  function open(){ ov.style.display="block"; renderChips(); select(ROSTER[0].key); }
+  function open(){ ov.style.display="flex"; renderChips(); select(ROSTER[0].key); requestAnimationFrame(_resize); setTimeout(_resize,140); }
   function close(){ ov.style.display="none"; }
   btn.onclick=open; $("memeClose").onclick=close;
+  ov.addEventListener("click",e=>{ if(e.target===ov)close(); });   /* tap the dim backdrop to close */
+  window.addEventListener("resize",()=>{ if(ov.style.display!=="none")_resize(); });
 
   /* ---- in-game announcement (once) ---- */
   function announce(){
