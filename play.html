@@ -984,9 +984,11 @@ if(location.search.indexOf("embed")>-1){
   <img id="arenaBanner" src="ui/chikiseum-banner.png" alt="Chikiseum">
   <div id="arenaZoom"></div>
   <div id="arenaIntro">
+    <div id="hubChampBanner" style="display:none"></div>
     <div class="aiTabs">
       <button class="aiTab on" data-ai="cards">🃏 My Deck</button>
       <button class="aiTab" data-ai="mech">⚔️ How to Battle</button>
+      <button class="aiTab" data-ai="cup">🏆 Chikoria Cup</button>
       <button class="aiTab" data-ai="tok">✨ Rewards</button>
       <button class="aiTab" data-ai="welcome">📖 Guide</button>
     </div>
@@ -1016,6 +1018,17 @@ if(location.search.indexOf("embed")>-1){
       <div class="aiBlock glory"><h4>✨ Spend Glory</h4>Mint new skill cards from <b>150 ✨</b> (cost rises as your deck grows). Master cards: Tier 3→4 <b>120 ✨</b> · Tier 4→5 <b>300 ✨</b>.</div>
       <div class="aiBlock"><h4>🪙 $CHIKI costs</h4>Mint a card <b>25,000 $CHIKI</b> · Tier 4→5 mastery <b>50,000 $CHIKI</b> · feeding restores stamina. Every spend: <b>1% burned</b> · 49.5% reward pool · 49.5% team.</div>
       <div class="aiBlock"><h4>🔮 Mystic Market</h4>Hatch Legendary Eggs and acquire skill cards at Mithra's Mystic Market.</div>
+    </div>
+    <div class="aiPane" data-aip="cup">
+      <h3>🏆 The Chikoria Cup</h3>
+      <p>Chikoria's grand tournament. Legendaries clash in <b>live PvP</b> for real <b>SOL</b> — and the winner is crowned <b>Champion</b>, taking home the legendary <b>Chikoria Cup trophy</b>. 🌊</p>
+      <div style="text-align:center;margin:4px 0 12px"><img src="chikoriacup_art.png" alt="Chikoria Cup Trophy" style="width:150px;height:auto;filter:drop-shadow(0 8px 18px rgba(0,0,0,.55))"></div>
+      <div class="aiBlock"><h4>🥇 The Trophy</h4>The Champion is awarded the <b>Chikoria Cup</b> in full 3D. It <b>floats and spins above their Legendary</b> for the whole world to see, and shines in their <b>profile</b>. Only the <b>reigning champion</b> holds it — win the next Cup to take it.</div>
+      <div class="aiBlock"><h4>🗺️ Format</h4><b>Double-elimination</b> bracket of <b>8, 10, or 16</b> Legendaries. Lose twice and you're out — one loss still leaves a path through the lower bracket.</div>
+      <div class="aiBlock"><h4>🎟️ Entry</h4><b>100 ✨ Glory</b> to register. Open the <b>🏆 Chikoria Cup</b> button (upper-right) when a Cup is live to claim your seat.</div>
+      <div class="aiBlock"><h4>⚔️ Battles</h4>Every match is a <b>live PvP duel fought right here in the Chikiseum</b> — same deck, energy, and element triangle. No auto-resolve: outplay your opponent to advance.</div>
+      <div class="aiBlock glory"><h4>💰 Prizes</h4>Pool of <b>4 SOL</b> split across the top placements, with <b>1 SOL to the Champion</b>. Prizes land in your <b>Chiki Pouch</b> to claim. 🌊</div>
+      <p style="text-align:center;color:#9fb3d6;font-size:12.5px">Crystals up, Trainers. The next Cup awaits. 👑</p>
     </div>
     <div class="aiPane on" data-aip="cards">
       <div id="hubLeg3D"><div id="hub3d"><div class="ld">Loading 3D…</div></div><div id="hubLegStats"></div></div>
@@ -2496,8 +2509,14 @@ function renderProfile(){
       <div class="row"><span>Status</span><span>${statusText(c)}</span></div>
       <div class="row"><span>Tasks done</span><span style="color:var(--green)">${c.tasksDone}</span></div>
     </div>`).join("");
-  document.getElementById("profileBody").innerHTML=`
-    <div class="row"><span>🪪 Player name</span><span><b>${player.handle||"(unnamed)"}</b></span></div>
+  const isChamp=!!(window.CUP_CHAMPION&&player.pk&&window.CUP_CHAMPION.wallet===player.pk);
+  const champHTML=isChamp?`<div style="margin-bottom:12px;background:linear-gradient(180deg,#3a2c12,#241a08);border:2px solid #ffce4d;border-radius:12px;padding:12px 12px 10px;text-align:center">
+      <div id="profileTrophy" style="width:150px;height:150px;margin:0 auto"></div>
+      <div style="font-weight:900;color:#ffd966;font-size:15px;margin-top:2px">🏆 Chikoria Cup Champion</div>
+      <div style="font-size:11.5px;color:#e6d3a0;margin-top:2px">Reigning champion of Chikoria — the trophy floats above your Legendary in the world. 🌊</div>
+    </div>`:"";
+  document.getElementById("profileBody").innerHTML=champHTML+`
+    <div class="row"><span>🪪 Player name</span><span><b>${player.handle||"(unnamed)"}</b></span></div>`+`
     <div class="row"><span>Wallet</span><span style="font-size:11px">${player.addr}</span></div>
     <div style="margin:7px 0 2px"><a href="#" id="changeNameLink" style="color:#1f7bd6;text-decoration:underline;font-size:13px;font-weight:700">✏️ Change Name</a></div>
     <h3 style="font-family:'Nunito';color:#b5803a;margin:12px 0 5px;font-size:13px">🐣 Your Chiki${chikis.length>1?"s":""}</h3>
@@ -2516,6 +2535,7 @@ function renderProfile(){
       <div style="font-size:10.5px;color:#8fa6c9">SOL your Chiki has collected, waiting to be claimed · claim regularly (accrues up to ~${Math.round((SEED_CFG.accrualCap||1440)/60)}h)</div>
     </div>`:""}
     ${CHAIN.BACKEND&&player.pk&&player._earnEligible!==false?`<button id="claimBtn" style="width:100%;margin-top:9px;font-size:12px;padding:8px 10px">💰 Claim Chiki Pouch</button>`:""}`;
+  if(isChamp&&window.mountTrophy)try{window.mountTrophy(document.getElementById("profileTrophy"));}catch(e){}
   const ln=document.getElementById("changeNameLink");
   if(ln)ln.onclick=(e)=>{e.preventDefault();openRename();};
   const cl=document.getElementById("claimBtn");
@@ -6949,6 +6969,7 @@ requestAnimationFrame(frame);
   ov.innerHTML=`<div class="wrap">
     <div class="hd"><div><h1>🏆 <span class="gold">Chikoria Cup</span></h1><div class="sub" id="cupxSub">10 Legendaries · double elimination · battles fought in the Chikiseum 🌊</div></div>
       <div style="display:flex;gap:8px;align-items:center"><span id="cupxStatus" class="pill" style="color:#ffd166">—</span><span class="x" id="cupxClose">✕</span></div></div>
+    <div id="cupChampBanner" style="display:none"></div>
     <div class="card" id="cupxAdmin" style="display:none;border-color:#3ddc8455"><h3 style="margin-top:0">🛠 Admin controls</h3>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
         <select id="cupxSize" style="font-family:inherit;font-weight:800;font-size:13px;padding:9px 8px;border-radius:10px;border:1px solid #1c3d2e;background:#0f2a1e;color:#dff5e8;cursor:pointer">
@@ -6974,7 +6995,7 @@ requestAnimationFrame(frame);
     <div class="card" id="cupxRound" style="display:none"><div class="hd"><h3 style="margin:0" id="cupxRtitle"></h3>
       <div><button class="g" id="cupxReady">✅ Ready Up</button></div></div>
       <div id="cupxMatches"></div></div>
-    <div class="card champ" id="cupxChamp" style="display:none"><div class="c">👑</div><div class="w" id="cupxChampName"></div><div class="sub">Champion of the Chikoria Cup — <b class="gold">1 SOL</b> 🌊</div></div>
+    <div class="card champ" id="cupxChamp" style="display:none"><img src="chikoriacup_art.png" alt="Chikoria Cup" style="width:104px;height:auto;margin:0 auto 4px;display:block;filter:drop-shadow(0 6px 14px rgba(0,0,0,.55))"><div class="w" id="cupxChampName"></div><div class="sub">Champion of the Chikoria Cup — wins the <b class="gold">Chikoria Cup trophy</b> 🏆 (floats above their Legendary) + <b class="gold">1 SOL</b> 🌊</div></div>
     <div class="card" id="cupxStand" style="display:none"><h3 style="margin-top:0">🏅 Standings & Payouts</h3><div id="cupxStandings"></div><div class="sub" id="cupxPaid" style="margin-top:6px"></div></div>
   </div>`;
   document.body.appendChild(ov);
@@ -7274,6 +7295,80 @@ requestAnimationFrame(frame);
     }, 4000);
   }
   announce();
+})();
+</script>
+<!-- ===================== CHIKORIA CUP — reigning champion's floating trophy + badge ===================== -->
+<script>
+(function(){
+  if(window.__champTrophyInit)return; window.__champTrophyInit=true;
+  const BK=(window.CHAIN&&CHAIN.BACKEND)||"";
+  let champ=null, proto=null, loading=false, inst=null, instFor=null;
+  window.CUP_CHAMPION=null;
+
+  function esc(s){ return String(s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+  function bannerHTML(){
+    if(!champ||!champ.name)return "";
+    return '<div style="display:flex;align-items:center;gap:10px;background:linear-gradient(180deg,#2c2208,#1a1305);border:1px solid #ffce4d;border-radius:12px;padding:8px 12px;margin:0 0 12px">'
+      +'<img src="chikoriacup_art.png" alt="Chikoria Cup" style="width:42px;height:auto;flex:0 0 auto;filter:drop-shadow(0 3px 6px rgba(0,0,0,.5))">'
+      +'<div style="text-align:left;line-height:1.25"><div style="font-weight:900;color:#ffd966;font-size:13px">🏆 Reigning Chikoria Cup Champion</div>'
+      +'<div style="font-size:14px;color:#f3e6bd;font-weight:800">'+esc(champ.name)+'</div></div></div>';
+  }
+  function updateBanners(){ const h=bannerHTML(); ["hubChampBanner","cupChampBanner"].forEach(id=>{ const el=document.getElementById(id); if(el){ el.innerHTML=h; el.style.display=h?"block":"none"; } }); }
+  function poll(){ if(!BK){ updateBanners(); return; } fetch(BK+"/cup/champion").then(r=>r.json()).then(j=>{ champ=(j&&j.wallet)?j:null; window.CUP_CHAMPION=champ; updateBanners(); }).catch(()=>{}); }
+  poll(); setInterval(poll, 20000); setInterval(updateBanners, 4000);
+
+  function ensureProto(cb){
+    if(proto){cb(proto);return;}
+    if(loading||typeof THREE==="undefined"||!THREE.GLTFLoader)return; loading=true;
+    const loader=new THREE.GLTFLoader();
+    try{ if(window.MeshoptDecoder)loader.setMeshoptDecoder(window.MeshoptDecoder); }catch(e){}
+    loader.load("chikoriacup.glb?v=1", g=>{
+      const root=g.scene, box=new THREE.Box3().setFromObject(root), sz=new THREE.Vector3(); box.getSize(sz);
+      root.scale.setScalar(1/(sz.y||1));                                  /* normalize to 1-unit tall */
+      const b2=new THREE.Box3().setFromObject(root), c2=new THREE.Vector3(); b2.getCenter(c2); root.position.sub(c2);
+      root.traverse(o=>{ if(o.isMesh)o.castShadow=false; });
+      proto=root; loading=false; cb(proto);
+    }, undefined, ()=>{ loading=false; });
+  }
+  /* mount a small spinning trophy GLB viewer into any host element (used by the profile) */
+  window.mountTrophy=function(host){
+    if(!host||host._tr||typeof THREE==="undefined"||!THREE.WebGLRenderer)return;
+    const w=host.clientWidth||140,h=host.clientHeight||140; let r;
+    try{ r=new THREE.WebGLRenderer({antialias:true,alpha:true}); }catch(e){ return; }
+    r.setPixelRatio(Math.min(2,window.devicePixelRatio||1)); r.setSize(w,h);
+    host.innerHTML=""; host.appendChild(r.domElement); host._tr=true;
+    const sc=new THREE.Scene(), cam=new THREE.PerspectiveCamera(40,w/h,0.1,100); cam.position.set(0,0,3.4); cam.lookAt(0,0,0);
+    sc.add(new THREE.AmbientLight(0xffffff,1.0)); const d=new THREE.DirectionalLight(0xffffff,1.05); d.position.set(2,4,3); sc.add(d);
+    let m=null; ensureProto(p=>{ m=p.clone(true); m.scale.multiplyScalar(2.0); sc.add(m); });
+    (function loop(){ if(!host.isConnected){ try{r.forceContextLoss&&r.forceContextLoss();r.dispose();}catch(e){} host._tr=false; return; } if(m)m.rotation.y+=0.02; r.render(sc,cam); requestAnimationFrame(loop); })();
+  };
+  function champCreature(){
+    if(!champ||!champ.wallet||typeof creatures==="undefined")return null;
+    try{ return creatures.find(c=>c&&c.isLegend&&c.mesh&&c.holder&&c.holder.pk===champ.wallet)||null; }catch(e){ return null; }
+  }
+  function clearInst(){ if(inst){ try{scene.remove(inst);}catch(e){} inst=null; } instFor=null; }
+  function makeInst(c){
+    ensureProto(p=>{
+      if(instFor!==c||typeof scene==="undefined")return;
+      const cb=new THREE.Box3().setFromObject(c.mesh), csz=new THREE.Vector3(); cb.getSize(csz);
+      const ch=csz.y||14, ts=ch*0.5;                                      /* trophy ≈ half the creature's height */
+      const t=p.clone(true); t.scale.multiplyScalar(ts);
+      const wrap=new THREE.Group(); wrap.add(t);
+      wrap.userData.off=(cb.max.y-c.mesh.position.y)+ts*0.5+ch*0.18;       /* float above the head */
+      scene.add(wrap); inst=wrap;
+    });
+  }
+  function tick(now){
+    requestAnimationFrame(tick);
+    if(typeof scene==="undefined")return;
+    const c=champCreature();
+    if(!c){ if(inst)clearInst(); return; }
+    if(instFor!==c){ clearInst(); instFor=c; makeInst(c); }
+    if(inst){ const off=inst.userData.off||18;
+      inst.position.set(c.mesh.position.x, c.mesh.position.y+off+Math.sin(now*0.002)*1.2, c.mesh.position.z);
+      inst.rotation.y+=0.02; }
+  }
+  requestAnimationFrame(tick);
 })();
 </script>
 </body>
