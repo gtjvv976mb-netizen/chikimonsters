@@ -11,10 +11,10 @@
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%;overflow:hidden;background:#061426;font-family:'Nunito',system-ui,sans-serif;color:#fff}
   a{color:inherit;text-decoration:none}
-  #hero{position:fixed;inset:0;background:url("homepage-hero.png?v=meme2") center center/cover no-repeat;transition:opacity .6s}
+  #hero{position:fixed;inset:0;background:url("homepage-hero.png?v=meme5") center center/cover no-repeat;transition:opacity .6s}
 
   /* ---- vertical side tab bars ---- */
-  .sidebar{position:fixed;top:43%;transform:translateY(-50%);z-index:30;   /* nudged a step up */
+  .sidebar{position:fixed;top:43%;transform:translateY(-50%);z-index:30;transition:opacity .55s ease;   /* nudged a step up */
     display:flex;flex-direction:column;gap:clamp(10px,1.6vh,20px);align-items:center;
     background:rgba(8,16,30,.5);border:1px solid rgba(255,233,120,.3);border-radius:20px;padding:14px 9px;
     -webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);filter:drop-shadow(0 6px 14px rgba(0,0,0,.55))}
@@ -29,13 +29,13 @@
 
   /* ---- $CHIKI token = PLAY button (invisible circular hotspot over the swirl emblem) ---- */
   #tokenBtn{position:fixed;border-radius:50%;cursor:pointer;z-index:20;transform:translate(-50%,-50%);
-    box-shadow:0 0 0 0 rgba(120,200,255,.55);animation:tokpulse 2s ease-in-out infinite}
+    box-shadow:0 0 0 0 rgba(120,200,255,.55);animation:tokpulse 2s ease-in-out infinite;transition:opacity .45s ease}
   #tokenBtn:hover{box-shadow:0 0 34px 6px rgba(140,210,255,.75)}
   #tokenBtn:active{transform:translate(-50%,-50%) scale(.95)}
   @keyframes tokpulse{0%,100%{box-shadow:0 0 0 0 rgba(120,200,255,.0),0 0 18px 2px rgba(120,200,255,.35)}50%{box-shadow:0 0 0 14px rgba(120,200,255,0),0 0 30px 6px rgba(120,200,255,.55)}}
   #tokenHint{position:fixed;left:50%;transform:translateX(-50%);z-index:21;pointer-events:none;text-align:center;
     font-family:'Baloo 2','Nunito',sans-serif;font-weight:800;color:#eaf6ff;font-size:clamp(14px,2.2vw,20px);
-    text-shadow:0 2px 8px rgba(0,0,0,.75),0 0 16px rgba(80,160,255,.5);animation:hintbob 1.6s ease-in-out infinite;white-space:nowrap}
+    text-shadow:0 2px 8px rgba(0,0,0,.75),0 0 16px rgba(80,160,255,.5);animation:hintbob 1.6s ease-in-out infinite;white-space:nowrap;transition:opacity .45s ease}
   #tokenHint .tk{color:#ffe978}
   @keyframes hintbob{50%{transform:translateX(-50%) translateY(-5px)}}
 
@@ -64,8 +64,8 @@
 
   .fading{opacity:0 !important;pointer-events:none}
   body.intro #hero,body.intro .sidebar,body.intro #tokenBtn,body.intro #tokenHint,body.intro .panel,body.intro #pointer{opacity:0;pointer-events:none}
-  #introVid{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;background:#000;display:none;z-index:50}
-  body.intro #introVid{display:block}
+  #introVid{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;background:#000;opacity:0;pointer-events:none;transition:opacity .7s ease;z-index:50}
+  body.intro #introVid{opacity:1;pointer-events:auto}
   #skipHint{position:fixed;right:22px;bottom:18px;z-index:51;display:none;font-family:'Baloo 2';font-weight:800;font-size:13px;
     color:rgba(255,255,255,.85);background:rgba(0,0,0,.45);padding:7px 16px;border-radius:999px;border:1px solid rgba(255,255,255,.3);cursor:pointer}
   body.intro #skipHint{display:block}
@@ -194,7 +194,7 @@
   </div>
 </div>
 
-<video id="introVid" src="intro.mp4?v=meme3" playsinline preload="auto"></video>
+<video id="introVid" src="intro.mp4?v=meme5" playsinline preload="auto"></video>
 <div id="skipHint">Skip ▶</div>
 <iframe id="gameFrame" title="Chiki Monsters" allow="clipboard-write"></iframe>
 
@@ -230,13 +230,17 @@
 
   function toGame(){if(done)return;done=true;try{vid.pause();}catch(e){}
     document.body.classList.remove("intro");document.body.classList.add("playing");}
+  var started=false;
   function start(){
+    if(started)return; started=true;
     closeAll();
-    if(btn)btn.style.opacity="0"; if(hint)hint.style.opacity="0";
     if(!frame.src)frame.src="play.html?embed=1&v="+Date.now();   /* cache-bust so the latest game always loads */
-    setTimeout(function(){document.body.classList.add("intro");
-      var p=vid.play();if(p&&p.catch)p.catch(toGame);},450);
-    vid.onended=toGame;vid.onerror=toGame;skip.onclick=toGame;vid.onclick=toGame;
+    /* start the movie WITHIN the click gesture so audio is allowed; fall back to muted autoplay */
+    try{ vid.currentTime=0; }catch(e){}
+    var p=vid.play(); if(p&&p.catch)p.catch(function(){ vid.muted=true; var q=vid.play(); if(q&&q.catch)q.catch(toGame); });
+    /* next frame → add .intro so CSS cross-fades the homepage out and the movie in together */
+    requestAnimationFrame(function(){ document.body.classList.add("intro"); });
+    vid.onended=toGame; vid.onerror=toGame; skip.onclick=toGame; vid.onclick=toGame;
   }
   if(btn)btn.onclick=start;
 
@@ -252,7 +256,7 @@
     btn.style.left=cx+"px"; btn.style.top=cy+"px"; btn.style.width=d+"px"; btn.style.height=d+"px";
     if(hint){ hint.style.left=cx+"px"; hint.style.top=(cy+d*0.62)+"px"; }   /* hint sits just below the token */
   }
-  probe.onload=place; probe.src="homepage-hero.png?v=meme2"; addEventListener("resize",place); setTimeout(place,60);
+  probe.onload=place; probe.src="homepage-hero.png?v=meme5"; addEventListener("resize",place); setTimeout(place,60);
 })();
 </script>
 <script>
