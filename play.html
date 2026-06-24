@@ -1966,9 +1966,10 @@ function saveProfile(h){
     const data={pk:h.pk,bal:h.bal,sol:h.sol,earned:h.earned||0,savedAt:Date.now(),
       handle:h.handle||null,renames:h.renames||0,   /* player name follows the wallet across browsers/devices */
       ancientEgg:h.ancientEgg||null,                /* Sorceress: legendary egg incubation state */
+      memeEgg:h.memeEgg||null,                      /* Meme Egg incubation state (parallel to the legendary egg) */
       glory:h.glory||0,                             /* Chikoria Cup battle currency */
       taskCounts:h.taskCounts||null,                /* per-task completions by this player's Chikis (Done column) */
-      chikis:mine.map(c=>({sp:SPECIES.indexOf(c.sp),level:c.level,tasksDone:c.tasksDone||0,nick:c.nick||null,renames:c.renames||0,sleepCycles:c.sleepCycles||0,hungry:!!c.hungry,food:Math.round(c.food||0),stamina:Math.round(c.stamina||0),xp:Math.floor(c.xp||0),isLegend:!!c.isLegend,tending:!!c.tending,arenaSkills:c.arenaSkills||null,br:c.br||1,battleXp:Math.floor(c.battleXp||0),skillPts:c.skillPts||0,cardTier:c.cardTier||null,arenaStam:c.arenaStam!=null?Math.round(c.arenaStam):null,arenaSleepUntil:c.arenaSleepUntil||0,sleeping:c.state==="sleeping",sleepUntil:c.sleepUntil||0}))};   /* persist the nap so a refresh RESUMES it instead of restarting */
+      chikis:mine.map(c=>({sp:SPECIES.indexOf(c.sp),level:c.level,tasksDone:c.tasksDone||0,nick:c.nick||null,renames:c.renames||0,sleepCycles:c.sleepCycles||0,hungry:!!c.hungry,food:Math.round(c.food||0),stamina:Math.round(c.stamina||0),xp:Math.floor(c.xp||0),isLegend:!!c.isLegend,tending:!!c.tending,tendingMeme:!!c.tendingMeme,arenaSkills:c.arenaSkills||null,br:c.br||1,battleXp:Math.floor(c.battleXp||0),skillPts:c.skillPts||0,cardTier:c.cardTier||null,arenaStam:c.arenaStam!=null?Math.round(c.arenaStam):null,arenaSleepUntil:c.arenaSleepUntil||0,sleeping:c.state==="sleeping",sleepUntil:c.sleepUntil||0}))};   /* persist the nap so a refresh RESUMES it instead of restarting */
     localStorage.setItem(profileKey(h.pk),JSON.stringify(data));
     if(CHAIN.BACKEND)fetch(CHAIN.BACKEND+"/profile",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:h.pk,profile:data})}).catch(()=>{});
   }catch(e){}
@@ -1978,6 +1979,7 @@ function loadProfile(pk){try{const s=localStorage.getItem(profileKey(pk));return
 function offlineProgress(c,elapsedSec){
   if(c.isLegend)return 0;                                                     /* legendaries don't work/earn/eat */
   if(c.tending&&c.holder&&c.holder.ancientEgg&&!c.holder.ancientEgg.hatched)return 0;    /* tenders tend the Legendary Egg — tickCare spends their food */
+  if(c.tendingMeme&&c.holder&&c.holder.memeEgg&&!c.holder.memeEgg.hatched)return 0;      /* Meme-Egg tenders earn nothing — tickMemeCare spends their food */
   /* If mid timed-nap, let the WALL CLOCK finish it — don't re-simulate (that's what was resetting the timer on every return). */
   if(c.state==="sleeping"&&!c.hungry&&c.sleepUntil){
     if(Date.now()<c.sleepUntil)return 0;                                       /* still napping → leave it; the tick wakes it by real time */
@@ -2014,6 +2016,7 @@ function restoreChikis(h,saved){
   const since=saved._serverSavedAt||saved.savedAt||0;
   const elapsed=since?Math.max(0,(Date.now()-since)/1000):0;
   if(saved.ancientEgg)h.ancientEgg=saved.ancientEgg;   /* set FIRST so offlineProgress knows the carers are tending the egg, not working */
+  if(saved.memeEgg)h.memeEgg=saved.memeEgg;            /* restore Meme Egg incubation */
   let totalTasks=0,lvUps=0,anyHungry=false;
   (saved.chikis||[]).forEach(cd=>{
     const idx=(cd.sp>=0?cd.sp:ri(0,SPECIES.length-1));
@@ -2024,6 +2027,7 @@ function restoreChikis(h,saved){
     c.food=(cd.food!=null?cd.food:foodMaxSec(c.level));   /* restore the food bar (offlineProgress drains it for time away) */
     if(cd.stamina!=null)c.stamina=Math.max(0,Math.min(cd.stamina,maxStamOf(c.level)));   /* restore stamina — refreshing must NOT refill it */
     if(cd.tending)c.tending=true;                         /* this Chiki was chosen to tend the Legendary Egg */
+    if(cd.tendingMeme)c.tendingMeme=true;                 /* …or the Meme Egg */
     if(cd.isLegend)c.isLegend=true;
     if(cd.arenaStam!=null)c.arenaStam=cd.arenaStam; if(cd.arenaSleepUntil)c.arenaSleepUntil=cd.arenaSleepUntil;   /* arena stamina + sleep cooldown */
     if(cd.arenaSkills)c.arenaSkills=cd.arenaSkills;   /* legendary's 3-of-7 Chi skills */
@@ -2058,6 +2062,15 @@ function restoreChikis(h,saved){
       else if(fed<=0)addFeed(`🔮 <b>Mithra:</b> your <b>Legendary Egg</b> is incubating but <b>paused</b> — your Chiki(s) ran out of food. Feed them to resume! 🍖`);
       else { const left=careLeft/carerN, lt=left>=60?Math.floor(left/60)+"h "+Math.round(left%60)+"m":Math.max(1,Math.ceil(left))+"m";
         addFeed(`🔮 <b>Mithra:</b> your <b>Legendary Egg</b> is incubating — about <b>${lt}</b> of care left (keep your Chiki(s) fed). Tap the 🔮 Mystic Market to watch.`); }
+    }
+  }
+  /* fast-forward the Meme Egg's care for time away too */
+  if(saved.memeEgg && h.memeEgg && !h.memeEgg.hatched){
+    if(typeof window.tickMemeCare==="function")window.tickMemeCare(h);
+    const e=h.memeEgg; if(e&&!e.hatched){ const need=e.need||360, done=Math.min(need,e.careMin||0), careLeft=Math.max(0,need-done);
+      const cn=Math.max(1,creatures.filter(c=>c.holder===h&&!c.isLegend&&c.tendingMeme).length), left=careLeft/cn;
+      if(done>=need)addFeed(`🥚 Your <b>Meme Egg</b> is <b>ready to hatch!</b> 🌊`);
+      else { const lt=left>=60?Math.floor(left/60)+"h "+Math.round(left%60)+"m":Math.max(1,Math.ceil(left))+"m"; addFeed(`🥚 Your <b>Meme Egg</b> is incubating — about <b>${lt}</b> of care left (keep the tenders fed).`); }
     }
   }
   if(saved.glory!=null)h.glory=saved.glory;            /* Chikoria Cup battle currency */
@@ -2132,6 +2145,7 @@ function earnerIndex(c){ if(!player||c.holder!==player||c.isLegend||c.bot)return
 function assignTask(c,forceRare){
   if(c.isLegend){ c.task=null;c.target=null;c.state="wander";c.nextTaskIn=rng(10,20); return; }   /* Legendaries are defenders of Chikoria — they don't do tasks or earn */
   if(c.tending&&c.holder&&c.holder.ancientEgg&&!c.holder.ancientEgg.hatched){ c.task=null;c.target=null;c.state="wander";c.nextTaskIn=rng(6,12); return; }   /* chosen tenders tend the egg instead of working */
+  if(c.tendingMeme&&c.holder&&c.holder.memeEgg&&!c.holder.memeEgg.hatched){ c.task=null;c.target=null;c.state="wander";c.nextTaskIn=rng(6,12); return; }   /* Meme-Egg tenders don't take tasks */
   let t;
   const _ci=earnerIndex(c);
   if(_ci>=0&&player.pk&&player._lastClaim!=null){   /* YOUR earner Chiki performs tasks IN ITS REWARD ORDER — the task you SEE is the reward you GET */
@@ -4022,6 +4036,42 @@ setInterval(updateWhaleTab,1000);
     renderSorc();
   }
 
+  /* ===== MEME EGG incubation — same mechanics as the Legendary egg, but its own nest, tenders & timer.
+     need=360 care-minutes → 1 tender ≈ 6h, 2 fed tenders ≈ 3h. Runs in PARALLEL with the Legendary egg. ===== */
+  const MEME_CARE_NEED=360;
+  function memeCarers(h){return creatures.filter(c=>c.holder===h&&!c.isLegend&&c.tendingMeme);}
+  function fedMemeCarers(h){return memeCarers(h).filter(c=>(c.food||0)>0).length;}
+  function tickMemeCare(h){
+    const e=h&&h.memeEgg; if(!e||e.hatched)return;
+    const need=e.need||MEME_CARE_NEED;
+    const now=Date.now(); let sec=(now-(e.lastAt||now))/1000; e.lastAt=now;
+    if(sec<=0)return;
+    let careSec=0;
+    memeCarers(h).forEach(c=>{
+      const spend=Math.min(sec, c.food||0);                          /* a tender cares only while it has food */
+      if(spend>0){ c.food=Math.max(0,(c.food||0)-spend); careSec+=spend; c.stamina=Math.max(0,(c.stamina||0)-spend*0.06); }
+      if((c.food||0)<=0){ c.hungry=true; if(c.state!=="sleeping"){freeSpot&&freeSpot(c);c.task=null;c.target=null;c.state="sleeping";c.sleepT=0;} }  /* famished → sleeps until fed */
+    });
+    if(careSec>0)e.careMin=Math.min(need,(e.careMin||0)+careSec/60);
+    if((e.careMin||0)>=need && !e.hatched && !e._fired){ e._fired=true; if(typeof window.completeMemeHatch==="function")window.completeMemeHatch(); }
+  }
+  /* start incubating a freshly-bought Meme Egg with `tenderCount` tenders (1 or 2) — picks the player's free workers */
+  function startMemeIncubation(info,tenderCount){
+    if(!player||!info)return 0;
+    creatures.forEach(c=>{if(c.holder===player&&!c.isLegend)c.tendingMeme=false;});
+    const avail=creatures.filter(c=>c.holder===player&&!c.isLegend&&!c.tending);   /* don't steal Legendary-egg tenders */
+    const n=Math.max(1,Math.min(tenderCount||1,2,avail.length||1));
+    avail.slice(0,n).forEach(c=>{ c.tendingMeme=true; if(typeof freeSpot==="function")freeSpot(c); c.task=null;c.target=null; if(c.state!=="sleeping")c.state="wander"; });
+    player.memeEgg={careMin:0,lastAt:Date.now(),hatched:false,need:MEME_CARE_NEED,char:info.char,name:info.name,edition:info.edition,cap:info.cap,rarity:info.rarity,hatchId:info.id||info.hatchId||null};
+    const cn=memeCarers(player).length||1;
+    if(typeof addFeed==="function"){ const names=memeCarers(player).map(c=>nameOf(c)).join(" & ")||"your Chiki"; addFeed(`🥚 <b>${names}</b> ${cn>1?"are":"is"} now tending a <b>Meme Egg</b> — hatches in ~${cn>1?"3h":"6h"}. Keep ${cn>1?"them":"it"} fed! 🌊`); }
+    if(player.pk&&typeof saveProfile==="function")saveProfile(player);
+    if(typeof refreshUI==="function")refreshUI();
+    return cn;
+  }
+  window.tickMemeCare=tickMemeCare; window.memeCarers=memeCarers; window.fedMemeCarers=fedMemeCarers; window.startMemeIncubation=startMemeIncubation; window.MEME_CARE_NEED=MEME_CARE_NEED;
+  setInterval(()=>{ if(player&&player.memeEgg&&!player.memeEgg.hatched)tickMemeCare(player); }, 12000);
+
   /* origin lore shown at hatch — keyed by Legendary species name */
   const LEGEND_LORE={
     Galador:{ep:"The Tide Sovereign",lore:"Risen from the lightless abyss of the eastern sea — ancient and patient as the ocean itself.",tag:"The tide does not rush. The tide simply wins."},
@@ -5739,6 +5789,39 @@ setInterval(()=>{                                  /* show the egg + gentle bob 
   _eggT+=0.06;
   if(eggMesh){ eggMesh.visible=inc; if(inc){eggMesh.position.y=eggNest.gy+Math.sin(_eggT)*2; eggMesh.rotation.y+=0.004;} }
   if(eggAura){ eggAura.visible=inc; if(inc&&typeof animateAura==="function")animateAura(eggAura,performance.now()/1000,0.06); }
+},60);
+/* ===== MEME EGG nest — a second 3D egg landmark, shown while a Meme Egg incubates ===== */
+let memeEggNest=null, memeEggMesh=null, memeEggAura=null, _memeEggT=0;
+function makeMemeEggNest(){
+  if(typeof THREE==="undefined")return;
+  let tx=108,ty=64,found=null;   /* offset from the legendary nest so the two eggs don't overlap */
+  for(let r=0;r<34&&!found;r++)for(let dx=-r;dx<=r&&!found;dx++)for(let dy=-r;dy<=r&&!found;dy++){
+    const nx=tx+dx,ny=ty+dy; if(nx<5||ny<5||nx>COLS-5||ny>ROWS-5)continue;
+    if(walkable(nx*TILE+TILE/2,ny*TILE+TILE/2))found={x:nx,y:ny};
+  }
+  if(!found)found={x:tx,y:ty};
+  const wx=found.x*TILE+TILE/2, wz=found.y*TILE+TILE/2, gy=heightY(wx,wz);
+  memeEggNest={x:wx,z:wz,gy};
+  if(typeof THREE.GLTFLoader!=="undefined"){
+    const ld=new THREE.GLTFLoader(); try{ if(window.MeshoptDecoder)ld.setMeshoptDecoder(window.MeshoptDecoder); }catch(e){}
+    ld.load("memeegg.glb?v=1",gltf=>{
+      const root=gltf.scene;
+      root.traverse(o=>{if(o.isMesh){o.castShadow=true; if(o.geometry&&o.geometry.attributes&&o.geometry.attributes.color&&o.material){o.material.vertexColors=true;if(o.material.color)o.material.color.setRGB(1,1,1);o.material.needsUpdate=true;}}});
+      const box=new THREE.Box3().setFromObject(root); const size=new THREE.Vector3(); box.getSize(size);
+      const k=EGG_MODEL_HEIGHT/Math.max(0.001,size.y);
+      const wrap=new THREE.Group(); wrap.add(root); wrap.scale.setScalar(k);
+      wrap.position.set(wx,gy,wz); wrap.visible=false; scene.add(wrap); memeEggMesh=wrap;
+    },undefined,()=>{});
+  }
+  if(typeof buildAura==="function"){ memeEggAura=buildAura("gold",true); memeEggAura.scale.setScalar(1.9); memeEggAura.position.set(wx,gy+6,wz); memeEggAura.visible=false; scene.add(memeEggAura); }
+}
+setTimeout(makeMemeEggNest,750);
+setInterval(()=>{
+  if(!memeEggNest)return;
+  const inc=!!(player&&player.memeEgg&&!player.memeEgg.hatched);
+  _memeEggT+=0.06;
+  if(memeEggMesh){ memeEggMesh.visible=inc; if(inc){memeEggMesh.position.y=memeEggNest.gy+Math.sin(_memeEggT)*2; memeEggMesh.rotation.y+=0.004;} }
+  if(memeEggAura){ memeEggAura.visible=inc; if(inc&&typeof animateAura==="function")animateAura(memeEggAura,performance.now()/1000,0.06); }
 },60);
 /* ===== Chikiseum arena — placed once on a flat, empty, walkable spot (no obstruction) ===== */
 let chikiseumMesh=null, chikiseumSpot=null;
@@ -7544,6 +7627,13 @@ requestAnimationFrame(frame);
     const open2=saleOpenNow();
     const total=(s&&s.total)||ROSTER.reduce((a,m)=>a+(m.cap||10),0);
     const el=$("meSupply");
+    /* already incubating a Meme Egg? show that instead of a buy button (1 egg of this kind at a time) */
+    if(window.player&&player.memeEgg&&!player.memeEgg.hatched){
+      const e=player.memeEgg, need=e.need||360, done=Math.min(need,e.careMin||0), pct=Math.round(done/need*100);
+      if(el)el.innerHTML="🥚 <b>Your Meme Egg is incubating</b> ("+pct+"%) — tend it in Chikoria! 🌊";
+      const hb0=$("meHatch"); if(hb0){ hb0.disabled=true; hb0.innerHTML="🥚 Incubating… "+pct+"%"; }
+      return;
+    }
     if(el){
       if(_testMode) el.innerHTML="🧪 <b>Test Mode</b> — free hatch, no $CHIKI, no real NFT";
       else if(!open2) el.innerHTML="🔒 <b>Hatching opens at official launch</b> — stay tuned on X! 🥚";
@@ -7590,7 +7680,7 @@ requestAnimationFrame(frame);
       const r=await fetch(BK+"/meme/hatch",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:player.pk,paySig})});
       const j=await r.json();
       if(!j||j.error){ if(typeof showBanner==="function")showBanner("⚠️ "+((j&&j.error)||"hatch failed"),"error"); if(hb)hb.disabled=false; return; }
-      showReveal(j.hatch); eggRefresh();
+      startIncubation(j.hatch); eggRefresh();   /* egg now incubates in-world; reveal happens when it hatches */
     }catch(e){ if(typeof showBanner==="function")showBanner("⚠️ "+(e.message||e),"error"); }
     if(hb)hb.disabled=false;
   }
@@ -7640,6 +7730,37 @@ requestAnimationFrame(frame);
       undefined, ()=>{ if(next)next(); else { if(ld.parentNode)ld.remove(); host.innerHTML='<div class="ld3">3D model unavailable —<br>check it\'s deployed</div>'; } });
     load(key+"_build.glb?v="+GLB_VER, ()=>load(key+".glb?v="+GLB_VER, null));   /* prefer the in-game voxel build, fall back to the smooth GLB */
   }
+  /* After buying, the egg INCUBATES in-world (6h with 1 tender / 3h with 2). Pick tenders here. */
+  function startIncubation(hatch){
+    let avail=0; try{ if(typeof creatures!=="undefined"&&window.player) avail=creatures.filter(c=>c.holder===player&&!c.isLegend&&!c.tending).length; }catch(e){}
+    const m=ROSTER_BY[hatch.char]||{name:hatch.name,emoji:"❓"};
+    let r2=$("memeReveal"); if(!r2){ r2=document.createElement("div"); r2.id="memeReveal"; document.body.appendChild(r2); }
+    r2.style.display="flex";
+    const twoBtn=avail>=2?'<button id="inc2">🥚🥚 2 Tenders · ~3h</button>':'';
+    r2.innerHTML='<div class="rv"><img src="ui/meme-egg.png?v=meme4" style="width:150px;max-width:48vw" onerror="this.outerHTML=\'<div style=&quot;font-size:110px&quot;>🥚</div>\'">'
+      +'<div class="rvName">'+(m.emoji||"")+' '+m.name+' is on the way!</div>'
+      +'<div class="rvMsg">Your <b>Meme Egg</b> must be <b>tended to hatch</b>. Assign Chikis to it — they stop working &amp; get hungry, but more tenders hatch it faster. When it hatches you get a playable Legendary <b>and</b> your NFT mints on-chain. 🌊</div>'
+      +(avail<1?'<div class="rvMsg" style="color:#ffb3b3">You need at least 1 working Chiki to tend the egg — get a Chiki first.</div>'
+               :'<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:14px"><button id="inc1">🥚 1 Tender · ~6h</button>'+twoBtn+'</div>')
+      +'</div>';
+    const go=(n)=>{ const cn=window.startMemeIncubation?window.startMemeIncubation(hatch,n):0; r2.style.display="none"; if(typeof showBanner==="function")showBanner("🥚 Meme Egg incubating — ~"+(cn>1?"3h":"6h")+". Keep your tender(s) fed! Find the egg in Chikoria.","info"); };
+    const b1=$("inc1"); if(b1)b1.onclick=()=>go(1);
+    const b2=$("inc2"); if(b2)b2.onclick=()=>go(2);
+  }
+  /* called by the world tick when the egg's care timer completes → reveal + mint */
+  window.completeMemeHatch=function(){
+    try{
+      const e=window.player&&player.memeEgg; if(!e||e.hatched)return;
+      e.hatched=true;
+      try{ if(typeof creatures!=="undefined") creatures.forEach(c=>{ if(c.holder===player&&!c.isLegend)c.tendingMeme=false; }); }catch(_){}
+      const info={char:e.char,name:e.name,edition:e.edition,cap:e.cap,rarity:e.rarity}, hatchId=e.hatchId;
+      player.memeEgg=null;
+      if(player.pk&&typeof saveProfile==="function")saveProfile(player);
+      const BK=(window.CHAIN&&CHAIN.BACKEND)||"";
+      if(BK&&hatchId&&player.pk) fetch(BK+"/meme/hatched",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:player.pk,hatchId})}).catch(()=>{});
+      showReveal(info);
+    }catch(err){}
+  };
   function showReveal(h,isTest){
     isTest=isTest||h.test;
     let r2=$("memeReveal"); if(!r2){ r2=document.createElement("div"); r2.id="memeReveal"; document.body.appendChild(r2); }
@@ -7689,7 +7810,7 @@ requestAnimationFrame(frame);
     fetch(BK+"/meme/mine?wallet="+player.pk).then(r=>r.json()).then(j=>{ const items=(j&&j.items)||[];
       if(!items.length){ list.innerHTML="<div style='color:#a99cd6;font-size:13px'>No Meme NFTs yet — hatch a Meme Legendary Egg! 🥚</div>"; return; }
       list.innerHTML=items.map(it=>{ const m=ROSTER_BY[it.char]||{emoji:"❓"};
-        const st=it.status==="minted"?'<a class="ns minted" href="https://explorer.solana.com/address/'+(it.mintAddr||"")+'?cluster=devnet" target="_blank" rel="noopener" style="text-decoration:none">✅ On-chain ↗</a>':'<span class="ns pending">⏳ Minting…</span>';
+        const st=it.status==="minted"?'<a class="ns minted" href="https://explorer.solana.com/address/'+(it.mintAddr||"")+'?cluster=devnet" target="_blank" rel="noopener" style="text-decoration:none">✅ On-chain ↗</a>':(it.status==="incubating"?'<span class="ns pending">🥚 Incubating…</span>':'<span class="ns pending">⏳ Minting…</span>');
         const trade=it.listed?'<button class="meSell unlist" data-unlist="'+it.id+'">🏷️ Listed '+it.listed.price+' ◎ · Unlist</button>':'<button class="meSell" data-list="'+it.id+'">🏪 List for sale</button>';
         return '<div class="meNft"><img src="'+it.char+'_art.png?v=meme4" onerror="this.style.visibility=\'hidden\'"><div style="flex:1"><div class="nn">'+(m.emoji||"")+' '+it.name+'</div><div class="ne">Edition #'+String(it.edition).padStart(3,"0")+'</div><div style="margin-top:5px">'+trade+'</div></div>'+st+'</div>'; }).join("");
       list.querySelectorAll("[data-list]").forEach(b=>b.onclick=()=>listNft(b.getAttribute("data-list")));
