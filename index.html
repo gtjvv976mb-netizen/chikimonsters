@@ -11,7 +11,7 @@
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%;overflow:hidden;background:#061426;font-family:'Nunito',system-ui,sans-serif;color:#fff}
   a{color:inherit;text-decoration:none}
-  #hero{position:fixed;inset:0;background:url("homepage-hero.png?v=meme5") center center/cover no-repeat;transition:opacity .6s}
+  #hero{position:fixed;inset:0;background:url("homepage-hero.png?v=meme6") center center/cover no-repeat;transition:opacity .6s}
 
   /* ---- vertical side tab bars ---- */
   .sidebar{position:fixed;top:43%;transform:translateY(-50%);z-index:30;transition:opacity .55s ease;   /* nudged a step up */
@@ -255,11 +255,11 @@
     var vw=innerWidth,vh=innerHeight,iw=probe.naturalWidth,ih=probe.naturalHeight;
     var s=Math.max(vw/iw,vh/ih),dw=iw*s,dh=ih*s,xOff=(vw-dw)/2,yOff=(vh-dh)/2;
     var cx=xOff+SW_X*dw, cy=yOff+SW_Y*dh;
-    var d=Math.max(48,0.115*dw);           /* token image sized to match the swirl emblem in the bg exactly */
+    var d=Math.max(44,0.085*dw);           /* token button: small coin sitting in the wreath (swirl painted out of bg) */
     btn.style.left=cx+"px"; btn.style.top=cy+"px"; btn.style.width=d+"px"; btn.style.height=d+"px";
     if(hint){ hint.style.left=cx+"px"; hint.style.top=(cy+d*0.62)+"px"; }   /* hint sits just below the token */
   }
-  probe.onload=place; probe.src="homepage-hero.png?v=meme5"; addEventListener("resize",place); setTimeout(place,60);
+  probe.onload=place; probe.src="homepage-hero.png?v=meme6"; addEventListener("resize",place); setTimeout(place,60);
 })();
 </script>
 <script>
