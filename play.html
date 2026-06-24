@@ -1172,7 +1172,7 @@ if(location.search.indexOf("embed")>-1){
   <ul>
     <li><b>Five Legendary Chikimons</b> — Galador (💧 Water), Adalor (✨ Light), Tyrannos (🐾 Beast), Grovador (⚡ Storm) &amp; Dragonos (🔥 Fire) — descend from the ancient royal bloodlines and wield the power of <b>Chi</b>, each blazing with its own aura.</li>
     <li>Hatch one from a <b>Legendary Egg</b> at <b>🔮 Mithra's Mystic Market</b> (open now). Each is born owning <b>3 of its 12</b> skill cards — view your Legendary in HD 3D and build your deck in the <b>⚔️ Chikiseum hub</b>, live today.</li>
-    <li>⚔️ <b>Battles launch with the Chikoria Cup — tomorrow.</b> Legendaries duel with Energy &amp; turn-based combat (elemental strengths &amp; weaknesses) to win <b>✨ Glory</b>, then collect &amp; master cards.</li>
+    <li>⚔️ <b>The Chikoria Cup is LIVE — battles are open now!</b> Legendaries duel in <b>live PvP</b> with Energy &amp; turn-based combat (elemental strengths &amp; weaknesses) to win <b>✨ Glory</b> &amp; real <b>SOL</b>, then collect &amp; master cards. Tap <b>🏆 Chikoria Cup</b> (upper-right) to enter.</li>
   </ul>
   <h3>📈 XP, events &amp; achievements</h3>
   <p>Chikis <b>earn XP from every task</b> (a growth stat), but leveling itself is earned by completing tasks and then paying — see above.
@@ -4116,7 +4116,7 @@ setInterval(updateWhaleTab,1000);
         <div id="legNameErr" class="onbErr"></div>
         <div class="sStat" style="margin-top:6px">Awakened Chi skills (3 of 7):</div>
         <div>${skillsTxt.map(s=>`<span class="sSkill" style="color:${sp.body};border-color:${sp.body}">${s}</span>`).join("")}</div>
-        <div class="sNote" style="margin-top:12px;border:1px solid #6b4ea0;border-radius:10px;padding:8px">⚔️ <b style="color:#c79bff">Your Legendary will be activated in the Chikoria Cup Patch</b> — the arena is being polished, and battles are coming soon!</div>
+        <div class="sNote" style="margin-top:12px;border:1px solid #6b4ea0;border-radius:10px;padding:8px">⚔️ <b style="color:#c79bff">The Chikoria Cup is LIVE!</b> Take your Legendary into <b>live PvP</b> in the Chikiseum — tap <b>🏆 Chikoria Cup</b> (upper-right) to register and battle for <b>✨ Glory</b> &amp; <b>SOL</b>.</div>
         <button class="sBtn gold" id="legNameGo" style="margin-top:12px">✅ Confirm Name</button>`;
       const inp=g("legNameInp"); if(inp)setTimeout(()=>{inp.focus();inp.select();},60);
       const finish=()=>{
@@ -4125,7 +4125,7 @@ setInterval(updateWhaleTab,1000);
         if(nameTaken(usedChikiNames,v)||ownChikiNameTaken(v,c)){const e=g("legNameErr");if(e)e.textContent="That name is taken — choose another.";return;}
         c.nick=v; c.named=true;
         if(player&&player.pk){usedChikiNames.add(v.toLowerCase());saveNameDB();}
-        addFeed(`👑 You named your Legendary <b style="color:${sp.body}">${v}</b> — a defender of Chikoria! It will be activated in the <b>Chikoria Cup Patch</b>.`);
+        addFeed(`👑 You named your Legendary <b style="color:${sp.body}">${v}</b> — a defender of Chikoria! Enter the <b>🏆 Chikoria Cup</b> (live now) to battle in PvP for ✨ Glory &amp; SOL.`);
         if(player&&player.pk&&typeof saveProfile==="function")saveProfile(player);
         if(typeof refreshUI==="function")refreshUI();
         revealing=false; renderSorc();
