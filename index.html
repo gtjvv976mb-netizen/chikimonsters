@@ -35,7 +35,7 @@
   #tokenBtn:active{transform:translate(-50%,-50%) scale(.95)}
   @keyframes tokglow{0%,100%{filter:drop-shadow(0 5px 12px rgba(0,0,0,.5)) drop-shadow(0 0 8px rgba(120,200,255,.4))}
     50%{filter:drop-shadow(0 5px 12px rgba(0,0,0,.5)) drop-shadow(0 0 24px rgba(120,200,255,.85))}}
-  #tokenHint{position:fixed;left:50%;transform:translateX(-50%);z-index:21;pointer-events:none;text-align:center;
+  #tokenHint{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:21;pointer-events:none;text-align:center;
     font-family:'Baloo 2','Nunito',sans-serif;font-weight:800;color:#eaf6ff;font-size:clamp(14px,2.2vw,20px);
     text-shadow:0 2px 8px rgba(0,0,0,.75),0 0 16px rgba(80,160,255,.5);animation:hintbob 1.6s ease-in-out infinite;white-space:nowrap;transition:opacity .45s ease}
   #tokenHint .tk{color:#ffe978}
@@ -257,7 +257,7 @@
     var cx=xOff+SW_X*dw, cy=yOff+SW_Y*dh;
     var d=Math.max(52,0.102*dw);           /* token button: small coin sitting in the wreath (swirl painted out of bg) */
     btn.style.left=cx+"px"; btn.style.top=cy+"px"; btn.style.width=d+"px"; btn.style.height=d+"px";
-    if(hint){ hint.style.left=cx+"px"; hint.style.top=(cy+d*0.62)+"px"; }   /* hint sits just below the token */
+    /* hint is pinned to the bottom-center of the screen via CSS (no per-token positioning) */
   }
   probe.onload=place; probe.src="homepage-hero.png?v=meme7"; addEventListener("resize",place); setTimeout(place,60);
 })();
