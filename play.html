@@ -7538,7 +7538,9 @@ requestAnimationFrame(frame);
   /* 🔒 SALE SWITCH — set TRUE at your official X launch to open public hatching.
      While FALSE the egg is locked for everyone EXCEPT admins (your wallet / ?memetest=1), so you can still dry-run. */
   const SALE_OPEN=false;
-  function saleOpenNow(){ return SALE_OPEN || _memeCfg.saleOpen===true || canTest(); }   /* backend MEME_SALE_OPEN=true opens it for everyone — no redeploy needed */
+  function isAdmin(){ try{ return !!(window.CHAIN&&CHAIN.ADMINS&&window.player&&player.pk&&CHAIN.ADMINS.indexOf(player.pk)>=0); }catch(e){ return false; } }
+  /* REAL purchase is allowed only when the sale is open OR you're the admin wallet — NOT via ?memetest=1 (that's test-only). */
+  function saleOpenNow(){ return SALE_OPEN || _memeCfg.saleOpen===true || isAdmin(); }
   function applyEggUI(s){
     const open2=saleOpenNow();
     const total=(s&&s.total)||ROSTER.reduce((a,m)=>a+(m.cap||10),0);
