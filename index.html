@@ -27,12 +27,14 @@
   .mtab.active{filter:brightness(1.12) drop-shadow(0 0 9px rgba(255,233,120,.92))}
   #pointer{display:none}
 
-  /* ---- $CHIKI token = PLAY button (invisible circular hotspot over the swirl emblem) ---- */
-  #tokenBtn{position:fixed;border-radius:50%;cursor:pointer;z-index:20;transform:translate(-50%,-50%);
-    box-shadow:0 0 0 0 rgba(120,200,255,.55);animation:tokpulse 2s ease-in-out infinite;transition:opacity .45s ease}
-  #tokenBtn:hover{box-shadow:0 0 34px 6px rgba(140,210,255,.75)}
+  /* ---- $CHIKI token = PLAY button (real token image laid exactly over the swirl emblem) ---- */
+  #tokenBtn{position:fixed;cursor:pointer;z-index:20;transform:translate(-50%,-50%);object-fit:contain;
+    -webkit-user-drag:none;user-select:none;animation:tokglow 2.1s ease-in-out infinite;transition:opacity .45s ease,transform .12s ease}
+  #tokenBtn:hover{animation:none;transform:translate(-50%,-50%) scale(1.06);
+    filter:drop-shadow(0 5px 12px rgba(0,0,0,.55)) drop-shadow(0 0 26px rgba(150,215,255,.95))}
   #tokenBtn:active{transform:translate(-50%,-50%) scale(.95)}
-  @keyframes tokpulse{0%,100%{box-shadow:0 0 0 0 rgba(120,200,255,.0),0 0 18px 2px rgba(120,200,255,.35)}50%{box-shadow:0 0 0 14px rgba(120,200,255,0),0 0 30px 6px rgba(120,200,255,.55)}}
+  @keyframes tokglow{0%,100%{filter:drop-shadow(0 5px 12px rgba(0,0,0,.5)) drop-shadow(0 0 8px rgba(120,200,255,.4))}
+    50%{filter:drop-shadow(0 5px 12px rgba(0,0,0,.5)) drop-shadow(0 0 24px rgba(120,200,255,.85))}}
   #tokenHint{position:fixed;left:50%;transform:translateX(-50%);z-index:21;pointer-events:none;text-align:center;
     font-family:'Baloo 2','Nunito',sans-serif;font-weight:800;color:#eaf6ff;font-size:clamp(14px,2.2vw,20px);
     text-shadow:0 2px 8px rgba(0,0,0,.75),0 0 16px rgba(80,160,255,.5);animation:hintbob 1.6s ease-in-out infinite;white-space:nowrap;transition:opacity .45s ease}
@@ -91,7 +93,8 @@
 </head>
 <body>
 <div id="hero"></div>
-<div id="tokenBtn" title="Press the $CHIKI token to play"></div>
+<img id="tokenBtn" src="ui/chiki-token-btn.png?v=1" alt="Play" title="Press the $CHIKI token to play" draggable="false">
+
 <div id="tokenHint">👆 Press the <span class="tk">$CHIKI</span> token to play</div>
 
 <!-- ===== image tab bar (Main Tab Bar.png) with accurate click zones ===== -->
@@ -252,7 +255,7 @@
     var vw=innerWidth,vh=innerHeight,iw=probe.naturalWidth,ih=probe.naturalHeight;
     var s=Math.max(vw/iw,vh/ih),dw=iw*s,dh=ih*s,xOff=(vw-dw)/2,yOff=(vh-dh)/2;
     var cx=xOff+SW_X*dw, cy=yOff+SW_Y*dh;
-    var d=Math.max(54,0.13*dw);            /* clickable diameter = exactly the $CHIKI token's wooden ring */
+    var d=Math.max(56,0.135*dw);           /* token image laid exactly over (and covering) the swirl emblem */
     btn.style.left=cx+"px"; btn.style.top=cy+"px"; btn.style.width=d+"px"; btn.style.height=d+"px";
     if(hint){ hint.style.left=cx+"px"; hint.style.top=(cy+d*0.62)+"px"; }   /* hint sits just below the token */
   }
