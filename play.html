@@ -1575,6 +1575,7 @@ const CHAIN={
   ONCHAIN_SPENDS:true,           /* true = level/feed are REAL on-chain $CHIKI tx (20% burn/45% pool/35% team); false = simulated */
   ADMINS:["CmY2ZXVPVG2gbAHeVWHw7PQrAKtTcrWsq2raaWgg8YJ9"]   /* wallets that can PIN / post official chat updates (add your own here) */
 };
+window.CHAIN=CHAIN;   /* expose on window — top-level `const` doesn't attach to window, and the Meme Dex reads window.CHAIN */
 /* ===== Real on-chain $CHIKI spend: 20% burned, 45%→treasury, 35%→team (player signs in Phantom) ===== */
 let _chikiDec=null;
 async function chikiDecimals(){
@@ -7531,13 +7532,31 @@ requestAnimationFrame(frame);
   /* ===== Meme Legendary Egg → hatch a random Meme Dynasty NFT ===== */
   const EGG_PRICE=1000000;   // $CHIKI per egg
   const ROSTER_BY=Object.fromEntries(ROSTER.map(m=>[m.key,m]));
-  let _memeCfg={tradeTensor:false,tensorUrl:null};   // populated from the backend (mainnet routes trading to Tensor)
+  let _memeCfg={tradeTensor:false,tensorUrl:null,saleOpen:false};   // populated from the backend (mainnet routes trading to Tensor)
   let _testMode=false;                               // 🧪 Test Mode: hatch the full UX for free, no $CHIKI, no real NFT
   const _testNfts=[]; const _testSupply={};          // local-only test inventory + per-character test supply (10 each)
+  /* 🔒 SALE SWITCH — set TRUE at your official X launch to open public hatching.
+     While FALSE the egg is locked for everyone EXCEPT admins (your wallet / ?memetest=1), so you can still dry-run. */
+  const SALE_OPEN=false;
+  function saleOpenNow(){ return SALE_OPEN || _memeCfg.saleOpen===true || canTest(); }   /* backend MEME_SALE_OPEN=true opens it for everyone — no redeploy needed */
+  function applyEggUI(s){
+    const open2=saleOpenNow();
+    const total=(s&&s.total)||ROSTER.reduce((a,m)=>a+(m.cap||10),0);
+    const el=$("meSupply");
+    if(el){
+      if(!open2) el.innerHTML="🔒 <b>Hatching opens at official launch</b> — stay tuned on X! 🥚";
+      else if(s&&s.totalLeft!=null) el.textContent="🥚 "+s.totalLeft.toLocaleString()+" of "+total.toLocaleString()+" eggs left to hatch"+(SALE_OPEN?"":"  ·  👑 admin preview (closed to public)");
+    }
+    const hb=$("meHatch");
+    if(hb){
+      if(!open2){ hb.disabled=true; hb.innerHTML="🔒 Opens at launch"; }
+      else { hb.disabled=false; hb.innerHTML=_testMode?"🧪 Test Hatch · <span id='meCost'>FREE</span>":"🥚 Hatch Egg · <span id='meCost'>"+EGG_PRICE.toLocaleString()+" $CHIKI</span>"; }
+    }
+  }
   function eggRefresh(){
-    const cost=$("meCost"); if(cost)cost.textContent=EGG_PRICE.toLocaleString()+" $CHIKI";
+    applyEggUI(null);   /* lock immediately so the button never flashes enabled */
     const BK=(window.CHAIN&&CHAIN.BACKEND)||""; if(!BK)return;
-    fetch(BK+"/meme/supply").then(r=>r.json()).then(s=>{ if(s){ _memeCfg.tradeTensor=!!s.tradeTensor; _memeCfg.tensorUrl=s.tensorUrl||null; } const el=$("meSupply"); const total=(s&&s.total)||ROSTER.reduce((a,m)=>a+(m.cap||10),0); if(el&&s&&s.totalLeft!=null) el.textContent="🥚 "+s.totalLeft.toLocaleString()+" of "+total.toLocaleString()+" eggs left to hatch"; }).catch(()=>{});
+    fetch(BK+"/meme/supply").then(r=>r.json()).then(s=>{ if(s){ _memeCfg.tradeTensor=!!s.tradeTensor; _memeCfg.tensorUrl=s.tensorUrl||null; _memeCfg.saleOpen=!!s.saleOpen; } applyEggUI(s); }).catch(()=>{});
   }
   function testHatch(){   /* 🧪 full hatch experience — no payment, no backend, no real NFT */
     const avail=ROSTER.filter(m=>( _testSupply[m.key]||0)<(m.cap||10));
@@ -7553,6 +7572,7 @@ requestAnimationFrame(frame);
   }
   async function hatchEgg(){
     if(_testMode){ testHatch(); return; }
+    if(!saleOpenNow()){ if(typeof showBanner==="function")showBanner("🥚 Meme Dynasty hatching opens at official launch — stay tuned on X!","info"); return; }
     const BK=(window.CHAIN&&CHAIN.BACKEND)||"";
     if(!BK){ if(typeof showBanner==="function")showBanner("Backend offline — try again later.","error"); return; }
     if(!window.player||!player.pk){ if(typeof showBanner==="function")showBanner("👛 Connect your wallet to hatch a Meme Egg.","error"); return; }
