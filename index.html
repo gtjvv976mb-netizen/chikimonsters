@@ -248,14 +248,14 @@
   if(btn)btn.onclick=start;
 
   /* position the round $CHIKI-token hotspot over the swirl emblem (covers as the bg scales) */
-  var SW_X=0.505, SW_Y=0.438;   /* $CHIKI token (swirl) center, normalized to the 1600×900 hero image */
+  var SW_X=0.499, SW_Y=0.428;   /* $CHIKI token (swirl) center, normalized to the 1600×900 hero image */
   var probe=new Image();
   function place(){
     if(!btn||!probe.naturalWidth)return;
     var vw=innerWidth,vh=innerHeight,iw=probe.naturalWidth,ih=probe.naturalHeight;
     var s=Math.max(vw/iw,vh/ih),dw=iw*s,dh=ih*s,xOff=(vw-dw)/2,yOff=(vh-dh)/2;
     var cx=xOff+SW_X*dw, cy=yOff+SW_Y*dh;
-    var d=Math.max(44,0.085*dw);           /* token button: small coin sitting in the wreath (swirl painted out of bg) */
+    var d=Math.max(50,0.098*dw);           /* token button: small coin sitting in the wreath (swirl painted out of bg) */
     btn.style.left=cx+"px"; btn.style.top=cy+"px"; btn.style.width=d+"px"; btn.style.height=d+"px";
     if(hint){ hint.style.left=cx+"px"; hint.style.top=(cy+d*0.62)+"px"; }   /* hint sits just below the token */
   }
