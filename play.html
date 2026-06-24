@@ -971,6 +971,26 @@ if(location.search.indexOf("embed")>-1){
 .aLockBtn:hover,.aAgainBtn:hover{transform:translateY(-2px);filter:drop-shadow(0 7px 11px rgba(0,0,0,.55)) brightness(1.08)}
 .aLockBtn:active,.aAgainBtn:active{transform:translateY(1px)}
 .aLockBtn .lkN{position:absolute;top:-7px;right:-7px;min-width:24px;height:24px;padding:0 5px;border-radius:13px;background:linear-gradient(180deg,#3ddc84,#1f9e57);color:#04220f;font-size:14px;font-weight:800;display:flex;align-items:center;justify-content:center;border:2px solid #0f1b34;box-shadow:0 0 8px rgba(60,220,130,.85)}
+/* === battle onboarding: action prompt + lock pulse + How-to-Battle help === */
+#bPrompt{position:absolute;left:50%;transform:translateX(-50%);bottom:286px;z-index:13;pointer-events:none;
+  font-family:'Baloo 2','Nunito',sans-serif;font-weight:800;font-size:15px;color:#fff;text-align:center;white-space:nowrap;
+  background:rgba(10,14,30,.82);border:1px solid #b98a2e;border-radius:999px;padding:7px 18px;box-shadow:0 5px 14px rgba(0,0,0,.5);
+  -webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);transition:opacity .2s;max-width:92vw;overflow:hidden;text-overflow:ellipsis}
+#bPrompt .hl{color:#ffe27a}
+.aLockBtn.ready{animation:lockpulse 1.05s ease-in-out infinite}
+@keyframes lockpulse{0%,100%{filter:drop-shadow(0 4px 6px rgba(0,0,0,.5))}50%{filter:drop-shadow(0 0 14px rgba(60,220,130,.95)) brightness(1.12)}}
+#bHelpBtn{position:absolute;top:8px;right:10px;z-index:22;width:36px;height:36px;border-radius:50%;cursor:pointer;
+  background:rgba(10,14,30,.86);border:1px solid #b98a2e;color:#ffe27a;font-size:18px;font-weight:800;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 10px rgba(0,0,0,.5)}
+#bHelpBtn:hover{background:rgba(20,28,52,.95);transform:scale(1.06)}
+#bHelp{position:absolute;inset:0;z-index:40;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(4,8,18,.78);-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px)}
+#bHelp .card{width:min(92vw,460px);max-height:88%;overflow-y:auto;background:linear-gradient(180deg,#13203c,#0d1730);border:2px solid #ffd166;border-radius:18px;padding:18px 20px 20px;box-shadow:0 22px 60px rgba(0,0,0,.7);font-family:'Nunito',sans-serif;color:#e7eefb}
+#bHelp h3{margin:0 0 4px;font-family:'Baloo 2';font-size:21px;color:#ffd166}
+#bHelp .step{display:flex;gap:10px;align-items:flex-start;margin:11px 0;font-size:13.5px;line-height:1.5}
+#bHelp .step .ic{font-size:20px;flex:0 0 26px;text-align:center}
+#bHelp .step b{color:#9fd0ff}
+#bHelp .x{position:absolute;top:14px;right:18px;font-size:22px;color:#9fb6d8;cursor:pointer}
+#bHelp .go{display:block;width:100%;margin-top:14px;padding:11px;border:none;border-radius:11px;background:linear-gradient(180deg,#ffe08a,#e0a93a);color:#3a2a06;font-family:'Baloo 2';font-weight:800;font-size:15px;cursor:pointer}
 /* bottom-left card zoom preview */
 #arenaZoom{position:absolute;bottom:20px;left:20px;z-index:30;width:300px;height:452px;border-radius:18px;overflow:hidden;background:#0f1b34 center/contain no-repeat;border:4px solid #ffe27a;box-shadow:0 16px 44px rgba(0,0,0,.75);pointer-events:none;opacity:0;transform:translateY(20px) scale(.92);transition:opacity .16s,transform .16s}
 #arenaZoom.on{opacity:1;transform:translateY(0) scale(1)}
@@ -984,6 +1004,8 @@ if(location.search.indexOf("embed")>-1){
   .aPow.art{width:62px;height:93px;border-width:1.5px;flex:0 0 auto}
   .aPow.art:hover,.aPow.art.sel{transform:translateY(-6px) scale(1.04)}
   #arenaCenter{bottom:110px}                 /* lock-in / battle-again sits ABOVE the card strip */
+  #bPrompt{bottom:178px;font-size:12.5px;padding:6px 13px}
+  #bHelp .card{font-size:13px}#bHelpBtn{width:32px;height:32px;font-size:16px}
   .aLockBtn{width:148px;height:50px}
   .aAgainBtn{width:168px;height:60px}
   .aFighter img{height:23vh}
@@ -3212,6 +3234,7 @@ setInterval(updateWhaleTab,1000);
         `<div class="aMatch2">${matchTxt}</div>`;
     }
     pvpTop();   /* keep the top-center info panel current (matchup + status) for AI & PvP */
+    ensureBattleHelp(); battlePrompt();   /* clear "what to do now" prompt + first-time help */
     if(B.turn!=="you"){ if(!B.pvp)pvpStatus("🤖 "+((B.foe&&B.foe.name)||"Opponent")+" is planning…","#8fa6c9"); if(ac)ac.innerHTML=""; return; }
     if(!B.pvp)pvpStatus("🎯 Your move — plan up to 3 cards","#9fc4ff");
     B.you.hand.forEach((slot,idx)=>{const t=cardTier(B.you.c,slot),k=ARCHK[slot];
@@ -3573,6 +3596,46 @@ setInterval(updateWhaleTab,1000);
     el.style.display="block";
   }
   function pvpStatus(txt,col){ if(!B)return; B._pvpStatus=txt||""; B._pvpStatusCol=col||"#cfe0ff"; pvpTop(); }
+  /* ===== Battle onboarding: a "?" help card, a clear action prompt, and a pulsing LOCK IN ===== */
+  function openBattleHelp(){ const h=g("bHelp"); if(h)h.style.display="flex"; }
+  function ensureBattleHelp(){
+    const box=g("arenaBox"); if(!box)return;
+    if(!g("bHelpBtn")){ const hb=document.createElement("div"); hb.id="bHelpBtn"; hb.textContent="❓"; hb.title="How to Battle"; box.appendChild(hb); hb.onclick=openBattleHelp; }
+    if(!g("bHelp")){
+      const h=document.createElement("div"); h.id="bHelp";
+      h.innerHTML=`<div class="card" style="position:relative"><span class="x" id="bHelpX">✕</span>
+        <h3>⚔️ How to Battle</h3>
+        <div class="step"><span class="ic">🃏</span><div>Each turn you draw a <b>hand of cards</b>. Pick <b>up to 3</b> — they fire in the order you tap them.</div></div>
+        <div class="step"><span class="ic">⚡</span><div><b>Energy</b> (top bar) limits what you can play. Every card shows its cost; you gain energy each turn. <b>Charge</b> gives energy back.</div></div>
+        <div class="step"><span class="ic">🔒</span><div>Tap the big <b>LOCK IN</b> button to commit. Both players reveal <b>at the same time</b>, then trade blows.</div></div>
+        <div class="step"><span class="ic">❤️</span><div>Drop the enemy's <b>HP to 0</b> to win a game. <b>First to 2 games</b> wins the match (best of 3).</div></div>
+        <div class="step"><span class="ic">🛡️</span><div><b>Shields</b> absorb damage. <b>Quick</b> ignores shields; <b>Rend</b> ignores half.</div></div>
+        <div class="step"><span class="ic">🌊</span><div><b>Elements</b>: Water▸Fire▸Beast▸Storm▸Light▸Water. Beating the enemy's element hits <b>+10%</b>; losing, <b>−10%</b>.</div></div>
+        <div class="step"><span class="ic">⏱️</span><div>Each turn has a <b>timer</b>. If it runs out a hand is auto-played — so don't go idle!</div></div>
+        <button class="go" id="bHelpGo">Got it — let's battle! ⚔️</button></div>`;
+      box.appendChild(h);
+      const close=()=>{ h.style.display="none"; };
+      const x=g("bHelpX"), go=g("bHelpGo"); if(x)x.onclick=close; if(go)go.onclick=close;
+      h.addEventListener("click",e=>{ if(e.target===h)close(); });
+    }
+    try{ if(B&&!localStorage.getItem("seenBattleHelp")){ localStorage.setItem("seenBattleHelp","1"); openBattleHelp(); } }catch(e){}
+  }
+  function battlePrompt(){
+    const box=g("arenaBox"); if(!box)return;
+    let el=g("bPrompt");
+    if(!B||B.over){ if(el)el.style.display="none"; const lk=document.querySelector(".aLockBtn"); if(lk)lk.classList.remove("ready"); return; }
+    if(!el){ el=document.createElement("div"); el.id="bPrompt"; box.appendChild(el); }
+    const lock=document.querySelector(".aLockBtn");
+    if(B.turn==="you"&&!B._resolving){
+      const q=B.you.queue||[]; const spent=q.reduce((s,i)=>s+CARD_COST[B.you.hand[i]],0); const remain=Math.max(0,B.you.energy-spent);
+      el.innerHTML = q.length===0
+        ? `👉 Tap up to <span class="hl">3 cards</span>, then <span class="hl">LOCK&nbsp;IN</span> &nbsp;·&nbsp; ⚡<span class="hl">${remain}</span> left`
+        : `✅ <span class="hl">${q.length}</span> card${q.length>1?"s":""} ready — tap <span class="hl">🔒 LOCK&nbsp;IN</span>${remain>0?` &nbsp;·&nbsp; ⚡${remain} left`:``}`;
+      el.style.display="block"; if(lock){ if(q.length>0)lock.classList.add("ready"); else lock.classList.remove("ready"); }
+    } else if(B._resolving){ el.innerHTML=`⏳ Resolving the turn…`; el.style.display="block"; if(lock)lock.classList.remove("ready"); }
+    else { el.innerHTML = B.pvp ? (B._foeSub?`⚔️ Both locked in — resolving…`:`🔒 Locked in — waiting for opponent…`) : `🤖 Opponent is planning…`;
+      el.style.display="block"; if(lock)lock.classList.remove("ready"); }
+  }
   function applyPvpState(s){
     B.foe=pvpFoeSide(s.foe); B.foeBr=s.foe.br||1;
     B.you.hp=s.you.hp; B.you.maxhp=s.you.maxhp; B.you.shield=s.you.shield||0; B.you.energy=s.you.energy;
@@ -7265,7 +7328,9 @@ requestAnimationFrame(frame);
         <button class="b" id="cupxFinalize">🏁 Finalize Round</button>
         <button class="g" id="cupxResolve2">⚡ Auto-resolve</button>
         <button class="g" id="cupxPublic">🌐 Launch Public</button>
-      </div><div class="sub" id="cupxAdminMsg" style="margin-top:7px"></div></div>
+        <button class="b" id="cupxAuto">🤖 Auto-Run: ON</button>
+      </div><div class="sub" id="cupxAdminMsg" style="margin-top:7px"></div>
+      <div class="sub" id="cupxAutoNote" style="margin-top:4px;color:#3ddc84"></div></div>
     <div class="card" id="cupxPrize" style="display:none;border-color:#ffd166"><b class="gold">🏆 You won Cup SOL!</b> <span id="cupxPrizeAmt"></span> is waiting in your <b>Chiki Pouch</b> — claim it from the game. 🌊</div>
     <div class="card" id="cupxReg"><h3 style="margin-top:0">⚔️ Enter the Cup</h3>
       <video src="ui/chikoria-cup-intro.mp4" autoplay muted loop playsinline controls preload="metadata" style="width:100%;max-height:40vh;border-radius:12px;border:1px solid #1c3d2e;margin:0 0 12px;display:block;background:#0a1d15"></video>
@@ -7278,7 +7343,7 @@ requestAnimationFrame(frame);
     <div class="card" id="cupxRound" style="display:none"><div class="hd"><h3 style="margin:0" id="cupxRtitle"></h3>
       <div><button class="g" id="cupxReady">✅ Ready Up</button></div></div>
       <div id="cupxMatches"></div></div>
-    <div class="card champ" id="cupxChamp" style="display:none"><img src="chikoriacup_art.png?v=meme4" alt="Chikoria Cup" style="width:104px;height:auto;margin:0 auto 4px;display:block;filter:drop-shadow(0 6px 14px rgba(0,0,0,.55))"><div class="w" id="cupxChampName"></div><div class="sub">Champion of the Chikoria Cup — wins the <b class="gold">Chikoria Cup trophy</b> 🏆 (floats above their Legendary) + <b class="gold">1 SOL</b> 🌊</div></div>
+    <div class="card champ" id="cupxChamp" style="display:none"><div id="cupxTrophy3d" style="width:150px;height:150px;margin:0 auto"></div><img id="cupxTrophyImg" src="chikoriacup_art.png?v=meme4" alt="Chikoria Cup" style="width:104px;height:auto;margin:0 auto 4px;display:block;filter:drop-shadow(0 6px 14px rgba(0,0,0,.55))"><div class="w" id="cupxChampName"></div><div class="sub">🏆 <b class="gold">Chikoria Cup Champion</b> — wins the <b class="gold">3D trophy</b> (floats above their Legendary in the world) + <b class="gold">1 SOL</b> 🌊</div></div>
     <div class="card" id="cupxStand" style="display:none"><h3 style="margin-top:0">🏅 Standings & Payouts</h3><div id="cupxStandings"></div><div class="sub" id="cupxPaid" style="margin-top:6px"></div></div>
     <div class="card" id="cupxChat"><h3 style="margin-top:0">💬 Cup Chat</h3>
       <div class="chatbox"><div class="clog" id="cupxChatLog"><div class="cmsg sys">Welcome to the Chikoria Cup chat — good luck, competitors! 🌊</div></div>
@@ -7321,10 +7386,12 @@ requestAnimationFrame(frame);
 
     // admin controls
     $("cupxAdmin").style.display=adm?"block":"none";
-    if(adm){ $("cupxCreate").disabled=false;
-      $("cupxFill").disabled=!reg; $("cupxStart").disabled=!(reg&&St.entrants.length===St.cap); $("cupxResolve2").disabled=!live;
-      $("cupxStartRound").disabled=!(live&&!St.roundBattling); $("cupxFinalize").disabled=!(live&&St.roundBattling);
+    if(adm){ const auto=!!St.auto; $("cupxCreate").disabled=false;
+      $("cupxFill").disabled=!reg; $("cupxStart").disabled=!(reg&&St.entrants.length===St.cap); $("cupxResolve2").disabled=!live||auto;
+      $("cupxStartRound").disabled=auto||!(live&&!St.roundBattling); $("cupxFinalize").disabled=auto||!(live&&St.roundBattling);
       $("cupxPublic").textContent=St.public?"🔒 Make Admin-Only":"🌐 Launch Public";
+      const ab=$("cupxAuto"); if(ab){ ab.textContent=auto?"🤖 Auto-Run: ON":"🎮 Auto-Run: OFF"; ab.style.background=auto?"linear-gradient(180deg,#3ddc84,#1f9e57)":"#0f2a1e"; ab.style.color=auto?"#04220f":"#dff5e8"; }
+      const an=$("cupxAutoNote"); if(an)an.textContent=auto?"🤖 Auto-Run is ON — the server starts every match and advances each round on its own. Just launch public & sit back; players fight when their match is up.":"⚙️ Manual mode — use ⚔️ Start Round and 🏁 Finalize Round yourself.";
       const ss=document.getElementById("cupxSize"); if(ss){ if(document.activeElement!==ss)ss.value=String(St.cap||10); ss.disabled=!reg; ss.title=reg?"Change lobby size live (kept entrants)":"Resize only during registration"; } }
 
     // prize banner
@@ -7345,7 +7412,7 @@ requestAnimationFrame(frame);
       $("cupxReg2").disabled=St.youRegistered||blocked||!snap||busy;
       $("cupxReg2").textContent=St.youRegistered?"Registered ✓":(St.entryGlory>0?("Register — "+St.entryGlory+" ✨"):"Register — Free");
       if(!St.youRegistered)regMsg(blocked?"Not open to the public yet.":(!snap?"Hatch a Legendary first.":""));
-      else regMsg("You're in the lobby — wait for the Cup to start. 🛡"); }
+      else regMsg(St.auto?"You're in! 🛡 Matches start automatically — when it's your turn, an ⚔️ FIGHT button appears here. Keep this open.":"You're in the lobby — wait for the Cup to start. 🛡"); }
 
     // lobby
     if(reg||live){ $("cupxLobbyCount").textContent="· "+St.entrants.length+"/"+St.cap;
@@ -7353,7 +7420,7 @@ requestAnimationFrame(frame);
       $("cupxLobbyList").innerHTML=seeded.map((e,i)=>`<div class="match" style="margin:0"><div class="mrow">${legHTML(elObj(e.player||e.name,e.name,e.element,e.br,e.player&&e.player===myName()))}<span class="meta">#${i+1}${e.bot?" 🤖":""}</span></div></div>`).join(""); }
 
     // live round
-    if(live){ $("cupxRtitle").textContent=(RNAME[St.round]||St.round||"Round")+(St.roundBattling?" — ⚔️ LIVE":"");
+    if(live){ $("cupxRtitle").textContent=(RNAME[St.round]||St.round||"Round")+(St.roundBattling?" — ⚔️ LIVE":"")+(St.auto?" · 🤖 Auto":"");
       const inPlay=St.youRegistered&&St.youPlace==null;
       // your live PvP match this round → jump straight into the Chikiseum battle
       $("cupxReady").style.display=(inPlay&&!St.roundBattling)?"inline-block":"none";
@@ -7375,6 +7442,7 @@ requestAnimationFrame(frame);
 
     // finished
     if(fin){ if(St.champion)$("cupxChampName").textContent=St.champion;
+      try{ if(window.mountTrophy){ const host=$("cupxTrophy3d"); window.mountTrophy(host); if(host&&host._tr){ const im=$("cupxTrophyImg"); if(im)im.style.display="none"; } } }catch(e){}
       if(St.results){ let total=0; $("cupxStandings").innerHTML=St.results.map(x=>{ total+=x.sol; const me=x.wallet===myPk();
         return `<div class="stand"><span>${x.place}. ${x.name}${me?' <b class="teal">(you)</b>':''}</span><span class="s">${x.sol.toFixed(3)} ◎</span></div>`; }).join("");
         $("cupxPaid").textContent="Total prize: "+total.toFixed(3)+" SOL · winners' SOL is credited to their Chiki Pouch — claim it from the game."; } }
@@ -7480,6 +7548,7 @@ requestAnimationFrame(frame);
   $("cupxFill").onclick=async ()=>{ try{ const j=await apiPost("/cup/fill",{wallet:myPk()}); admMsg("Added "+j.added+" bot(s) — lobby "+j.entrants.length+"/"+j.cap+"."); await refresh(); }catch(e){ admMsg("⚠️ "+e.message); } };
   $("cupxStart").onclick=async ()=>{ try{ await apiPost("/cup/start",{wallet:myPk()}); admMsg("Cup started! ⚔️"); await refresh(); }catch(e){ admMsg("⚠️ "+e.message); } };
   $("cupxPublic").onclick=async ()=>{ try{ const j=await apiPost("/cup/public",{wallet:myPk(),public:!St.public}); admMsg(j.public?"🌐 Cup is now PUBLIC — open to all players.":"🔒 Cup is admin-only."); await refresh(); }catch(e){ admMsg("⚠️ "+e.message); } };
+  $("cupxAuto").onclick=async ()=>{ try{ const j=await apiPost("/cup/auto",{wallet:myPk(),auto:!St.auto}); admMsg(j.auto?"🤖 Auto-Run ON — rounds will start & advance automatically.":"🎮 Auto-Run OFF — you control rounds manually."); await refresh(); }catch(e){ admMsg("⚠️ "+e.message); } };
   $("cupxResolve2").onclick=async ()=>{ if(busy)return; busy=true; $("cupxResolve2").disabled=true; admMsg("Auto-resolving round…");
     try{ const j=await apiPost("/cup/resolve-round",{wallet:myPk()}); const r=j.result||{}; admMsg(r.finished?("🏆 Champion: "+r.champion):(r.round+" resolved → next "+r.next)); await refresh(); }
     catch(e){ admMsg("⚠️ "+e.message); } busy=false; };
