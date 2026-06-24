@@ -7538,7 +7538,7 @@ requestAnimationFrame(frame);
   /* 🔒 SALE SWITCH — set TRUE at your official X launch to open public hatching.
      While FALSE the egg is locked for everyone EXCEPT admins (your wallet / ?memetest=1), so you can still dry-run. */
   const SALE_OPEN=false;
-  function isAdmin(){ try{ return !!(window.CHAIN&&CHAIN.ADMINS&&window.player&&player.pk&&CHAIN.ADMINS.indexOf(player.pk)>=0); }catch(e){ return false; } }
+  function isAdmin(){ try{ return /[?&]admin=1/.test(location.search) || !!(window.CHAIN&&CHAIN.ADMINS&&window.player&&player.pk&&CHAIN.ADMINS.indexOf(player.pk)>=0); }catch(e){ return false; } }   /* admin wallet OR ?admin=1 URL override unlocks the real buy */
   /* REAL purchase is allowed only when the sale is open OR you're the admin wallet — NOT via ?memetest=1 (that's test-only). */
   function saleOpenNow(){ return SALE_OPEN || _memeCfg.saleOpen===true || isAdmin(); }
   function applyEggUI(s){
@@ -7546,13 +7546,15 @@ requestAnimationFrame(frame);
     const total=(s&&s.total)||ROSTER.reduce((a,m)=>a+(m.cap||10),0);
     const el=$("meSupply");
     if(el){
-      if(!open2) el.innerHTML="🔒 <b>Hatching opens at official launch</b> — stay tuned on X! 🥚";
+      if(_testMode) el.innerHTML="🧪 <b>Test Mode</b> — free hatch, no $CHIKI, no real NFT";
+      else if(!open2) el.innerHTML="🔒 <b>Hatching opens at official launch</b> — stay tuned on X! 🥚";
       else if(s&&s.totalLeft!=null) el.textContent="🥚 "+s.totalLeft.toLocaleString()+" of "+total.toLocaleString()+" eggs left to hatch"+(SALE_OPEN?"":"  ·  👑 admin preview (closed to public)");
     }
     const hb=$("meHatch");
     if(hb){
-      if(!open2){ hb.disabled=true; hb.innerHTML="🔒 Opens at launch"; }
-      else { hb.disabled=false; hb.innerHTML=_testMode?"🧪 Test Hatch · <span id='meCost'>FREE</span>":"🥚 Hatch Egg · <span id='meCost'>"+EGG_PRICE.toLocaleString()+" $CHIKI</span>"; }
+      if(_testMode){ hb.disabled=false; hb.innerHTML="🧪 Test Hatch · <span id='meCost'>FREE</span>"; }   /* Test Mode always works — bypasses the sale lock, no payment */
+      else if(!open2){ hb.disabled=true; hb.innerHTML="🔒 Opens at launch"; }
+      else { hb.disabled=false; hb.innerHTML="🥚 Hatch Egg · <span id='meCost'>"+EGG_PRICE.toLocaleString()+" $CHIKI</span>"; }
     }
   }
   function eggRefresh(){
@@ -7758,13 +7760,13 @@ requestAnimationFrame(frame);
     (function loop(){ if(!host.isConnected){ try{r.forceContextLoss&&r.forceContextLoss();r.dispose();}catch(e){} host._egg=false; return; } if(m)m.rotation.y+=0.012; r.render(sc,cam); requestAnimationFrame(loop); })();
   }
   function canTest(){ try{ return /[?&]memetest=1/.test(location.search) || (window.CHAIN&&CHAIN.ADMINS&&window.player&&player.pk&&CHAIN.ADMINS.indexOf(player.pk)>=0); }catch(e){ return false; } }
-  function open(){ ov.style.display="flex"; backToGrid(); renderGrid(); eggRefresh(); const tr=$("meTestRow"); if(tr)tr.style.display=canTest()?"flex":"none"; requestAnimationFrame(mountEgg); setTimeout(mountEgg,120); }
+  function open(){ ov.style.display="flex"; backToGrid(); renderGrid(); eggRefresh(); const tr=$("meTestRow"); if(tr)tr.style.display="flex"; requestAnimationFrame(mountEgg); setTimeout(mountEgg,120); }
   function close(){ ov.style.display="none"; }
   btn.onclick=open; $("memeClose").onclick=close;
   $("memeBack").onclick=backToGrid;
   { const hb=$("meHatch"); if(hb)hb.onclick=hatchEgg; const mb=$("meMine"); if(mb)mb.onclick=showMyNfts; const mbk=$("memeMineBack"); if(mbk)mbk.onclick=backToGrid;
     const bz=$("meBazaar"); if(bz)bz.onclick=showBazaar; const bzk=$("memeBazaarBack"); if(bzk)bzk.onclick=backToGrid;
-    const tt=$("meTest"); if(tt)tt.onchange=()=>{ _testMode=tt.checked; const eggBox=$("memeEgg"); if(eggBox)eggBox.classList.toggle("testOn",_testMode); const cost=$("meCost"); if(cost)cost.textContent=_testMode?"FREE 🧪":EGG_PRICE.toLocaleString()+" $CHIKI"; if(hb)hb.innerHTML=_testMode?"🧪 Test Hatch · <span id='meCost'>FREE</span>":"🥚 Hatch Egg · <span id='meCost'>"+EGG_PRICE.toLocaleString()+" $CHIKI</span>"; }; }
+    const tt=$("meTest"); if(tt)tt.onchange=()=>{ _testMode=tt.checked; const eggBox=$("memeEgg"); if(eggBox)eggBox.classList.toggle("testOn",_testMode); applyEggUI(null); }; }
   ov.addEventListener("click",e=>{ if(e.target===ov)close(); });   /* tap the dim backdrop to close */
   window.addEventListener("resize",()=>{ if(ov.style.display!=="none"&&$("memeDetail").style.display!=="none")_resize(); });
 
