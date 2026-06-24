@@ -255,7 +255,7 @@
     var vw=innerWidth,vh=innerHeight,iw=probe.naturalWidth,ih=probe.naturalHeight;
     var s=Math.max(vw/iw,vh/ih),dw=iw*s,dh=ih*s,xOff=(vw-dw)/2,yOff=(vh-dh)/2;
     var cx=xOff+SW_X*dw, cy=yOff+SW_Y*dh;
-    var d=Math.max(56,0.135*dw);           /* token image laid exactly over (and covering) the swirl emblem */
+    var d=Math.max(48,0.115*dw);           /* token image sized to match the swirl emblem in the bg exactly */
     btn.style.left=cx+"px"; btn.style.top=cy+"px"; btn.style.width=d+"px"; btn.style.height=d+"px";
     if(hint){ hint.style.left=cx+"px"; hint.style.top=(cy+d*0.62)+"px"; }   /* hint sits just below the token */
   }
