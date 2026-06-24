@@ -7217,13 +7217,41 @@ requestAnimationFrame(frame);
   #cupx .stand{display:flex;justify-content:space-between;padding:6px 8px;border-bottom:1px solid #1c3d2e;font-size:12.5px}
   #cupx .stand .s{color:#ffd166;font-weight:800}
   #cupx .x{cursor:pointer;font-size:20px;color:#8fb8a3}
-  #cupx .champ{text-align:center;padding:22px}#cupx .champ .c{font-size:48px}#cupx .champ .w{font-size:24px;font-weight:900;color:#ffd166;margin:6px}`;
+  #cupx .champ{text-align:center;padding:22px}#cupx .champ .c{font-size:48px}#cupx .champ .w{font-size:24px;font-weight:900;color:#ffd166;margin:6px}
+  #cupx .chatbox{display:flex;flex-direction:column;height:250px}
+  #cupx .clog{flex:1;overflow-y:auto;background:#0b1d15;border:1px solid #1c3d2e;border-radius:10px;padding:8px 10px;font-size:13px;line-height:1.5}
+  #cupx .cmsg{margin:3px 0;word-break:break-word}
+  #cupx .cmsg .cnm{color:#3ddc84;font-weight:800;margin-right:5px}
+  #cupx .cmsg.me .cnm{color:#ffd166}
+  #cupx .cmsg.sys{color:#8fb8a3;font-style:italic}
+  #cupx .crow{display:flex;gap:8px;margin-top:8px}
+  #cupx .crow input{flex:1;background:#0f2a1e;border:1px solid #1c3d2e;border-radius:10px;padding:10px;color:#dff5e8;font-family:inherit;font-size:13px;outline:none}
+  #cupx .crow input:focus{border-color:#3ddc84}
+  #cupxSpec{position:fixed;inset:0;z-index:260;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(3,10,8,.92);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#dff5e8}
+  #cupxSpec .sp{width:min(94vw,520px);background:linear-gradient(180deg,#0c2118,#0f2a1e);border:1px solid #2a6048;border-radius:18px;padding:18px 18px 20px;box-shadow:0 22px 60px rgba(0,0,0,.6)}
+  #cupxSpec .sphd{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+  #cupxSpec .sphd h3{margin:0;font-size:16px;color:#ffd166}#cupxSpec .x{cursor:pointer;font-size:20px;color:#8fb8a3}
+  #cupxSpec .sgame{text-align:center;color:#8fb8a3;font-size:12.5px;margin:2px 0 12px}
+  #cupxSpec .sf{display:flex;align-items:center;gap:10px;margin:10px 0}
+  #cupxSpec .sf .orb{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:19px;flex:0 0 auto}
+  #cupxSpec .sf .nm{font-weight:800;font-size:14px}#cupxSpec .sf .meta{color:#8fb8a3;font-size:11px}
+  #cupxSpec .bar{height:13px;background:#06140f;border:1px solid #1c3d2e;border-radius:7px;overflow:hidden;margin-top:4px;position:relative}
+  #cupxSpec .bar i{display:block;height:100%;background:linear-gradient(90deg,#3ddc84,#7be37b);transition:width .4s}
+  #cupxSpec .bar.foe i{background:linear-gradient(90deg,#ff6b6b,#ffa8a8)}
+  #cupxSpec .bar span{position:absolute;right:6px;top:-1px;font-size:10px;font-weight:800;color:#eaffe9;text-shadow:0 1px 2px #000}
+  #cupxSpec .shd{font-size:11px;color:#9fd0ff;font-weight:700}
+  #cupxSpec .vsbar{text-align:center;color:#8fb8a3;font-weight:800;font-size:12px;margin:2px 0}
+  #cupxSpec .dots{display:flex;gap:5px;justify-content:center;margin-top:4px}
+  #cupxSpec .dots b{width:9px;height:9px;border-radius:50%;background:#1c3d2e;display:inline-block}
+  #cupxSpec .dots b.on{background:#ffd166}
+  #cupxSpec .status{text-align:center;margin-top:14px;font-size:13px;color:#bfe9d3;min-height:18px}
+  #cupxSpec .win{text-align:center;margin-top:14px;font-size:18px;font-weight:900;color:#ffd166}`;
   document.head.appendChild(css);
 
   const ov=document.createElement("div"); ov.id="cupx";
   ov.innerHTML=`<div class="wrap">
-    <div class="hd"><div><h1>🏆 <span class="gold">Chikoria Cup</span></h1><div class="sub" id="cupxSub">10 Legendaries · double elimination · battles fought in the Chikiseum 🌊</div></div>
-      <div style="display:flex;gap:8px;align-items:center"><span id="cupxStatus" class="pill" style="color:#ffd166">—</span><span class="x" id="cupxClose">✕</span></div></div>
+    <div class="hd"><div><h1>🏆 <span class="gold">Chikoria Cup</span> Hub</h1><div class="sub" id="cupxSub">10 Legendaries · double elimination · live PvP in the Chikiseum 🌊</div></div>
+      <div style="display:flex;gap:8px;align-items:center"><span id="cupxRole" class="pill" style="color:#9fd0ff">🎮 Player</span><span id="cupxStatus" class="pill" style="color:#ffd166">—</span><span class="x" id="cupxClose">✕</span></div></div>
     <div id="cupChampBanner" style="display:none"></div>
     <div class="card" id="cupxAdmin" style="display:none;border-color:#3ddc8455"><h3 style="margin-top:0">🛠 Admin controls</h3>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
@@ -7252,6 +7280,9 @@ requestAnimationFrame(frame);
       <div id="cupxMatches"></div></div>
     <div class="card champ" id="cupxChamp" style="display:none"><img src="chikoriacup_art.png?v=meme4" alt="Chikoria Cup" style="width:104px;height:auto;margin:0 auto 4px;display:block;filter:drop-shadow(0 6px 14px rgba(0,0,0,.55))"><div class="w" id="cupxChampName"></div><div class="sub">Champion of the Chikoria Cup — wins the <b class="gold">Chikoria Cup trophy</b> 🏆 (floats above their Legendary) + <b class="gold">1 SOL</b> 🌊</div></div>
     <div class="card" id="cupxStand" style="display:none"><h3 style="margin-top:0">🏅 Standings & Payouts</h3><div id="cupxStandings"></div><div class="sub" id="cupxPaid" style="margin-top:6px"></div></div>
+    <div class="card" id="cupxChat"><h3 style="margin-top:0">💬 Cup Chat</h3>
+      <div class="chatbox"><div class="clog" id="cupxChatLog"><div class="cmsg sys">Welcome to the Chikoria Cup chat — good luck, competitors! 🌊</div></div>
+        <div class="crow"><input id="cupxChatInp" maxlength="240" placeholder="Say something to the arena…" autocomplete="off"><button class="b" id="cupxChatSend">Send</button></div></div></div>
   </div>`;
   document.body.appendChild(ov);
 
@@ -7260,8 +7291,11 @@ requestAnimationFrame(frame);
   const API=(typeof CHAIN!=="undefined"&&CHAIN.BACKEND)?CHAIN.BACKEND:"";
   const myPk=()=>{ try{ return (typeof player!=="undefined"&&player&&player.pk)?player.pk:null; }catch(e){ return null; } };
   const isAdm=()=>{ try{ return typeof isCreator==="function"&&!!myPk()&&isCreator(myPk()); }catch(e){ return false; } };
-  function legHTML(e,cls){const el=e.el||"Fire";return `<div class="ftr ${cls||''}"><div class="orb" style="background:${COL[el]}22;color:${COL[el]}">${ELEMS[el]}</div><div><div class="nm">${e.name}${e.mine?' <span class="meta">(you)</span>':''}</div><div class="meta">${el} · BR ${e.br}</div></div></div>`;}
-  const elObj=(name,el,br,mine)=>({name,el,br,mine});
+  function legHTML(e,cls){const el=e.el||"Fire"; const prim=esc(e.player||e.legend||"Player"); const sub=(e.legend&&e.legend!==(e.player||""))?("🐉 "+esc(e.legend)+" · "):"";
+    return `<div class="ftr ${cls||''}"><div class="orb" style="background:${COL[el]}22;color:${COL[el]}">${ELEMS[el]}</div><div><div class="nm">${prim}${e.mine?' <span class="meta">(you)</span>':''}</div><div class="meta">${sub}${el} · BR ${e.br}</div></div></div>`;}
+  const elObj=(player,legend,el,br,mine)=>({player,legend,el,br,mine});
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])); }
+  const myName=()=>{ try{ return (typeof player!=="undefined"&&player&&player.handle)?player.handle:null; }catch(e){ return null; } };
 
   async function apiGet(path){ if(!API)throw new Error("backend offline"); const r=await fetch(API+path,{cache:"no-store"}); const j=await r.json().catch(()=>({})); if(!r.ok)throw new Error(j.error||("HTTP "+r.status)); return j; }
   async function apiPost(path,body){ if(!API)throw new Error("backend offline"); const r=await fetch(API+path,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body||{})}); const j=await r.json().catch(()=>({})); if(!r.ok)throw new Error(j.error||("HTTP "+r.status)); return j; }
@@ -7272,13 +7306,14 @@ requestAnimationFrame(frame);
   // build the snapshot the server expects from the player's best Legendary
   function myLegSnap(){ try{ if(typeof myChikis==="function"){ const legs=myChikis().filter(c=>c.isLegend); if(legs.length){ const c=legs.slice().sort((a,b)=>(b.br||1)-(a.br||1))[0]; const si=(typeof SPECIES!=="undefined")?SPECIES.indexOf(c.sp):-1; return {name:(typeof nameOf==="function"?nameOf(c):"Your Legendary"),element:LEGEL[si]||"Fire",br:c.br||10,arenaSkills:c.arenaSkills||[0,1,2],cardTier:c.cardTier||{}}; } } }catch(e){} return null; }
 
-  let St=null, poll=null, busy=false;
+  let St=null, poll=null, busy=false, chatSince=0, chatPoll=null, specMatch=null, specPoll=null, specEl=null;
   function admMsg(t){ const e=$("cupxAdminMsg"); if(e)e.textContent=t||""; }
   function regMsg(t){ const e=$("cupxRegMsg"); if(e)e.textContent=t||""; }
 
   async function refresh(){ try{ St=await apiGet("/cup/status"+(myPk()?("?wallet="+myPk()):"")); render(); }catch(e){ admMsg("⚠️ "+e.message); } }
 
   function render(){ if(!St)return; const adm=isAdm();
+    const rp=$("cupxRole"); if(rp){ rp.textContent=adm?"👑 Admin":"🎮 Player"; rp.style.color=adm?"#ffd166":"#9fd0ff"; }
     const PILL={none:["NO CUP","#8fb8a3"],registration:["REGISTRATION","#ffd166"],live:["LIVE","#3ddc84"],finished:["FINISHED","#8fb8a3"]};
     const pm=PILL[St.status]||["—","#ffd166"]; $("cupxStatus").textContent=pm[0]; $("cupxStatus").style.color=pm[1];
     const sub=document.getElementById("cupxSub"); if(sub)sub.textContent=(St.cap||10)+" Legendaries · double elimination · battles fought in the Chikiseum 🌊";
@@ -7289,7 +7324,8 @@ requestAnimationFrame(frame);
     if(adm){ $("cupxCreate").disabled=false;
       $("cupxFill").disabled=!reg; $("cupxStart").disabled=!(reg&&St.entrants.length===St.cap); $("cupxResolve2").disabled=!live;
       $("cupxStartRound").disabled=!(live&&!St.roundBattling); $("cupxFinalize").disabled=!(live&&St.roundBattling);
-      $("cupxPublic").textContent=St.public?"🔒 Make Admin-Only":"🌐 Launch Public"; }
+      $("cupxPublic").textContent=St.public?"🔒 Make Admin-Only":"🌐 Launch Public";
+      const ss=document.getElementById("cupxSize"); if(ss){ if(document.activeElement!==ss)ss.value=String(St.cap||10); ss.disabled=!reg; ss.title=reg?"Change lobby size live (kept entrants)":"Resize only during registration"; } }
 
     // prize banner
     if(St.yourPrize>0){ $("cupxPrize").style.display="block"; $("cupxPrizeAmt").textContent=St.yourPrize.toFixed(3)+" ◎"; } else $("cupxPrize").style.display="none";
@@ -7304,7 +7340,7 @@ requestAnimationFrame(frame);
 
     // registration card
     if(reg){ const snap=myLegSnap();
-      $("cupxMine").innerHTML=snap?legHTML(elObj(snap.name,snap.element,snap.br,true)):'<div class="sub">Hatch a Legendary at the Mystic Market to enter.</div>';
+      $("cupxMine").innerHTML=snap?legHTML(elObj(myName()||snap.name,snap.name,snap.element,snap.br,true)):'<div class="sub">Hatch a Legendary at the Mystic Market to enter.</div>';
       const blocked=(!St.public&&!adm);
       $("cupxReg2").disabled=St.youRegistered||blocked||!snap||busy;
       $("cupxReg2").textContent=St.youRegistered?"Registered ✓":(St.entryGlory>0?("Register — "+St.entryGlory+" ✨"):"Register — Free");
@@ -7314,7 +7350,7 @@ requestAnimationFrame(frame);
     // lobby
     if(reg||live){ $("cupxLobbyCount").textContent="· "+St.entrants.length+"/"+St.cap;
       const seeded=St.entrants.slice().sort((a,b)=>(b.br||1)-(a.br||1));
-      $("cupxLobbyList").innerHTML=seeded.map((e,i)=>`<div class="match" style="margin:0"><div class="mrow">${legHTML(elObj(e.name,e.element,e.br,false))}<span class="meta">#${i+1}${e.bot?" 🤖":""}</span></div></div>`).join(""); }
+      $("cupxLobbyList").innerHTML=seeded.map((e,i)=>`<div class="match" style="margin:0"><div class="mrow">${legHTML(elObj(e.player||e.name,e.name,e.element,e.br,e.player&&e.player===myName()))}<span class="meta">#${i+1}${e.bot?" 🤖":""}</span></div></div>`).join(""); }
 
     // live round
     if(live){ $("cupxRtitle").textContent=(RNAME[St.round]||St.round||"Round")+(St.roundBattling?" — ⚔️ LIVE":"");
@@ -7322,15 +7358,20 @@ requestAnimationFrame(frame);
       // your live PvP match this round → jump straight into the Chikiseum battle
       $("cupxReady").style.display=(inPlay&&!St.roundBattling)?"inline-block":"none";
       $("cupxReady").disabled=!!St.youReady||busy; $("cupxReady").textContent=St.youReady?"✅ Ready — locked":"✅ Ready Up";
-      const ms=St.matches||[];
-      $("cupxMatches").innerHTML=ms.map(m=>{ const mine=m.a.wallet===myPk()||m.b.wallet===myPk(); const opp=m.a.wallet===myPk()?m.b:m.a;
+      const ms=St.matches||[], lm=St.liveMatches||[];
+      const bracket=ms.map(m=>{ const mine=m.a.wallet===myPk()||m.b.wallet===myPk();
         const fightBtn = (mine&&St.roundBattling&&St.pvpMatchId&&!St.pvpOver)
           ? `<div style="margin-top:6px;text-align:center"><button class="b" id="cupxFight">⚔️ FIGHT your match!</button></div>`
-          : (mine&&St.roundBattling&&St.pvpOver) ? `<div style="margin-top:6px;text-align:center" class="sub">✅ Your match is done — waiting for the round to finalize…</div>`
-          : (mine?`<div style="margin-top:6px;text-align:center"><button class="g" data-watch="${opp.br||10}">⚔️ Watch in the Chikiseum</button></div>`:"");
-        return `<div class="match"><div class="mrow">${legHTML(elObj(m.a.name,m.a.element,m.a.br,m.a.wallet===myPk()))}<div class="vs">VS</div>${legHTML(elObj(m.b.name,m.b.element,m.b.br,m.b.wallet===myPk()))}</div>`+fightBtn+`</div>`; }).join("")||'<div class="sub">Pairing…</div>';
+          : (mine&&St.roundBattling&&St.pvpOver) ? `<div style="margin-top:6px;text-align:center" class="sub">✅ Your match is done — waiting for the round to finalize…</div>` : "";
+        return `<div class="match"><div class="mrow">${legHTML(elObj(m.a.player||m.a.name,m.a.name,m.a.element,m.a.br,m.a.wallet===myPk()))}<div class="vs">VS</div>${legHTML(elObj(m.b.player||m.b.name,m.b.name,m.b.element,m.b.br,m.b.wallet===myPk()))}</div>`+fightBtn+`</div>`; }).join("")||'<div class="sub">Pairing…</div>';
+      // Live PvP matches anyone can spectate
+      const specList = lm.length ? ('<div class="sub" style="margin:10px 0 4px">👁 Live PvP — tap to spectate</div>'+lm.map(x=>{
+          const done=x.status==="finished", wname=done?(x.winner==="a"?x.a:x.b):null;
+          const right = done ? `<span class="meta">🏁 ${esc(wname)} won</span>` : `<button class="g" data-spec="${x.matchId}" data-an="${encodeURIComponent(x.a)}" data-bn="${encodeURIComponent(x.b)}">👁 Spectate</button>`;
+          return `<div class="match"><div class="mrow"><div class="ftr"><div class="orb" style="background:${COL[x.aEl||'Fire']}22;color:${COL[x.aEl||'Fire']}">${ELEMS[x.aEl||'Fire']}</div><div class="nm">${esc(x.a)}</div></div><div class="vs">VS</div><div class="ftr"><div class="orb" style="background:${COL[x.bEl||'Fire']}22;color:${COL[x.bEl||'Fire']}">${ELEMS[x.bEl||'Fire']}</div><div class="nm">${esc(x.b)}</div></div><div style="flex:0 0 auto">${right}</div></div></div>`; }).join('')) : "";
+      $("cupxMatches").innerHTML=bracket+specList;
       const fb=$("cupxFight"); if(fb)fb.onclick=()=>{ if(typeof window.startPvp==="function"){ ov.style.display="none"; window.startPvp(St.pvpMatchId, St.pvpSide, true); } };
-      $("cupxMatches").querySelectorAll("[data-watch]").forEach(b=>b.onclick=()=>{ const br=+b.getAttribute("data-watch"); if(typeof window.cupSpectate==="function"){ ov.style.display="none"; window.cupSpectate(br,()=>{ ov.style.display="block"; }); } }); }
+      $("cupxMatches").querySelectorAll("[data-spec]").forEach(b=>b.onclick=()=>openSpectate(b.getAttribute("data-spec"), decodeURIComponent(b.getAttribute("data-an")), decodeURIComponent(b.getAttribute("data-bn")))); }
 
     // finished
     if(fin){ if(St.champion)$("cupxChampName").textContent=St.champion;
@@ -7356,8 +7397,10 @@ requestAnimationFrame(frame);
     const p=vid.play(); if(p&&p.catch)p.catch(()=>{ vid.muted=true; vid.play().catch(()=>{}); });
     vid.onended=finish; skip.onclick=finish;
   }
-  btn.onclick=()=>{ playCupIntro(()=>{ ov.style.display="block"; refresh(); if(poll)clearInterval(poll); poll=setInterval(refresh,5000); }); };
-  $("cupxClose").onclick=()=>{ ov.style.display="none"; if(poll){ clearInterval(poll); poll=null; } };
+  btn.onclick=()=>{ playCupIntro(()=>{ ov.style.display="block"; refresh(); if(poll)clearInterval(poll); poll=setInterval(refresh,5000);
+    chatSince=0; const cl=$("cupxChatLog"); if(cl)cl.querySelectorAll(".cmsg:not(.sys)").forEach(n=>n.remove());
+    chatRefresh(); if(chatPoll)clearInterval(chatPoll); chatPoll=setInterval(chatRefresh,3000); }); };
+  $("cupxClose").onclick=()=>{ ov.style.display="none"; if(poll){ clearInterval(poll); poll=null; } if(chatPoll){ clearInterval(chatPoll); chatPoll=null; } closeSpectate(); };
 
   // ---- player actions ----
   $("cupxReg2").onclick=async ()=>{ if(busy)return; const snap=myLegSnap(); if(!snap){ regMsg("Hatch a Legendary first."); return; }
@@ -7373,6 +7416,67 @@ requestAnimationFrame(frame);
 
   // ---- admin actions ----
   $("cupxCreate").onclick=async ()=>{ try{ const cap=+(document.getElementById("cupxSize")&&document.getElementById("cupxSize").value||10); await apiPost("/cup/create",{wallet:myPk(),cap}); admMsg("New "+cap+"-player Cup created — registration open."); await refresh(); }catch(e){ admMsg("⚠️ "+e.message); } };
+  // Change the lobby SIZE live (8/10/16) without recreating — keeps everyone already registered.
+  const cupxSizeSel=document.getElementById("cupxSize");
+  if(cupxSizeSel)cupxSizeSel.onchange=async ()=>{ const cap=+cupxSizeSel.value;
+    if(!St||!St.exists){ admMsg("Size set to "+cap+" — applies when you tap ＋ New Cup."); return; }
+    if(St.status!=="registration"){ admMsg("⚠️ Can only resize during registration."); cupxSizeSel.value=String(St.cap||10); return; }
+    try{ const j=await apiPost("/cup/resize",{wallet:myPk(),cap}); admMsg("✅ Lobby resized to "+j.cap+" players — kept the "+(St.entrants?St.entrants.length:0)+" already in."); await refresh(); }
+    catch(e){ admMsg("⚠️ "+e.message); cupxSizeSel.value=String(St.cap||10); } };
+
+  // ---- Cup chat (live, ephemeral) ----
+  function escHtml(s){ return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])); }
+  async function chatRefresh(){ try{ const j=await apiGet("/cup/chat"+(chatSince?("?since="+chatSince):"")); const box=$("cupxChatLog"); if(!box||!j.messages)return;
+      const atBottom=Math.abs(box.scrollHeight-box.clientHeight-box.scrollTop)<55;
+      j.messages.forEach(m=>{ if(m.ts<=chatSince)return; chatSince=Math.max(chatSince,m.ts);
+        const d=document.createElement("div"); d.className="cmsg"+(m.wallet===myPk()?" me":"");
+        d.innerHTML='<span class="cnm">'+escHtml(m.name)+'</span>'+escHtml(m.text); box.appendChild(d); });
+      while(box.children.length>140)box.removeChild(box.firstChild);
+      if(atBottom)box.scrollTop=box.scrollHeight;
+    }catch(e){} }
+  async function chatSend(){ const inp=$("cupxChatInp"); if(!inp)return; const t=(inp.value||"").trim(); if(!t)return;
+    if(!myPk()){ admMsg("Connect your wallet to chat."); return; }
+    inp.value="";
+    const nm=(typeof myHandle==="function"&&myHandle())||((myLegSnap()||{}).name)||"Player";
+    try{ await apiPost("/cup/chat",{wallet:myPk(),name:nm,text:t}); await chatRefresh(); }
+    catch(e){ admMsg("⚠️ "+e.message); inp.value=t; } }
+  { const _ci=$("cupxChatInp"), _cs=$("cupxChatSend");
+    if(_cs)_cs.onclick=chatSend;
+    if(_ci){ ["keydown","keyup","keypress"].forEach(ev=>_ci.addEventListener(ev,e=>e.stopPropagation()));   // don't drive the game while typing
+      _ci.addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); chatSend(); } }); } }
+
+  // ---- Lightweight live spectating (anyone can watch a live PvP match) ----
+  function buildSpecEl(){ if(specEl)return specEl;
+    specEl=document.createElement("div"); specEl.id="cupxSpec";
+    specEl.innerHTML=`<div class="sp"><div class="sphd"><h3 id="spTitle">👁 Spectating</h3><span class="x" id="spClose">✕</span></div>
+      <div class="sgame" id="spGame"></div>
+      <div class="sf" id="spA"></div><div class="vsbar">VS</div><div class="sf" id="spB"></div>
+      <div class="dots" id="spDots"></div>
+      <div class="status" id="spStatus">Loading…</div><div class="win" id="spWin" style="display:none"></div></div>`;
+    document.body.appendChild(specEl); $("spClose").onclick=closeSpectate; return specEl; }
+  function sfHTML(side,p){ const el=p.element||"Fire"; const pct=Math.max(0,Math.min(100,Math.round(100*p.hp/(p.maxhp||1))));
+    return `<div class="orb" style="background:${COL[el]}22;color:${COL[el]}">${ELEMS[el]}</div>
+      <div style="flex:1"><div class="nm">${esc(p.player||p.name||"Player")}</div>
+        <div class="meta">${(p.name&&p.name!==(p.player||""))?("🐉 "+esc(p.name)+" · "):""}${el} · BR ${p.br||1}${p.shield>0?' · <span class="shd">🛡 '+p.shield+'</span>':''}</div>
+        <div class="bar ${side}"><i style="width:${pct}%"></i><span>${p.hp}/${p.maxhp}</span></div></div>`; }
+  function specRender(v){ if(!v||!v.a||!v.b)return;
+    $("spA").innerHTML=sfHTML("you",v.a); $("spB").innerHTML=sfHTML("foe",v.b);
+    $("spGame").textContent="Best of "+(v.bestOf||3)+" · Game "+(v.game||1)+" · Turn "+(v.turn||0);
+    const need=Math.ceil((v.bestOf||3)/2); let dots="";
+    for(let i=0;i<need;i++)dots+='<b class="'+((v.score&&v.score.a>i)?"on":"")+'"></b>';
+    dots+='<span style="display:inline-block;width:16px"></span>';
+    for(let i=0;i<need;i++)dots+='<b class="'+((v.score&&v.score.b>i)?"on":"")+'"></b>';
+    $("spDots").innerHTML=dots;
+    if(v.over){ $("spStatus").style.display="none"; const w=$("spWin"); w.style.display="block";
+      const wn=v.winner==="a"?(v.a.player||v.a.name):(v.b.player||v.b.name); w.textContent="🏆 "+(wn||"—")+" wins!"+(v.reason==="forfeit"?" (forfeit)":""); }
+    else { $("spWin").style.display="none"; const s=$("spStatus"); s.style.display="block";
+      s.textContent=v.between?("⏳ Game "+v.game+" — next game starting…"):"⚔️ Players choosing cards…"; } }
+  async function specTick(){ if(!specMatch)return; try{ const v=await apiGet("/pvp/spectate?matchId="+encodeURIComponent(specMatch)); specRender(v); if(v.over&&specPoll){ clearInterval(specPoll); specPoll=null; } }catch(e){ const s=$("spStatus"); if(s)s.textContent="⚠️ "+e.message; } }
+  function openSpectate(matchId,aName,bName){ buildSpecEl(); specMatch=matchId; specEl.style.display="flex";
+    $("spTitle").textContent="👁 "+(aName||"A")+" vs "+(bName||"B"); $("spWin").style.display="none"; $("spStatus").style.display="block"; $("spStatus").textContent="Loading…";
+    if(specPoll)clearInterval(specPoll); specPoll=setInterval(specTick,1500); specTick(); }
+  function closeSpectate(){ if(specEl)specEl.style.display="none"; specMatch=null; if(specPoll){ clearInterval(specPoll); specPoll=null; } }
+  window.cupOpenSpectate=openSpectate;
   $("cupxFill").onclick=async ()=>{ try{ const j=await apiPost("/cup/fill",{wallet:myPk()}); admMsg("Added "+j.added+" bot(s) — lobby "+j.entrants.length+"/"+j.cap+"."); await refresh(); }catch(e){ admMsg("⚠️ "+e.message); } };
   $("cupxStart").onclick=async ()=>{ try{ await apiPost("/cup/start",{wallet:myPk()}); admMsg("Cup started! ⚔️"); await refresh(); }catch(e){ admMsg("⚠️ "+e.message); } };
   $("cupxPublic").onclick=async ()=>{ try{ const j=await apiPost("/cup/public",{wallet:myPk(),public:!St.public}); admMsg(j.public?"🌐 Cup is now PUBLIC — open to all players.":"🔒 Cup is admin-only."); await refresh(); }catch(e){ admMsg("⚠️ "+e.message); } };
