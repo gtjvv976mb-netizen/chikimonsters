@@ -3225,7 +3225,7 @@ setInterval(updateWhaleTab,1000);
     if(ac){ac.innerHTML=""; if(!B._resolving){const et=document.createElement("button");et.className="aLockBtn";et.setAttribute("aria-label","Lock in");et.innerHTML=q.length?`<span class="lkN">${q.length}</span>`:"";et.onclick=()=>resolveTurn();ac.appendChild(et);}}
   }
   function startBattle(skipIntro){
-    if(!skipIntro){ playBattleIntro(()=>startBattle(true)); return; }   /* play the battle intro first */
+    if(!skipIntro&&typeof playBattleIntro==="function"){ playBattleIntro(()=>startBattle(true)); return; }   /* play the battle intro first (skip gracefully if unavailable) */
     clearTurnTimer();
     const legs=myLegends().map(ensureLegendSkills); if(!legs.length)return;
     const me=legs[0]; const foeC=aiFoe(me.br||1);
@@ -3515,7 +3515,7 @@ setInterval(updateWhaleTab,1000);
   setInterval(pvpLobbyTick, 4000);
 
   function startPvp(matchId, side, fromCup, skipIntro){
-    if(!skipIntro){ playBattleIntro(()=>startPvp(matchId, side, fromCup, true)); return; }   /* play the battle intro first */
+    if(!skipIntro&&typeof playBattleIntro==="function"){ playBattleIntro(()=>startPvp(matchId, side, fromCup, true)); return; }   /* play the battle intro first (skip gracefully if unavailable) */
     clearTurnTimer(); const legs=myLegends().map(ensureLegendSkills); if(!legs.length)return;
     B={ you:makeSide(legs[0],true), foe:null, over:false, turn:null, pvp:{matchId,side,fromCup:!!fromCup}, foeBr:1, series:null, _lastGameShown:-1, _pvpStatus:"" };
     const sp0=g("pvpSeries"); if(sp0){ sp0.style.display="none"; sp0.innerHTML=""; }
