@@ -4127,7 +4127,8 @@ setInterval(updateWhaleTab,1000);
       if((c.food||0)<=0){ c.hungry=true; if(c.state!=="sleeping"){freeSpot&&freeSpot(c);c.task=null;c.target=null;c.state="sleeping";c.sleepT=0;} }  /* famished → sleeps until fed */
     });
     if(careSec>0)e.careMin=Math.min(need,(e.careMin||0)+careSec/60);
-    if((e.careMin||0)>=need && !e.hatched && !e._fired){ e._fired=true; if(typeof window.completeMemeHatch==="function")window.completeMemeHatch(); }
+    /* DONE incubating → mark READY (don't auto-hatch). The player taps the egg in Chikoria to hatch it for the surprise reveal. */
+    if((e.careMin||0)>=need && !e.hatched){ if(!e.ready){ e.ready=true; if(typeof addFeed==="function")addFeed("🥚✨ <b>Your Meme Egg is ready to hatch!</b> Find it in Chikoria and <b>tap it</b> to reveal your Meme Legendary."); if(typeof showBanner==="function")showBanner("🥚✨ Your Meme Egg is READY — tap it in Chikoria to hatch!","info"); } }
   }
   /* start incubating a freshly-bought Meme Egg with `tenderCount` tenders (1 or 2) — picks the player's free workers */
   function startMemeIncubation(info,tenderCount){
@@ -4243,8 +4244,26 @@ setInterval(updateWhaleTab,1000);
     /* ---- market: release/reroll + buy a Legendary Egg ---- */
     const norms=creatures.filter(c=>c.holder===player&&!c.isLegend).length;
     const legs=holderCounts(player).legend, atLegCap=!isCreator(player.pk)&&legs>=MAX_LEGEND;
+    /* ---- Meme Dynasty NFT mint banner (lives in the Mystic Market too) ---- */
+    const _ms=(typeof window.memeEggState==="function")?window.memeEggState():null;
+    const _mOpen=(typeof window.memeSaleOpenNow==="function")?window.memeSaleOpenNow():false;
+    const _mPrice=((window.memeEggPrice)||1000000).toLocaleString();
+    let _memeInner, _memeBtn;
+    if(_ms){ /* an egg is incubating / ready — show a status bar instead of a buy button */
+      _memeInner='<div style="height:13px;background:#241a3e;border:1px solid '+(_ms.ready?'#36c46a':'#7a5ad0')+';border-radius:7px;overflow:hidden;margin:6px 0 4px;position:relative"><i style="display:block;height:100%;width:'+_ms.pct+'%;background:linear-gradient(90deg,'+(_ms.ready?'#7ee68f,#36c46a':'#b58bff,#6a3ad0')+')"></i><span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff;text-shadow:0 1px 2px #000">'+_ms.pct+'%</span></div>'
+        +'<div class="sNote">'+(_ms.ready?'✨ <b>Ready!</b> Tap your egg in Chikoria, or hatch it now.':'🥚 Your <b>Mystery Meme Egg</b> is incubating — keep your tender(s) fed.')+'</div>';
+      _memeBtn=_ms.ready?'<button class="sBtn gold" id="sorcMemeBtn">🐣 Hatch Now — Reveal!</button>':'<button class="sBtn" id="sorcMemeBtn" disabled>🥚 Incubating… '+_ms.pct+'%</button>';
+    } else {
+      _memeInner='<div class="sNote">Hatch a <b>random Meme Legendary</b> — a <b>surprise</b> until it hatches! 🤫 Minted as a real <b>Solana NFT</b>. Only <b>105 editions</b>, ever.</div><div id="sorcMemeTracker" style="margin:8px 0"></div>';
+      _memeBtn=_mOpen?'<button class="sBtn gold" id="sorcMemeBtn">🥚 Hatch a Meme Egg · '+_mPrice+' $CHIKI</button>':'<button class="sBtn" id="sorcMemeBtn" disabled>🔒 Opens at launch</button>';
+    }
     body.innerHTML=`${PORTRAIT}
       <div id="sorcLore">“Welcome, traveler. I am <b>Mithra</b>, guardian of Chikoria — let us trade.”</div>
+      <div class="mCard legend" style="border-color:#7a5ad0;background:linear-gradient(180deg,#241a44,#171029)">
+        <div class="mCardHead">🧬 Meme Dynasty <span class="mPrice" style="color:#d7c2ff">NFT Mint</span></div>
+        ${_memeInner}
+        ${_memeBtn}
+      </div>
       <div class="mCard">
         <div class="mCardHead">🌿 Release &amp; Reroll <span class="mPrice">${REROLL_COST.toLocaleString()} $CHIKI</span></div>
         <div class="sNote">Release a Chiki to the jungle and I'll grant a fresh egg — a new <b>normal</b> Chiki from Lv 1. Reroll as many times as you wish.</div>
@@ -4261,6 +4280,9 @@ setInterval(updateWhaleTab,1000);
     const rb=g("mithReroll"); if(rb)rb.onclick=releaseRehatch;
     const bb=g("sorcBuyBtn"); if(bb)bb.onclick=buyEgg;
     if(typeof window.renderSkillMarket==="function")window.renderSkillMarket(g("sorcSkillMarket"));
+    /* Meme Dynasty banner: live tracker + hatch button */
+    if(!_ms && typeof window.memeTracker==="function") window.memeTracker(g("sorcMemeTracker"));
+    const mmb=g("sorcMemeBtn"); if(mmb&&!mmb.disabled)mmb.onclick=()=>{ g("sorcOverlay").style.display="none"; open=false; if(typeof window.hatchMemeEgg==="function")window.hatchMemeEgg(); };
   }
 
   /* button alert dot when an egg is ready to hatch */
@@ -4870,6 +4892,15 @@ function focusOnEgg(){
   updateCamera(); return true;
 }
 window.focusOnEgg=focusOnEgg;
+/* pan the camera to the Meme Egg nest (used right after buying a Meme Egg) */
+function focusOnMemeEgg(){
+  if(typeof memeEggNest==="undefined"||!memeEggNest)return false;
+  followMode=false;
+  cam.target.set(memeEggNest.x,(memeEggNest.restY!=null?memeEggNest.restY:(memeEggNest.gy||0))+22,memeEggNest.z);
+  cam.dist=Math.min(cam.dist,430); cam.theta=-0.6; cam.phi=0.9;
+  updateCamera(); return true;
+}
+window.focusOnMemeEgg=focusOnMemeEgg;
 /* swing the camera over to the Chikiseum arena in the world */
 function focusOnChikiseum(){
   if(typeof chikiseumSpot==="undefined"||!chikiseumSpot)return false;
@@ -5866,6 +5897,7 @@ setInterval(()=>{                                  /* show the egg + gentle bob 
 },60);
 /* ===== MEME EGG nest — a second 3D egg landmark, shown while a Meme Egg incubates ===== */
 let memeEggNest=null, memeEggMesh=null, memeEggAura=null, _memeEggT=0;
+const MEME_EGG_HEIGHT=52;     /* world-units tall — deliberately smaller than the 92u legendary egg */
 function makeMemeEggNest(){
   if(typeof THREE==="undefined")return;
   let tx=108,ty=64,found=null;   /* offset from the legendary nest so the two eggs don't overlap */
@@ -5882,7 +5914,7 @@ function makeMemeEggNest(){
       const root=gltf.scene;
       root.traverse(o=>{if(o.isMesh){o.castShadow=true; if(o.geometry&&o.geometry.attributes&&o.geometry.attributes.color&&o.material){o.material.vertexColors=true;if(o.material.color)o.material.color.setRGB(1,1,1);o.material.needsUpdate=true;}}});
       const box=new THREE.Box3().setFromObject(root); const size=new THREE.Vector3(); box.getSize(size);
-      const k=EGG_MODEL_HEIGHT/Math.max(0.001,size.y);
+      const k=MEME_EGG_HEIGHT/Math.max(0.001,size.y);   /* smaller than the legendary egg */
       const wrap=new THREE.Group(); wrap.add(root); wrap.scale.setScalar(k);
       wrap.position.set(wx,gy,wz);
       const b2=new THREE.Box3().setFromObject(wrap); wrap.position.y += (gy - b2.min.y);   /* sit the egg ON the ground, not buried (model origin isn't at its base) */
@@ -5890,14 +5922,16 @@ function makeMemeEggNest(){
       wrap.visible=false; scene.add(wrap); memeEggMesh=wrap;
     },undefined,()=>{});
   }
-  if(typeof buildAura==="function"){ memeEggAura=buildAura("gold",true); memeEggAura.scale.setScalar(1.05); memeEggAura.position.set(wx,gy+4,wz); memeEggAura.visible=false; scene.add(memeEggAura); }
+  if(typeof buildAura==="function"){ memeEggAura=buildAura("gold",true); memeEggAura.scale.setScalar(0.6); memeEggAura.position.set(wx,gy+3,wz); memeEggAura.visible=false; scene.add(memeEggAura); }
 }
 setTimeout(makeMemeEggNest,750);
 setInterval(()=>{
   if(!memeEggNest)return;
   const inc=!!(player&&player.memeEgg&&!player.memeEgg.hatched);
   _memeEggT+=0.06;
-  if(memeEggMesh){ memeEggMesh.visible=inc; if(inc){memeEggMesh.position.y=(memeEggNest.restY!=null?memeEggNest.restY:memeEggNest.gy)+Math.sin(_memeEggT)*2; memeEggMesh.rotation.y+=0.004;} }
+  if(memeEggMesh){ memeEggMesh.visible=inc; if(inc){ const rdy=!!(player.memeEgg&&(player.memeEgg.ready||(player.memeEgg.careMin||0)>=(player.memeEgg.need||360)));
+    const baseY=(memeEggNest.restY!=null?memeEggNest.restY:memeEggNest.gy);
+    memeEggMesh.position.y=baseY+Math.sin(_memeEggT*(rdy?3:1))*(rdy?6:2); memeEggMesh.rotation.y+=0.004; memeEggMesh.rotation.z=rdy?Math.sin(_memeEggT*7)*0.09:0; } }   /* shakes when ready to hatch */
   if(memeEggAura){ memeEggAura.visible=inc; if(inc&&typeof animateAura==="function")animateAura(memeEggAura,performance.now()/1000,0.06); }
 },60);
 /* ===== Chikiseum arena — placed once on a flat, empty, walkable spot (no obstruction) ===== */
@@ -6289,6 +6323,12 @@ cv.addEventListener("click",e=>{
   mouseV.x=(e.clientX/innerWidth)*2-1;mouseV.y=-(e.clientY/innerHeight)*2+1;
   raycaster.setFromCamera(mouseV,camera);
   if(typeof mithraNPC!=="undefined"&&mithraNPC){const mh=raycaster.intersectObject(mithraNPC,true);if(mh.length){if(window.openMystic)window.openMystic();return;}}   /* click Mithra → open the Mystic Market */
+  if(typeof memeEggMesh!=="undefined"&&memeEggMesh&&memeEggMesh.visible){ const eh=raycaster.intersectObject(memeEggMesh,true);
+    if(eh.length){ const e=window.player&&player.memeEgg;
+      if(e&&!e.hatched){ const need=e.need||360, ready=!!e.ready||(e.careMin||0)>=need;
+        if(ready){ if(typeof window.completeMemeHatch==="function")window.completeMemeHatch(); }
+        else if(typeof showBanner==="function")showBanner("🥚 Still incubating — "+Math.round(Math.min(1,(e.careMin||0)/need)*100)+"%. Keep your tender(s) fed!","info"); }
+      return; } }   /* tap the Meme Egg → hatch it when ready (surprise reveal) */
   const hits=raycaster.intersectObjects(chikiRoot.children,true);
   if(hits.length){const c=hits[0].object.userData.ci;if(c)showInspect(c);}
   else if(typeof closeAllPops==="function")closeAllPops();   /* tap empty world to minimize open panels */
@@ -7849,9 +7889,13 @@ requestAnimationFrame(frame);
     const el=$("meSupply");
     /* already incubating a Meme Egg? show that instead of a buy button (1 egg of this kind at a time) */
     if(window.player&&player.memeEgg&&!player.memeEgg.hatched){
-      const e=player.memeEgg, need=e.need||360, done=Math.min(need,e.careMin||0), pct=Math.round(done/need*100);
-      if(el)el.innerHTML="🥚 <b>Your Meme Egg is incubating</b> ("+pct+"%) — tend it in Chikoria! 🌊";
-      const hb0=$("meHatch"); if(hb0){ hb0.disabled=true; hb0.innerHTML="🥚 Incubating… "+pct+"%"; }
+      const e=player.memeEgg, need=e.need||360, done=Math.min(need,e.careMin||0), pct=Math.round(done/need*100), ready=!!e.ready||done>=need;
+      const bar='<div style="height:13px;background:#241a3e;border:1px solid '+(ready?'#36c46a':'#7a5ad0')+';border-radius:7px;overflow:hidden;margin:8px 0 4px;position:relative">'
+        +'<i style="display:block;height:100%;width:'+pct+'%;background:linear-gradient(90deg,'+(ready?'#7ee68f,#36c46a':'#b58bff,#6a3ad0')+');transition:width .5s"></i>'
+        +'<span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff;text-shadow:0 1px 2px #000">'+pct+'%</span></div>';
+      if(el)el.innerHTML="🥚 <b>"+(ready?"Your Meme Egg is READY! ✨":"Your Mystery Meme Egg is incubating")+"</b>"+bar
+        +'<div style="font-size:12px;color:'+(ready?'#9be3a8':'#b9a4ff')+'">'+(ready?"👆 Tap the egg in Chikoria (or the button) to hatch &amp; reveal!":"Keep your tender(s) fed — incubating in Chikoria 🌊")+'</div>';
+      const hb0=$("meHatch"); if(hb0){ if(ready){ hb0.disabled=false; hb0.innerHTML="🐣 Hatch Now — Reveal!"; } else { hb0.disabled=true; hb0.innerHTML="🥚 Incubating… "+pct+"%"; } }
       return;
     }
     if(el){
@@ -7886,6 +7930,10 @@ requestAnimationFrame(frame);
   }
   async function hatchEgg(){
     if(_testMode){ testHatch(); return; }
+    /* already have a Meme Egg? if it's READY, hatch it (reveal); otherwise it's still incubating. */
+    if(window.player&&player.memeEgg&&!player.memeEgg.hatched){ const e=player.memeEgg, need=e.need||360;
+      if(e.ready||(e.careMin||0)>=need){ if(typeof window.completeMemeHatch==="function")window.completeMemeHatch(); return; }
+      if(typeof showBanner==="function")showBanner("🥚 Your Meme Egg is still incubating — tend it in Chikoria!","info"); return; }
     if(!saleOpenNow()){ if(typeof showBanner==="function")showBanner("🥚 Meme Dynasty hatching opens at official launch — stay tuned on X!","info"); return; }
     const BK=(window.CHAIN&&CHAIN.BACKEND)||"";
     if(!BK){ if(typeof showBanner==="function")showBanner("Backend offline — try again later.","error"); return; }
@@ -7905,6 +7953,25 @@ requestAnimationFrame(frame);
     }catch(e){ if(typeof showBanner==="function")showBanner("⚠️ "+(e.message||e),"error"); }
     if(hb)hb.disabled=false;
   }
+  /* ===== expose the Meme hatch + a live tracker/status renderer so the Mystic Market can host them too ===== */
+  window.hatchMemeEgg=hatchEgg;
+  window.memeSaleOpenNow=saleOpenNow;
+  window.memeEggPrice=EGG_PRICE;
+  window.memeEggState=function(){ try{ const e=window.player&&player.memeEgg; if(!e||e.hatched)return null; const need=e.need||360, pct=Math.round(Math.min(1,(e.careMin||0)/need)*100); return {incubating:true, ready:!!e.ready||(e.careMin||0)>=need, pct, need}; }catch(_){ return null; } };
+  /* renders the Edition Tracker + a 🔴 LIVE HATCHES ticker into any host element (used by the Meme Dex AND the Mystic Market) */
+  window.memeTracker=function(host){
+    if(!host)return; const BK=(window.CHAIN&&CHAIN.BACKEND)||""; if(!BK){ host.innerHTML=""; return; }
+    Promise.all([fetch(BK+"/meme/supply",{cache:"no-store"}).then(r=>r.json()).catch(()=>null),fetch(BK+"/meme/recent",{cache:"no-store"}).then(r=>r.json()).catch(()=>null)]).then(([s,rec])=>{
+      const order=["pepe","popcat","moodeng","doge","chillguy","alon"]; let html="";
+      if(s&&s.chars){ const minted=(s.total||0)-(s.totalLeft||0);
+        html+='<div style="display:flex;justify-content:space-between;align-items:center;margin:2px 0 6px"><b style="color:#d9c6ff;font-size:12.5px">💎 Edition Tracker</b><span style="color:#ffd966;font-weight:800;font-size:12px">'+minted+' / '+(s.total||0)+' hatched</span></div>';
+        html+=order.filter(k=>s.chars[k]).map(k=>{ const c=s.chars[k],m=(ROSTER_BY[k]||{}),pct=Math.round(c.minted/c.cap*100),founder=/founder/i.test(c.rarity||""),col=founder?'#ffd54a':'#b58bff',thr=Math.max(3,Math.ceil(c.cap*0.2)),tag=c.left===0?'<b style="color:#ff7a7a">SOLD OUT</b>':(c.left<=thr?'<b style="color:#ff9a4d">🔥'+c.left+'</b>':c.left+' left');
+          return '<div style="display:flex;align-items:center;gap:6px;margin:3px 0"><span style="width:74px;font-size:11px;font-weight:800;color:#e7dcff">'+(m.emoji||"")+' '+c.name+'</span><div style="flex:1;height:9px;background:#241a3e;border:1px solid #4a3a80;border-radius:5px;overflow:hidden"><i style="display:block;height:100%;width:'+pct+'%;background:linear-gradient(90deg,'+col+',#6a3ad0)"></i></div><span style="width:80px;text-align:right;font-size:10px;color:#b9a4ff">'+c.minted+'/'+c.cap+' · '+tag+'</span></div>'; }).join("");
+      }
+      if(rec&&rec.items&&rec.items.length){ html+='<div style="border-top:1px solid #4a3a80;margin-top:8px;padding-top:6px;white-space:nowrap;overflow:hidden;font-size:11px"><span style="color:#9b6bff;font-weight:800;margin-right:8px">🔴 LIVE HATCHES</span>'+rec.items.map(it=>{const m=ROSTER_BY[it.char]||{};return '<span style="margin-right:16px;color:'+(/founder/i.test(it.rarity||"")?"#ffd54a":"#cdbcff")+'">'+(m.emoji||"🥚")+' <b>'+it.name+'</b> #'+String(it.edition).padStart(3,"0")+'</span>';}).join("")+'</div>'; }
+      host.innerHTML=html||'<div class="sNote">Dynasty data loading…</div>';
+    });
+  };
   function grantMemeLegendary(key){   /* the hatched Chiki becomes a real, playable Legendary in your roster */
     try{
       if(!window.player||typeof spawnCreature!=="function"||typeof MEME_KEY_SP==="undefined")return null;
@@ -7959,12 +8026,15 @@ requestAnimationFrame(frame);
     r2.style.display="flex";
     const twoBtn=avail>=2?'<button id="inc2">🥚🥚 2 Tenders · ~3h</button>':'';
     r2.innerHTML='<div class="rv"><img src="ui/meme-egg.png?v=meme4" style="width:150px;max-width:48vw" onerror="this.outerHTML=\'<div style=&quot;font-size:110px&quot;>🥚</div>\'">'
-      +'<div class="rvName">'+(m.emoji||"")+' '+m.name+' is on the way!</div>'
-      +'<div class="rvMsg">Your <b>Meme Egg</b> must be <b>tended to hatch</b>. Assign Chikis to it — they stop working &amp; get hungry, but more tenders hatch it faster. When it hatches you get a playable Legendary <b>and</b> your NFT mints on-chain. 🌊</div>'
+      +'<div class="rvName">❓ A Mystery Meme Egg is on the way!</div>'
+      +'<div class="rvMsg">Which Meme Legendary is inside? 🤫 It\'s a <b>secret until it hatches!</b> Your <b>Meme Egg</b> must be <b>tended to hatch</b> — assign Chikis to it (they stop working &amp; get hungry, but more tenders hatch it faster). When it hatches you get a playable Legendary <b>and</b> your NFT mints on-chain. 🌊</div>'
       +(avail<1?'<div class="rvMsg" style="color:#ffb3b3">You need at least 1 working Chiki to tend the egg — get a Chiki first.</div>'
                :'<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:14px"><button id="inc1">🥚 1 Tender · ~6h</button>'+twoBtn+'</div>')
       +'</div>';
-    const go=(n)=>{ const cn=window.startMemeIncubation?window.startMemeIncubation(hatch,n):0; r2.style.display="none"; if(typeof showBanner==="function")showBanner("🥚 Meme Egg incubating — ~"+(cn>1?"3h":"6h")+". Keep your tender(s) fed! Find the egg in Chikoria.","info"); };
+    const go=(n)=>{ const cn=window.startMemeIncubation?window.startMemeIncubation(hatch,n):0; r2.style.display="none";
+      const md=document.getElementById("memeDex"); if(md)md.style.display="none";          /* close the dex so the player sees the world */
+      if(typeof window.focusOnMemeEgg==="function") setTimeout(()=>{ try{ window.focusOnMemeEgg(); }catch(e){} },150);   /* fly the camera straight to the egg's spot */
+      if(typeof showBanner==="function")showBanner("🥚 Your Meme Egg is incubating — ~"+(cn>1?"3h":"6h")+"! Here it is in Chikoria 🐣 — keep your tender(s) fed.","info"); };
     const b1=$("inc1"); if(b1)b1.onclick=()=>go(1);
     const b2=$("inc2"); if(b2)b2.onclick=()=>go(2);
   }
@@ -8031,9 +8101,12 @@ requestAnimationFrame(frame);
     fetch(BK+"/meme/mine?wallet="+player.pk).then(r=>r.json()).then(j=>{ const items=(j&&j.items)||[];
       if(!items.length){ list.innerHTML="<div style='color:#a99cd6;font-size:13px'>No Meme NFTs yet — hatch a Meme Legendary Egg! 🥚</div>"; return; }
       list.innerHTML=items.map(it=>{ const m=ROSTER_BY[it.char]||{emoji:"❓"};
-        const st=it.status==="minted"?'<a class="ns minted" href="https://explorer.solana.com/address/'+(it.mintAddr||"")+'?cluster=devnet" target="_blank" rel="noopener" style="text-decoration:none">✅ On-chain ↗</a>':(it.status==="incubating"?'<span class="ns pending">🥚 Incubating…</span>':'<span class="ns pending">⏳ Minting…</span>');
-        const trade=it.listed?'<button class="meSell unlist" data-unlist="'+it.id+'">🏷️ Listed '+it.listed.price+' ◎ · Unlist</button>':'<button class="meSell" data-list="'+it.id+'">🏪 List for sale</button>';
-        return '<div class="meNft"><img src="'+it.char+'_art.png?v=meme4" onerror="this.style.visibility=\'hidden\'"><div style="flex:1"><div class="nn">'+(m.emoji||"")+' '+it.name+'</div><div class="ne">Edition #'+String(it.edition).padStart(3,"0")+'</div><div style="margin-top:5px">'+trade+'</div></div>'+st+'</div>'; }).join("");
+        const mystery=it.status==="incubating";   /* keep the species a surprise until it hatches */
+        const st=it.status==="minted"?'<a class="ns minted" href="https://explorer.solana.com/address/'+(it.mintAddr||"")+'?cluster=devnet" target="_blank" rel="noopener" style="text-decoration:none">✅ On-chain ↗</a>':(mystery?'<span class="ns pending">🥚 Incubating…</span>':'<span class="ns pending">⏳ Minting…</span>');
+        const trade=mystery?"":(it.listed?'<button class="meSell unlist" data-unlist="'+it.id+'">🏷️ Listed '+it.listed.price+' ◎ · Unlist</button>':'<button class="meSell" data-list="'+it.id+'">🏪 List for sale</button>');
+        const img=mystery?'ui/meme-egg.png?v=meme4':(it.char+'_art.png?v=meme4');
+        const nm=mystery?'❓ Mystery Meme Egg':((m.emoji||"")+' '+it.name);
+        return '<div class="meNft"><img src="'+img+'" onerror="this.style.visibility=\'hidden\'"><div style="flex:1"><div class="nn">'+nm+'</div><div class="ne">'+(mystery?'Tending… a surprise awaits 🤫':'Edition #'+String(it.edition).padStart(3,"0"))+'</div><div style="margin-top:5px">'+trade+'</div></div>'+st+'</div>'; }).join("");
       list.querySelectorAll("[data-list]").forEach(b=>b.onclick=()=>listNft(b.getAttribute("data-list")));
       list.querySelectorAll("[data-unlist]").forEach(b=>b.onclick=()=>unlistNft(b.getAttribute("data-unlist")));
     }).catch(()=>{ list.innerHTML="<div style='color:#ff8a8a;font-size:13px'>Couldn't load your NFTs.</div>"; });
