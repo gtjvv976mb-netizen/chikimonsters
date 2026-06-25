@@ -4132,6 +4132,13 @@ setInterval(updateWhaleTab,1000);
   function tickMemeCare(h){
     const e=h&&h.memeEgg; if(!e||e.hatched)return;
     const need=e.need||MEME_CARE_NEED;
+    /* 🔧 SELF-HEAL: keep the intended number of tenders assigned. If a tender was never assigned or wandered off,
+       automatically pull a FREE (non-Legendary, not tending the Legendary egg) Chiki onto the egg so it never stalls. */
+    const want=Math.max(1,e.tenders||1);
+    if(memeCarers(h).length<want){
+      const free=creatures.filter(c=>c.holder===h&&!c.isLegend&&!c.tending&&!c.tendingMeme);
+      for(const c of free){ if(memeCarers(h).length>=want)break; c.tendingMeme=true; if(typeof freeSpot==="function")freeSpot(c); c.task=null;c.target=null; if(c.state==="sleeping"&&!c.hungry)c.state="wander"; }
+    }
     const now=Date.now(); let sec=(now-(e.lastAt||now))/1000; e.lastAt=now;
     if(sec<=0)return;
     let careSec=0;
@@ -4151,7 +4158,7 @@ setInterval(updateWhaleTab,1000);
     const avail=creatures.filter(c=>c.holder===player&&!c.isLegend&&!c.tending);   /* don't steal Legendary-egg tenders */
     const n=Math.max(1,Math.min(tenderCount||1,2,avail.length||1));
     avail.slice(0,n).forEach(c=>{ c.tendingMeme=true; if(typeof freeSpot==="function")freeSpot(c); c.task=null;c.target=null; if(c.state!=="sleeping")c.state="wander"; });
-    player.memeEgg={careMin:0,lastAt:Date.now(),hatched:false,need:MEME_CARE_NEED,char:info.char,name:info.name,edition:info.edition,cap:info.cap,rarity:info.rarity,hatchId:info.id||info.hatchId||null};
+    player.memeEgg={careMin:0,lastAt:Date.now(),hatched:false,need:MEME_CARE_NEED,tenders:n,char:info.char,name:info.name,edition:info.edition,cap:info.cap,rarity:info.rarity,hatchId:info.id||info.hatchId||null};
     const cn=memeCarers(player).length||1;
     if(typeof addFeed==="function"){ const names=memeCarers(player).map(c=>nameOf(c)).join(" & ")||"your Chiki"; addFeed(`🥚 <b>${names}</b> ${cn>1?"are":"is"} now tending a <b>Meme Egg</b> — hatches in ~${cn>1?"3h":"6h"}. Keep ${cn>1?"them":"it"} fed! 🌊`); }
     if(player.pk&&typeof saveProfile==="function")saveProfile(player);
@@ -8092,14 +8099,18 @@ requestAnimationFrame(frame);
       const e=window.player&&player.memeEgg; if(!e||e.hatched||e._hatching)return; e._hatching=true;
       const hatchId=e.hatchId, BK=(window.CHAIN&&CHAIN.BACKEND)||"";
       let info=null;
+      const fillMeta=(o)=>{ if(!o||!o.char)return o; const m=(typeof ROSTER_BY!=="undefined"&&ROSTER_BY[o.char])||{}; if(o.cap==null)o.cap=m.cap; if(!o.rarity)o.rarity=m.rarity; if(!o.name)o.name=m.name; return o; };
       if(BK&&hatchId&&player.pk){
         try{ const r=await fetch(BK+"/meme/hatched",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:player.pk,hatchId})}); const j=await r.json();
-          if(j&&j.char){ info={char:j.char,name:j.name,edition:j.edition,cap:j.cap,rarity:j.rarity}; }          /* 🎲 species rolled by the server NOW */
+          if(j&&j.char){ info=fillMeta({char:j.char,name:j.name,edition:j.edition,cap:j.cap,rarity:j.rarity}); }          /* 🎲 species rolled by the (new) server NOW */
           else if(j&&j.error){ e._hatching=false; if(typeof showBanner==="function")showBanner("⚠️ "+j.error,"error"); return; }
         }catch(_){}
+        if(!info){ /* older backend didn't return the species → read it back from My NFTs */
+          try{ const mr=await fetch(BK+"/meme/mine?wallet="+player.pk,{cache:"no-store"}); const mj=await mr.json(); const it=(mj.items||[]).find(x=>x.id===hatchId); if(it&&it.char)info=fillMeta({char:it.char,name:it.name,edition:it.edition}); }catch(_){}
+        }
       }
-      if(!info){ if(e.char){ info={char:e.char,name:e.name,edition:e.edition,cap:e.cap,rarity:e.rarity}; }   /* legacy egg fallback */
-        else { e._hatching=false; if(typeof showBanner==="function")showBanner("⚠️ Couldn't reach the hatchery — tap the egg again.","error"); return; } }
+      if(!info){ if(e.char){ info=fillMeta({char:e.char,name:e.name,edition:e.edition,cap:e.cap,rarity:e.rarity}); }   /* legacy predetermined egg */
+        else { e._hatching=false; if(typeof showBanner==="function")showBanner("⚠️ Couldn't reach the hatchery — make sure the backend is deployed, then tap the egg again.","error"); return; } }
       e.hatched=true;
       try{ if(typeof creatures!=="undefined") creatures.forEach(c=>{ if(c.holder===player&&!c.isLegend)c.tendingMeme=false; }); }catch(_){}
       player.memeEgg=null;
