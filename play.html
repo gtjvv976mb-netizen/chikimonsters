@@ -7756,6 +7756,7 @@ requestAnimationFrame(frame);
       <div id="memeName"></div>
       <div id="memeTabs"></div>
       <div id="memeStage"><div class="ld">Loading…</div></div>
+      <div id="memeCards" style="display:none;max-height:min(46vh,360px);overflow-y:auto;padding:6px 2px 2px"></div>
     </div>
     <div id="memeMine" style="display:none">
       <button id="memeMineBack">← Back</button>
@@ -7820,13 +7821,38 @@ requestAnimationFrame(frame);
   function renderTabs(m){
     const tabs=$("memeTabs");
     tabs.innerHTML='<button class="memeTab" data-v="voxel"'+(m.voxel?'':' disabled title="Voxel build coming soon"')+'>🧱 Voxel Build</button>'
-      +'<button class="memeTab" data-v="art">🖼️ Art</button>';
+      +'<button class="memeTab" data-v="art">🖼️ Art</button>'
+      +'<button class="memeTab" data-v="cards">🃏 Cards</button>';
     tabs.querySelectorAll(".memeTab").forEach(b=>{ b.classList.toggle("on", b.dataset.v===_view); if(!b.hasAttribute("disabled")) b.onclick=()=>setView(m.key,b.dataset.v); });
   }
   function setView(key,view){
     _view=view;
     $("memeTabs").querySelectorAll(".memeTab").forEach(b=>b.classList.toggle("on",b.dataset.v===view));
-    showModel(key,view);
+    const stage=$("memeStage"), cards=$("memeCards");
+    if(view==="cards"){ if(stage)stage.style.display="none"; if(cards){ cards.style.display="block"; renderMemeCards(key); } }
+    else { if(cards)cards.style.display="none"; if(stage)stage.style.display=""; showModel(key,view); }
+  }
+  /* the full 12-card skill deck for a Meme Chiki — browsable even if you don't own it */
+  function renderMemeCards(key){
+    const host=$("memeCards"); if(!host)return;
+    const si=(typeof MEME_KEY_SP!=="undefined")?MEME_KEY_SP[key]:null;
+    if(si==null){ host.innerHTML='<div class="ld" style="position:static;padding:18px">Cards coming soon.</div>'; return; }
+    let html='<div style="font-size:11.5px;color:#a99cd6;text-align:center;margin-bottom:8px">Its full 12-card battle deck — tap a card to enlarge 🔍</div>'
+      +'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px">';
+    for(let slot=0;slot<12;slot++){
+      const nm=(typeof PN!=="undefined"&&PN[si]&&PN[si][slot])?(PN[si][slot][0]+" "+PN[si][slot][1]):("Card "+(slot+1));
+      html+='<div style="text-align:center"><img src="ui/cards/'+si+'_'+slot+'.jpg?v=meme7" loading="lazy" data-card="'+si+'_'+slot+'" style="width:100%;border-radius:8px;border:1px solid #4a3a80;cursor:zoom-in;display:block" onerror="this.style.opacity=.25">'
+        +'<div style="font-size:10px;color:#b9a4ff;margin-top:2px;line-height:1.2">'+nm+'</div></div>';
+    }
+    html+='</div>';
+    host.innerHTML=html;
+    host.querySelectorAll("[data-card]").forEach(im=>im.onclick=()=>openCardLightbox(im.getAttribute("data-card")));
+  }
+  function openCardLightbox(k){
+    let lb=$("memeCardLB");
+    if(!lb){ lb=document.createElement("div"); lb.id="memeCardLB"; lb.style.cssText="position:fixed;inset:0;z-index:400;display:none;align-items:center;justify-content:center;background:rgba(4,2,12,.86);cursor:zoom-out"; document.body.appendChild(lb); lb.onclick=()=>{ lb.style.display="none"; }; }
+    lb.innerHTML='<img src="ui/cards/'+k+'.jpg?v=meme7" style="max-width:90vw;max-height:90vh;border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.75)">';
+    lb.style.display="flex";
   }
   function openDetail(key){
     const m=ROSTER.find(x=>x.key===key); if(!m)return;
@@ -7890,11 +7916,19 @@ requestAnimationFrame(frame);
     /* already incubating a Meme Egg? show that instead of a buy button (1 egg of this kind at a time) */
     if(window.player&&player.memeEgg&&!player.memeEgg.hatched){
       const e=player.memeEgg, need=e.need||360, done=Math.min(need,e.careMin||0), pct=Math.round(done/need*100), ready=!!e.ready||done>=need;
-      const bar='<div style="height:13px;background:#241a3e;border:1px solid '+(ready?'#36c46a':'#7a5ad0')+';border-radius:7px;overflow:hidden;margin:8px 0 4px;position:relative">'
-        +'<i style="display:block;height:100%;width:'+pct+'%;background:linear-gradient(90deg,'+(ready?'#7ee68f,#36c46a':'#b58bff,#6a3ad0')+');transition:width .5s"></i>'
+      const tenders=(typeof window.memeCarers==="function")?window.memeCarers(player).length:1;
+      const fedN=(typeof window.fedMemeCarers==="function")?window.fedMemeCarers(player):tenders;
+      const paused=!ready && fedN<=0;   /* no tender, or every tender is out of food → 0%/stalled */
+      const bar='<div style="height:13px;background:#241a3e;border:1px solid '+(ready?'#36c46a':paused?'#ff922b':'#7a5ad0')+';border-radius:7px;overflow:hidden;margin:8px 0 4px;position:relative">'
+        +'<i style="display:block;height:100%;width:'+pct+'%;background:linear-gradient(90deg,'+(ready?'#7ee68f,#36c46a':paused?'#ff922b,#a85a12':'#b58bff,#6a3ad0')+');transition:width .5s"></i>'
         +'<span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff;text-shadow:0 1px 2px #000">'+pct+'%</span></div>';
+      let line;
+      if(ready) line="👆 Tap the egg in Chikoria (or the button) to hatch &amp; reveal!";
+      else if(tenders<=0) line='⚠️ <b style="color:#ff922b">No Chiki is tending the egg.</b> You need a normal (non-Legendary) Chiki free to tend it — it won\'t grow without one.';
+      else if(paused) line='⏸ <b style="color:#ff922b">Paused — your tender ran out of food.</b> Refill its food in the <b>🐣 My Chiki</b> panel to resume.';
+      else line="🍖 Tending with "+fedN+" fed Chiki"+(fedN>1?"s":"")+" — keep "+(fedN>1?"them":"it")+" fed! "+(tenders>1?"2 tenders ≈ 3h":"1 tender ≈ 6h")+" 🌊";
       if(el)el.innerHTML="🥚 <b>"+(ready?"Your Meme Egg is READY! ✨":"Your Mystery Meme Egg is incubating")+"</b>"+bar
-        +'<div style="font-size:12px;color:'+(ready?'#9be3a8':'#b9a4ff')+'">'+(ready?"👆 Tap the egg in Chikoria (or the button) to hatch &amp; reveal!":"Keep your tender(s) fed — incubating in Chikoria 🌊")+'</div>';
+        +'<div style="font-size:12px;color:'+(ready?'#9be3a8':paused||tenders<=0?'#ffc78a':'#b9a4ff')+'">'+line+'</div>';
       const hb0=$("meHatch"); if(hb0){ if(ready){ hb0.disabled=false; hb0.innerHTML="🐣 Hatch Now — Reveal!"; } else { hb0.disabled=true; hb0.innerHTML="🥚 Incubating… "+pct+"%"; } }
       return;
     }
@@ -8109,7 +8143,8 @@ requestAnimationFrame(frame);
       if(!items.length){ list.innerHTML="<div style='color:#a99cd6;font-size:13px'>No Meme NFTs yet — hatch a Meme Legendary Egg! 🥚</div>"; return; }
       list.innerHTML=items.map(it=>{ const m=ROSTER_BY[it.char]||{emoji:"❓"};
         const mystery=it.status==="incubating";   /* keep the species a surprise until it hatches */
-        const st=it.status==="minted"?'<a class="ns minted" href="https://explorer.solana.com/address/'+(it.mintAddr||"")+'?cluster=devnet" target="_blank" rel="noopener" style="text-decoration:none">✅ On-chain ↗</a>':(mystery?'<span class="ns pending">🥚 Incubating…</span>':'<span class="ns pending">⏳ Minting…</span>');
+        const _clu=(window.CHAIN&&/dev/i.test(CHAIN.NETWORK||""))?"?cluster=devnet":"";   /* mainnet by default */
+        const st=it.status==="minted"?'<a class="ns minted" href="https://explorer.solana.com/address/'+(it.mintAddr||"")+_clu+'" target="_blank" rel="noopener" style="text-decoration:none">✅ On-chain ↗</a>':(mystery?'<span class="ns pending">🥚 Incubating…</span>':'<span class="ns pending">⏳ Minting…</span>');
         const trade=mystery?"":(it.listed?'<button class="meSell unlist" data-unlist="'+it.id+'">🏷️ Listed '+it.listed.price+' ◎ · Unlist</button>':'<button class="meSell" data-list="'+it.id+'">🏪 List for sale</button>');
         const img=mystery?'ui/meme-egg.png?v=meme4':(it.char+'_art.png?v=meme4');
         const nm=mystery?'❓ Mystery Meme Egg':((m.emoji||"")+' '+it.name);
