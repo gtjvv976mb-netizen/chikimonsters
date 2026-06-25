@@ -4132,12 +4132,14 @@ setInterval(updateWhaleTab,1000);
   function tickMemeCare(h){
     const e=h&&h.memeEgg; if(!e||e.hatched)return;
     const need=e.need||MEME_CARE_NEED;
-    /* 🔧 SELF-HEAL: keep the intended number of tenders assigned. If a tender was never assigned or wandered off,
-       automatically pull a FREE (non-Legendary, not tending the Legendary egg) Chiki onto the egg so it never stalls. */
-    const want=Math.max(1,e.tenders||1);
-    if(memeCarers(h).length<want){
-      const free=creatures.filter(c=>c.holder===h&&!c.isLegend&&!c.tending&&!c.tendingMeme);
-      for(const c of free){ if(memeCarers(h).length>=want)break; c.tendingMeme=true; if(typeof freeSpot==="function")freeSpot(c); c.task=null;c.target=null; if(c.state==="sleeping"&&!c.hungry)c.state="wander"; }
+    /* 🔧 SELF-HEAL (auto mode only): keep the intended number of tenders assigned so the egg never silently stalls.
+       If the player has taken MANUAL control via the tickboxes (e.manualTenders), respect their exact choice. */
+    if(!e.manualTenders){
+      const want=Math.max(1,e.tenders||1);
+      if(memeCarers(h).length<want){
+        const free=creatures.filter(c=>c.holder===h&&!c.isLegend&&!c.tending&&!c.tendingMeme);
+        for(const c of free){ if(memeCarers(h).length>=want)break; c.tendingMeme=true; if(typeof freeSpot==="function")freeSpot(c); c.task=null;c.target=null; if(c.state==="sleeping"&&!c.hungry)c.state="wander"; }
+      }
     }
     const now=Date.now(); let sec=(now-(e.lastAt||now))/1000; e.lastAt=now;
     if(sec<=0)return;
@@ -7930,6 +7932,7 @@ requestAnimationFrame(frame);
     if(!_recentInit){ _recentInit=true; setInterval(()=>{ const md=$("memeDex"); if(md&&md.style.display!=="none")pollRecent(); },15000); }
   }
   function applyEggUI(s){
+    if(s)window._memeLastSupply=s;   /* cache so the tend-tickboxes can re-render without losing the tracker */
     renderRarity(s);
     const open2=saleOpenNow();
     const total=(s&&s.total)||ROSTER.reduce((a,m)=>a+(m.cap||10),0);
@@ -7948,8 +7951,23 @@ requestAnimationFrame(frame);
       else if(tenders<=0) line='⚠️ <b style="color:#ff922b">No Chiki is tending the egg.</b> You need a normal (non-Legendary) Chiki free to tend it — it won\'t grow without one.';
       else if(paused) line='⏸ <b style="color:#ff922b">Paused — your tender ran out of food.</b> Refill its food in the <b>🐣 My Chiki</b> panel to resume.';
       else line="🍖 Tending with "+fedN+" fed Chiki"+(fedN>1?"s":"")+" — keep "+(fedN>1?"them":"it")+" fed! "+(tenders>1?"2 tenders ≈ 3h":"1 tender ≈ 6h")+" 🌊";
+      /* per-Chiki tend tickboxes — the player chooses who tends (and can free a Chiki for tasks) */
+      const eligible=(typeof creatures!=="undefined")?creatures.filter(c=>c.holder===window.player&&!c.isLegend&&!c.tending):[];
+      let tlist="";
+      if(!ready && eligible.length){
+        tlist='<div style="margin-top:9px;border-top:1px solid #4a3a80;padding-top:7px"><div style="font-size:11px;color:#a99cd6;margin-bottom:3px">🥚 Choose who tends the egg (untick to free a Chiki for tasks):</div>'
+          +eligible.map(c=>{ const fed=(c.food||0)>0, nm=(typeof nameOf==="function"?nameOf(c):"Chiki"), idx=creatures.indexOf(c);
+            const tag=c.tendingMeme?(fed?'<span style="color:#7ee68f">🍖 tending</span>':'<span style="color:#ff922b">⏸ hungry — feed it</span>'):'<span style="color:#8a7fb0">free</span>';
+            return '<label style="display:flex;align-items:center;gap:8px;font-size:12px;color:#e7dcff;padding:3px 0;cursor:pointer"><input type="checkbox" class="tendChk" data-ci="'+idx+'"'+(c.tendingMeme?' checked':'')+' style="width:16px;height:16px;accent-color:#9b6bff;cursor:pointer"><span style="flex:1">'+nm+'</span>'+tag+'</label>'; }).join("")+'</div>';
+      }
       if(el)el.innerHTML="🥚 <b>"+(ready?"Your Meme Egg is READY! ✨":"Your Mystery Meme Egg is incubating")+"</b>"+bar
-        +'<div style="font-size:12px;color:'+(ready?'#9be3a8':paused||tenders<=0?'#ffc78a':'#b9a4ff')+'">'+line+'</div>';
+        +'<div style="font-size:12px;color:'+(ready?'#9be3a8':paused||tenders<=0?'#ffc78a':'#b9a4ff')+'">'+line+'</div>'+tlist;
+      if(el)el.querySelectorAll(".tendChk").forEach(chk=>chk.onchange=()=>{ const c=creatures[+chk.dataset.ci]; if(!c)return;
+        c.tendingMeme=chk.checked;
+        if(c.tendingMeme){ if(typeof freeSpot==="function")freeSpot(c); c.task=null;c.target=null; if(c.state==="sleeping"&&!c.hungry)c.state="wander"; }
+        const eg=window.player&&player.memeEgg; if(eg){ eg.manualTenders=true; eg.tenders=creatures.filter(x=>x.holder===player&&!x.isLegend&&x.tendingMeme).length; eg.lastAt=Date.now(); }
+        if(typeof saveProfile==="function"&&player.pk)saveProfile(player);
+        applyEggUI(window._memeLastSupply||null); });
       const hb0=$("meHatch"); if(hb0){ if(ready){ hb0.disabled=false; hb0.innerHTML="🐣 Hatch Now — Reveal!"; } else { hb0.disabled=true; hb0.innerHTML="🥚 Incubating… "+pct+"%"; } }
       return;
     }
