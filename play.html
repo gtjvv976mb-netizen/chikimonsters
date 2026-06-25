@@ -2321,6 +2321,20 @@ async function feedChiki(c){            /* refill the FOOD bar — foodPerMin(le
   addFeed(`🍖 ${nameFor(h)} fed <b>${nameOf(c)}</b> ${cost.toLocaleString()} $CHIKI → food full (${fmtFood(c.food)}) · 🔥${fmtK(burn)} burned · 💰${fmtK(toPool)}→pool · 🏦${fmtK(toTeam)}→team`);
   spawnBurst(c.x,c.y,"#ff922b",24);spawnFloat(c.x,c.y,"🍖 Yum!","#ff922b");
   if(c.hungry)wakeUp(c); else refreshUI();   /* feeding only rouses a FAMISHED Chiki; a normal stamina nap is left to finish (constant feeding no longer blocks sleep) */
+  /* 🥚 MEME EGG: a freshly-fed Chiki resumes tending — and if the egg has NO tender at all, this one adopts it. */
+  try{
+    if(h.memeEgg && !h.memeEgg.hatched && !c.isLegend && !c.tending){
+      const tenders=creatures.filter(x=>x.holder===h&&!x.isLegend&&x.tendingMeme);
+      if(c.tendingMeme){
+        c.hungry=false; if(c.state==="sleeping"){c.state="wander";c.nextTaskIn=rng(2,6);} c.task=null;c.target=null;
+        addFeed(`🥚 <b>${nameOf(c)}</b> is fed and back to tending your Meme Egg!`);
+      } else if(tenders.length===0){          /* egg was stuck with no tender → adopt this fed Chiki */
+        c.tendingMeme=true; c.hungry=false; if(c.state==="sleeping"){c.state="wander";c.nextTaskIn=rng(2,6);} c.task=null;c.target=null;
+        addFeed(`🥚 <b>${nameOf(c)}</b> started tending your Meme Egg! 🌊`);
+      }
+      if(c.holder.memeEgg) c.holder.memeEgg.lastAt=Date.now();   /* care resumes cleanly from now */
+    }
+  }catch(e){}
   if(typeof saveProfile==="function"&&h.pk)saveProfile(h);
 }
 
