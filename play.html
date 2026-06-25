@@ -7840,7 +7840,7 @@ requestAnimationFrame(frame);
     let html='<div style="font-size:11.5px;color:#a99cd6;text-align:center;margin-bottom:8px">Its full 12-card battle deck — tap a card to enlarge 🔍</div>'
       +'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px">';
     for(let slot=0;slot<12;slot++){
-      const nm=(typeof PN!=="undefined"&&PN[si]&&PN[si][slot])?(PN[si][slot][0]+" "+PN[si][slot][1]):("Card "+(slot+1));
+      const nm=(typeof CHI_PN!=="undefined"&&CHI_PN[si]&&CHI_PN[si][slot])?(CHI_PN[si][slot][0]+" "+CHI_PN[si][slot][1]):("Card "+(slot+1));
       html+='<div style="text-align:center"><img src="ui/cards/'+si+'_'+slot+'.jpg?v=meme7" loading="lazy" data-card="'+si+'_'+slot+'" style="width:100%;border-radius:8px;border:1px solid #4a3a80;cursor:zoom-in;display:block" onerror="this.style.opacity=.25">'
         +'<div style="font-size:10px;color:#b9a4ff;margin-top:2px;line-height:1.2">'+nm+'</div></div>';
     }
