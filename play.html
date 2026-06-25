@@ -7385,7 +7385,21 @@ requestAnimationFrame(frame);
   #cupxSpec .dots b{width:9px;height:9px;border-radius:50%;background:#1c3d2e;display:inline-block}
   #cupxSpec .dots b.on{background:#ffd166}
   #cupxSpec .status{text-align:center;margin-top:14px;font-size:13px;color:#bfe9d3;min-height:18px}
-  #cupxSpec .win{text-align:center;margin-top:14px;font-size:18px;font-weight:900;color:#ffd166}`;
+  #cupxSpec .win{text-align:center;margin-top:14px;font-size:18px;font-weight:900;color:#ffd166}
+  /* player-guidance hero banner */
+  #cupxHero{margin:0 0 12px}
+  #cupxHero .hero{border-radius:14px;padding:13px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  #cupxHero .htxt{flex:1;min-width:160px}
+  #cupxHero .htitle{font-weight:900;font-size:16px;line-height:1.2}
+  #cupxHero .hsub{font-size:12.5px;color:#bfe9d3;margin-top:2px}
+  #cupxHero .hbtn{border:none;border-radius:12px;padding:13px 22px;font-weight:900;font-size:16px;cursor:pointer;font-family:inherit;white-space:nowrap}
+  #cupxHero .fight{background:linear-gradient(180deg,#ff6b6b,#d63d3d);color:#fff;box-shadow:0 4px 0 #a82a2a;animation:cfightpulse 1s ease-in-out infinite}
+  #cupxHero .fight:active{transform:translateY(2px);box-shadow:0 2px 0 #a82a2a}
+  #cupxHero .reg{background:linear-gradient(180deg,#ffe08a,#e0a93a);color:#3a2a06;box-shadow:0 4px 0 #a87f1f}
+  @keyframes cfightpulse{0%,100%{box-shadow:0 4px 0 #a82a2a,0 0 0 rgba(255,90,90,.6)}50%{box-shadow:0 4px 0 #a82a2a,0 0 22px rgba(255,90,90,.95)}}
+  #cupxBtn.cuplive{animation:cupbtnglow 1.4s ease-in-out infinite}
+  @keyframes cupbtnglow{0%,100%{box-shadow:0 4px 0 #a87f1f,0 6px 14px rgba(0,0,0,.3)}50%{box-shadow:0 4px 0 #a87f1f,0 0 18px rgba(61,220,132,.9)}}
+  #cupxBtn .livedot{position:absolute;top:-5px;right:-5px;width:12px;height:12px;border-radius:50%;background:#ff4d4d;border:2px solid #1a1205;animation:cfightpulse 1s infinite}`;
   document.head.appendChild(css);
 
   const ov=document.createElement("div"); ov.id="cupx";
@@ -7393,6 +7407,7 @@ requestAnimationFrame(frame);
     <div class="hd"><div><h1>🏆 <span class="gold">Chikoria Cup</span> Hub</h1><div class="sub" id="cupxSub">10 Legendaries · double elimination · live PvP in the Chikiseum 🌊</div></div>
       <div style="display:flex;gap:8px;align-items:center"><span id="cupxRole" class="pill" style="color:#9fd0ff">🎮 Player</span><span id="cupxStatus" class="pill" style="color:#ffd166">—</span><span class="x" id="cupxClose">✕</span></div></div>
     <div id="cupChampBanner" style="display:none"></div>
+    <div id="cupxHero"></div>
     <div class="card" id="cupxAdmin" style="display:none;border-color:#3ddc8455"><h3 style="margin-top:0">🛠 Admin controls</h3>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
         <select id="cupxSize" style="font-family:inherit;font-weight:800;font-size:13px;padding:9px 8px;border-radius:10px;border:1px solid #1c3d2e;background:#0f2a1e;color:#dff5e8;cursor:pointer">
@@ -7443,7 +7458,17 @@ requestAnimationFrame(frame);
   async function apiPost(path,body){ if(!API)throw new Error("backend offline"); const r=await fetch(API+path,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body||{})}); const j=await r.json().catch(()=>({})); if(!r.ok)throw new Error(j.error||("HTTP "+r.status)); return j; }
 
   // Cup tab button: admins always see it; everyone else only once the Cup is launched publicly.
-  setInterval(async ()=>{ if(isAdm()){ btn.style.display="block"; return; } try{ const s=await apiGet("/cup/status"); btn.style.display=s.public?"block":"none"; }catch(e){ btn.style.display="none"; } },5000);
+  // Also glow + show a red dot when a Cup is LIVE (and extra-strong when YOUR match is up) so players notice.
+  setInterval(async ()=>{ const adm=isAdm(); let s=null;
+    try{ s=await apiGet("/cup/status"+(myPk()?("?wallet="+myPk()):"")); }catch(e){}
+    if(!s){ btn.style.display=adm?"block":"none"; return; }
+    btn.style.display=(adm||s.public)?"block":"none";
+    const myFight = s.status==="live" && s.roundBattling && s.pvpMatchId && !s.pvpOver;
+    const liveish = s.status==="live" || s.status==="registration";
+    btn.classList.toggle("cuplive", liveish||myFight);
+    let dot=btn.querySelector(".livedot"); if(liveish||myFight){ if(!dot){ dot=document.createElement("span"); dot.className="livedot"; btn.appendChild(dot); } } else if(dot){ dot.remove(); }
+    btn.title = myFight?"⚔️ Your Cup match is LIVE — tap to fight!":(s.status==="live"?"🏆 Chikoria Cup — LIVE now":(s.status==="registration"?"🏆 Chikoria Cup — registration open!":"🏆 Chikoria Cup"));
+  },5000);
 
   // build the snapshot the server expects from the player's best Legendary
   function myLegSnap(){ try{ if(typeof myChikis==="function"){ const legs=myChikis().filter(c=>c.isLegend); if(legs.length){ const c=legs.slice().sort((a,b)=>(b.br||1)-(a.br||1))[0]; const si=(typeof SPECIES!=="undefined")?SPECIES.indexOf(c.sp):-1; return {name:(typeof nameOf==="function"?nameOf(c):"Your Legendary"),element:LEGEL[si]||"Fire",br:c.br||10,arenaSkills:c.arenaSkills||[0,1,2],cardTier:c.cardTier||{}}; } } }catch(e){} return null; }
@@ -7460,6 +7485,35 @@ requestAnimationFrame(frame);
     const pm=PILL[St.status]||["—","#ffd166"]; $("cupxStatus").textContent=pm[0]; $("cupxStatus").style.color=pm[1];
     const sub=document.getElementById("cupxSub"); if(sub)sub.textContent=(St.cap||10)+" Legendaries · double elimination · battles fought in the Chikiseum 🌊";
     const reg=St.status==="registration", live=St.status==="live", fin=St.status==="finished";
+
+    // ===== player-guidance HERO banner — tells the player exactly what to do right now =====
+    (function(){ const h=$("cupxHero"); if(!h)return;
+      const myMatch = live && St.roundBattling && St.pvpMatchId && !St.pvpOver;
+      const myDone  = live && St.roundBattling && St.pvpOver;
+      let bg="linear-gradient(180deg,#0f2a1e,#0c2118)", title="", subt="", btnH="";
+      if(St.status==="none"){ title="🏆 No Cup running right now"; subt="Check back soon — when a Cup opens you can register here to battle for SOL."; }
+      else if(reg){
+        if(St.youRegistered){ bg="linear-gradient(180deg,#143a28,#0c2118)"; title="✅ You're registered!"; subt="Waiting for the bracket to fill — "+St.entrants.length+"/"+St.cap+" in. "+(St.auto?"Matches start automatically; keep this open.":"The host starts it soon."); }
+        else { const blocked=(!St.public&&!adm), snap=myLegSnap(); bg="linear-gradient(180deg,#2c2208,#1a1305)";
+          title="⚔️ The Chikoria Cup is open!"; subt= blocked?"Not open to the public yet — hang tight.":(!snap?"You need a Legendary to enter — hatch one at the 🔮 Mystic Market.":"Register to compete for the 4 SOL pool · "+St.entrants.length+"/"+St.cap+" joined.");
+          if(!blocked&&snap)btnH='<button class="hbtn reg" id="cupxHeroReg">Register · '+(St.entryGlory>0?St.entryGlory+" ✨":"Free")+'</button>'; }
+      }
+      else if(live){
+        if(myMatch){ bg="linear-gradient(180deg,#3a1414,#1a0c0c)"; title="⚔️ YOUR MATCH IS LIVE!"; subt="Battle in the Chikiseum — win to advance!"; btnH='<button class="hbtn fight" id="cupxHeroFight">⚔️ FIGHT NOW</button>'; }
+        else if(myDone){ bg="linear-gradient(180deg,#143a28,#0c2118)"; title="✅ Your match is done — you advanced!"; subt="Hang tight for the round to finalize, then your next match begins."; }
+        else if(St.youRegistered && St.youPlace==null){ bg="linear-gradient(180deg,#142a3a,#0c1a21)"; title="⏳ Waiting for your next match…"; subt=(RNAME[St.round]||"The round")+" is underway. When you're paired, a FIGHT button appears here."; }
+        else if(St.youRegistered && St.youPlace!=null){ title="🏁 You finished #"+St.youPlace; subt="You're out of the bracket — spectate the rest below!"; }
+        else { title="🍿 Cup in progress"; subt="Spectate the live matches below — enter the next Cup to compete!"; }
+      }
+      else if(fin){
+        if(St.youRegistered && St.youPlace===1){ bg="linear-gradient(180deg,#3a2e08,#1a1305)"; title="🏆 YOU ARE THE CHAMPION!"; subt="The trophy floats above your Legendary, and 1 SOL is in your pouch!"; }
+        else if(St.youRegistered && St.youPlace){ title="🏁 You placed #"+St.youPlace; subt= St.yourPrize>0?("GG! Your "+St.yourPrize.toFixed(3)+" SOL is in your pouch."):"GG — better luck next Cup!"; }
+        else { title="🏆 Champion: "+(St.champion||"—"); subt="The Cup has concluded — full standings below."; }
+      }
+      h.innerHTML='<div class="hero" style="background:'+bg+';border:1px solid #2a6048"><div class="htxt"><div class="htitle">'+title+'</div><div class="hsub">'+subt+'</div></div>'+btnH+'</div>';
+      const rb=$("cupxHeroReg"); if(rb)rb.onclick=()=>{ const r2=$("cupxReg2"); if(r2&&!r2.disabled)r2.click(); };
+      const fb2=$("cupxHeroFight"); if(fb2)fb2.onclick=()=>{ if(typeof window.startPvp==="function"){ ov.style.display="none"; window.startPvp(St.pvpMatchId, St.pvpSide, true); } };
+    })();
 
     // admin controls
     $("cupxAdmin").style.display=adm?"block":"none";
