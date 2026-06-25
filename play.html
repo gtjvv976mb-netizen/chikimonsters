@@ -7801,7 +7801,7 @@ requestAnimationFrame(frame);
   const _testNfts=[]; const _testSupply={};          // local-only test inventory + per-character test supply (10 each)
   /* 🔒 SALE SWITCH — set TRUE at your official X launch to open public hatching.
      While FALSE the egg is locked for everyone EXCEPT admins (your wallet / ?memetest=1), so you can still dry-run. */
-  const SALE_OPEN=false;
+  const SALE_OPEN=true;   /* 🚀 LAUNCHED — Meme Dynasty is public. (Backend MEME_SALE_OPEN is the real gate; this clears the "admin preview" label.) */
   function isAdmin(){ try{ return /[?&]admin=1/.test(location.search) || !!(window.CHAIN&&CHAIN.ADMINS&&window.player&&player.pk&&CHAIN.ADMINS.indexOf(player.pk)>=0); }catch(e){ return false; } }   /* admin wallet OR ?admin=1 URL override unlocks the real buy */
   /* REAL purchase is allowed only when the sale is open OR you're the admin wallet — NOT via ?memetest=1 (that's test-only). */
   function saleOpenNow(){ return SALE_OPEN || _memeCfg.saleOpen===true || isAdmin(); }
