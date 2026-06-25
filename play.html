@@ -7697,6 +7697,8 @@ requestAnimationFrame(frame);
             <div class="meSupply" id="meSupply">Loading supply…</div></div></div>
         <div class="meBtns"><button id="meHatch">🥚 Hatch Egg · <span id="meCost"></span></button></div>
         <div class="meBtns"><button id="meMine" class="meGhost">🎒 My NFTs</button><button id="meBazaar" class="meGhost">🏪 NFT Bazaar</button></div>
+        <div id="meRarity"></div>
+        <div id="meTicker"></div>
       </div>
       <div class="mgCards" id="mgCards"></div>
       <div id="memeFoot">🎨 <b>The roster isn't finished.</b> Want your favourite meme immortalised as a Chiki? Submit fan art or a suggestion with <b>#MemeDynasty</b> — the best picks join the dynasty, locked in forever. 🐾👑</div>
@@ -7802,7 +7804,38 @@ requestAnimationFrame(frame);
   function isAdmin(){ try{ return /[?&]admin=1/.test(location.search) || !!(window.CHAIN&&CHAIN.ADMINS&&window.player&&player.pk&&CHAIN.ADMINS.indexOf(player.pk)>=0); }catch(e){ return false; } }   /* admin wallet OR ?admin=1 URL override unlocks the real buy */
   /* REAL purchase is allowed only when the sale is open OR you're the admin wallet — NOT via ?memetest=1 (that's test-only). */
   function saleOpenNow(){ return SALE_OPEN || _memeCfg.saleOpen===true || isAdmin(); }
+  /* === ENGAGEMENT: live Edition Tracker (per-character rarity bars + urgency) === */
+  function renderRarity(s){
+    const host=$("meRarity"); if(!host)return;
+    if(!s||!s.chars){ host.innerHTML=""; return; }
+    const order=["pepe","popcat","moodeng","doge","chillguy","alon"];
+    const minted=(s.total||0)-(s.totalLeft||0);
+    const rows=order.filter(k=>s.chars[k]).map(k=>{ const c=s.chars[k], m=(typeof ROSTER_BY!=="undefined"&&ROSTER_BY[k])||{}, pct=Math.round((c.minted/c.cap)*100);
+      const founder=/founder/i.test(c.rarity||""), col=founder?"#ffd54a":"#b58bff";
+      const thresh=Math.max(3,Math.ceil(c.cap*0.2));
+      const tag=c.left===0?'<b style="color:#ff7a7a">SOLD OUT</b>':(c.left<=thresh?'<b style="color:#ff9a4d">🔥 '+c.left+' left!</b>':c.left+' left');
+      return '<div style="display:flex;align-items:center;gap:8px;margin:5px 0">'
+        +'<span style="width:80px;font-weight:800;font-size:12px;color:#e7dcff">'+(m.emoji||"")+' '+c.name+'</span>'
+        +'<div style="flex:1;height:11px;background:#241a3e;border:1px solid #4a3a80;border-radius:6px;overflow:hidden"><i style="display:block;height:100%;width:'+pct+'%;background:linear-gradient(90deg,'+col+',#6a3ad0);transition:width .5s"></i></div>'
+        +'<span style="width:92px;text-align:right;font-size:11px;color:#b9a4ff">'+c.minted+'/'+c.cap+' · '+tag+'</span></div>'; }).join("");
+    host.innerHTML='<div style="margin-top:12px;background:rgba(20,14,40,.5);border:1px solid #4a3a80;border-radius:12px;padding:10px 12px">'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><b style="color:#d9c6ff;font-size:13px">💎 Edition Tracker</b><span style="font-size:12px;color:#ffd966;font-weight:800">'+minted+' / '+(s.total||0)+' hatched</span></div>'+rows+'</div>';
+  }
+  /* live "just hatched!" ticker */
+  let _recentInit=false;
+  function pollRecent(){
+    const BK=(window.CHAIN&&CHAIN.BACKEND)||""; if(!BK)return;
+    fetch(BK+"/meme/recent",{cache:"no-store"}).then(r=>r.json()).then(j=>{ const host=$("meTicker"); if(!host)return;
+      const items=(j&&j.items)||[]; if(!items.length){ host.style.display="none"; return; }
+      const chips=items.map(it=>{ const m=(typeof ROSTER_BY!=="undefined"&&ROSTER_BY[it.char])||{}, founder=/founder/i.test(it.rarity||"");
+        return '<span style="display:inline-block;margin-right:20px;font-size:12px;color:'+(founder?"#ffd54a":"#cdbcff")+'">'+(m.emoji||"🥚")+' <b>'+it.name+'</b> #'+String(it.edition).padStart(3,"0")+' hatched!</span>'; }).join("");
+      host.style.display="block";
+      host.innerHTML='<div style="overflow:hidden;white-space:nowrap;border-top:1px solid #4a3a80;margin-top:10px;padding-top:8px"><span style="font-weight:800;color:#9b6bff;font-size:11px;margin-right:10px">🔴 LIVE HATCHES</span>'+chips+'</div>';
+    }).catch(()=>{});
+    if(!_recentInit){ _recentInit=true; setInterval(()=>{ const md=$("memeDex"); if(md&&md.style.display!=="none")pollRecent(); },15000); }
+  }
   function applyEggUI(s){
+    renderRarity(s);
     const open2=saleOpenNow();
     const total=(s&&s.total)||ROSTER.reduce((a,m)=>a+(m.cap||10),0);
     const el=$("meSupply");
@@ -7829,6 +7862,7 @@ requestAnimationFrame(frame);
     applyEggUI(null);   /* lock immediately so the button never flashes enabled */
     const BK=(window.CHAIN&&CHAIN.BACKEND)||""; if(!BK)return;
     fetch(BK+"/meme/supply").then(r=>r.json()).then(s=>{ if(s){ _memeCfg.tradeTensor=!!s.tradeTensor; _memeCfg.tensorUrl=s.tensorUrl||null; _memeCfg.saleOpen=!!s.saleOpen; } applyEggUI(s); }).catch(()=>{});
+    pollRecent();   /* live hatches ticker */
   }
   function testHatch(){   /* 🧪 full hatch experience — no payment, no backend, no real NFT */
     const avail=ROSTER.filter(m=>( _testSupply[m.key]||0)<(m.cap||10));
