@@ -5884,17 +5884,20 @@ function makeMemeEggNest(){
       const box=new THREE.Box3().setFromObject(root); const size=new THREE.Vector3(); box.getSize(size);
       const k=EGG_MODEL_HEIGHT/Math.max(0.001,size.y);
       const wrap=new THREE.Group(); wrap.add(root); wrap.scale.setScalar(k);
-      wrap.position.set(wx,gy,wz); wrap.visible=false; scene.add(wrap); memeEggMesh=wrap;
+      wrap.position.set(wx,gy,wz);
+      const b2=new THREE.Box3().setFromObject(wrap); wrap.position.y += (gy - b2.min.y);   /* sit the egg ON the ground, not buried (model origin isn't at its base) */
+      memeEggNest.restY=wrap.position.y;
+      wrap.visible=false; scene.add(wrap); memeEggMesh=wrap;
     },undefined,()=>{});
   }
-  if(typeof buildAura==="function"){ memeEggAura=buildAura("gold",true); memeEggAura.scale.setScalar(1.9); memeEggAura.position.set(wx,gy+6,wz); memeEggAura.visible=false; scene.add(memeEggAura); }
+  if(typeof buildAura==="function"){ memeEggAura=buildAura("gold",true); memeEggAura.scale.setScalar(1.05); memeEggAura.position.set(wx,gy+4,wz); memeEggAura.visible=false; scene.add(memeEggAura); }
 }
 setTimeout(makeMemeEggNest,750);
 setInterval(()=>{
   if(!memeEggNest)return;
   const inc=!!(player&&player.memeEgg&&!player.memeEgg.hatched);
   _memeEggT+=0.06;
-  if(memeEggMesh){ memeEggMesh.visible=inc; if(inc){memeEggMesh.position.y=memeEggNest.gy+Math.sin(_memeEggT)*2; memeEggMesh.rotation.y+=0.004;} }
+  if(memeEggMesh){ memeEggMesh.visible=inc; if(inc){memeEggMesh.position.y=(memeEggNest.restY!=null?memeEggNest.restY:memeEggNest.gy)+Math.sin(_memeEggT)*2; memeEggMesh.rotation.y+=0.004;} }
   if(memeEggAura){ memeEggAura.visible=inc; if(inc&&typeof animateAura==="function")animateAura(memeEggAura,performance.now()/1000,0.06); }
 },60);
 /* ===== Chikiseum arena — placed once on a flat, empty, walkable spot (no obstruction) ===== */
