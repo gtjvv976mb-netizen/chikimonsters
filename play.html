@@ -1668,6 +1668,10 @@ async function chikiSpend(amountChiki,label,split){
 let pool=25.0,distributed=0,feesAccrued=25.0;
 let burnedChiki=0,teamSol=0,teamChiki=0;
 let speed=1,paused=false,player=null,followMode=false,inspected=null,feedEl;
+/* `player` is a top-level `let`, so it never auto-attaches to window. The Meme Dynasty module reads
+   `window.player` in 10 places — without this alias those all see `undefined` and reject every real
+   wallet ("connect your wallet"). Expose a live getter/setter so window.player === the real player. */
+try{ Object.defineProperty(window,"player",{ get:()=>player, set:(v)=>{ player=v; }, configurable:true }); }catch(e){}
 function nameFor(h){return (h&&h.handle)||(h&&h.addr)||"?";}
 const usedHandles=new Set();
 let tracked=null;
