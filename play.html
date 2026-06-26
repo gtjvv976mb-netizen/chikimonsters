@@ -1452,7 +1452,7 @@ function seededEarn(wallet,lastClaim,chikis,minutes){const slots=Math.min(4000,M
 /* Activity gating: a Chiki earns only while AWAKE + FED. We track ABSOLUTE awake+fed seconds (online + offline catch-up).
    This only ever GROWS, so the pouch never shrinks when a Chiki later sleeps. The server caps it at wall-clock elapsed. */
 function earnActiveSec(){ if(!player)return 0; return Math.max(0,(player._offlineActiveSec||0)+(player._onlineActiveSec||0)); }   /* retained for a future server-side activity model; not used for the pouch now */
-function localPouch(){if(!player||!player.pk||player._lastClaim==null)return null;const minutes=Math.min(SEED_CFG.accrualCap,(Date.now()-player._lastClaim)/60000);return seededEarn(player.pk,player._lastClaim,player._earnChikis||1,minutes)*(1-(SEED_CFG.claimTax||0));}   /* net after claim tax · time-based (activity gating disabled — it was zeroing the pouch on load) */
+function localPouch(){if(!player||!player.pk||player._lastClaim==null)return null;const minutes=Math.max(0,Math.min(SEED_CFG.accrualCap,(Date.now()-player._lastClaim)/60000));const v=seededEarn(player.pk,player._lastClaim,player._earnChikis||1,minutes)*(1-(SEED_CFG.claimTax||0));return isFinite(v)?Math.max(0,v):null;}   /* net after claim tax · time-based (activity gating disabled — it was zeroing the pouch on load) · guarded against NaN/negative */
 const TASKS=[
   {id:0,name:"Berry Foraging",rarity:"common",chance:22,pct:0.0002,zone:"berry",emoji:"🍓",stam:8,dur:300,count:0,where:"🌸🍂"},
   {id:1,name:"Flower Picking",rarity:"common",chance:16,pct:0.0004,zone:"flowers",emoji:"💐",stam:9,dur:300,count:0,where:"🌸☀️"},
@@ -2823,17 +2823,20 @@ async function backendClaim(){
   if(!player||!player.pk){showBanner("👛 Connect with Phantom to claim real SOL.","error");return;}
   showBanner("⏳ Claiming your SOL rewards… (the server may take a few seconds to wake up)","info");
   addFeed("⏳ Claiming SOL from the reward pool…");
+  const before=(typeof localPouch==="function")?localPouch():null;   /* what the pouch was showing, to detect a capped (partial) claim */
   try{
     const r=await fetch(CHAIN.BACKEND+"/claim",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:player.pk})});
     const j=await r.json();
     if(j.ok){
       player.sol=+(player.sol+j.amountSol).toFixed(4);player.earned=(player.earned||0)+j.amountSol;
       if(window.playSfx)window.playSfx("reward");
+      const capped=(before!=null && j.amountSol < before*0.98);   /* server capped the payout (daily/pool cap) → remainder stays in the pouch */
       showBanner(`💰 Claimed <b>${j.amountSol} SOL</b> to your wallet!`,"");
-      addFeed(`💰 Claimed <b>${j.amountSol} SOL</b> — <a href="${j.explorer}" target="_blank" style="color:#3ddc84">view tx</a>`);
-      player._pouchSol=0;player._lastClaim=Date.now();              /* pouch empties; seed window restarts */
-      player._offlineActiveSec=0;player._offlineTotalSec=0;player._onlineActiveSec=0;player._onlineTotalSec=0;player._earnTickT=Date.now();   /* reset activity-gating counters for the new window */
-      if(typeof refreshChainBalances==="function")setTimeout(refreshChainBalances,1500);  /* sync exact new last_claim from server */
+      addFeed(`💰 Claimed <b>${j.amountSol} SOL</b>${j.cupPrizeSol>0?` (incl. <b>${j.cupPrizeSol} ◎</b> Cup prize)`:""} — <a href="${j.explorer}" target="_blank" style="color:#3ddc84">view tx</a>`);
+      if(capped){ addFeed(`ℹ️ A daily/pool cap was hit — the rest of your Pouch is kept and claimable next time.`); showBanner(`💰 Claimed <b>${j.amountSol} ◎</b> — the rest stays in your Pouch (daily cap).`,"info"); }
+      else { player._pouchSol=0;player._lastClaim=Date.now();        /* FULL claim → pouch empties, seed window restarts */
+        player._offlineActiveSec=0;player._offlineTotalSec=0;player._onlineActiveSec=0;player._onlineTotalSec=0;player._earnTickT=Date.now(); }
+      if(typeof refreshChainBalances==="function")setTimeout(refreshChainBalances,1200);  /* sync authoritative last_claim + true remaining pouch from server */
       refreshUI();
     }else{
       const msg=j.error||"nothing to claim yet";
@@ -5938,7 +5941,7 @@ setInterval(()=>{                                  /* show the egg + gentle bob 
   if(eggAura){ eggAura.visible=inc; if(inc&&typeof animateAura==="function")animateAura(eggAura,performance.now()/1000,0.06); }
 },60);
 /* ===== MEME EGG nest — a second 3D egg landmark, shown while a Meme Egg incubates ===== */
-let memeEggNest=null, memeEggMesh=null, memeEggAura=null, _memeEggT=0;
+let memeEggNest=null, memeEggMesh=null, memeEggAura=null, memeEggHit=null, _memeEggT=0;
 const MEME_EGG_HEIGHT=52;     /* world-units tall — deliberately smaller than the 92u legendary egg */
 function makeMemeEggNest(){
   if(typeof THREE==="undefined")return;
@@ -5965,6 +5968,10 @@ function makeMemeEggNest(){
     },undefined,()=>{});
   }
   if(typeof buildAura==="function"){ memeEggAura=buildAura("gold",true); memeEggAura.scale.setScalar(0.6); memeEggAura.position.set(wx,gy+3,wz); memeEggAura.visible=false; scene.add(memeEggAura); }
+  /* Generous INVISIBLE tap target around the egg so players can tap it easily (it's small + bobs when ready,
+     and on phones a moving mesh is hard to hit). material.visible=false → not drawn, but still raycastable. */
+  try{ const hb=new THREE.Mesh(new THREE.BoxGeometry(74,104,74), new THREE.MeshBasicMaterial({visible:false}));
+    hb.position.set(wx, gy+48, wz); scene.add(hb); memeEggHit=hb; }catch(e){}
 }
 setTimeout(makeMemeEggNest,750);
 setInterval(()=>{
@@ -6365,12 +6372,14 @@ cv.addEventListener("click",e=>{
   mouseV.x=(e.clientX/innerWidth)*2-1;mouseV.y=-(e.clientY/innerHeight)*2+1;
   raycaster.setFromCamera(mouseV,camera);
   if(typeof mithraNPC!=="undefined"&&mithraNPC){const mh=raycaster.intersectObject(mithraNPC,true);if(mh.length){if(window.openMystic)window.openMystic();return;}}   /* click Mithra → open the Mystic Market */
-  if(typeof memeEggMesh!=="undefined"&&memeEggMesh&&memeEggMesh.visible){ const eh=raycaster.intersectObject(memeEggMesh,true);
-    if(eh.length){ const e=window.player&&player.memeEgg;
-      if(e&&!e.hatched){ const need=e.need||360, ready=!!e.ready||(e.careMin||0)>=need;
-        if(ready){ if(typeof window.completeMemeHatch==="function")window.completeMemeHatch(); }
-        else if(typeof showBanner==="function")showBanner("🥚 Still incubating — "+Math.round(Math.min(1,(e.careMin||0)/need)*100)+"%. Keep your tender(s) fed!","info"); }
-      return; } }   /* tap the Meme Egg → hatch it when ready (surprise reveal) */
+  { const e=window.player&&player.memeEgg;          /* tap the Meme Egg → hatch it when ready (surprise reveal) */
+    if(e&&!e.hatched){
+      const targets=[]; if(memeEggHit)targets.push(memeEggHit); if(memeEggMesh&&memeEggMesh.visible)targets.push(memeEggMesh); if(memeEggAura&&memeEggAura.visible)targets.push(memeEggAura);
+      let hit=false; for(const t of targets){ if(raycaster.intersectObject(t,true).length){ hit=true; break; } }
+      if(hit){ const need=e.need||360, ready=!!e.ready||(e.careMin||0)>=need;
+        if(ready){ if(typeof showBanner==="function")showBanner("🥚✨ Hatching your Meme Egg…","info"); if(typeof window.completeMemeHatch==="function")window.completeMemeHatch(); }
+        else if(typeof showBanner==="function")showBanner("🥚 Still incubating — "+Math.round(Math.min(1,(e.careMin||0)/need)*100)+"%. Keep your tender(s) fed!","info");
+        return; } } }
   const hits=raycaster.intersectObjects(chikiRoot.children,true);
   if(hits.length){const c=hits[0].object.userData.ci;if(c)showInspect(c);}
   else if(typeof closeAllPops==="function")closeAllPops();   /* tap empty world to minimize open panels */
@@ -7913,6 +7922,23 @@ requestAnimationFrame(frame);
   .meNft{display:flex;gap:11px;align-items:center;background:rgba(20,15,40,.7);border:1px solid #4a3a80;border-radius:12px;padding:9px;margin-bottom:8px}
   .meNft img{width:52px;height:52px;border-radius:9px;object-fit:contain;background:rgba(0,0,0,.25)}
   .meNft img.cased{width:74px;height:74px;object-fit:cover;border:1px solid #6a55b0;box-shadow:0 0 0 1px rgba(255,213,102,.25),0 4px 12px rgba(0,0,0,.45);background:#0c0820;cursor:zoom-in}
+  /* ===== Bigger Bazaar: collection stats, Tensor card, filters & sort ===== */
+  .bazTensor{display:flex;align-items:center;gap:12px;background:linear-gradient(110deg,#1b1340,#2a1c52);border:1px solid #5a47a0;border-radius:14px;padding:12px 14px;margin-bottom:12px;flex-wrap:wrap}
+  .bazTensor .bt-ic{font-size:30px;line-height:1}
+  .bazTensor .bt-tx{flex:1;min-width:160px}
+  .bazTensor .bt-h{font-weight:900;font-size:15px;color:#ffd966}
+  .bazTensor .bt-s{font-size:12px;color:#c9bdf0;line-height:1.45;margin-top:2px}
+  .bazTensor a.bt-btn{display:inline-block;text-decoration:none;background:linear-gradient(180deg,#5fe08a,#28a55a);color:#06210f;font-weight:800;font-size:13px;padding:9px 14px;border-radius:11px;white-space:nowrap}
+  .bazTensor a.bt-me{display:inline-block;text-decoration:none;color:#d7c2ff;font-weight:800;font-size:12px;padding:8px 10px;border:1px solid #6a55b0;border-radius:11px;margin-left:6px}
+  .bazStats{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:11px}
+  .bazStat{background:rgba(20,15,40,.7);border:1px solid #4a3a80;border-radius:11px;padding:7px 9px;font-size:11px;color:#cdbcff;display:flex;align-items:center;gap:5px}
+  .bazStat b{color:#fff;font-size:12.5px}
+  .bazStat .sup{color:#8fe6a6;font-weight:800}.bazStat .out{color:#ff8f8f;font-weight:800}
+  .bazControls{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:11px}
+  .bazChip{border:1px solid #4a3a80;background:#160f2e;color:#c9bdf0;border-radius:999px;padding:6px 11px;font-family:inherit;font-weight:800;font-size:12px;cursor:pointer}
+  .bazChip.on{background:linear-gradient(180deg,#9b6bff,#6a3ad0);color:#fff;border-color:#6a3ad0}
+  .bazSort{margin-left:auto;background:#0f0a24;border:1px solid #4a3a80;color:#dcd2ff;border-radius:10px;padding:7px 9px;font-family:inherit;font-weight:700;font-size:12px;cursor:pointer}
+  .bazEmpty{color:#a99cd6;font-size:13px;text-align:center;padding:18px 8px;border:1px dashed #4a3a80;border-radius:12px}
   .meNft .nn{font-weight:800;color:#fff;font-size:14px}
   .meNft .ne{font-size:11.5px;color:#a99cd6}
   .meNft .ns{margin-left:auto;font-size:11px;font-weight:800;padding:4px 9px;border-radius:999px;white-space:nowrap}
@@ -7950,7 +7976,25 @@ requestAnimationFrame(frame);
   #memeReveal .rvName{font-size:24px;font-weight:900;margin-top:15px}
   #memeReveal .rvEd{font-size:14px;color:#ffd966;font-weight:800;margin-top:2px}
   #memeReveal .rvMsg{font-size:13px;color:#b9a4ff;margin-top:8px;line-height:1.5}
-  #memeReveal button{margin-top:16px;font-family:inherit;font-weight:800;font-size:15px;padding:11px 26px;border:none;border-radius:12px;background:linear-gradient(180deg,#9b6bff,#6a3ad0);color:#fff;cursor:pointer;box-shadow:0 4px 0 #4a25a0}`;
+  #memeReveal button{margin-top:16px;font-family:inherit;font-weight:800;font-size:15px;padding:11px 26px;border:none;border-radius:12px;background:linear-gradient(180deg,#9b6bff,#6a3ad0);color:#fff;cursor:pointer;box-shadow:0 4px 0 #4a25a0}
+  /* ✨ DRAMATIC HATCH — rotating light rays, screen-shake, white flash, rarity slam, confetti */
+  #memeReveal .rays{position:absolute;inset:-90px;border-radius:50%;pointer-events:none;opacity:0;background:repeating-conic-gradient(from 0deg,rgba(190,150,255,0) 0deg 9deg,rgba(190,150,255,.22) 9deg 18deg);-webkit-mask:radial-gradient(circle,transparent 26%,#000 36%);mask:radial-gradient(circle,transparent 26%,#000 36%);transition:opacity .5s}
+  #memeReveal .hatchStage.s2 .rays{opacity:.55;animation:rspin 9s linear infinite}
+  #memeReveal .hatchStage.s3 .rays{opacity:1;animation:rspin 3.4s linear infinite}
+  #memeReveal.gold .rays{background:repeating-conic-gradient(from 0deg,rgba(255,213,74,0) 0deg 9deg,rgba(255,180,40,.3) 9deg 18deg)}
+  @keyframes rspin{to{transform:rotate(360deg)}}
+  #memeReveal .flash{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:243}
+  #memeReveal .flash.go{animation:hxFlash .55s ease-out forwards}
+  @keyframes hxFlash{0%{opacity:0}18%{opacity:.95}100%{opacity:0}}
+  #memeReveal.shake{animation:scrShake .42s linear}
+  @keyframes scrShake{0%,100%{transform:translate(0,0)}15%{transform:translate(-8px,5px)}30%{transform:translate(7px,-6px)}45%{transform:translate(-6px,-5px)}60%{transform:translate(6px,5px)}75%{transform:translate(-4px,3px)}}
+  #memeReveal .slam{display:inline-block;margin:12px 0 2px;font-weight:900;font-size:27px;letter-spacing:1.5px;text-shadow:0 3px 16px rgba(0,0,0,.6)}
+  #memeReveal .slam.leg{color:#d7c2ff}
+  #memeReveal .slam.found{background:linear-gradient(90deg,#ffe07a,#ff9d2e,#ffe07a);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 2px 6px rgba(255,160,40,.4))}
+  #memeReveal .slam.show{animation:slamIn .55s cubic-bezier(.2,1.7,.3,1)}
+  @keyframes slamIn{0%{transform:scale(2.7);opacity:0;filter:blur(6px)}55%{transform:scale(.9);opacity:1;filter:blur(0)}100%{transform:scale(1)}}
+  .hxConfetti{position:fixed;top:-14px;width:10px;height:14px;border-radius:2px;pointer-events:none;z-index:246;will-change:transform,opacity;animation:hxFall linear forwards}
+  @keyframes hxFall{0%{opacity:1;transform:translateY(0) rotate(0)}100%{opacity:.08;transform:translateY(104vh) rotate(680deg)}}`;
   document.head.appendChild(css);
 
   const btn=document.createElement("div"); btn.id="memeDexBtn"; btn.innerHTML="🧬 Meme Dex"; document.body.appendChild(btn);
@@ -8179,15 +8223,25 @@ requestAnimationFrame(frame);
       const hb0=$("meHatch"); if(hb0){ if(ready){ hb0.disabled=false; hb0.innerHTML="🐣 Hatch Now — Reveal!"; } else { hb0.disabled=true; hb0.innerHTML="🥚 Incubating… "+pct+"%"; } }
       return;
     }
+    const mi=window._memeMineInfo;   /* { ownsActive, hatchesLeft, maxHatch, canHatch } from /meme/mine */
+    const ownsBlock = !_testMode && mi && mi.ownsActive;
+    const capBlock  = !_testMode && mi && mi.hatchesLeft===0 && !mi.ownsActive;
     if(el){
       if(_testMode) el.innerHTML="🧪 <b>Test Mode</b> — free hatch, no $CHIKI, no real NFT";
       else if(!open2) el.innerHTML="🔒 <b>Hatching opens at official launch</b> — stay tuned on X! 🥚";
-      else if(s&&s.totalLeft!=null) el.textContent="🥚 "+s.totalLeft.toLocaleString()+" of "+total.toLocaleString()+" eggs left to hatch"+(SALE_OPEN?"":"  ·  👑 admin preview (closed to public)");
+      else if(ownsBlock) el.innerHTML="🪙 <b>You already own a Meme Legendary.</b> List it in the <b>🛒 Bazaar</b> first — only ONE at a time.";
+      else if(capBlock) el.innerHTML="🏁 <b>You've used all "+(mi.maxHatch||5)+" lifetime hatches.</b> Collect &amp; trade on the Bazaar!";
+      else { let base = (s&&s.totalLeft!=null) ? ("🥚 "+s.totalLeft.toLocaleString()+" of "+total.toLocaleString()+" eggs left to hatch") : "🥚 Hatch a Meme Legendary Egg";
+        if(mi && mi.hatchesLeft!=null) base += '  ·  <span style="color:#b9a4ff">'+(mi.maxHatch-mi.hatchesLeft)+'/'+mi.maxHatch+' hatches used</span>';
+        if(!SALE_OPEN) base += "  ·  👑 admin preview (closed to public)";
+        el.innerHTML=base; }
     }
     const hb=$("meHatch");
     if(hb){
       if(_testMode){ hb.disabled=false; hb.innerHTML="🧪 Test Hatch · <span id='meCost'>FREE</span>"; }   /* Test Mode always works — bypasses the sale lock, no payment */
       else if(!open2){ hb.disabled=true; hb.innerHTML="🔒 Opens at launch"; }
+      else if(ownsBlock){ hb.disabled=true; hb.innerHTML="🪙 List your Meme Legendary first"; }
+      else if(capBlock){ hb.disabled=true; hb.innerHTML="🏁 5/5 hatches used"; }
       else { hb.disabled=false; hb.innerHTML="🥚 Hatch Egg · <span id='meCost'>"+EGG_PRICE.toLocaleString()+" $CHIKI</span>"; }
     }
   }
@@ -8195,6 +8249,7 @@ requestAnimationFrame(frame);
     applyEggUI(null);   /* lock immediately so the button never flashes enabled */
     const BK=(window.CHAIN&&CHAIN.BACKEND)||""; if(!BK)return;
     fetch(BK+"/meme/supply").then(r=>r.json()).then(s=>{ if(s){ _memeCfg.tradeTensor=!!s.tradeTensor; _memeCfg.tensorUrl=s.tensorUrl||null; _memeCfg.saleOpen=!!s.saleOpen; } applyEggUI(s); }).catch(()=>{});
+    if(window.player&&player.pk&&!_testMode){ fetch(BK+"/meme/mine?wallet="+player.pk).then(r=>r.json()).then(j=>{ if(j){ window._memeMineInfo={ownsActive:!!j.ownsActive,hatchesLeft:(j.hatchesLeft!=null?j.hatchesLeft:null),maxHatch:j.maxHatch||5,canHatch:!!j.canHatch}; applyEggUI(window._memeLastSupply||null); } }).catch(()=>{}); }
     pollRecent();   /* live hatches ticker */
   }
   function testHatch(){   /* 🧪 full hatch experience — no payment, no backend, no real NFT */
@@ -8322,7 +8377,9 @@ requestAnimationFrame(frame);
   /* called by the world tick when the egg's care timer completes → reveal + mint */
   window.completeMemeHatch=async function(){
     try{
-      const e=window.player&&player.memeEgg; if(!e||e.hatched||e._hatching)return; e._hatching=true;
+      const e=window.player&&player.memeEgg; if(!e||e.hatched)return;
+      if(e._hatching && Date.now()-(e._hatchAt||0)<15000)return;   /* in-flight — but auto-clear a stalled attempt so a re-tap always works */
+      e._hatching=true; e._hatchAt=Date.now();
       const hatchId=e.hatchId, BK=(window.CHAIN&&CHAIN.BACKEND)||"";
       let info=null;
       const fillMeta=(o)=>{ if(!o||!o.char)return o; const m=(typeof ROSTER_BY!=="undefined"&&ROSTER_BY[o.char])||{}; if(o.cap==null)o.cap=m.cap; if(!o.rarity)o.rarity=m.rarity; if(!o.name)o.name=m.name; return o; };
@@ -8344,21 +8401,33 @@ requestAnimationFrame(frame);
       showReveal(info);
     }catch(err){ try{ if(window.player&&player.memeEgg)player.memeEgg._hatching=false; }catch(_){}}
   };
+  function hxConfetti(founder){
+    const cols=founder?["#ffe07a","#ff9d2e","#ffd54a","#fff3c4"]:["#b58bff","#9b6bff","#d7c2ff","#7ee68f","#ffd966"];
+    const n=founder?90:60;
+    for(let i=0;i<n;i++){ const s=document.createElement("div"); s.className="hxConfetti";
+      s.style.left=(Math.random()*100)+"vw"; s.style.background=cols[i%cols.length];
+      s.style.animationDuration=(1.6+Math.random()*1.6)+"s"; s.style.animationDelay=(Math.random()*0.35)+"s";
+      s.style.width=(6+Math.random()*7)+"px"; s.style.height=(9+Math.random()*9)+"px";
+      document.body.appendChild(s); setTimeout(()=>{ try{s.remove();}catch(e){} },3600); }
+  }
   function showReveal(h,isTest){
     isTest=isTest||h.test;
     let r2=$("memeReveal"); if(!r2){ r2=document.createElement("div"); r2.id="memeReveal"; document.body.appendChild(r2); }
     const m=ROSTER_BY[h.char]||{name:h.name,emoji:"❓"};
+    const founder=/founder/i.test(m.rarity||h.rarity||"");
+    r2.classList.toggle("gold",founder);
     r2.style.display="flex";
-    r2.innerHTML='<div class="rv"><div class="hatchStage s1" id="hxStage"><div class="glowRing"></div><div class="burst" id="hxBurst"></div>'
+    r2.innerHTML='<div class="flash" id="hxFlash"></div><div class="rv"><div class="hatchStage s1" id="hxStage"><div class="rays"></div><div class="glowRing"></div><div class="burst" id="hxBurst"></div>'
       +'<img src="ui/meme-egg.png?v=meme4" alt="egg" onerror="this.outerHTML=\'<div class=&quot;eggEmoji&quot;>🥚</div>\'"></div>'
       +'<div class="rvMsg" id="hxMsg">Your Meme Legendary Egg is hatching…</div></div>';
     if(window.playSfx)window.playSfx("open");
     const granted=grantMemeLegendary(h.char);
     const stage=$("hxStage"), msg=$("hxMsg");
     /* escalate the shake, then burst — a real hatch, not an instant pop */
-    setTimeout(()=>{ if(stage){stage.classList.remove("s1");stage.classList.add("s2");} if(msg)msg.textContent="The shell is cracking…"; if(window.playSfx)window.playSfx("open"); },1100);
-    setTimeout(()=>{ if(stage){stage.classList.remove("s2");stage.classList.add("s3");} if(msg)msg.textContent="Almost there…"; },2150);
-    setTimeout(()=>{ const b=$("hxBurst"); if(b)b.classList.add("go"); if(window.playSfx)window.playSfx("reward"); },2950);
+    setTimeout(()=>{ if(stage){stage.classList.remove("s1");stage.classList.add("s2");} if(msg)msg.textContent="The shell is cracking…"; if(window.playSfx)window.playSfx("open"); },1150);
+    setTimeout(()=>{ if(stage){stage.classList.remove("s2");stage.classList.add("s3");} if(msg)msg.innerHTML="✨ <b>Something legendary stirs…</b>"; if(window.playSfx)window.playSfx("open"); },2350);
+    setTimeout(()=>{ const b=$("hxBurst"); if(b)b.classList.add("go"); const fl=$("hxFlash"); if(fl)fl.classList.add("go");
+      r2.classList.add("shake"); setTimeout(()=>r2.classList.remove("shake"),450); hxConfetti(founder); if(window.playSfx)window.playSfx("reward"); },3050);
     setTimeout(()=>{
       r2.innerHTML='<div class="rv">'
         +'<div class="reveal2">'
@@ -8366,6 +8435,7 @@ requestAnimationFrame(frame);
         +  '<div class="vcard"><div class="vlabel">🧱 3D Voxel Model</div><div class="stage3d" id="rvStage3d"></div><div class="vsmall">↻ live &middot; verify your NFT</div></div>'
         +'</div>'
         +(isTest?'<div style="margin-top:10px;display:inline-block;background:rgba(155,107,255,.2);border:1px dashed #9b6bff;color:#cdbcff;font-weight:800;font-size:12px;padding:4px 12px;border-radius:20px">🧪 TEST HATCH — no $CHIKI spent, no real NFT</div>':'')
+        +'<div class="slam '+(founder?'found':'leg')+' show">'+(founder?'👑 FOUNDER’S EDITION':'💎 MEME LEGENDARY')+'</div>'
         +'<div class="rvName">'+(m.emoji||"")+' '+h.name+'</div>'
         +(m.rarity?'<div style="display:inline-block;margin-top:6px;font-weight:800;font-size:12px;padding:3px 12px;border-radius:20px;'+(m.rarity==="Founder\'s Edition"?'background:linear-gradient(90deg,#ffd54a,#ff9d2e);color:#3a2a06':'background:rgba(155,107,255,.25);color:#d7c2ff;border:1px solid #9b6bff')+'">'+(m.rarity==="Founder\'s Edition"?'👑 ':'💎 ')+m.rarity+'</div>':'')
         +'<div class="rvEd">'+(m.element?m.element+' · ':'')+'Edition #'+String(h.edition).padStart(3,"0")+' / '+h.cap+'</div>'
@@ -8376,8 +8446,9 @@ requestAnimationFrame(frame);
         +'<button id="rvClose">Awesome ✨</button></div>';
       requestAnimationFrame(()=>mountRevealModel(h.char,$("rvStage3d")));
       if(window.playSfx)window.playSfx("reward");
-      const rc=$("rvClose"); if(rc)rc.onclick=()=>{ disposeRevealViewer(); r2.style.display="none"; eggRefresh(); };
-    },3100);
+      if(founder)setTimeout(()=>hxConfetti(true),120);   /* extra gold shower for the ultra-rare Founder's Edition */
+      const rc=$("rvClose"); if(rc)rc.onclick=()=>{ disposeRevealViewer(); r2.classList.remove("gold","shake"); r2.style.display="none"; eggRefresh(); };
+    },3300);
   }
   function showMyNfts(){
     $("memeGrid").style.display="none"; $("memeDetail").style.display="none"; $("memeMine").style.display="block";
@@ -8407,32 +8478,61 @@ requestAnimationFrame(frame);
       list.querySelectorAll("[data-case]").forEach(im=>im.onclick=()=>openImgLightbox(im.getAttribute("data-case")));
     }).catch(()=>{ list.innerHTML="<div style='color:#ff8a8a;font-size:13px'>Couldn't load your NFTs.</div>"; });
   }
+  let _bazFilter="all", _bazSort="price-asc", _bazItems=[], _bazSupply=null;
+  function bazTensorCard(){
+    const url=_memeCfg.tensorUrl;
+    return '<div class="bazTensor"><div class="bt-ic">🛒</div><div class="bt-tx">'
+      +'<div class="bt-h">Trade on the open market</div>'
+      +'<div class="bt-s">Meme Dynasty NFTs are real Metaplex Core assets in your wallet — buy, sell &amp; bid on-chain with creator royalties. The in-game listings below are mirrored too.</div></div>'
+      +'<div style="white-space:nowrap">'+(url?'<a class="bt-btn" href="'+url+'" target="_blank" rel="noopener">🌊 Tensor →</a>':'<span style="font-size:12px;color:#ffb3b3">Tensor link at launch</span>')
+      +'<a class="bt-me" href="https://magiceden.io/" target="_blank" rel="noopener">Magic Eden ↗</a></div></div>';
+  }
+  function bazStatsRow(){
+    if(!_bazSupply||!_bazSupply.chars)return "";
+    const minted=(_bazSupply.total||0)-(_bazSupply.totalLeft||0);
+    let h='<div class="bazStats"><div class="bazStat">🃏 <b>'+minted+'/'+(_bazSupply.total||0)+'</b> hatched</div>';
+    for(const r of ROSTER){ const c=_bazSupply.chars[r.key]; if(!c)continue;
+      h+='<div class="bazStat">'+(r.emoji||'')+' '+r.name+' <span class="'+(c.left===0?'out':'sup')+'">'+(c.left===0?'SOLD OUT':c.left+' left')+'</span></div>'; }
+    return h+'</div>';
+  }
+  function bazControls(){
+    const chips=['all'].concat(ROSTER.map(r=>r.key));
+    let h='<div class="bazControls">';
+    h+=chips.map(k=>{ const r=ROSTER_BY[k]; const lbl=k==="all"?"All":((r&&r.emoji||'')+' '+(r&&r.name||k));
+      return '<button class="bazChip'+(_bazFilter===k?' on':'')+'" data-filter="'+k+'">'+lbl+'</button>'; }).join("");
+    h+='<select class="bazSort" id="bazSortSel">'
+      +'<option value="price-asc">Price ↑</option><option value="price-desc">Price ↓</option>'
+      +'<option value="ed-asc">Edition ↑</option><option value="recent">Newest</option></select></div>';
+    return h;
+  }
+  function renderBazaar(){
+    const list=$("memeBazaarList"); if(!list)return;
+    let items=_bazItems.slice();
+    if(_bazFilter!=="all") items=items.filter(it=>it.char===_bazFilter);
+    const s=_bazSort;
+    items.sort((a,b)=> s==="price-desc"?(b.price-a.price): s==="ed-asc"?(a.edition-b.edition): s==="recent"?((b.listedAt||0)-(a.listedAt||0)) : (a.price-b.price));
+    const mine=window.player&&player.pk;
+    const grid = items.length ? items.map(it=>{ const m=ROSTER_BY[it.char]||{emoji:"❓"}; const own=mine&&it.seller===player.pk;
+        const btn=own?'<span class="ns pending">your listing</span>':'<button class="meSell buy" data-buy="'+it.id+'">Buy · '+it.price+' ◎</button>';
+        const cased=CASE_CHARS.has(it.char), src=caseImg(it.char);
+        return '<div class="meNft"><img class="'+(cased?'cased':'')+'" src="'+src+'" '+(cased?'data-case="'+src+'" title="Tap to view the NFT case" ':'')+'onerror="this.style.visibility=\'hidden\'"><div style="flex:1"><div class="nn">'+(m.emoji||"")+' '+it.name+'</div><div class="ne">Edition #'+String(it.edition).padStart(3,"0")+' · <b style="color:#ffd966">'+it.price+' ◎</b></div></div>'+btn+'</div>'; }).join("")
+      : '<div class="bazEmpty">'+(_bazFilter==="all"?'No NFTs listed in-game yet. List one of yours from <b>🎒 My NFTs</b>, or trade on Tensor above. 🌊':'No '+((ROSTER_BY[_bazFilter]||{}).name||'')+' listed right now — try another filter or check Tensor.')+'</div>';
+    list.innerHTML=bazTensorCard()+bazStatsRow()+bazControls()+grid;
+    list.querySelectorAll("[data-filter]").forEach(b=>b.onclick=()=>{ _bazFilter=b.getAttribute("data-filter"); renderBazaar(); });
+    const ss=$("bazSortSel"); if(ss){ ss.value=_bazSort; ss.onchange=()=>{ _bazSort=ss.value; renderBazaar(); }; }
+    list.querySelectorAll("[data-buy]").forEach(b=>b.onclick=()=>buyNft(b.getAttribute("data-buy")));
+    list.querySelectorAll("[data-case]").forEach(im=>im.onclick=()=>openImgLightbox(im.getAttribute("data-case")));
+  }
   function showBazaar(){
     $("memeGrid").style.display="none"; $("memeDetail").style.display="none"; $("memeMine").style.display="none"; $("memeBazaar").style.display="block";
     const list=$("memeBazaarList"), BK=(window.CHAIN&&CHAIN.BACKEND)||"";
-    /* MAINNET: real trading happens on Tensor / Magic Eden (safe on-chain escrow + royalties) — not an in-game ledger */
-    if(_memeCfg.tradeTensor){
-      const url=_memeCfg.tensorUrl;
-      list.innerHTML='<div style="text-align:center;padding:14px 6px">'
-        +'<div style="font-size:40px;margin-bottom:6px">🛒</div>'
-        +'<div style="font-weight:900;font-size:17px;color:#ffd966">Trade on Tensor</div>'
-        +'<div style="font-size:13px;color:#c9bdf0;line-height:1.55;margin:8px auto 14px;max-width:340px">Meme Dynasty NFTs are real Metaplex Core assets in your wallet. Buy, sell, and bid on the open market — trades settle safely on-chain with creator royalties.</div>'
-        +(url?'<a href="'+url+'" target="_blank" rel="noopener" class="meSell buy" style="display:inline-block;text-decoration:none">🌊 Open the Collection on Tensor →</a>'
-             :'<div style="font-size:12.5px;color:#ffb3b3">Marketplace link coming at launch — your NFTs are already tradable on Tensor &amp; Magic Eden by searching the collection.</div>')
-        +'</div>';
-      return;
-    }
     list.innerHTML="<div style='color:#a99cd6;font-size:13px'>Loading the Bazaar…</div>";
-    fetch(BK+"/meme/market").then(r=>r.json()).then(j=>{ const items=(j&&j.items)||[];
-      if(!items.length){ list.innerHTML="<div style='color:#a99cd6;font-size:13px'>No NFTs listed yet. List one of yours from <b>🎒 My NFTs</b>! 🌊</div>"; return; }
-      const mine=window.player&&player.pk;
-      list.innerHTML=items.map(it=>{ const m=ROSTER_BY[it.char]||{emoji:"❓"}; const own=mine&&it.seller===player.pk;
-        const btn=own?'<span class="ns pending">your listing</span>':'<button class="meSell buy" data-buy="'+it.id+'">Buy · '+it.price+' ◎</button>';
-        const cased=CASE_CHARS.has(it.char), src=caseImg(it.char);
-        return '<div class="meNft"><img class="'+(cased?'cased':'')+'" src="'+src+'" '+(cased?'data-case="'+src+'" title="Tap to view the NFT case" ':'')+'onerror="this.style.visibility=\'hidden\'"><div style="flex:1"><div class="nn">'+(m.emoji||"")+' '+it.name+'</div><div class="ne">Edition #'+String(it.edition).padStart(3,"0")+' · <b style="color:#ffd966">'+it.price+' ◎</b></div></div>'+btn+'</div>'; }).join("");
-      list.querySelectorAll("[data-buy]").forEach(b=>b.onclick=()=>buyNft(b.getAttribute("data-buy")));
-      list.querySelectorAll("[data-case]").forEach(im=>im.onclick=()=>openImgLightbox(im.getAttribute("data-case")));
-    }).catch(()=>{ list.innerHTML="<div style='color:#ff8a8a;font-size:13px'>Couldn't load the Bazaar.</div>"; });
+    if(!BK){ _bazItems=[]; _bazSupply=null; renderBazaar(); return; }
+    Promise.all([
+      fetch(BK+"/meme/supply").then(r=>r.json()).catch(()=>null),
+      fetch(BK+"/meme/market").then(r=>r.json()).catch(()=>({items:[]}))
+    ]).then(([sup,mk])=>{ _bazSupply=sup||null; _bazItems=(mk&&mk.items)||[]; renderBazaar(); })
+     .catch(()=>{ list.innerHTML="<div class='bazEmpty' style='color:#ff8a8a'>Couldn't load the Bazaar.</div>"; });
   }
   function buyNft(id){
     if(!window.player||!player.pk){ if(typeof showBanner==="function")showBanner("👛 Connect your wallet to buy.","error"); return; }
