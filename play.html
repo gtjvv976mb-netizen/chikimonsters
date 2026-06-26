@@ -847,8 +847,12 @@ if(location.search.indexOf("embed")>-1){
 #arenaBox.introMode>#arenaZoom{display:block!important}   /* allow the card zoom preview inside the hub */
 /* hub "My Cards" grid */
 #hubCards{padding:2px}
-.hubLeg{margin-bottom:16px}
+.hubLeg{margin-bottom:16px;border-radius:14px;transition:box-shadow .2s}
+.hubLeg.actLeg{box-shadow:0 0 0 2px #3ddc8466,0 0 16px #3ddc8433;padding:8px;background:linear-gradient(180deg,#0f2a1e22,transparent)}
 .hubLegHd{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:800;color:#cfe0ff;margin-bottom:8px;flex-wrap:wrap}
+.hubUse{margin-left:auto;border:none;border-radius:10px;padding:7px 14px;font-family:inherit;font-weight:800;font-size:12px;cursor:pointer;background:#1a2c44;color:#9fd0ff;border:1px solid #2a4368}
+.hubUse:hover{background:#22395a}
+.hubUse.on{background:linear-gradient(180deg,#3ddc84,#1f9e57);color:#04220f;border-color:#1f9e57;cursor:default;box-shadow:0 2px 0 #167a42}
 .hubLegHd .gl{color:#ffd93d}
 .hubGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
 @media(max-width:620px){.hubGrid{grid-template-columns:repeat(2,1fr)}}
@@ -1761,7 +1765,12 @@ function ensureBattle(c){ if(!c)return c; if(c.br==null)c.br=1; if(c.battleXp==n
 function cardTier(c,slot){ const t=c&&c.cardTier&&c.cardTier[slot]; return Math.min(5,Math.max(1,t||1)); }
 function gainBattleXp(c,amt){ ensureBattle(c); c.battleXp+=amt; let ups=0;
   while(c.br<MAX_BR && c.battleXp>=brNeed(c.br)){ c.battleXp-=brNeed(c.br); c.br++; c.skillPts++; ups++; } return ups; }
-function ensureLegendSkills(c){ if(c&&c.isLegend&&(!c.arenaSkills||!c.arenaSkills.length)){ const p=[0,1,2,3,4,5,6,7,8,9,10,11],o=[]; for(let k=0;k<3;k++)o.push(p.splice(ri(0,p.length-1),1)[0]); c.arenaSkills=o.sort((a,b)=>a-b); } if(c&&c.isLegend)ensureBattle(c); return c; }
+function ensureLegendSkills(c){ if(c&&c.isLegend&&!c.uid)c.uid="L"+Date.now().toString(36)+Math.random().toString(36).slice(2,8); if(c&&c.isLegend&&(!c.arenaSkills||!c.arenaSkills.length)){ const p=[0,1,2,3,4,5,6,7,8,9,10,11],o=[]; for(let k=0;k<3;k++)o.push(p.splice(ri(0,p.length-1),1)[0]); c.arenaSkills=o.sort((a,b)=>a-b); } if(c&&c.isLegend)ensureBattle(c); return c; }
+/* ---- Active battler: which Legendary (old or Meme) you fight with in the Chikiseum & Chikoria Cup ---- */
+function ownLegends(){ return (typeof creatures!=="undefined"&&player)?creatures.filter(c=>c.holder===player&&c.isLegend).map(ensureLegendSkills):[]; }
+function activeLegend(){ const ls=ownLegends(); if(!ls.length)return null; if(player&&player.activeLegendUid){ const m=ls.find(c=>c.uid===player.activeLegendUid); if(m)return m; } return ls.slice().sort((a,b)=>(b.br||1)-(a.br||1))[0]; }
+function setActiveLegend(uid){ if(!player)return; player.activeLegendUid=uid; try{ saveProfile(player); }catch(e){} if(typeof renderHubCards==="function")try{renderHubCards();}catch(e){} }
+try{ window.activeLegend=activeLegend; window.setActiveLegend=setActiveLegend; window.ownLegends=ownLegends; }catch(e){}
 function holderCounts(h){let n=0,l=0;for(const c of creatures){if(c.holder===h){if(c.isLegend)l++;else n++;}}return {normal:n,legend:l,total:n+l};}
 function holderAtCap(h){ if(isCreator(h&&h.pk))return false; const c=holderCounts(h); return c.normal>=MAX_NORMAL && c.legend>=MAX_LEGEND; }
 async function hatchChikis(h,n,opts){
@@ -1994,8 +2003,9 @@ function saveProfile(h){
       ancientEgg:h.ancientEgg||null,                /* Sorceress: legendary egg incubation state */
       memeEgg:h.memeEgg||null,                      /* Meme Egg incubation state (parallel to the legendary egg) */
       glory:h.glory||0,                             /* Chikoria Cup battle currency */
+      activeLegendUid:h.activeLegendUid||null,      /* chosen battler for Chikiseum + Cup */
       taskCounts:h.taskCounts||null,                /* per-task completions by this player's Chikis (Done column) */
-      chikis:mine.map(c=>({sp:SPECIES.indexOf(c.sp),level:c.level,tasksDone:c.tasksDone||0,nick:c.nick||null,renames:c.renames||0,sleepCycles:c.sleepCycles||0,hungry:!!c.hungry,food:Math.round(c.food||0),stamina:Math.round(c.stamina||0),xp:Math.floor(c.xp||0),isLegend:!!c.isLegend,tending:!!c.tending,tendingMeme:!!c.tendingMeme,arenaSkills:c.arenaSkills||null,br:c.br||1,battleXp:Math.floor(c.battleXp||0),skillPts:c.skillPts||0,cardTier:c.cardTier||null,arenaStam:c.arenaStam!=null?Math.round(c.arenaStam):null,arenaSleepUntil:c.arenaSleepUntil||0,sleeping:c.state==="sleeping",sleepUntil:c.sleepUntil||0}))};   /* persist the nap so a refresh RESUMES it instead of restarting */
+      chikis:mine.map(c=>({sp:SPECIES.indexOf(c.sp),level:c.level,tasksDone:c.tasksDone||0,nick:c.nick||null,renames:c.renames||0,sleepCycles:c.sleepCycles||0,hungry:!!c.hungry,food:Math.round(c.food||0),stamina:Math.round(c.stamina||0),xp:Math.floor(c.xp||0),isLegend:!!c.isLegend,uid:c.uid||null,tending:!!c.tending,tendingMeme:!!c.tendingMeme,arenaSkills:c.arenaSkills||null,br:c.br||1,battleXp:Math.floor(c.battleXp||0),skillPts:c.skillPts||0,cardTier:c.cardTier||null,arenaStam:c.arenaStam!=null?Math.round(c.arenaStam):null,arenaSleepUntil:c.arenaSleepUntil||0,sleeping:c.state==="sleeping",sleepUntil:c.sleepUntil||0}))};   /* persist the nap so a refresh RESUMES it instead of restarting */
     localStorage.setItem(profileKey(h.pk),JSON.stringify(data));
     if(CHAIN.BACKEND)fetch(CHAIN.BACKEND+"/profile",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:h.pk,profile:data})}).catch(()=>{});
   }catch(e){}
@@ -2043,6 +2053,7 @@ function restoreChikis(h,saved){
   const elapsed=since?Math.max(0,(Date.now()-since)/1000):0;
   if(saved.ancientEgg)h.ancientEgg=saved.ancientEgg;   /* set FIRST so offlineProgress knows the carers are tending the egg, not working */
   if(saved.memeEgg)h.memeEgg=saved.memeEgg;            /* restore Meme Egg incubation */
+  if(saved.activeLegendUid)h.activeLegendUid=saved.activeLegendUid;   /* chosen battler for Chikiseum + Cup */
   let totalTasks=0,lvUps=0,anyHungry=false;
   (saved.chikis||[]).forEach(cd=>{
     const idx=(cd.sp>=0?cd.sp:ri(0,SPECIES.length-1));
@@ -2055,6 +2066,7 @@ function restoreChikis(h,saved){
     if(cd.tending)c.tending=true;                         /* this Chiki was chosen to tend the Legendary Egg */
     if(cd.tendingMeme)c.tendingMeme=true;                 /* …or the Meme Egg */
     if(cd.isLegend)c.isLegend=true;
+    if(cd.uid)c.uid=cd.uid;                          /* stable id so the chosen battler survives reloads */
     if(cd.arenaStam!=null)c.arenaStam=cd.arenaStam; if(cd.arenaSleepUntil)c.arenaSleepUntil=cd.arenaSleepUntil;   /* arena stamina + sleep cooldown */
     if(cd.arenaSkills)c.arenaSkills=cd.arenaSkills;   /* legendary's 3-of-7 Chi skills */
     if(c.isLegend){ c.br=cd.br||1; c.battleXp=cd.battleXp||0; c.skillPts=cd.skillPts||0; c.cardTier=cd.cardTier||null; ensureBattle(c); }
@@ -3150,6 +3162,7 @@ setInterval(updateWhaleTab,1000);
     const RAR=["common","common","common","rare","common","common","epic","common","common","rare","rare","epic"];
     const legs=(typeof myLegends==="function"?myLegends():[]).map(ensureLegendSkills);
     if(!legs.length){ host.innerHTML='<div style="color:#8fa6c9;padding:20px;text-align:center">No Legendary yet — hatch one at 🔮 <b>Mithra\'s Mystic Market</b> to collect &amp; battle with skill cards.</div>'; return; }
+    const actUid=(typeof activeLegend==="function"&&(activeLegend()||{}).uid)||null;
     host.innerHTML=legs.map(c=>{
       const si=SPECIES.indexOf(c.sp), owned=new Set(c.arenaSkills||[]); let cells="";
       for(let slot=0;slot<12;slot++){
@@ -3163,8 +3176,11 @@ setInterval(updateWhaleTab,1000);
       }
       const smax=legStamMax(c.level||1),scur=Math.round(c.arenaStam!=null?c.arenaStam:smax),slp=c.arenaSleepUntil&&c.arenaSleepUntil>Date.now();
       const stam=slp?('💤 '+fmtSleep((c.arenaSleepUntil-Date.now())/1000)):('⚡ '+scur+'/'+smax);
-      return '<div class="hubLeg"><div class="hubLegHd"><span style="color:'+c.sp.body+'">'+nameOf(c)+'</span><span>BR '+(c.br||1)+'</span><span>'+stam+'</span><span class="gl">✨ '+(player&&player.glory||0)+' Glory</span><span>🎯 '+(c.skillPts||0)+' pts</span><span>Deck '+(c.arenaSkills||[]).length+'/12</span></div><div class="hubGrid">'+cells+'</div></div>';
+      const isAct=c.uid&&c.uid===actUid;
+      const useBtn='<button class="hubUse'+(isAct?" on":"")+'" data-use="'+(c.uid||"")+'">'+(isAct?"⚔️ Active Battler":"Use in battle")+'</button>';
+      return '<div class="hubLeg'+(isAct?" actLeg":"")+'"><div class="hubLegHd"><span style="color:'+c.sp.body+'">'+nameOf(c)+'</span><span>BR '+(c.br||1)+'</span><span>'+stam+'</span><span class="gl">✨ '+(player&&player.glory||0)+' Glory</span><span>🎯 '+(c.skillPts||0)+' pts</span><span>Deck '+(c.arenaSkills||[]).length+'/12</span>'+useBtn+'</div><div class="hubGrid">'+cells+'</div></div>';
     }).join("");
+    host.querySelectorAll("[data-use]").forEach(b=>b.onclick=()=>{ if(b.dataset.use&&typeof setActiveLegend==="function"){ setActiveLegend(b.dataset.use); renderHubCards(); if(typeof showBanner==="function")showBanner("⚔️ Battler set — this Legendary now fights in the Chikiseum & Chikoria Cup.","info"); } });
     host.querySelectorAll(".hcImg").forEach(el=>el.onclick=()=>showZoom(el.dataset.key));
     host.querySelectorAll(".hcBtn.up").forEach(b=>{if(!b.disabled)b.onclick=()=>doUpgrade(creatures[+b.dataset.ci],+b.dataset.slot);});
     host.querySelectorAll(".hcBtn.buy").forEach(b=>b.onclick=()=>buyCard(creatures[+b.dataset.ci],+b.dataset.slot));
@@ -3223,7 +3239,7 @@ setInterval(updateWhaleTab,1000);
     const legs=(typeof myLegends==="function"?myLegends():[]).map(ensureLegendSkills);
     if(!legs.length){ wrap.style.display="none"; return; }
     wrap.style.display="flex";
-    const c=legs[0], si=SPECIES.indexOf(c.sp);
+    const c=(typeof activeLegend==="function"&&activeLegend())||legs[0], si=SPECIES.indexOf(c.sp);
     const smax=legStamMax(c.level||1),scur=Math.round(c.arenaStam!=null?c.arenaStam:smax),slp=c.arenaSleepUntil&&c.arenaSleepUntil>Date.now();
     const hp=120+(c.br||1)*6, spd=42+(c.br||1)*2;
     stats.innerHTML='<div class="hls-name" style="color:'+c.sp.body+'">'+nameOf(c)+'</div>'+
@@ -3290,7 +3306,7 @@ setInterval(updateWhaleTab,1000);
     if(!skipIntro&&typeof playBattleIntro==="function"){ playBattleIntro(()=>startBattle(true)); return; }   /* play the battle intro first (skip gracefully if unavailable) */
     clearTurnTimer();
     const legs=myLegends().map(ensureLegendSkills); if(!legs.length)return;
-    const me=legs[0]; const foeC=aiFoe(me.br||1);
+    const me=(typeof activeLegend==="function"&&activeLegend())||legs[0]; const foeC=aiFoe(me.br||1);
     B={you:makeSide(me,true),foe:makeSide(foeC,false),over:false,turn:null,foeBr:foeC.br};
     log(`A wild <b style="color:${SPECIES[B.foe.si].body}">${B.foe.name}</b> (BR ${B.foe.c.br}) challenges you!`);
     B.firstAttacker=(B.you.st.spd>=B.foe.st.spd)?"you":"foe";   /* faster strikes first; flips each round */
@@ -3453,7 +3469,7 @@ setInterval(updateWhaleTab,1000);
   function cupSpectate(foeBr, onEnd){
     const legs=myLegends().map(ensureLegendSkills);
     if(!legs.length){ if(typeof onEnd==="function")onEnd(true); return; }   /* no Legendary → can't show a battle, just advance */
-    const you=legs[0], foeC=aiFoe(Math.max(1, foeBr||1));
+    const you=(typeof activeLegend==="function"&&activeLegend())||legs[0], foeC=aiFoe(Math.max(1, foeBr||1));
     const bx=g("arenaBox"); if(bx)bx.classList.remove("introMode");
     const ai=g("arenaIntro"); if(ai)ai.style.display="none";
     const ov=g("arenaOverlay"); if(ov)ov.style.display="flex";
@@ -3539,7 +3555,7 @@ setInterval(updateWhaleTab,1000);
   }
   /* ===== "Trainers ready to battle" lobby — see who's available & challenge them directly ===== */
   let _lobbyChallenged={}, _pvpSearching=false;
-  function legendSnap(){ const ls=myLegends().map(ensureLegendSkills); if(!ls.length)return null; const c=ls[0]; return {name:nameOf(c),handle:(player.handle||player.addr||"Trainer"),element:legElem(SPECIES.indexOf(c.sp)),br:c.br||1,arenaSkills:c.arenaSkills||[0,1,2],cardTier:c.cardTier||{}}; }
+  function legendSnap(){ const ls=myLegends().map(ensureLegendSkills); if(!ls.length)return null; const c=(typeof activeLegend==="function"&&activeLegend())||ls[0]; return {name:nameOf(c),handle:(player.handle||player.addr||"Trainer"),element:legElem(SPECIES.indexOf(c.sp)),br:c.br||1,arenaSkills:c.arenaSkills||[0,1,2],cardTier:c.cardTier||{}}; }
   function lobbyActive(){ const ov=g("arenaOverlay"),bx=g("arenaBox"); return !!(ov&&ov.style.display!=="none"&&bx&&bx.classList.contains("introMode")&&!B&&CHAIN.BACKEND&&player&&player.pk); }
   async function pvpLobbyTick(){
     const panel=g("pvpLobby");
@@ -3579,7 +3595,7 @@ setInterval(updateWhaleTab,1000);
   function startPvp(matchId, side, fromCup, skipIntro){
     if(!skipIntro&&typeof playBattleIntro==="function"){ playBattleIntro(()=>startPvp(matchId, side, fromCup, true)); return; }   /* play the battle intro first (skip gracefully if unavailable) */
     clearTurnTimer(); const legs=myLegends().map(ensureLegendSkills); if(!legs.length)return;
-    B={ you:makeSide(legs[0],true), foe:null, over:false, turn:null, pvp:{matchId,side,fromCup:!!fromCup}, foeBr:1, series:null, _lastGameShown:-1, _pvpStatus:"" };
+    B={ you:makeSide((typeof activeLegend==="function"&&activeLegend())||legs[0],true), foe:null, over:false, turn:null, pvp:{matchId,side,fromCup:!!fromCup}, foeBr:1, series:null, _lastGameShown:-1, _pvpStatus:"" };
     const sp0=g("pvpSeries"); if(sp0){ sp0.style.display="none"; sp0.innerHTML=""; }
     const bx=g("arenaBox"); if(bx)bx.classList.remove("introMode"); const ai=g("arenaIntro"); if(ai)ai.style.display="none";
     g("arenaOverlay").style.display="flex";
@@ -3751,7 +3767,7 @@ setInterval(updateWhaleTab,1000);
       g("arenaResult").innerHTML="<span style='color:#ffd93d'>👑 Legendaries only</span>";
       g("arenaLog").innerHTML="Only <b>Legendary</b> Chikimons can wield the power of Chi and enter the Arena. Buy a Legendary Egg from 🔮 <b>Mithra's Mystic Market</b> to awaken one!";
       g("arenaCenter").innerHTML="";return;}
-    const c=ensureBattle(legs[0]); const now=Date.now();
+    const c=ensureBattle((typeof activeLegend==="function"&&activeLegend())||legs[0]); const now=Date.now();
     /* SLEEP: exhausted Legendaries must rest before they can be fed again */
     if(c.arenaSleepUntil&&c.arenaSleepUntil>now){
       const left=(c.arenaSleepUntil-now)/1000;
@@ -7427,7 +7443,16 @@ requestAnimationFrame(frame);
   #cupxBracket .pl .ck{color:#ffd166;font-weight:900;font-size:11px;flex:0 0 auto}
   #cupxBracket .pl.bye{opacity:.4} #cupxBracket .pl.bye .pn{font-style:italic}
   #cupxBracket .mt .vsbar{text-align:center;font-size:8px;font-weight:900;color:#5f7d6e;letter-spacing:1px;line-height:1}
-  #cupxBracket .gf .mt{border-color:#ff8fce99;box-shadow:0 0 0 1px #ff8fce44}`;
+  #cupxBracket .gf .mt{border-color:#ff8fce99;box-shadow:0 0 0 1px #ff8fce44}
+  /* Cup battler chooser chips */
+  .cupPickRow{display:flex;gap:8px;flex-wrap:wrap}
+  .cupPick{display:flex;align-items:center;gap:7px;border:1px solid #1c3d2e;background:#0e2418;color:#dff5e8;border-radius:11px;padding:7px 11px;font-family:inherit;font-weight:800;font-size:12.5px;cursor:pointer}
+  .cupPick:hover{border-color:#3ddc8466}
+  .cupPick .orb{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;flex:0 0 auto}
+  .cupPick .cpn{max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .cupPick .meta{font-size:10px;color:#9fb4a8}
+  .cupPick.on{background:linear-gradient(180deg,#173a26,#10301f);border-color:#3ddc84;box-shadow:0 0 0 1px #3ddc8455}
+  .cupPick .cpck{color:#3ddc84;font-weight:900}`;
   document.head.appendChild(css);
 
   const ov=document.createElement("div"); ov.id="cupx";
@@ -7467,7 +7492,7 @@ requestAnimationFrame(frame);
         <div class="match" style="margin:0"><div class="mrow" id="cupxMine"></div></div>
         <div><div class="sub">Entry: <b class="gold">100 ✨ Glory</b> · Pool: <b class="teal">4 SOL</b> · Champion <b class="gold">1 SOL</b></div>
           <button class="b" id="cupxReg2" style="margin-top:10px">Register — 100 ✨</button>
-          <div class="sub" id="cupxRegMsg" style="margin-top:6px"></div></div></div></div>
+          <div class="sub" id="cupxRegMsg" style="margin-top:6px"></div></div></div><div id="cupxPick" style="margin-top:4px"></div></div>
     <div class="card" id="cupxLobby" style="display:none"><h3 style="margin-top:0">🛡 Lobby <span class="sub" id="cupxLobbyCount"></span></h3><div class="grid2" id="cupxLobbyList"></div></div>
     <div class="card" id="cupxBracket" style="display:none"><div class="hd"><h3 style="margin:0">🪜 Tournament Bracket</h3><span class="sub" id="cupxBracketSub"></span></div><div id="cupxBracketBody"></div></div>
     <div class="card" id="cupxRound" style="display:none"><div class="hd"><h3 style="margin:0" id="cupxRtitle"></h3>
@@ -7535,6 +7560,19 @@ requestAnimationFrame(frame);
     $("cupxBracketSub").textContent = `${bk.cap}-player · double elimination · ${total}/${bk.rounds.length} rounds done`;
   }
 
+  // Cup-registration battler chooser: pick which Legendary (old or Meme) enters the Cup.
+  function renderCupPick(St){
+    const host=$("cupxPick"); if(!host)return;
+    let legs=[]; try{ legs=(typeof window.ownLegends==="function")?window.ownLegends():[]; }catch(e){}
+    if(St.youRegistered||legs.length<2){ host.innerHTML=""; return; }   // locked once registered; nothing to choose with <2
+    let actUid=null; try{ actUid=(window.activeLegend&&(window.activeLegend()||{}).uid)||null; }catch(e){}
+    const chips=legs.map(c=>{ const si=(typeof SPECIES!=="undefined")?SPECIES.indexOf(c.sp):-1; const el=(typeof LEGEL!=="undefined"&&LEGEL[si])||"Fire";
+      const nm=esc((typeof nameOf==="function"?nameOf(c):"Legendary")); const on=c.uid&&c.uid===actUid;
+      return `<button class="cupPick${on?" on":""}" data-uid="${c.uid||""}"><span class="orb" style="background:${COL[el]}22;color:${COL[el]}">${ELEMS[el]}</span><span class="cpn">${nm}</span><span class="meta">BR ${c.br||1}</span>${on?'<span class="cpck">✓</span>':""}</button>`; }).join("");
+    host.innerHTML=`<div class="sub" style="margin:8px 0 5px">⚔️ Choose your Cup battler (old & Meme Legendaries):</div><div class="cupPickRow">${chips}</div>`;
+    host.querySelectorAll("[data-uid]").forEach(b=>b.onclick=()=>{ try{ if(b.dataset.uid&&window.setActiveLegend){ window.setActiveLegend(b.dataset.uid); refresh(); } }catch(e){} });
+  }
+
   async function apiGet(path){ if(!API)throw new Error("backend offline"); const r=await fetch(API+path,{cache:"no-store"}); const j=await r.json().catch(()=>({})); if(!r.ok)throw new Error(j.error||("HTTP "+r.status)); return j; }
   async function apiPost(path,body){ if(!API)throw new Error("backend offline"); const r=await fetch(API+path,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body||{})}); const j=await r.json().catch(()=>({})); if(!r.ok)throw new Error(j.error||("HTTP "+r.status)); return j; }
 
@@ -7552,7 +7590,7 @@ requestAnimationFrame(frame);
   },5000);
 
   // build the snapshot the server expects from the player's best Legendary
-  function myLegSnap(){ try{ if(typeof myChikis==="function"){ const legs=myChikis().filter(c=>c.isLegend); if(legs.length){ const c=legs.slice().sort((a,b)=>(b.br||1)-(a.br||1))[0]; const si=(typeof SPECIES!=="undefined")?SPECIES.indexOf(c.sp):-1; return {name:(typeof nameOf==="function"?nameOf(c):"Your Legendary"),element:LEGEL[si]||"Fire",br:c.br||10,arenaSkills:c.arenaSkills||[0,1,2],cardTier:c.cardTier||{}}; } } }catch(e){} return null; }
+  function myLegSnap(){ try{ if(typeof myChikis==="function"){ const legs=myChikis().filter(c=>c.isLegend); if(legs.length){ const c=(typeof window.activeLegend==="function"&&window.activeLegend())||legs.slice().sort((a,b)=>(b.br||1)-(a.br||1))[0]; const si=(typeof SPECIES!=="undefined")?SPECIES.indexOf(c.sp):-1; return {uid:c.uid||null,name:(typeof nameOf==="function"?nameOf(c):"Your Legendary"),element:LEGEL[si]||"Fire",br:c.br||10,arenaSkills:c.arenaSkills||[0,1,2],cardTier:c.cardTier||{}}; } } }catch(e){} return null; }
 
   let St=null, poll=null, busy=false, chatSince=0, chatPoll=null, specMatch=null, specPoll=null, specEl=null;
   function admMsg(t){ const e=$("cupxAdminMsg"); if(e)e.textContent=t||""; }
@@ -7621,6 +7659,7 @@ requestAnimationFrame(frame);
     // registration card
     if(reg){ const snap=myLegSnap();
       $("cupxMine").innerHTML=snap?legHTML(elObj(myName()||snap.name,snap.name,snap.element,snap.br,true)):'<div class="sub">Hatch a Legendary at the Mystic Market to enter.</div>';
+      renderCupPick(St);
       const blocked=(!St.public&&!adm);
       $("cupxReg2").disabled=St.youRegistered||blocked||!snap||busy;
       $("cupxReg2").textContent=St.youRegistered?"Registered ✓":(St.entryGlory>0?("Register — "+St.entryGlory+" ✨"):"Register — Free");
