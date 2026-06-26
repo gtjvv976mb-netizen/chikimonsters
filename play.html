@@ -7427,7 +7427,7 @@ requestAnimationFrame(frame);
         <div style="font-weight:800;font-size:13px;color:#dff5e8;margin-bottom:6px">🎁 Gift a Legendary</div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
           <input id="giftWallet" placeholder="recipient wallet address" autocomplete="off" style="flex:1;min-width:180px;background:#0f2a1e;border:1px solid #1c3d2e;border-radius:9px;padding:9px;color:#dff5e8;font-family:inherit;font-size:12px">
-          <select id="giftSp" style="font-family:inherit;font-weight:700;font-size:12px;padding:9px 8px;border-radius:9px;border:1px solid #1c3d2e;background:#0f2a1e;color:#dff5e8;cursor:pointer"><option value="10">💧 Galador</option><option value="11">✨ Adalor</option><option value="12">🐾 Tyrannos</option><option value="13">⚡ Grovador</option><option value="14">🔥 Dragonos</option></select>
+          <select id="giftSp" style="font-family:inherit;font-weight:700;font-size:12px;padding:9px 8px;border-radius:9px;border:1px solid #1c3d2e;background:#0f2a1e;color:#dff5e8;cursor:pointer"><optgroup label="Normal Chiki"><option value="0">🌿 Leafpup</option><option value="1">⚡ Sparkit</option><option value="2">🌊 Aquabit</option><option value="3">🔥 Pyrix</option><option value="4">❄️ Snowclaw</option><option value="5">⛰️ Rocko</option><option value="6">🌑 Nightbat</option><option value="7">💎 Crystalix</option><option value="8">💨 Cloudo</option><option value="9">🌙 Lunara</option></optgroup><optgroup label="Legendary"><option value="10">💧 Galador</option><option value="11">✨ Adalor</option><option value="12">🐾 Tyrannos</option><option value="13">⚡ Grovador</option><option value="14">🔥 Dragonos</option></optgroup></select>
           <input id="giftLvl" type="number" value="10" min="1" max="50" title="level" style="width:62px;background:#0f2a1e;border:1px solid #1c3d2e;border-radius:9px;padding:9px;color:#dff5e8;font-family:inherit;font-size:12px">
           <input id="giftNick" placeholder="nickname" maxlength="16" autocomplete="off" style="width:120px;background:#0f2a1e;border:1px solid #1c3d2e;border-radius:9px;padding:9px;color:#dff5e8;font-family:inherit;font-size:12px">
           <button class="b" id="giftBtn">🎁 Gift</button></div>
@@ -7701,9 +7701,10 @@ requestAnimationFrame(frame);
         const r=await sol.signMessage(new TextEncoder().encode(msg),"utf8"); const s=r.signature||r; let bin=""; for(let i=0;i<s.length;i++)bin+=String.fromCharCode(s[i]); auth={msg,sig:btoa(bin)}; } }
       catch(e){ gm("⚠️ Signature declined."); return; }
       if(!auth){ gm("⚠️ Your wallet can't sign — connect Phantom/Solflare."); return; }
-      try{ await apiPost("/admin/gift-legendary",{adminWallet:myPk(),authMsg:auth.msg,authSig:auth.sig,wallet:target,sp,level:lvl,nick});
-        const names={10:"Galador",11:"Adalor",12:"Tyrannos",13:"Grovador",14:"Dragonos"};
-        gm("✅ Gifted <b>"+(names[sp]||"Legendary")+"</b> (Lv"+lvl+") to "+target.slice(0,4)+"…"+target.slice(-4)+" — they'll see it on reconnect.");
+      try{ const names={0:"Leafpup",1:"Sparkit",2:"Aquabit",3:"Pyrix",4:"Snowclaw",5:"Rocko",6:"Nightbat",7:"Crystalix",8:"Cloudo",9:"Lunara",10:"Galador",11:"Adalor",12:"Tyrannos",13:"Grovador",14:"Dragonos"};
+        const r=await apiPost("/admin/gift-chiki",{adminWallet:myPk(),authMsg:auth.msg,authSig:auth.sig,wallet:target,sp,level:lvl,nick})||{};
+        gm(r.pending?("📨 "+(names[sp]||"Chiki")+" offered — recipient is at capacity, they'll choose to accept (replace one) or decline.")
+                    :("✅ Gifted <b>"+(names[sp]||"Chiki")+"</b> (Lv"+lvl+") to "+target.slice(0,4)+"…"+target.slice(-4)+" — they'll see it on reconnect."));
         $("giftWallet").value=""; $("giftNick").value=""; }
       catch(e){ gm("⚠️ "+e.message); } };
     ["giftWallet","giftLvl","giftNick"].forEach(id=>{ const el=$(id); if(el)["keydown","keyup","keypress"].forEach(ev=>el.addEventListener(ev,e=>e.stopPropagation())); }); }
@@ -8360,6 +8361,60 @@ requestAnimationFrame(frame);
     }, 4000);
   }
   announce();
+})();
+</script>
+<!-- ===================== GIFT CLAIM — accept an admin-gifted Chiki (replace one) or decline ===================== -->
+<script>
+(function(){
+  if(window.__giftClaimInit)return; window.__giftClaimInit=true;
+  let busy=false, shown=false;
+  const BK=()=>(window.CHAIN&&CHAIN.BACKEND)||"";
+  const pk=()=>(window.player&&player.pk)||null;
+  function gName(g){ try{ const s=SPECIES[g.sp]; if(!s)return g.isLegend?"Legendary":"Chiki"; const st=(typeof stageOf==="function")?stageOf(g.level):0; return s.names[Math.min(st,s.names.length-1)]; }catch(e){return "Chiki";} }
+  function gType(g){ try{ return (SPECIES[g.sp]&&SPECIES[g.sp].type)||""; }catch(e){return "";} }
+  function chikiLabel(c){ try{ const s=SPECIES[c.sp]||{}; const st=(typeof stageOf==="function")?stageOf(c.level||1):0; const nm=c.nick||(s.names?s.names[Math.min(st,s.names.length-1)]:"Chiki"); return nm+" · Lv"+(c.level||1)+" · "+(s.type||""); }catch(e){return "Chiki";} }
+  async function sign(){ try{ const sol=window.solana; if(!sol||!sol.signMessage)return null; const now=Date.now(); const msg="Chikoria gift claim\nwallet:"+pk()+"\nts:"+now; const r=await sol.signMessage(new TextEncoder().encode(msg),"utf8"); const s=r.signature||r; let bin=""; for(let i=0;i<s.length;i++)bin+=String.fromCharCode(s[i]); return {msg,sig:btoa(bin)}; }catch(e){return null;} }
+  async function check(){
+    if(busy||shown||!pk()||!BK())return;
+    let gifts=[]; try{ gifts=((await (await fetch(BK()+"/gift/pending?wallet="+pk(),{cache:"no-store"})).json()).gifts)||[]; }catch(e){return;}
+    if(!gifts.length)return;
+    const g=gifts[0]; let chikis=[];
+    try{ const pj=await (await fetch(BK()+"/profile?wallet="+pk(),{cache:"no-store"})).json(); chikis=(pj.profile&&pj.profile.chikis)||[]; }catch(e){}
+    const same=chikis.map((c,i)=>({c,i})).filter(x=>!!x.c.isLegend===!!g.isLegend);
+    shown=true; openModal(g,same);
+  }
+  function openModal(g,same){
+    let m=document.getElementById("giftClaim");
+    if(!m){ m=document.createElement("div"); m.id="giftClaim"; m.style.cssText="position:fixed;inset:0;z-index:500;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(6,4,16,.82);-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);font-family:'Nunito',sans-serif"; document.body.appendChild(m); }
+    const badge=g.isLegend?'<span style="background:rgba(155,107,255,.28);color:#d7c2ff;border:1px solid #9b6bff;border-radius:999px;padding:2px 10px;font-size:11px;font-weight:800">💎 Legendary</span>':'';
+    const rows=same.length?same.map(x=>'<label style="display:flex;align-items:center;gap:9px;padding:9px;border:1px solid #3a4a6a;border-radius:10px;margin:5px 0;cursor:pointer;background:#101c34"><input type="radio" name="grepl" value="'+x.i+'" style="width:16px;height:16px;accent-color:#ff6b6b"><span style="flex:1;color:#e7eefb;font-size:13px">'+chikiLabel(x.c)+'</span></label>').join("")
+      :'<div style="color:#ffb3b3;font-size:13px">No matching Chiki found to replace.</div>';
+    m.innerHTML='<div style="width:min(94vw,440px);background:radial-gradient(120% 70% at 50% 0%,#1a2748,#0d1424 82%);border:2px solid #ffd166;border-radius:18px;padding:18px 20px 20px;box-shadow:0 22px 60px rgba(0,0,0,.7);color:#e7eefb">'
+      +'<div style="font-family:Baloo 2,Nunito;font-weight:900;font-size:20px;color:#ffd166;text-align:center">🎁 You\'ve been gifted a Chiki!</div>'
+      +'<div style="text-align:center;margin:8px 0 3px;font-size:17px;font-weight:900">'+gName(g)+' '+badge+'</div>'
+      +'<div style="text-align:center;color:#9fb6d8;font-size:12.5px">Lv '+g.level+' · '+gType(g)+(g.nick?' · &quot;'+g.nick+'&quot;':'')+'</div>'
+      +'<div style="margin-top:14px;font-size:12.5px;color:#bcd0ee">Your '+(g.isLegend?"Legendary":"Chiki")+' slots are full — pick one to <b>replace</b> with this gift, or decline.</div>'
+      +rows
+      +'<div style="display:flex;gap:8px;margin-top:14px"><button id="giftDecline" style="flex:1;padding:11px;border:1px solid #3a4a6a;border-radius:11px;background:#101c34;color:#cfe0ff;font-weight:800;cursor:pointer;font-family:inherit">Decline</button>'
+      +'<button id="giftAccept" style="flex:2;padding:11px;border:none;border-radius:11px;background:linear-gradient(180deg,#ffe08a,#e0a93a);color:#3a2a06;font-weight:900;cursor:pointer;font-family:inherit">Accept &amp; Replace</button></div>'
+      +'<div id="giftClaimMsg" style="margin-top:8px;font-size:12px;color:#9fb6d8;text-align:center;min-height:16px"></div></div>';
+    m.style.display="flex";
+    const msg=(t)=>{ const e=document.getElementById("giftClaimMsg"); if(e)e.textContent=t||""; };
+    document.getElementById("giftDecline").onclick=()=>claim(g,"decline",null,msg);
+    document.getElementById("giftAccept").onclick=()=>{ const sel=m.querySelector('input[name="grepl"]:checked'); if(!sel){ msg("Pick a Chiki to replace first."); return; } claim(g,"accept",+sel.value,msg); };
+  }
+  async function claim(g,action,replaceIndex,msg){
+    if(busy)return; busy=true; msg("✍️ Approve the signature in your wallet…");
+    const auth=await sign();
+    if(!auth){ msg("⚠️ Your wallet couldn't sign — connect Phantom/Solflare."); busy=false; return; }
+    try{ const r=await fetch(BK()+"/gift/claim",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:pk(),authMsg:auth.msg,authSig:auth.sig,giftId:g.id,action,replaceIndex})});
+      const j=await r.json(); if(!r.ok||j.error){ msg("⚠️ "+(j.error||"failed")); busy=false; return; }
+      const m=document.getElementById("giftClaim"); if(m)m.style.display="none"; shown=false; busy=false;
+      if(action==="accept"){ if(typeof showBanner==="function")showBanner("🎁 Gift accepted! Reloading your roster…","info"); setTimeout(()=>location.reload(),900); }
+      else { if(typeof showBanner==="function")showBanner("Gift declined.","info"); setTimeout(check,1500); }
+    }catch(e){ msg("⚠️ "+(e.message||e)); busy=false; }
+  }
+  setTimeout(check,4500); setInterval(check,30000);
 })();
 </script>
 <!-- ===================== CHIKORIA CUP — reigning champion's floating trophy + badge ===================== -->
