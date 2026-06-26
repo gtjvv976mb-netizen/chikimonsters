@@ -4148,14 +4148,17 @@ setInterval(updateWhaleTab,1000);
   function tickMemeCare(h){
     const e=h&&h.memeEgg; if(!e||e.hatched)return;
     const need=e.need||MEME_CARE_NEED;
-    /* 🔧 SELF-HEAL (auto mode only): keep the intended number of tenders assigned so the egg never silently stalls.
-       If the player has taken MANUAL control via the tickboxes (e.manualTenders), respect their exact choice. */
-    if(!e.manualTenders){
-      const want=Math.max(1,e.tenders||1);
-      if(memeCarers(h).length<want){
-        const free=creatures.filter(c=>c.holder===h&&!c.isLegend&&!c.tending&&!c.tendingMeme);
-        for(const c of free){ if(memeCarers(h).length>=want)break; c.tendingMeme=true; if(typeof freeSpot==="function")freeSpot(c); c.task=null;c.target=null; if(c.state==="sleeping"&&!c.hungry)c.state="wander"; }
-      }
+    /* 🔧 SELF-HEAL: keep the intended number of tenders assigned so the egg never silently stalls.
+       AUTO mode keeps `want` tenders topped up. MANUAL mode respects the player's exact choice — including a
+       deliberate ZERO (they unticked everyone to free Chikis for tasks; e.tenders===0). The one case we DON'T
+       allow is a manual egg whose saved desired count is >=1 but currently has 0 tenders — that means a refresh
+       dropped the per-Chiki flags, which would otherwise stall the egg forever. In that case we re-adopt them. */
+    const haveN=memeCarers(h).length;
+    const target = e.manualTenders ? (e.tenders||0) : Math.max(1,e.tenders||1);   // manual desired (0 = paused) vs auto want
+    const needHeal = e.manualTenders ? (haveN===0 && target>=1) : (haveN<target);
+    if(needHeal){
+      const free=creatures.filter(c=>c.holder===h&&!c.isLegend&&!c.tending&&!c.tendingMeme);
+      for(const c of free){ if(memeCarers(h).length>=target)break; c.tendingMeme=true; if(typeof freeSpot==="function")freeSpot(c); c.task=null;c.target=null; if(c.state==="sleeping"&&!c.hungry)c.state="wander"; }
     }
     const now=Date.now(); let sec=(now-(e.lastAt||now))/1000; e.lastAt=now;
     if(sec<=0)return;
@@ -8133,6 +8136,7 @@ requestAnimationFrame(frame);
     const el=$("meSupply");
     /* already incubating a Meme Egg? show that instead of a buy button (1 egg of this kind at a time) */
     if(window.player&&player.memeEgg&&!player.memeEgg.hatched){
+      if(typeof window.tickMemeCare==="function")try{ window.tickMemeCare(player); }catch(_){}   /* heal tenders + advance care so a refresh can't leave the egg stalled at 0% with the box unticked */
       const e=player.memeEgg, need=e.need||360, done=Math.min(need,e.careMin||0), pct=Math.round(done/need*100), ready=!!e.ready||done>=need;
       const tenders=(typeof window.memeCarers==="function")?window.memeCarers(player).length:1;
       const fedN=(typeof window.fedMemeCarers==="function")?window.fedMemeCarers(player):tenders;
