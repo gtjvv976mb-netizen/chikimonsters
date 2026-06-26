@@ -1598,13 +1598,15 @@ const CHAIN={
   MINT:"CPYrgdAYWFQD74ZtsR8mEBWW7qnrXnegcn7gDMobpump",   /* $CHIKI mint (pump.fun) — live balance check ON */
   RPC:"https://mainnet.helius-rpc.com/?api-key=4aec5974-6a75-4693-9d26-6b2050c2464b",  /* Helius RPC */
   BACKEND:"https://backend-wffd.onrender.com",   /* live verify/payout backend */
-  TREASURY:"7AkAC12DJUtWxUGPJYzCaq1obUJhDJ21ifzG799JERQ1",       /* reward pool — receives 45% of $CHIKI spends (rotated after compromise) */
-  TEAM:"CmY2ZXVPVG2gbAHeVWHw7PQrAKtTcrWsq2raaWgg8YJ9",          /* team wallet — receives 35% */
-  ONCHAIN_SPENDS:true,           /* true = level/feed are REAL on-chain $CHIKI tx (20% burn/45% pool/35% team); false = simulated */
+  TREASURY:"7AkAC12DJUtWxUGPJYzCaq1obUJhDJ21ifzG799JERQ1",       /* reward pool — gets the POOL share of $CHIKI spends (49.5% default · 40% Legendary Egg · 39% reroll). Rotated after compromise. */
+  TEAM:"CmY2ZXVPVG2gbAHeVWHw7PQrAKtTcrWsq2raaWgg8YJ9",          /* team wallet — gets the TEAM share (49.5% default · 59% Legendary Egg · 60% reroll) */
+  ONCHAIN_SPENDS:true,           /* true = spends (feed/level/eggs) are REAL on-chain $CHIKI tx. Default split 1% burn / 49.5% pool / 49.5% team (eggs & reroll use their own splits below). false = simulated */
   ADMINS:["CmY2ZXVPVG2gbAHeVWHw7PQrAKtTcrWsq2raaWgg8YJ9"]   /* wallets that can PIN / post official chat updates (add your own here) */
 };
 window.CHAIN=CHAIN;   /* expose on window — top-level `const` doesn't attach to window, and the Meme Dex reads window.CHAIN */
-/* ===== Real on-chain $CHIKI spend: 20% burned, 45%→treasury, 35%→team (player signs in Phantom) ===== */
+/* ===== Real on-chain $CHIKI spend (player signs in Phantom). Split in BASIS POINTS via the `split` arg;
+   DEFAULT = 1% burn / 49.5% treasury(pool) / 49.5% team. Legendary Egg = 1%/40%/59% (EGG_SPLIT).
+   Meme Egg uses the default. Release/reroll = 1%/39%/60% (REROLL_SPLIT). ===== */
 let _chikiDec=null;
 async function chikiDecimals(){
   if(_chikiDec!=null)return _chikiDec;
@@ -7503,7 +7505,16 @@ requestAnimationFrame(frame);
           <input id="giftLvl" type="number" value="10" min="1" max="50" title="level" style="width:62px;background:#0f2a1e;border:1px solid #1c3d2e;border-radius:9px;padding:9px;color:#dff5e8;font-family:inherit;font-size:12px">
           <input id="giftNick" placeholder="nickname" maxlength="16" autocomplete="off" style="width:120px;background:#0f2a1e;border:1px solid #1c3d2e;border-radius:9px;padding:9px;color:#dff5e8;font-family:inherit;font-size:12px">
           <button class="b" id="giftBtn">🎁 Gift</button></div>
-        <div class="sub" id="giftMsg" style="margin-top:6px"></div></div></div>
+        <div class="sub" id="giftMsg" style="margin-top:6px"></div></div>
+      <div style="margin-top:10px;border-top:1px solid #1c3d2e;padding-top:10px">
+        <div style="font-weight:800;font-size:13px;color:#ffcccc;margin-bottom:6px">🚫 Reward-Pool Bans <span style="font-weight:600;color:#9fb4a8;font-size:11px">— block a wallet from ALL claims &amp; Cup prizes</span></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+          <input id="banWallet" placeholder="wallet address" autocomplete="off" style="flex:1;min-width:180px;background:#2a1010;border:1px solid #5a2424;border-radius:9px;padding:9px;color:#ffe0e0;font-family:inherit;font-size:12px">
+          <button class="b" id="banBtn" style="background:linear-gradient(180deg,#ff6b6b,#d63d3d);box-shadow:0 4px 0 #a82a2a;color:#fff">🚫 Ban</button>
+          <button class="b" id="unbanBtn" style="background:#0f2a1e">✅ Unban</button>
+          <button class="g" id="banListBtn">📋 List</button></div>
+        <div class="sub" id="banMsg" style="margin-top:6px"></div>
+        <div id="banList" style="margin-top:5px;font-size:11px;color:#cdbcbc;line-height:1.6;word-break:break-all"></div></div></div>
     <div class="card" id="cupxPrize" style="display:none;border-color:#ffd166"><b class="gold">🏆 You won Cup SOL!</b> <span id="cupxPrizeAmt"></span> is waiting in your <b>Chiki Pouch</b> — claim it from the game. 🌊</div>
     <div class="card" id="cupxReg"><h3 style="margin-top:0">⚔️ Enter the Cup</h3>
       <video src="ui/chikoria-cup-intro.mp4" autoplay muted loop playsinline controls preload="metadata" style="width:100%;max-height:40vh;border-radius:12px;border:1px solid #1c3d2e;margin:0 0 12px;display:block;background:#0a1d15"></video>
@@ -7839,6 +7850,25 @@ requestAnimationFrame(frame);
         $("giftWallet").value=""; $("giftNick").value=""; }
       catch(e){ gm("⚠️ "+e.message); } };
     ["giftWallet","giftLvl","giftNick"].forEach(id=>{ const el=$(id); if(el)["keydown","keyup","keypress"].forEach(ev=>el.addEventListener(ev,e=>e.stopPropagation())); }); }
+  /* 🚫 Reward-pool ban controls (admin sign-in, spoof-proof) */
+  { const bm=(t)=>{ const e=$("banMsg"); if(e)e.innerHTML=t||""; };
+    async function adminSign(){ try{ const sol=window.solana; if(!sol||!sol.signMessage)return null; const now=Date.now(); const msg="Chikoria admin sign-in\nwallet:"+myPk()+"\nts:"+now; const r=await sol.signMessage(new TextEncoder().encode(msg),"utf8"); const s=r.signature||r; let bin=""; for(let i=0;i<s.length;i++)bin+=String.fromCharCode(s[i]); return {msg,sig:btoa(bin)}; }catch(e){ return null; } }
+    function renderBanList(list){ const el=$("banList"); if(!el)return; if(!list||!list.length){ el.textContent="No wallets banned."; return; } el.innerHTML="<b>Banned ("+list.length+"):</b><br>"+list.map(w=>"🚫 "+esc(w)).join("<br>"); }
+    async function doBan(unban){
+      const target=(($("banWallet")||{}).value||"").trim();
+      if(!target){ bm("Enter a wallet address."); return; }
+      if(!myPk()){ bm("Connect your admin wallet first."); return; }
+      bm("✍️ Approve the signature in your wallet…");
+      const auth=await adminSign(); if(!auth){ bm("⚠️ Signature declined or unavailable."); return; }
+      try{ const r=await apiPost(unban?"/admin/unban":"/admin/ban",{adminWallet:myPk(),authMsg:auth.msg,authSig:auth.sig,target})||{};
+        bm(unban?("✅ Unbanned "+target.slice(0,4)+"…"+target.slice(-4)+" — "+(r.total||0)+" still banned.")
+                :("🚫 Banned "+target.slice(0,4)+"…"+target.slice(-4)+" — they can no longer claim or win Cup prizes. ("+(r.total||0)+" total)"));
+        $("banWallet").value=""; renderBanList(r.list); }
+      catch(e){ bm("⚠️ "+e.message); } }
+    const bb=$("banBtn"); if(bb)bb.onclick=()=>doBan(false);
+    const ub=$("unbanBtn"); if(ub)ub.onclick=()=>doBan(true);
+    const lb=$("banListBtn"); if(lb)lb.onclick=async ()=>{ try{ const j=await apiGet("/admin/banned?wallet="+myPk()); renderBanList(j.banned); bm(""); }catch(e){ bm("⚠️ "+e.message); } };
+    const bw=$("banWallet"); if(bw)["keydown","keyup","keypress"].forEach(ev=>bw.addEventListener(ev,e=>e.stopPropagation())); }
   $("cupxResolve2").onclick=async ()=>{ if(busy)return; busy=true; $("cupxResolve2").disabled=true; admMsg("Auto-resolving round…");
     try{ const j=await apiPost("/cup/resolve-round",{wallet:myPk()}); const r=j.result||{}; admMsg(r.finished?("🏆 Champion: "+r.champion):(r.round+" resolved → next "+r.next)); await refresh(); }
     catch(e){ admMsg("⚠️ "+e.message); } busy=false; };
