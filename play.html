@@ -7912,6 +7912,7 @@ requestAnimationFrame(frame);
   #memeEgg.testOn .meTitle::after{content:" · 🧪 TEST";color:#b69bff;font-size:12px}
   .meNft{display:flex;gap:11px;align-items:center;background:rgba(20,15,40,.7);border:1px solid #4a3a80;border-radius:12px;padding:9px;margin-bottom:8px}
   .meNft img{width:52px;height:52px;border-radius:9px;object-fit:contain;background:rgba(0,0,0,.25)}
+  .meNft img.cased{width:74px;height:74px;object-fit:cover;border:1px solid #6a55b0;box-shadow:0 0 0 1px rgba(255,213,102,.25),0 4px 12px rgba(0,0,0,.45);background:#0c0820;cursor:zoom-in}
   .meNft .nn{font-weight:800;color:#fff;font-size:14px}
   .meNft .ne{font-size:11.5px;color:#a99cd6}
   .meNft .ns{margin-left:auto;font-size:11px;font-weight:800;padding:4px 9px;border-radius:999px;white-space:nowrap}
@@ -8072,6 +8073,15 @@ requestAnimationFrame(frame);
     let lb=$("memeCardLB");
     if(!lb){ lb=document.createElement("div"); lb.id="memeCardLB"; lb.style.cssText="position:fixed;inset:0;z-index:400;display:none;align-items:center;justify-content:center;background:rgba(4,2,12,.86);cursor:zoom-out"; document.body.appendChild(lb); lb.onclick=()=>{ lb.style.display="none"; }; }
     lb.innerHTML='<img src="ui/cards/'+k+'.jpg?v=meme7" style="max-width:90vw;max-height:90vh;border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.75)">';
+    lb.style.display="flex";
+  }
+  /* Meme NFTs ship in a collectible display case — show that boxed art in the marketplace (My NFTs + Bazaar). */
+  const CASE_CHARS=new Set(["pepe","popcat","moodeng","doge","chillguy","alon"]);
+  const caseImg=(char)=> CASE_CHARS.has(char) ? ("ui/nft-case/"+char+".jpg?v=case1") : (char+"_art.png?v=meme4");
+  function openImgLightbox(src){
+    let lb=$("memeCardLB");
+    if(!lb){ lb=document.createElement("div"); lb.id="memeCardLB"; lb.style.cssText="position:fixed;inset:0;z-index:400;display:none;align-items:center;justify-content:center;background:rgba(4,2,12,.86);cursor:zoom-out"; document.body.appendChild(lb); lb.onclick=()=>{ lb.style.display="none"; }; }
+    lb.innerHTML='<img src="'+src+'" style="max-width:90vw;max-height:90vh;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.75)">';
     lb.style.display="flex";
   }
   function openDetail(key){
@@ -8374,8 +8384,9 @@ requestAnimationFrame(frame);
     const list=$("memeMineList"), BK=(window.CHAIN&&CHAIN.BACKEND)||"";
     if(_testMode){
       if(!_testNfts.length){ list.innerHTML="<div style='color:#a99cd6;font-size:13px'>🧪 Test Mode — no test hatches yet. Hit 🧪 Test Hatch to try the flow.</div>"; return; }
-      list.innerHTML='<div style="font-size:12px;color:#b69bff;margin-bottom:8px">🧪 Test inventory (local only — not real NFTs)</div>'+_testNfts.map(it=>{ const m=ROSTER_BY[it.char]||{emoji:"❓"};
-        return '<div class="meNft"><img src="'+it.char+'_art.png?v=meme4" onerror="this.style.visibility=\'hidden\'"><div style="flex:1"><div class="nn">'+(m.emoji||"")+' '+it.name+'</div><div class="ne">Edition #'+String(it.edition).padStart(3,"0")+' / '+it.cap+'</div></div><span class="ns pending">🧪 Test</span></div>'; }).join("");
+      list.innerHTML='<div style="font-size:12px;color:#b69bff;margin-bottom:8px">🧪 Test inventory (local only — not real NFTs)</div>'+_testNfts.map(it=>{ const m=ROSTER_BY[it.char]||{emoji:"❓"}; const cased=CASE_CHARS.has(it.char), src=caseImg(it.char);
+        return '<div class="meNft"><img class="'+(cased?'cased':'')+'" src="'+src+'" '+(cased?'data-case="'+src+'" ':'')+'onerror="this.style.visibility=\'hidden\'"><div style="flex:1"><div class="nn">'+(m.emoji||"")+' '+it.name+'</div><div class="ne">Edition #'+String(it.edition).padStart(3,"0")+' / '+it.cap+'</div></div><span class="ns pending">🧪 Test</span></div>'; }).join("");
+      list.querySelectorAll("[data-case]").forEach(im=>im.onclick=()=>openImgLightbox(im.getAttribute("data-case")));
       return;
     }
     if(!window.player||!player.pk){ list.innerHTML="<div style='color:#a99cd6;font-size:13px'>Connect your wallet to see your Meme NFTs.</div>"; return; }
@@ -8387,11 +8398,13 @@ requestAnimationFrame(frame);
         const _clu=(window.CHAIN&&/dev/i.test(CHAIN.NETWORK||""))?"?cluster=devnet":"";   /* mainnet by default */
         const st=it.status==="minted"?'<a class="ns minted" href="https://explorer.solana.com/address/'+(it.mintAddr||"")+_clu+'" target="_blank" rel="noopener" style="text-decoration:none">✅ On-chain ↗</a>':(mystery?'<span class="ns pending">🥚 Incubating…</span>':'<span class="ns pending">⏳ Minting…</span>');
         const trade=mystery?"":(it.listed?'<button class="meSell unlist" data-unlist="'+it.id+'">🏷️ Listed '+it.listed.price+' ◎ · Unlist</button>':'<button class="meSell" data-list="'+it.id+'">🏪 List for sale</button>');
-        const img=mystery?'ui/meme-egg.png?v=meme4':(it.char+'_art.png?v=meme4');
+        const cased=!mystery&&CASE_CHARS.has(it.char);
+        const img=mystery?'ui/meme-egg.png?v=meme4':caseImg(it.char);
         const nm=mystery?'❓ Mystery Meme Egg':((m.emoji||"")+' '+it.name);
-        return '<div class="meNft"><img src="'+img+'" onerror="this.style.visibility=\'hidden\'"><div style="flex:1"><div class="nn">'+nm+'</div><div class="ne">'+(mystery?'Tending… a surprise awaits 🤫':'Edition #'+String(it.edition).padStart(3,"0"))+'</div><div style="margin-top:5px">'+trade+'</div></div>'+st+'</div>'; }).join("");
+        return '<div class="meNft"><img class="'+(cased?'cased':'')+'" src="'+img+'" '+(cased?'data-case="'+img+'" title="Tap to view the NFT case" ':'')+'onerror="this.style.visibility=\'hidden\'"><div style="flex:1"><div class="nn">'+nm+'</div><div class="ne">'+(mystery?'Tending… a surprise awaits 🤫':'Edition #'+String(it.edition).padStart(3,"0"))+'</div><div style="margin-top:5px">'+trade+'</div></div>'+st+'</div>'; }).join("");
       list.querySelectorAll("[data-list]").forEach(b=>b.onclick=()=>listNft(b.getAttribute("data-list")));
       list.querySelectorAll("[data-unlist]").forEach(b=>b.onclick=()=>unlistNft(b.getAttribute("data-unlist")));
+      list.querySelectorAll("[data-case]").forEach(im=>im.onclick=()=>openImgLightbox(im.getAttribute("data-case")));
     }).catch(()=>{ list.innerHTML="<div style='color:#ff8a8a;font-size:13px'>Couldn't load your NFTs.</div>"; });
   }
   function showBazaar(){
@@ -8415,8 +8428,10 @@ requestAnimationFrame(frame);
       const mine=window.player&&player.pk;
       list.innerHTML=items.map(it=>{ const m=ROSTER_BY[it.char]||{emoji:"❓"}; const own=mine&&it.seller===player.pk;
         const btn=own?'<span class="ns pending">your listing</span>':'<button class="meSell buy" data-buy="'+it.id+'">Buy · '+it.price+' ◎</button>';
-        return '<div class="meNft"><img src="'+it.char+'_art.png?v=meme4" onerror="this.style.visibility=\'hidden\'"><div style="flex:1"><div class="nn">'+(m.emoji||"")+' '+it.name+'</div><div class="ne">Edition #'+String(it.edition).padStart(3,"0")+' · <b style="color:#ffd966">'+it.price+' ◎</b></div></div>'+btn+'</div>'; }).join("");
+        const cased=CASE_CHARS.has(it.char), src=caseImg(it.char);
+        return '<div class="meNft"><img class="'+(cased?'cased':'')+'" src="'+src+'" '+(cased?'data-case="'+src+'" title="Tap to view the NFT case" ':'')+'onerror="this.style.visibility=\'hidden\'"><div style="flex:1"><div class="nn">'+(m.emoji||"")+' '+it.name+'</div><div class="ne">Edition #'+String(it.edition).padStart(3,"0")+' · <b style="color:#ffd966">'+it.price+' ◎</b></div></div>'+btn+'</div>'; }).join("");
       list.querySelectorAll("[data-buy]").forEach(b=>b.onclick=()=>buyNft(b.getAttribute("data-buy")));
+      list.querySelectorAll("[data-case]").forEach(im=>im.onclick=()=>openImgLightbox(im.getAttribute("data-case")));
     }).catch(()=>{ list.innerHTML="<div style='color:#ff8a8a;font-size:13px'>Couldn't load the Bazaar.</div>"; });
   }
   function buyNft(id){
