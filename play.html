@@ -7422,7 +7422,16 @@ requestAnimationFrame(frame);
         <button class="g" id="cupxPublic">🌐 Launch Public</button>
         <button class="b" id="cupxAuto">🤖 Auto-Run: ON</button>
       </div><div class="sub" id="cupxAdminMsg" style="margin-top:7px"></div>
-      <div class="sub" id="cupxAutoNote" style="margin-top:4px;color:#3ddc84"></div></div>
+      <div class="sub" id="cupxAutoNote" style="margin-top:4px;color:#3ddc84"></div>
+      <div style="margin-top:11px;border-top:1px solid #1c3d2e;padding-top:9px">
+        <div style="font-weight:800;font-size:13px;color:#dff5e8;margin-bottom:6px">🎁 Gift a Legendary</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+          <input id="giftWallet" placeholder="recipient wallet address" autocomplete="off" style="flex:1;min-width:180px;background:#0f2a1e;border:1px solid #1c3d2e;border-radius:9px;padding:9px;color:#dff5e8;font-family:inherit;font-size:12px">
+          <select id="giftSp" style="font-family:inherit;font-weight:700;font-size:12px;padding:9px 8px;border-radius:9px;border:1px solid #1c3d2e;background:#0f2a1e;color:#dff5e8;cursor:pointer"><option value="10">💧 Galador</option><option value="11">✨ Adalor</option><option value="12">🐾 Tyrannos</option><option value="13">⚡ Grovador</option><option value="14">🔥 Dragonos</option></select>
+          <input id="giftLvl" type="number" value="10" min="1" max="50" title="level" style="width:62px;background:#0f2a1e;border:1px solid #1c3d2e;border-radius:9px;padding:9px;color:#dff5e8;font-family:inherit;font-size:12px">
+          <input id="giftNick" placeholder="nickname" maxlength="16" autocomplete="off" style="width:120px;background:#0f2a1e;border:1px solid #1c3d2e;border-radius:9px;padding:9px;color:#dff5e8;font-family:inherit;font-size:12px">
+          <button class="b" id="giftBtn">🎁 Gift</button></div>
+        <div class="sub" id="giftMsg" style="margin-top:6px"></div></div></div>
     <div class="card" id="cupxPrize" style="display:none;border-color:#ffd166"><b class="gold">🏆 You won Cup SOL!</b> <span id="cupxPrizeAmt"></span> is waiting in your <b>Chiki Pouch</b> — claim it from the game. 🌊</div>
     <div class="card" id="cupxReg"><h3 style="margin-top:0">⚔️ Enter the Cup</h3>
       <video src="ui/chikoria-cup-intro.mp4" autoplay muted loop playsinline controls preload="metadata" style="width:100%;max-height:40vh;border-radius:12px;border:1px solid #1c3d2e;margin:0 0 12px;display:block;background:#0a1d15"></video>
@@ -7680,6 +7689,24 @@ requestAnimationFrame(frame);
   $("cupxStart").onclick=async ()=>{ try{ await apiPost("/cup/start",{wallet:myPk()}); admMsg("Cup started! ⚔️"); await refresh(); }catch(e){ admMsg("⚠️ "+e.message); } };
   $("cupxPublic").onclick=async ()=>{ try{ const j=await apiPost("/cup/public",{wallet:myPk(),public:!St.public}); admMsg(j.public?"🌐 Cup is now PUBLIC — open to all players.":"🔒 Cup is admin-only."); await refresh(); }catch(e){ admMsg("⚠️ "+e.message); } };
   $("cupxAuto").onclick=async ()=>{ try{ const j=await apiPost("/cup/auto",{wallet:myPk(),auto:!St.auto}); admMsg(j.auto?"🤖 Auto-Run ON — rounds will start & advance automatically.":"🎮 Auto-Run OFF — you control rounds manually."); await refresh(); }catch(e){ admMsg("⚠️ "+e.message); } };
+  // 🎁 Gift a Legendary — authenticated by the admin's WALLET SIGNATURE (no ADMIN_KEY typed anywhere)
+  { const gb=$("giftBtn"); const gm=(t)=>{ const e=$("giftMsg"); if(e)e.innerHTML=t||""; };
+    if(gb)gb.onclick=async ()=>{
+      const target=($("giftWallet").value||"").trim(), sp=+($("giftSp").value||10), lvl=Math.max(1,Math.min(50,+($("giftLvl").value||1))), nick=($("giftNick").value||"").trim();
+      if(!target){ gm("Enter a recipient wallet."); return; }
+      if(!myPk()){ gm("Connect your admin wallet first."); return; }
+      gm("✍️ Approve the signature in your wallet…");
+      let auth=null;
+      try{ const sol=window.solana; if(sol&&sol.signMessage){ const now=Date.now(); const msg="Chikoria admin sign-in\nwallet:"+myPk()+"\nts:"+now;
+        const r=await sol.signMessage(new TextEncoder().encode(msg),"utf8"); const s=r.signature||r; let bin=""; for(let i=0;i<s.length;i++)bin+=String.fromCharCode(s[i]); auth={msg,sig:btoa(bin)}; } }
+      catch(e){ gm("⚠️ Signature declined."); return; }
+      if(!auth){ gm("⚠️ Your wallet can't sign — connect Phantom/Solflare."); return; }
+      try{ await apiPost("/admin/gift-legendary",{adminWallet:myPk(),authMsg:auth.msg,authSig:auth.sig,wallet:target,sp,level:lvl,nick});
+        const names={10:"Galador",11:"Adalor",12:"Tyrannos",13:"Grovador",14:"Dragonos"};
+        gm("✅ Gifted <b>"+(names[sp]||"Legendary")+"</b> (Lv"+lvl+") to "+target.slice(0,4)+"…"+target.slice(-4)+" — they'll see it on reconnect.");
+        $("giftWallet").value=""; $("giftNick").value=""; }
+      catch(e){ gm("⚠️ "+e.message); } };
+    ["giftWallet","giftLvl","giftNick"].forEach(id=>{ const el=$(id); if(el)["keydown","keyup","keypress"].forEach(ev=>el.addEventListener(ev,e=>e.stopPropagation())); }); }
   $("cupxResolve2").onclick=async ()=>{ if(busy)return; busy=true; $("cupxResolve2").disabled=true; admMsg("Auto-resolving round…");
     try{ const j=await apiPost("/cup/resolve-round",{wallet:myPk()}); const r=j.result||{}; admMsg(r.finished?("🏆 Champion: "+r.champion):(r.round+" resolved → next "+r.next)); await refresh(); }
     catch(e){ admMsg("⚠️ "+e.message); } busy=false; };
@@ -8341,6 +8368,7 @@ requestAnimationFrame(frame);
   if(window.__champTrophyInit)return; window.__champTrophyInit=true;
   const BK=(window.CHAIN&&CHAIN.BACKEND)||"";
   let champ=null, proto=null, loading=false, inst=null, instFor=null;
+  let monument=null, monLabel=null, _monName=null;   /* world monument above the Chikiseum — visible to EVERYONE */
   window.CUP_CHAMPION=null;
 
   function esc(s){ return String(s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
@@ -8396,15 +8424,35 @@ requestAnimationFrame(frame);
       scene.add(wrap); inst=wrap;
     });
   }
+  /* a big trophy floating above the Chikiseum arena — a public monument to the reigning champion (everyone sees it) */
+  function buildMonument(){
+    if(monument||typeof scene==="undefined"||typeof chikiseumSpot==="undefined"||!chikiseumSpot)return;
+    ensureProto(p=>{
+      if(monument||typeof chikiseumSpot==="undefined"||!chikiseumSpot)return;
+      const t=p.clone(true); t.scale.multiplyScalar(34);                 /* landmark-sized */
+      const wrap=new THREE.Group(); wrap.add(t);
+      wrap.userData.baseY=(chikiseumSpot.gy||0)+175;
+      wrap.position.set(chikiseumSpot.x, wrap.userData.baseY, chikiseumSpot.z);
+      scene.add(wrap); monument=wrap;
+    });
+  }
   function tick(now){
     requestAnimationFrame(tick);
     if(typeof scene==="undefined")return;
+    // 1) trophy above the champion's OWN Legendary (the champion sees this on their creature)
     const c=champCreature();
-    if(!c){ if(inst)clearInst(); return; }
-    if(instFor!==c){ clearInst(); instFor=c; makeInst(c); }
-    if(inst){ const off=inst.userData.off||18;
-      inst.position.set(c.mesh.position.x, c.mesh.position.y+off+Math.sin(now*0.002)*1.2, c.mesh.position.z);
-      inst.rotation.y+=0.02; }
+    if(!c){ if(inst)clearInst(); }
+    else { if(instFor!==c){ clearInst(); instFor=c; makeInst(c); }
+      if(inst){ const off=inst.userData.off||18; inst.position.set(c.mesh.position.x, c.mesh.position.y+off+Math.sin(now*0.002)*1.2, c.mesh.position.z); inst.rotation.y+=0.02; } }
+    // 2) WORLD MONUMENT above the Chikiseum — EVERYONE sees the reigning champion + their name
+    if(champ&&champ.name){
+      buildMonument();
+      if(monument){ monument.visible=true; const by=monument.userData.baseY||0;
+        monument.position.y=by+Math.sin(now*0.0016)*4; monument.rotation.y+=0.012;
+        if(_monName!==champ.name){ _monName=champ.name; if(monLabel){ try{scene.remove(monLabel);}catch(e){} monLabel=null; }
+          try{ monLabel=makeTextSprite("🏆 Champion: "+champ.name,34,"#ffd166"); monLabel.userData.noScale=1; scene.add(monLabel); }catch(e){} }
+        if(monLabel&&chikiseumSpot){ monLabel.position.set(chikiseumSpot.x, by+50, chikiseumSpot.z); monLabel.visible=true; } }
+    } else { if(monument)monument.visible=false; if(monLabel)monLabel.visible=false; }
   }
   requestAnimationFrame(tick);
 })();
