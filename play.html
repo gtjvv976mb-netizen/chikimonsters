@@ -6719,6 +6719,15 @@ function exploreChatClose(){ if(EXPLORE.chatPoll){ clearInterval(EXPLORE.chatPol
   b.style.cssText="position:fixed;left:12px;bottom:162px;z-index:70;background:linear-gradient(180deg,#3ddc84,#1f9e57);color:#04220f;border:1px solid #1f9e57;border-radius:12px;padding:10px 14px;font-family:'Nunito',sans-serif;font-weight:800;font-size:14px;cursor:pointer;box-shadow:0 4px 0 #167a42";
   b.onclick=()=>{ if(EXPLORE.on){ exploreStop(); b.textContent="🌍 Explore (Beta)"; b.style.filter=""; } else { exploreStart(); b.style.filter="brightness(1.12)"; } };
   document.body.appendChild(b); EXPLORE.btn=b; }catch(e){} })();
+/* 🌀 Realm Portal — leave the home estate and enter the separate MMORPG world, Chikoria Realms, with your Legendary. */
+(function(){ try{ const p=document.createElement("button"); p.id="portalBtn"; p.textContent="🌀 Realm Portal";
+  p.style.cssText="position:fixed;left:12px;bottom:212px;z-index:70;background:linear-gradient(180deg,#9b6bff,#6a3ad0);color:#fff;border:1px solid #4a25a0;border-radius:12px;padding:10px 14px;font-family:'Nunito',sans-serif;font-weight:800;font-size:14px;cursor:pointer;box-shadow:0 4px 0 #4a25a0";
+  p.onclick=()=>{ if(!window.player||!player.pk){ if(typeof showBanner==="function")showBanner("👛 Connect your wallet to enter Chikoria Realms.","error"); return; }
+    const leg=(typeof activeLegend==="function"&&activeLegend())||null; const sp=leg?((typeof SPECIES!=="undefined")?SPECIES.indexOf(leg.sp):14):14;
+    const el=leg?exploreElOf(leg):"Fire", br=leg?(leg.br||1):1, bk=(typeof CHAIN!=="undefined"&&CHAIN.BACKEND)||"";
+    const q=new URLSearchParams({wallet:player.pk,handle:(player.handle||player.addr||"Trainer"),leg:String(sp),el:el,br:String(br),backend:bk,home:(location.pathname.split("/").pop()||"play.html")});
+    location.href="chikoria-world.html?"+q.toString(); };
+  document.body.appendChild(p); }catch(e){} })();
 
 function frame(now){
   let dt=Math.min((now-last)/1000,.1);last=now;
