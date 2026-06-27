@@ -8195,7 +8195,7 @@ requestAnimationFrame(frame);
   /* ===== Meme Legendary Egg → hatch a random Meme Dynasty NFT ===== */
   const EGG_PRICE=1000000;   // $CHIKI per egg
   const ROSTER_BY=Object.fromEntries(ROSTER.map(m=>[m.key,m]));
-  let _memeCfg={tradeTensor:false,tensorUrl:null,saleOpen:false};   // populated from the backend (mainnet routes trading to Tensor)
+  let _memeCfg={tradeTensor:false,tensorUrl:null,marketName:"Magic Eden",marketUrl:null,saleOpen:false};   // populated from the backend (mainnet routes trading to the configured marketplace)
   let _testMode=false;                               // 🧪 Test Mode: hatch the full UX for free, no $CHIKI, no real NFT
   const _testNfts=[]; const _testSupply={};          // local-only test inventory + per-character test supply (10 each)
   /* 🔒 SALE SWITCH — set TRUE at your official X launch to open public hatching.
@@ -8300,7 +8300,7 @@ requestAnimationFrame(frame);
   function eggRefresh(){
     applyEggUI(null);   /* lock immediately so the button never flashes enabled */
     const BK=(window.CHAIN&&CHAIN.BACKEND)||""; if(!BK)return;
-    fetch(BK+"/meme/supply").then(r=>r.json()).then(s=>{ if(s){ _memeCfg.tradeTensor=!!s.tradeTensor; _memeCfg.tensorUrl=s.tensorUrl||null; _memeCfg.saleOpen=!!s.saleOpen; } applyEggUI(s); }).catch(()=>{});
+    fetch(BK+"/meme/supply").then(r=>r.json()).then(s=>{ if(s){ _memeCfg.tradeTensor=!!s.tradeTensor; _memeCfg.marketUrl=s.marketUrl||s.tensorUrl||null; _memeCfg.tensorUrl=_memeCfg.marketUrl; _memeCfg.marketName=s.marketName||"Magic Eden"; _memeCfg.saleOpen=!!s.saleOpen; } applyEggUI(s); }).catch(()=>{});
     if(window.player&&player.pk&&!_testMode){ fetch(BK+"/meme/mine?wallet="+player.pk).then(r=>r.json()).then(j=>{ if(j){ window._memeMineInfo={ownsActive:!!j.ownsActive,hatchesLeft:(j.hatchesLeft!=null?j.hatchesLeft:null),maxHatch:j.maxHatch||5,canHatch:!!j.canHatch}; applyEggUI(window._memeLastSupply||null); } }).catch(()=>{}); }
     pollRecent();   /* live hatches ticker */
   }
@@ -8532,12 +8532,12 @@ requestAnimationFrame(frame);
   }
   let _bazFilter="all", _bazSort="price-asc", _bazItems=[], _bazSupply=null;
   function bazTensorCard(){
-    const url=_memeCfg.tensorUrl;
+    const url=_memeCfg.marketUrl||_memeCfg.tensorUrl, name=_memeCfg.marketName||"Magic Eden";
     return '<div class="bazTensor"><div class="bt-ic">🛒</div><div class="bt-tx">'
-      +'<div class="bt-h">Trade on the open market</div>'
+      +'<div class="bt-h">Trade on '+esc(name)+'</div>'
       +'<div class="bt-s">Meme Dynasty NFTs are real Metaplex Core assets in your wallet — buy, sell &amp; bid on-chain with creator royalties. The in-game listings below are mirrored too.</div></div>'
-      +'<div style="white-space:nowrap">'+(url?'<a class="bt-btn" href="'+url+'" target="_blank" rel="noopener">🌊 Tensor →</a>':'<span style="font-size:12px;color:#ffb3b3">Tensor link at launch</span>')
-      +'<a class="bt-me" href="https://magiceden.io/" target="_blank" rel="noopener">Magic Eden ↗</a></div></div>';
+      +'<div style="white-space:nowrap">'+(url?'<a class="bt-btn" href="'+url+'" target="_blank" rel="noopener">🌊 '+esc(name)+' →</a>':'<span style="font-size:12px;color:#ffb3b3">Marketplace link coming soon</span>')
+      +'</div></div>';
   }
   function bazStatsRow(){
     if(!_bazSupply||!_bazSupply.chars)return "";
@@ -8568,7 +8568,7 @@ requestAnimationFrame(frame);
         const btn=own?'<span class="ns pending">your listing</span>':'<button class="meSell buy" data-buy="'+it.id+'">Buy · '+it.price+' ◎</button>';
         const cased=CASE_CHARS.has(it.char), src=caseImg(it.char);
         return '<div class="meNft"><img class="'+(cased?'cased':'')+'" src="'+src+'" '+(cased?'data-case="'+src+'" title="Tap to view the NFT case" ':'')+'onerror="this.style.visibility=\'hidden\'"><div style="flex:1"><div class="nn">'+(m.emoji||"")+' '+it.name+'</div><div class="ne">Edition #'+String(it.edition).padStart(3,"0")+' · <b style="color:#ffd966">'+it.price+' ◎</b></div></div>'+btn+'</div>'; }).join("")
-      : '<div class="bazEmpty">'+(_bazFilter==="all"?'No NFTs listed in-game yet. List one of yours from <b>🎒 My NFTs</b>, or trade on Tensor above. 🌊':'No '+((ROSTER_BY[_bazFilter]||{}).name||'')+' listed right now — try another filter or check Tensor.')+'</div>';
+      : '<div class="bazEmpty">'+(_bazFilter==="all"?'No NFTs listed in-game yet. List one of yours from <b>🎒 My NFTs</b>, or trade on '+esc(_memeCfg.marketName||"the open market")+' above. 🌊':'No '+((ROSTER_BY[_bazFilter]||{}).name||'')+' listed right now — try another filter or check '+esc(_memeCfg.marketName||"the market")+'.')+'</div>';
     list.innerHTML=bazTensorCard()+bazStatsRow()+bazControls()+grid;
     list.querySelectorAll("[data-filter]").forEach(b=>b.onclick=()=>{ _bazFilter=b.getAttribute("data-filter"); renderBazaar(); });
     const ss=$("bazSortSel"); if(ss){ ss.value=_bazSort; ss.onchange=()=>{ _bazSort=ss.value; renderBazaar(); }; }
@@ -8594,7 +8594,7 @@ requestAnimationFrame(frame);
         else if(typeof showBanner==="function")showBanner("⚠️ "+((j&&j.error)||"buy failed"),"error"); }).catch(()=>{});
   }
   function listNft(id){
-    if(_memeCfg.tradeTensor){ if(_memeCfg.tensorUrl)window.open(_memeCfg.tensorUrl,"_blank","noopener"); else if(typeof showBanner==="function")showBanner("List on Tensor or Magic Eden — search the Meme Dynasty collection.","info"); return; }
+    if(_memeCfg.tradeTensor){ const u=_memeCfg.marketUrl||_memeCfg.tensorUrl; if(u)window.open(u,"_blank","noopener"); else if(typeof showBanner==="function")showBanner("List on "+(_memeCfg.marketName||"Magic Eden")+" — open the Meme Dynasty collection.","info"); return; }
     const px=prompt("List this NFT for how many SOL? (e.g. 0.25)"); if(px==null)return; const p=Number(px);
     if(!(p>0)){ if(typeof showBanner==="function")showBanner("Enter a price greater than 0.","error"); return; }
     const BK=(window.CHAIN&&CHAIN.BACKEND)||"";
