@@ -6633,16 +6633,70 @@ mini.addEventListener("click",e=>{
 
 /* ================= MAIN LOOP ================= */
 let last=performance.now(),uiT=0,fishCounter=0;
+/* ===================== MMORPG Phase 0 — Explore Chikoria (Beta): shared-world presence =====================
+   A gated, additive layer over the idle world. You walk your Trainer + active Legendary around Chikoria and see
+   OTHER online trainers live (server-authoritative position broadcast). Off by default; never disrupts the idle game. */
+const EXPLORE={on:false,me:null,target:null,remote:new Map(),lastPing:0,btn:null};
+function exploreElOf(c){ try{ return (typeof legElem==="function"&&typeof SPECIES!=="undefined")?legElem(SPECIES.indexOf(c.sp)):"Fire"; }catch(e){ return "Fire"; } }
+function exploreCol(el){ try{ return new THREE.Color((typeof COL!=="undefined"&&COL[el])||"#9b6bff"); }catch(e){ return new THREE.Color("#9b6bff"); } }
+function makeExplorer(el){ const g=new THREE.Group(), col=exploreCol(el);
+  const body=new THREE.Mesh(new THREE.CylinderGeometry(7,11,30,8),new THREE.MeshLambertMaterial({color:col})); body.position.y=16; g.add(body);
+  const head=new THREE.Mesh(new THREE.SphereGeometry(9,10,8),new THREE.MeshLambertMaterial({color:col.clone().lerp(new THREE.Color(0xffffff),0.45)})); head.position.y=38; g.add(head);
+  const ring=new THREE.Mesh(new THREE.RingGeometry(13,17,20),new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:.5,side:THREE.DoubleSide})); ring.rotation.x=-Math.PI/2; ring.position.y=1; g.add(ring);
+  return g; }
+function exploreMyHandle(){ try{ return (window.player&&(player.handle||player.addr))||"You"; }catch(e){ return "You"; } }
+function exploreStart(){ if(EXPLORE.on||typeof scene==="undefined")return;
+  const leg=(typeof activeLegend==="function"&&activeLegend())||null, el=leg?exploreElOf(leg):"Fire";
+  const sx=(typeof chikiseumSpot!=="undefined"&&chikiseumSpot)?chikiseumSpot.x:W/2, sz=(typeof chikiseumSpot!=="undefined"&&chikiseumSpot)?chikiseumSpot.z:H/2;
+  const av=makeExplorer(el); const gy=heightY(sx,sz); av.position.set(sx,gy,sz); scene.add(av);
+  let nm=null; try{ nm=makeTextSprite("👤 "+exploreMyHandle(),26,"#7ee68f"); nm.userData.noScale=1; nm.position.set(sx,gy+72,sz); scene.add(nm); }catch(e){}
+  EXPLORE.me={av,nm,el,x:sx,z:sz,dir:0}; EXPLORE.target=null; EXPLORE.on=true;
+  try{ cam.target.set(sx,gy+20,sz); cam.dist=Math.min(cam.dist,560); }catch(e){}
+  if(typeof showBanner==="function")showBanner("🌍 <b>Explore (Beta)</b> — click the ground to walk. Other online Trainers appear live. Tap 🌍 again to exit.","info"); }
+function exploreStop(){ if(!EXPLORE.on)return; EXPLORE.on=false;
+  try{ if(EXPLORE.me){ scene.remove(EXPLORE.me.av); if(EXPLORE.me.nm)scene.remove(EXPLORE.me.nm);} }catch(e){}
+  for(const[,r]of EXPLORE.remote){ try{ scene.remove(r.av); if(r.nm)scene.remove(r.nm);}catch(e){} }
+  EXPLORE.remote.clear(); EXPLORE.me=null; EXPLORE.target=null; }
+cv.addEventListener("click",e=>{ if(!EXPLORE.on||!EXPLORE.me||dragMoved)return;
+  const mx=(e.clientX/innerWidth)*2-1,my=-(e.clientY/innerHeight)*2+1; raycaster.setFromCamera({x:mx,y:my},camera);
+  const h=heightY(EXPLORE.me.x,EXPLORE.me.z), pt=new THREE.Vector3(), plane=new THREE.Plane(new THREE.Vector3(0,1,0),-h);
+  if(raycaster.ray.intersectPlane(plane,pt)){ EXPLORE.target={x:Math.max(20,Math.min(W-20,pt.x)),z:Math.max(20,Math.min(H-20,pt.z))}; e.stopImmediatePropagation(); } },true);
+function exploreSync(players,online){ const seen=new Set();
+  for(const p of (players||[])){ seen.add(p.wallet); let r=EXPLORE.remote.get(p.wallet);
+    if(!r){ const av=makeExplorer(p.el||"Fire"); av.position.set(p.x,heightY(p.x,p.z),p.z); scene.add(av);
+      let nm=null; try{ nm=makeTextSprite("👤 "+(p.handle||"Trainer")+" · BR "+(p.br||1),24,"#9fd0ff"); nm.userData.noScale=1; scene.add(nm); }catch(e){}
+      r={av,nm,tx:p.x,tz:p.z,dir:p.dir||0}; EXPLORE.remote.set(p.wallet,r); }
+    r.tx=p.x; r.tz=p.z; r.dir=p.dir||0; }
+  for(const[w,r]of EXPLORE.remote){ if(!seen.has(w)){ try{ scene.remove(r.av); if(r.nm)scene.remove(r.nm);}catch(e){} EXPLORE.remote.delete(w); } }
+  if(EXPLORE.btn)EXPLORE.btn.textContent="🌍 Explore · "+(online||1)+" online"; }
+async function explorePing(){ const BK=(typeof CHAIN!=="undefined"&&CHAIN.BACKEND)||""; if(!BK||!window.player||!player.pk||!EXPLORE.me)return;
+  const me=EXPLORE.me, leg=(typeof activeLegend==="function"&&activeLegend())||null, sp=leg?((typeof SPECIES!=="undefined")?SPECIES.indexOf(leg.sp):14):14;
+  try{ const r=await fetch(BK+"/world/move",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({wallet:player.pk,x:me.x,z:me.z,dir:me.dir,handle:exploreMyHandle(),leg:sp,el:me.el,br:leg?(leg.br||1):1})});
+    const j=await r.json(); if(j)exploreSync(j.players,j.online); }catch(e){} }
+function exploreTick(dt){ if(!EXPLORE.on||!EXPLORE.me)return; const me=EXPLORE.me;
+  if(EXPLORE.target){ const dx=EXPLORE.target.x-me.x,dz=EXPLORE.target.z-me.z,d=Math.hypot(dx,dz);
+    if(d>4){ const sp=Math.min(d,300*dt); me.x+=dx/d*sp; me.z+=dz/d*sp; me.dir=Math.atan2(dx,dz); } else EXPLORE.target=null; }
+  const gy=heightY(me.x,me.z); me.av.position.set(me.x,gy,me.z); me.av.rotation.y=me.dir; if(me.nm)me.nm.position.set(me.x,gy+72,me.z);
+  try{ cam.target.lerp(new THREE.Vector3(me.x,gy+20,me.z),Math.min(1,dt*4)); }catch(e){}
+  for(const[,r]of EXPLORE.remote){ r.av.position.x+=(r.tx-r.av.position.x)*Math.min(1,dt*6); r.av.position.z+=(r.tz-r.av.position.z)*Math.min(1,dt*6);
+    const ry=heightY(r.av.position.x,r.av.position.z); r.av.position.y=ry; r.av.rotation.y=r.dir; if(r.nm)r.nm.position.set(r.av.position.x,ry+72,r.av.position.z); }
+  const t=performance.now(); if(t-EXPLORE.lastPing>500){ EXPLORE.lastPing=t; explorePing(); } }
+(function(){ try{ const b=document.createElement("button"); b.id="exploreBtn"; b.textContent="🌍 Explore (Beta)";
+  b.style.cssText="position:fixed;left:12px;bottom:162px;z-index:70;background:linear-gradient(180deg,#3ddc84,#1f9e57);color:#04220f;border:1px solid #1f9e57;border-radius:12px;padding:10px 14px;font-family:'Nunito',sans-serif;font-weight:800;font-size:14px;cursor:pointer;box-shadow:0 4px 0 #167a42";
+  b.onclick=()=>{ if(EXPLORE.on){ exploreStop(); b.textContent="🌍 Explore (Beta)"; b.style.filter=""; } else { exploreStart(); b.style.filter="brightness(1.12)"; } };
+  document.body.appendChild(b); EXPLORE.btn=b; }catch(e){} })();
+
 function frame(now){
   let dt=Math.min((now-last)/1000,.1);last=now;
   const sdt=paused?0:dt*speed;
   tickKeys(dt);
-  if(followMode&&player){
+  if(followMode&&player&&!EXPLORE.on){
     const pc=tracked&&tracked.holder===player?tracked:player.creature;
     cam.target.x+=(pc.x-cam.target.x)*Math.min(1,dt*4);
     cam.target.z+=(pc.y-cam.target.z)*Math.min(1,dt*4);
     cam.target.y=heightY(pc.x,pc.y);
   }
+  try{ exploreTick(dt); }catch(e){}
   if(sdt>0){
     tickFees(sdt);
     creatures.forEach(c=>tickCreature(c,sdt));
