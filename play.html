@@ -1623,7 +1623,13 @@ async function chikiSpend(amountChiki,label,split){
   const PK=s=>new w3.PublicKey(s);
   const conn=new w3.Connection(CHAIN.RPC,"confirmed");
   const owner=PK(player.pk),mint=PK(CHAIN.MINT),treas=PK(CHAIN.TREASURY),team=PK(CHAIN.TEAM);
-  const TOKEN=PK("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb");   /* $CHIKI is a Token-2022 mint */
+  /* 🔑 $CHIKI is a pump.fun token → it lives on the CLASSIC SPL Token program, NOT Token-2022.
+     Hardcoding Token-2022 derived the WRONG token-account address (one that doesn't exist), so every
+     on-chain spend failed with "account not found" even for funded wallets. Detect the mint's REAL
+     owner program and use that for ATA derivation + burn/transfer — correct for either token program. */
+  const TOKEN_CLASSIC=PK("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
+  let TOKEN=TOKEN_CLASSIC;
+  try{ const _mi=await conn.getAccountInfo(mint); if(_mi&&_mi.owner)TOKEN=_mi.owner; }catch(_e){}
   const ATAP=PK("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
   const SYS=w3.SystemProgram.programId;
   const dec=await chikiDecimals();
@@ -1631,6 +1637,20 @@ async function chikiSpend(amountChiki,label,split){
   const burn=unit*BigInt(SP.burn)/10000n, poolA=unit*BigInt(SP.pool)/10000n, teamA=unit-burn-poolA;   /* basis points; team gets remainder so the sum is exact */
   const ata=own=>w3.PublicKey.findProgramAddressSync([own.toBuffer(),TOKEN.toBuffer(),mint.toBuffer()],ATAP)[0];
   const srcATA=ata(owner),treasATA=ata(treas),teamATA=ata(team);
+  /* ✅ PRE-CHECK: confirm THIS connected wallet actually holds enough $CHIKI on-chain before we ask
+     Phantom to sign. A logged-in wallet with no (or an empty/closed) $CHIKI token account makes Solana
+     reject the transfer with the cryptic "Account not found" — buyers read that as "I'm logged in, why?".
+     Fetch the real balance and, if short, stop here with a clear, friendly reason instead. */
+  let _haveChiki=0;
+  try{ const _rb=await conn.getTokenAccountBalance(srcATA); _haveChiki=(_rb&&_rb.value&&_rb.value.uiAmount)||0; }
+  catch(_e){ _haveChiki=0; }   /* no token account = this wallet has never held $CHIKI */
+  try{ player.bal=Math.floor(_haveChiki); }catch(_e){}   /* keep the UI balance honest */
+  if(_haveChiki < amountChiki){
+    const short="👛 This wallet holds "+Math.floor(_haveChiki).toLocaleString()+" $CHIKI — you need "
+      +Math.round(amountChiki).toLocaleString()+". Add $CHIKI to "+player.pk.slice(0,4)+"…"+player.pk.slice(-4)
+      +" (buy/transfer it in), then try again.";
+    throw new Error(short);
+  }
   const u64=n=>{const b=new Uint8Array(8);let x=BigInt(n);for(let i=0;i<8;i++){b[i]=Number(x&0xffn);x>>=8n;}return b;};
   const ix=(programId,keys,data)=>new w3.TransactionInstruction({programId,keys,data:Uint8Array.from(data)});
   const mkATA=(a,own)=>ix(ATAP,[
@@ -1657,7 +1677,10 @@ async function chikiSpend(amountChiki,label,split){
     /* sign locally (fast) and broadcast ourselves, so the UI isn't blocked by the wallet's own confirm wait */
     if(prov.signTransaction){const signed=await prov.signTransaction(tx);sig=await conn.sendRawTransaction(signed.serialize(),{maxRetries:3});}
     else{const r=await prov.signAndSendTransaction(tx);sig=r&&(r.signature||r);}
-  }catch(e){console.error("Phantom sign/send error:",e);throw new Error(e&&(e.message||e.code)||"wallet rejected the request");}
+  }catch(e){console.error("Phantom sign/send error:",e);let _m=(e&&(e.message||e.code))||"wallet rejected the request";
+    if(/account not found|could not find account|found no record|insufficient/i.test(String(_m)))
+      _m="👛 This wallet doesn't have enough $CHIKI to complete the purchase. Add $CHIKI to it, then try again.";
+    throw new Error(_m);}
   if(!sig)throw new Error("no signature returned by wallet");
   showBanner(`⏳ Confirming on Solana… (${label})`,"info");
   /* succeed as soon as a status appears; error only on a real on-chain failure; otherwise treat the
@@ -2576,9 +2599,10 @@ async function refreshChainBalances(){
     const conn=new w3.Connection(CHAIN.RPC,"confirmed");
     const owner=new w3.PublicKey(player.pk);
     const lam=await conn.getBalance(owner); player._chainSol=+(lam/1e9).toFixed(4);
-    const TOKEN=new w3.PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb");
-    const ATAP=new w3.PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
     const mint=new w3.PublicKey(CHAIN.MINT);
+    let TOKEN=new w3.PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");   /* classic SPL (pump.fun); detect real owner below */
+    try{ const _mi=await conn.getAccountInfo(mint); if(_mi&&_mi.owner)TOKEN=_mi.owner; }catch(e){}
+    const ATAP=new w3.PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
     const ata=w3.PublicKey.findProgramAddressSync([owner.toBuffer(),TOKEN.toBuffer(),mint.toBuffer()],ATAP)[0];
     try{const r=await conn.getTokenAccountBalance(ata); if(r&&r.value&&r.value.uiAmount!=null)player.bal=Math.floor(r.value.uiAmount);}catch(e){}
     try{if(CHAIN.BACKEND){const er=await fetch(CHAIN.BACKEND+"/claimable?wallet="+player.pk,{cache:"no-store"});const ej=await er.json();if(ej){
