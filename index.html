@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0">
+		<title>Chikoria Realm — Chiki Monsters</title>
+		<style>
+html, body, #canvas { margin: 0; padding: 0; border: 0; }
+body {
+	background: #050f1f; color: #dce8fa; overflow: hidden; touch-action: none;
+	font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+#canvas { display: block; }
+#canvas:focus { outline: none; }
+#boot {
+	position: absolute; inset: 0; z-index: 10;
+	background: radial-gradient(1200px 700px at 50% 30%, #0d1d3c 0%, #050f1f 62%);
+	display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+}
+#boot h1 {
+	margin: 0; font-size: clamp(30px, 5vw, 56px); letter-spacing: 3px; font-weight: 900;
+	color: #ffd166; text-shadow: 0 3px 0 #2a1a08, 0 10px 26px rgba(0, 0, 0, .65);
+}
+#boot .sub { color: #8fa6c9; font-size: clamp(12px, 1.6vw, 16px); }
+#barwrap {
+	width: min(520px, 72vw); height: 22px; border: 3px solid #2a1a08; border-radius: 12px;
+	background: #0d1d3c; overflow: hidden; box-shadow: 0 6px 0 rgba(0, 0, 0, .35);
+}
+#bar { height: 100%; width: 0%; border-radius: 8px; background: linear-gradient(180deg, #ffd34d, #e89a06); transition: width .2s; }
+#pct { color: #ffd166; font-weight: 700; font-size: 14px; }
+#tip { color: #8fa6c9; font-size: 13px; min-height: 18px; font-style: italic; }
+#err {
+	display: none; max-width: min(640px, 86vw); background: #5b3943; border: 1px solid #9b3943;
+	border-radius: 10px; padding: 14px 18px; line-height: 1.4; text-align: center; white-space: pre-wrap;
+}
+#back { position: absolute; top: 14px; left: 16px; z-index: 11; color: #8fa6c9; text-decoration: none; font-size: 13px; }
+#back:hover { color: #ffd166; }
+		</style>
+		<link id="-gd-engine-icon" rel="icon" type="image/png" href="index.icon.png" />
+<link rel="apple-touch-icon" href="index.apple-touch-icon.png"/>
+<script src="coi-serviceworker.min.js"></script>
+	</head>
+	<body>
+		<canvas id="canvas">Your browser does not support the canvas tag.</canvas>
+		<noscript>Your browser does not support JavaScript.</noscript>
+		<div id="boot">
+			<h1>CHIKORIA REALM</h1>
+			<div class="sub">the Chiki Monsters 3D world &middot; loads right in your browser</div>
+			<div id="barwrap"><div id="bar"></div></div>
+			<div id="pct">0%</div>
+			<div id="tip"></div>
+			<div id="err"></div>
+			<a id="back" href="../">&larr; chikimonsters.com</a>
+		</div>
+
+		<script src="index.js"></script>
+		<script>
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":252771148,"index.wasm":40092042},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+const GODOT_THREADS_ENABLED = true;
+const engine = new Engine(GODOT_CONFIG);
+
+(function () {
+	const bar = document.getElementById('bar');
+	const pct = document.getElementById('pct');
+	const tip = document.getElementById('tip');
+	const err = document.getElementById('err');
+	const boot = document.getElementById('boot');
+
+	const TIPS = [
+		'Hatch chikimons from eggs — legendaries are 1 in 10…',
+		'Craft tools at Brambleforge to gather much faster.',
+		'Your $CHIKI balance rides with you across the realm.',
+		'Mount the griffin to fly over the castle walls.',
+		'Wicked Grimwick waits at the mountain temple…',
+		'Raid MALGROTH with a sigil from the craft shop.',
+		'Every chikimon unlocks new ability cards up to level 50.',
+	];
+	let tipI = 0;
+	tip.textContent = TIPS[0];
+	setInterval(function () { tipI = (tipI + 1) % TIPS.length; tip.textContent = TIPS[tipI]; }, 4200);
+
+	function setBar(f) {
+		const v = Math.max(0, Math.min(1, f));
+		bar.style.width = (v * 100).toFixed(1) + '%';
+		pct.textContent = Math.round(v * 100) + '%';
+	}
+	function fail(e) {
+		console.error(e);
+		err.style.display = 'block';
+		err.textContent = (e && e.message) ? e.message : String(e);
+	}
+
+	// GitHub's web uploader rejects files over 25 MB, so the big engine files ship as
+	// numbered part-chunks (index.pck.0…, index.wasm.0…). Stream a part list back into
+	// one Blob, reporting progress across [lo, hi] of the loading bar.
+	async function streamParts(names, total, lo, hi, v) {
+		let done = 0;
+		const buf = [];
+		for (let i = 0; i < names.length; i++) {
+			// Version-stamped chunk URLs: every deploy carries a fresh ?v=<build-hash>, so a
+			// browser/CDN can NEVER mix old cached chunks with new ones (which corrupted the
+			// pck and showed stale/duplicate models after an update). Same-version repeat
+			// loads cache fully = faster. Without a stamp, fall back to ETag revalidation.
+			const url = v ? (names[i] + '?v=' + v) : names[i];
+			const res = await fetch(url, { cache: v ? 'default' : 'no-cache' });
+			if (!res.ok) { throw new Error('Failed to load ' + names[i] + ' (' + res.status + ')'); }
+			const reader = res.body.getReader();
+			for (;;) {
+				const r = await reader.read();
+				if (r.done) { break; }
+				buf.push(r.value);
+				done += r.value.byteLength;
+				setBar(lo + (hi - lo) * (done / total));
+			}
+		}
+		return buf;
+	}
+
+	async function run() {
+		// 1. The engine wasm is chunked too — reassemble it here and intercept the engine's
+		//    own `index.wasm` fetch with the finished Blob. Doing it in-page (not the service
+		//    worker) removes the SW-control race that stalled wasm-instantiate.
+		try {
+			const vt = await (await fetch('virtual-files.json', { cache: 'reload' })).json();
+			const w = vt['index.wasm'];
+			if (w && w.parts && w.parts.length) {
+				tip.textContent = 'Downloading the engine…';
+				const wasmChunks = await streamParts(w.parts, w.total, 0.0, 0.12, vt.v || '');
+				const wasmBlob = new Blob(wasmChunks, { type: 'application/wasm' });
+				const realFetch = window.fetch.bind(window);
+				window.fetch = function (input, init) {
+					const u = (typeof input === 'string') ? input : (input && input.url) || '';
+					if (u.split('?')[0].split('#')[0].endsWith('index.wasm')) {
+						return Promise.resolve(new Response(wasmBlob, { status: 200, headers: { 'Content-Type': 'application/wasm' } }));
+					}
+					return realFetch(input, init);
+				};
+			}
+		} catch (e) { /* no virtual-files table → wasm is a single file; leave fetch alone */ }
+
+		// 2. Reassemble the realm data pack.
+		tip.textContent = 'Building the realm…';
+		const man = await (await fetch('index.pck.manifest.json', { cache: 'reload' })).json();
+		const pckChunks = await streamParts(man.chunks, man.total, 0.12, 0.82, man.v || '');
+		const packUrl = URL.createObjectURL(new Blob(pckChunks, { type: 'application/octet-stream' }));
+
+		// 3. Boot the engine.
+		await engine.startGame({
+			'mainPack': packUrl,
+			// the voxel engine spawns streaming/meshing workers per core — the default
+			// 8-worker emscripten pool exhausts and risks deadlock on bigger machines
+			'emscriptenPoolSize': Math.min(Math.max(navigator.hardwareConcurrency || 8, 8) + 8, 24),
+			'onProgress': function (cur, tot) {
+				if (cur > 0 && tot > 0) { setBar(0.82 + 0.18 * (cur / tot)); }
+			},
+		});
+		boot.remove();
+	}
+
+	const missing = Engine.getMissingFeatures({ threads: GODOT_THREADS_ENABLED });
+	if (missing.length !== 0) {
+		// The isolation service worker usually fixes this after one reload.
+		if ('serviceWorker' in navigator && !sessionStorage.getItem('realm-sw-retry')) {
+			sessionStorage.setItem('realm-sw-retry', '1');
+			tip.textContent = 'Preparing secure context…';
+			setTimeout(function () { window.location.reload(); }, 1800);
+			return;
+		}
+		fail(new Error('This browser is missing features the realm needs:\n' + missing.join(', ') + '\nTry the latest Chrome, Edge, or Firefox.'));
+		return;
+	}
+	sessionStorage.removeItem('realm-sw-retry');
+
+	run().catch(fail);
+}());
+		</script>
+	</body>
+</html>
+
