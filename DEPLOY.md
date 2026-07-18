@@ -12,7 +12,7 @@ This repo IS the live site (GitHub Pages, `CNAME` → chikimonsters.com).
 
 A game change only rebuilds `realm/`. Nothing else in the repo changes.
 
-**Current build: `v=bc964e764a`** (Lore beacons: the 5 display-only future-update landmarks now reveal a parchment legend + "COMING SOON" tease when a player walks near them — the Wicked Temple (Grimwick), MALGROTH's raid arena, the Wandering Galleon (follows the ship), the Crystal Lode, and the Moonshadow Leviathan (follows the roaming fish). The crystal-mine landmark is now display-only (regular crystal nodes still supply crafting). Plus the minibar-overlap fix, day/night warp, loading screen, and everything prior.
+**Current build: `v=f35ff63ad8`** (Devnest tab overhaul: FIXED the vertical-text bug (paragraphs in the top-bar pops collapsed to 1-char columns) and rewrote the whole tab into a proper info hub — what the game is, the tech, the full core loop, the $CHIKI tokenomics + 3-way split, play-and-earn rewards, wallet safety, the 5 coming-soon legends (temple/raid/galleon/crystal-deep/leviathan), a refreshed roadmap, and verify-on-Solscan links + contract address. Plus the lore beacons and everything prior.
 solid wall with one clean road-width arched opening each; remote-trainer avatars can no longer perch
 on the wall top. Prior: fishes moved inside Inventory (Normal/Fantasy tabs) + full fantasy-fish
 descriptions in the Catalog; fantasy-fish trainer-level gates Lv5/10/15/20; thin matched-height HUD
