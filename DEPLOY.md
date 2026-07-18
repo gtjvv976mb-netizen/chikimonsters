@@ -12,7 +12,7 @@ This repo IS the live site (GitHub Pages, `CNAME` → chikimonsters.com).
 
 A game change only rebuilds `realm/`. Nothing else in the repo changes.
 
-**Current build: `v=228ceb024c`** (Asymmetric day/night: daylight now lasts 3000 real seconds (50 min — the old 5-min day ×10) and night is compressed to a 30-second dramatic dusk (the old 5-min night ÷10); still pure shared unix time so every player sees the same sky. Plus the CHIKORIA loading screen, pop-up length + permanent minibars, the 24-bug audit pass and everything prior.
+**Current build: `v=fca1d08abf`** (Pop-up/minibar overlap fix: the pop-up bottom is now capped just above the MEASURED top edge of the right minibar — a fixed clearance guess overlapped it on other aspect ratios and whenever potion-buff timer chips stacked an extra row on the dock. Plus the asymmetric day/night, the CHIKORIA loading screen, permanent minibars, the 24-bug audit pass and everything prior.
 solid wall with one clean road-width arched opening each; remote-trainer avatars can no longer perch
 on the wall top. Prior: fishes moved inside Inventory (Normal/Fantasy tabs) + full fantasy-fish
 descriptions in the Catalog; fantasy-fish trainer-level gates Lv5/10/15/20; thin matched-height HUD
