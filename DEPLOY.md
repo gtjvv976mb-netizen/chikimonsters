@@ -12,7 +12,7 @@ This repo IS the live site (GitHub Pages, `CNAME` → chikimonsters.com).
 
 A game change only rebuilds `realm/`. Nothing else in the repo changes.
 
-**Current build: `v=888f55dbd3`** (Browser-UI fix: bundled Noto Emoji (OFL) as a web font fallback so every emoji icon renders instead of a tofu box — the "all the icons are gone" report (visible even on the title's "$CHIKI token to play"); the browser wasm has no system emoji font. Also rebuilt the right-tab rail to always fit between the top info bar and the bottom docks (Avatar was clipped, Mounts/Potions ran off-screen on browser viewports). Plus old-web-game profile recovery, the 7-bug simulation pass, and everything prior.
+**Current build: `v=a0ce3d1680`** (Full-game audit pass: 24 verified bugs fixed — CRITICAL PlayerPanel boot recursion (the web 82%-freeze), wallet pop rebuild loop, avatar roulette always-classic, story-quest legendary forfeit, masterwork XP-farm, market chikimon identity wipe, drolax showing Alon battle cards, phase-dodge lifesteal, PvP streak wipe, tutorial reward copy, roster-import overcount, companion HP bar, weather sun/moon mixup, floating remote trainers, nest buttons, seashell dead-end, shovel dip, gather prompt mismatch, drowned-hook strand, catalog descriptions, gear tooltip, one-per-gather bonus procs. Plus the emoji font + rail fit + everything prior.
 solid wall with one clean road-width arched opening each; remote-trainer avatars can no longer perch
 on the wall top. Prior: fishes moved inside Inventory (Normal/Fantasy tabs) + full fantasy-fish
 descriptions in the Catalog; fantasy-fish trainer-level gates Lv5/10/15/20; thin matched-height HUD
