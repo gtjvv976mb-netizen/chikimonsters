@@ -12,7 +12,7 @@ This repo IS the live site (GitHub Pages, `CNAME` → chikimonsters.com).
 
 A game change only rebuilds `realm/`. Nothing else in the repo changes.
 
-**Current build: `v=b04c10ec57`** (old-web-game profile recovery: if the backend has no profile for a linked wallet, the web build reads the SAME-origin localStorage copy the old play.html saved (chikiProfile_<wallet>) and feeds it to the existing "Bring my Chikis home" import, then re-uploads it to /profile so the server copy is restored. Plus the 7-bug simulation fix pass and everything prior.
+**Current build: `v=888f55dbd3`** (Browser-UI fix: bundled Noto Emoji (OFL) as a web font fallback so every emoji icon renders instead of a tofu box — the "all the icons are gone" report (visible even on the title's "$CHIKI token to play"); the browser wasm has no system emoji font. Also rebuilt the right-tab rail to always fit between the top info bar and the bottom docks (Avatar was clipped, Mounts/Potions ran off-screen on browser viewports). Plus old-web-game profile recovery, the 7-bug simulation pass, and everything prior.
 solid wall with one clean road-width arched opening each; remote-trainer avatars can no longer perch
 on the wall top. Prior: fishes moved inside Inventory (Normal/Fantasy tabs) + full fantasy-fish
 descriptions in the Catalog; fantasy-fish trainer-level gates Lv5/10/15/20; thin matched-height HUD
