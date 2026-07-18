@@ -12,7 +12,7 @@ This repo IS the live site (GitHub Pages, `CNAME` → chikimonsters.com).
 
 A game change only rebuilds `realm/`. Nothing else in the repo changes.
 
-**Current build: `v=c5d9741992`** (Connect-Wallet pop redesign — wallet-icon hero, three HD icon feature cards (earn/whale-bonus/safe), a big balance card with tier badge when connected; all info-bar pops now hug their content (no dead space). Backend /verify fix ships separately in the `backend` repo.
+**Current build: `v=c1cd426db4`** (Simulation bug-fix pass: wallet pop no longer rebuilds every second (paste box + scroll preserved), Trading Post phantom-buyer no longer destroys a listing when your pouch is full, hospital ward drains its backlog after offline gaps, food/potion heals prune the ward queue, whale-egg copy corrected to 800k, anti-cheat sig covers listed-unit xp. Plus the wallet pop redesign + all prior updates.
 solid wall with one clean road-width arched opening each; remote-trainer avatars can no longer perch
 on the wall top. Prior: fishes moved inside Inventory (Normal/Fantasy tabs) + full fantasy-fish
 descriptions in the Catalog; fantasy-fish trainer-level gates Lv5/10/15/20; thin matched-height HUD
