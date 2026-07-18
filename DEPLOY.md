@@ -12,7 +12,7 @@ This repo IS the live site (GitHub Pages, `CNAME` → chikimonsters.com).
 
 A game change only rebuilds `realm/`. Nothing else in the repo changes.
 
-**Current build: `v=fca1d08abf`** (Pop-up/minibar overlap fix: the pop-up bottom is now capped just above the MEASURED top edge of the right minibar — a fixed clearance guess overlapped it on other aspect ratios and whenever potion-buff timer chips stacked an extra row on the dock. Plus the asymmetric day/night, the CHIKORIA loading screen, permanent minibars, the 24-bug audit pass and everything prior.
+**Current build: `v=bc964e764a`** (Lore beacons: the 5 display-only future-update landmarks now reveal a parchment legend + "COMING SOON" tease when a player walks near them — the Wicked Temple (Grimwick), MALGROTH's raid arena, the Wandering Galleon (follows the ship), the Crystal Lode, and the Moonshadow Leviathan (follows the roaming fish). The crystal-mine landmark is now display-only (regular crystal nodes still supply crafting). Plus the minibar-overlap fix, day/night warp, loading screen, and everything prior.
 solid wall with one clean road-width arched opening each; remote-trainer avatars can no longer perch
 on the wall top. Prior: fishes moved inside Inventory (Normal/Fantasy tabs) + full fantasy-fish
 descriptions in the Catalog; fantasy-fish trainer-level gates Lv5/10/15/20; thin matched-height HUD
