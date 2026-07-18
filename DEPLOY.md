@@ -12,7 +12,7 @@ This repo IS the live site (GitHub Pages, `CNAME` → chikimonsters.com).
 
 A game change only rebuilds `realm/`. Nothing else in the repo changes.
 
-**Current build: `v=f35ff63ad8`** (Devnest tab overhaul: FIXED the vertical-text bug (paragraphs in the top-bar pops collapsed to 1-char columns) and rewrote the whole tab into a proper info hub — what the game is, the tech, the full core loop, the $CHIKI tokenomics + 3-way split, play-and-earn rewards, wallet safety, the 5 coming-soon legends (temple/raid/galleon/crystal-deep/leviathan), a refreshed roadmap, and verify-on-Solscan links + contract address. Plus the lore beacons and everything prior.
+**Current build: `v=885b9d7534`** (The Wanderer NFT case: the classic avatar's display case is now the real uploaded render (bg-removed, tight-cropped) — all 10 avatar cases are genuine art. Plus the Devnest overhaul + text-wrap fix, lore beacons, and everything prior.
 solid wall with one clean road-width arched opening each; remote-trainer avatars can no longer perch
 on the wall top. Prior: fishes moved inside Inventory (Normal/Fantasy tabs) + full fantasy-fish
 descriptions in the Catalog; fantasy-fish trainer-level gates Lv5/10/15/20; thin matched-height HUD
