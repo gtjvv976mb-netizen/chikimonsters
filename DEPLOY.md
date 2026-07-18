@@ -12,7 +12,7 @@ This repo IS the live site (GitHub Pages, `CNAME` → chikimonsters.com).
 
 A game change only rebuilds `realm/`. Nothing else in the repo changes.
 
-**Current build: `v=a0ce3d1680`** (Full-game audit pass: 24 verified bugs fixed — CRITICAL PlayerPanel boot recursion (the web 82%-freeze), wallet pop rebuild loop, avatar roulette always-classic, story-quest legendary forfeit, masterwork XP-farm, market chikimon identity wipe, drolax showing Alon battle cards, phase-dodge lifesteal, PvP streak wipe, tutorial reward copy, roster-import overcount, companion HP bar, weather sun/moon mixup, floating remote trainers, nest buttons, seashell dead-end, shovel dip, gather prompt mismatch, drowned-hook strand, catalog descriptions, gear tooltip, one-per-gather bonus procs. Plus the emoji font + rail fit + everything prior.
+**Current build: `v=5001fe41f9`** (Right-tab pop-up polish: pop-ups now span the full band — from just below the info bar down to just above the right minibar (never covering it); the material minibar + left quest dock are PERMANENT (no longer hide behind pop-ups/battles); panel content clipped inside the parchment (rows no longer chop on the frame). Tab banners keep their fitted size. Plus the 24-bug audit pass and everything prior.
 solid wall with one clean road-width arched opening each; remote-trainer avatars can no longer perch
 on the wall top. Prior: fishes moved inside Inventory (Normal/Fantasy tabs) + full fantasy-fish
 descriptions in the Catalog; fantasy-fish trainer-level gates Lv5/10/15/20; thin matched-height HUD
