@@ -12,7 +12,7 @@ This repo IS the live site (GitHub Pages, `CNAME` → chikimonsters.com).
 
 A game change only rebuilds `realm/`. Nothing else in the repo changes.
 
-**Current build: `v=885b9d7534`** (The Wanderer NFT case: the classic avatar's display case is now the real uploaded render (bg-removed, tight-cropped) — all 10 avatar cases are genuine art. Plus the Devnest overhaul + text-wrap fix, lore beacons, and everything prior.
+**Current build: `v=34eca7b6f3`** (Quest→$CHIKI reward client: main quests report completion to the server (uncheatable), the Ledger tab shows the SERVER reward pouch, and Claim pays real $CHIKI on-chain via /quest/claim. REQUIRES the matching backend push (chiki-backend-repo-FIXED) + the key rotation/hot-cold setup in REWARD_SECURITY.md. Plus the Wanderer NFT case, Devnest overhaul, lore beacons, and everything prior.
 solid wall with one clean road-width arched opening each; remote-trainer avatars can no longer perch
 on the wall top. Prior: fishes moved inside Inventory (Normal/Fantasy tabs) + full fantasy-fish
 descriptions in the Catalog; fantasy-fish trainer-level gates Lv5/10/15/20; thin matched-height HUD
