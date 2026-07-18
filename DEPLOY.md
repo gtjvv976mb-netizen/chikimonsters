@@ -12,7 +12,7 @@ This repo IS the live site (GitHub Pages, `CNAME` → chikimonsters.com).
 
 A game change only rebuilds `realm/`. Nothing else in the repo changes.
 
-**Current build: `v=c31294d291`** (east + west wall gates rebuilt — the ragged breaches are now
+**Current build: `v=c5d9741992`** (Connect-Wallet pop redesign — wallet-icon hero, three HD icon feature cards (earn/whale-bonus/safe), a big balance card with tier badge when connected; all info-bar pops now hug their content (no dead space). Backend /verify fix ships separately in the `backend` repo.
 solid wall with one clean road-width arched opening each; remote-trainer avatars can no longer perch
 on the wall top. Prior: fishes moved inside Inventory (Normal/Fantasy tabs) + full fantasy-fish
 descriptions in the Catalog; fantasy-fish trainer-level gates Lv5/10/15/20; thin matched-height HUD
