@@ -12,29 +12,64 @@ body {
 }
 #canvas { display: block; }
 #canvas:focus { outline: none; }
+/* the game's chunky rounded display font, straight from the pck assets */
+@font-face {
+	font-family: "ChikoriaBaloo";
+	src: url("loading_font.ttf") format("truetype");
+	font-display: swap;
+}
 #boot {
 	position: absolute; inset: 0; z-index: 10;
-	background: radial-gradient(1200px 700px at 50% 30%, #0d1d3c 0%, #050f1f 62%);
-	display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+	/* the CHIKORIA key art IS the loading screen (logo baked into the picture) */
+	background: url("loading.png") center 32% / cover no-repeat, #0b1f4e;
+	display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+	gap: 14px; padding-bottom: 8vh;
 }
-#boot h1 {
-	margin: 0; font-size: clamp(30px, 5vw, 56px); letter-spacing: 3px; font-weight: 900;
-	color: #ffd166; text-shadow: 0 3px 0 #2a1a08, 0 10px 26px rgba(0, 0, 0, .65);
+/* soft ground shadow so the bar + text read over the bright voxel meadow */
+#boot::before {
+	content: ""; position: absolute; inset: auto 0 0 0; height: 34vh; pointer-events: none;
+	background: linear-gradient(180deg, rgba(6, 14, 4, 0) 0%, rgba(6, 14, 4, .58) 78%, rgba(6, 14, 4, .72) 100%);
 }
-#boot .sub { color: #8fa6c9; font-size: clamp(12px, 1.6vw, 16px); }
+#boot > * { position: relative; }   /* keep the controls above the ::before scrim */
 #barwrap {
-	width: min(520px, 72vw); height: 22px; border: 3px solid #2a1a08; border-radius: 12px;
-	background: #0d1d3c; overflow: hidden; box-shadow: 0 6px 0 rgba(0, 0, 0, .35);
+	width: min(560px, 74vw); height: 28px;
+	border: 4px solid #241505; border-radius: 9px;
+	background: linear-gradient(180deg, #171007, #2b1c0a);
+	overflow: hidden;
+	box-shadow: 0 5px 0 rgba(10, 6, 2, .55), inset 0 2px 4px rgba(0, 0, 0, .6), 0 0 0 2px rgba(255, 211, 77, .28);
 }
-#bar { height: 100%; width: 0%; border-radius: 8px; background: linear-gradient(180deg, #ffd34d, #e89a06); transition: width .2s; }
-#pct { color: #ffd166; font-weight: 700; font-size: 14px; }
-#tip { color: #8fa6c9; font-size: 13px; min-height: 18px; font-style: italic; }
+#bar {
+	height: 100%; width: 0%; border-radius: 4px; transition: width .2s;
+	/* amber like the CHIKORIA letters, with a blocky voxel shimmer */
+	background:
+		repeating-linear-gradient(90deg, rgba(255, 255, 255, .16) 0 3px, rgba(255, 255, 255, 0) 3px 16px),
+		linear-gradient(180deg, #ffe07a 0%, #ffc93c 45%, #e08c05 100%);
+	box-shadow: inset 0 -4px 6px rgba(122, 62, 0, .55), inset 0 2px 2px rgba(255, 255, 255, .5);
+}
+#pct {
+	font-family: "ChikoriaBaloo", "Arial Rounded MT Bold", -apple-system, sans-serif;
+	color: #ffd34d; font-weight: 800; font-size: 20px; letter-spacing: 1px;
+	text-shadow: 0 2px 0 #241505, -1px 0 0 #241505, 1px 0 0 #241505, 0 -1px 0 #241505, 0 6px 14px rgba(0, 0, 0, .6);
+}
+#tip {
+	font-family: "ChikoriaBaloo", "Arial Rounded MT Bold", -apple-system, sans-serif;
+	color: #f4e9c8; font-size: 15px; min-height: 20px; text-align: center; max-width: 86vw;
+	text-shadow: 0 2px 0 rgba(20, 12, 4, .85), 0 4px 10px rgba(0, 0, 0, .55);
+}
 #err {
-	display: none; max-width: min(640px, 86vw); background: #5b3943; border: 1px solid #9b3943;
+	display: none; max-width: min(640px, 86vw);
+	font-family: "ChikoriaBaloo", -apple-system, sans-serif;
+	background: rgba(64, 30, 26, .92); border: 3px solid #241505; color: #ffd9c9;
 	border-radius: 10px; padding: 14px 18px; line-height: 1.4; text-align: center; white-space: pre-wrap;
+	box-shadow: 0 5px 0 rgba(10, 6, 2, .5);
 }
-#back { position: absolute; top: 14px; left: 16px; z-index: 11; color: #8fa6c9; text-decoration: none; font-size: 13px; }
-#back:hover { color: #ffd166; }
+#back {
+	position: absolute; top: 14px; left: 16px; z-index: 11; text-decoration: none;
+	font-family: "ChikoriaBaloo", -apple-system, sans-serif; font-size: 13px; color: #ffe9b0;
+	background: rgba(14, 10, 4, .55); border: 2px solid rgba(36, 21, 5, .8);
+	padding: 5px 12px; border-radius: 9px; text-shadow: 0 1px 0 #241505;
+}
+#back:hover { color: #ffd34d; background: rgba(14, 10, 4, .75); }
 		</style>
 		<link id="-gd-engine-icon" rel="icon" type="image/png" href="index.icon.png" />
 <link rel="apple-touch-icon" href="index.apple-touch-icon.png"/>
@@ -44,8 +79,7 @@ body {
 		<canvas id="canvas">Your browser does not support the canvas tag.</canvas>
 		<noscript>Your browser does not support JavaScript.</noscript>
 		<div id="boot">
-			<h1>CHIKORIA REALM</h1>
-			<div class="sub">the Chiki Monsters 3D world &middot; loads right in your browser</div>
+			<!-- no caption: the key art carries the CHIKORIA logo — just the bar + loading details -->
 			<div id="barwrap"><div id="bar"></div></div>
 			<div id="pct">0%</div>
 			<div id="tip"></div>
