@@ -70,7 +70,44 @@ body {
 	padding: 5px 12px; border-radius: 9px; text-shadow: 0 1px 0 #241505;
 }
 #back:hover { color: #ffd34d; background: rgba(14, 10, 4, .75); }
+/* ---------- HTML title screen: the hero art + $CHIKI coin, shown INSTANTLY ---------- */
+#hero {
+	position: absolute; inset: 0; z-index: 12; overflow: hidden;
+	background: #061426; cursor: default;
+}
+/* pure-CSS covered layout: correct framing from the very first paint, no JS needed */
+#heroimg {
+	position: absolute; inset: 0; width: 100%; height: 100%;
+	object-fit: cover; object-position: center;
+	user-select: none; -webkit-user-drag: none; pointer-events: none;
+}
+#coin {
+	position: absolute; padding: 0; border: 0; background: transparent; cursor: pointer;
+	visibility: hidden;   /* the early inline script positions it, then shows it */
+	animation: coinpulse 2.1s ease-in-out infinite;
+	filter: drop-shadow(0 0 18px rgba(255, 211, 77, .55));
+}
+#coin img { width: 100%; height: 100%; display: block; user-select: none; -webkit-user-drag: none; }
+#coin:hover { animation-play-state: paused; transform: scale(1.08); }
+@keyframes coinpulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+#herohint {
+	position: absolute; left: 0; right: 0; bottom: 7vh; text-align: center; pointer-events: none;
+	font-family: "ChikoriaBaloo", "Arial Rounded MT Bold", -apple-system, sans-serif;
+	color: #eaf6ff; font-size: 21px;
+	text-shadow: 0 2px 0 rgba(0, 0, 0, .7), 0 6px 16px rgba(0, 0, 0, .55);
+	animation: hintbob 1.6s ease-in-out infinite;
+}
+@keyframes hintbob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+/* ---------- post-load intro clip ---------- */
+#cine { position: absolute; inset: 0; z-index: 15; background: #000; display: none; cursor: pointer; }
+#cinevid { width: 100%; height: 100%; object-fit: contain; }
+#cineskip {
+	position: absolute; right: 18px; bottom: 14px; pointer-events: none;
+	font-family: "ChikoriaBaloo", -apple-system, sans-serif; font-size: 13px; color: rgba(255, 255, 255, .65);
+	text-shadow: 0 1px 2px rgba(0, 0, 0, .8);
+}
 		</style>
+		<link rel="preload" as="image" href="hero.jpg">
 		<link id="-gd-engine-icon" rel="icon" type="image/png" href="index.icon.png" />
 <link rel="apple-touch-icon" href="index.apple-touch-icon.png"/>
 <script src="coi-serviceworker.min.js"></script>
@@ -86,10 +123,63 @@ body {
 			<div id="err"></div>
 			<a id="back" href="../">&larr; chikimonsters.com</a>
 		</div>
+		<!-- the homepage title screen, in-page: shows INSTANTLY (no waiting for the engine).
+		     Click the coin -> the loading bar (chunks stream behind this the whole time). -->
+		<div id="hero">
+			<img id="heroimg" src="hero.jpg" alt="">
+			<button id="coin" aria-label="Play"><img src="coin.png" alt=""></button>
+			<div id="herohint">&#128070; Press the $CHIKI token to play</div>
+		</div>
+		<!-- post-load intro clip: plays once the realm is built, then the game -->
+		<div id="cine">
+			<video id="cinevid" src="after_loading.mp4" preload="auto" playsinline></video>
+			<div id="cineskip">tap to skip &#9656;</div>
+		</div>
 
+		<script>
+		// EARLY hero controller — runs at parse time, BEFORE the multi-hundred-KB engine JS
+		// below, so the title is correctly framed and the coin is live from the first paint.
+		// (The engine script is parser-blocking; without this the coin would sit unstyled and
+		// dead in the corner on slow networks — the exact problem the instant hero solves.)
+		(function () {
+			var hero = document.getElementById('hero');
+			var coin = document.getElementById('coin');
+			function ssGet(k) { try { return sessionStorage.getItem(k); } catch (e) { return null; } }
+			function ssSet(k, v) { try { sessionStorage.setItem(k, v); } catch (e) {} }
+			window.__ssGet = ssGet; window.__ssSet = ssSet;
+			// the coin pins to the art's wreath emblem: KEEP_ASPECT_COVERED math over 1672x941
+			var HERO_W = 1672, HERO_H = 941, SW_X = 0.503, SW_Y = 0.420;
+			function coinLayout() {
+				if (!hero.parentNode) { return; }
+				var vw = window.innerWidth, vh = window.innerHeight;
+				var s = Math.max(vw / HERO_W, vh / HERO_H);
+				var dw = HERO_W * s, dh = HERO_H * s;
+				var ox = (vw - dw) / 2, oy = (vh - dh) / 2;
+				var d = Math.max(52, 0.102 * dw);
+				coin.style.width = d + 'px'; coin.style.height = d + 'px';
+				coin.style.left = (ox + SW_X * dw - d / 2) + 'px';
+				coin.style.top = (oy + SW_Y * dh - d / 2) + 'px';
+				coin.style.visibility = 'visible';
+			}
+			window.addEventListener('resize', coinLayout);
+			// a coin press survives the one-time cross-origin-isolation reload (the COI service
+			// worker reboots the page on first visit) — restore it and skip straight to loading
+			window.__coinClicked = (ssGet('realm-hero-done') === '1');
+			if (window.__coinClicked) { hero.remove(); }
+			else { coinLayout(); }
+			coin.addEventListener('click', function () {
+				if (window.__coinClicked) { return; }
+				window.__coinClicked = true;
+				ssSet('realm-hero-done', '1');
+				// tell the main controller if it's up; otherwise just reveal the loading page
+				if (window.__onCoin) { window.__onCoin(); }
+				else if (hero.parentNode) { hero.remove(); }
+			});
+		}());
+		</script>
 		<script src="index.js"></script>
 		<script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":256731104,"index.wasm":40092042},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":259889536,"index.wasm":40092042},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
 const GODOT_THREADS_ENABLED = true;
 const engine = new Engine(GODOT_CONFIG);
 
@@ -99,6 +189,70 @@ const engine = new Engine(GODOT_CONFIG);
 	const tip = document.getElementById('tip');
 	const err = document.getElementById('err');
 	const boot = document.getElementById('boot');
+	// NOTE: the early script may have ALREADY removed #hero (restored coin press after the
+	// isolation reload) — hero can be null here, so every use below must be guarded.
+	const hero = document.getElementById('hero');
+	const cine = document.getElementById('cine');
+	const vid = document.getElementById('cinevid');
+	function dropHero() { if (hero && hero.parentNode) { hero.remove(); } }
+
+	// ---------- entrance flow: HERO -> (coin click) -> LOADING -> (ready) -> VIDEO -> GAME ----------
+	// Downloads + engine boot run in the background the whole time; these flags only gate
+	// what the player SEES. The coin click is also the user gesture that unlocks audio/autoplay.
+	// The coin itself (layout + click capture + reload-restore) is owned by the EARLY inline
+	// script above the engine <script> — here we just pick up where it left off.
+	let heroDone = !!window.__coinClicked;   // player pressed the coin (possibly pre-engine)
+	let engineReady = false;                 // engine.startGame resolved (the realm is built)
+	let cineStarted = false;
+	let introDone = false;
+	if (heroDone) { dropHero(); }   // restored click → straight to loading
+
+	function finishIntro() {
+		if (introDone) { return; }
+		introDone = true;
+		try { vid.pause(); } catch (e) {}
+		cine.remove();
+		dropHero();
+		if (boot.parentNode) { boot.remove(); }
+		const c = document.getElementById('canvas');
+		if (c) { c.focus(); }
+	}
+
+	function startCine() {
+		if (cineStarted || introDone) { return; }
+		cineStarted = true;
+		cine.style.display = 'block';
+		dropHero();
+		vid.onended = finishIntro;
+		vid.onerror = finishIntro;
+		cine.addEventListener('click', finishIntro);
+		// hard watchdog: a stalled/missing clip must never trap the player outside the game
+		setTimeout(function () {
+			if (!introDone && (vid.readyState < 3 || vid.paused)) { finishIntro(); }
+		}, 6000);
+		setTimeout(finishIntro, 15000);
+		// the coin click gave this page sticky user activation, so audible autoplay is
+		// normally allowed — if the browser still refuses, retry muted, then give up
+		const p = vid.play();
+		if (p && p.catch) {
+			p.catch(function () {
+				vid.muted = true;
+				const p2 = vid.play();
+				if (p2 && p2.catch) { p2.catch(finishIntro); }
+			});
+		}
+	}
+
+	function maybeAdvance() {
+		if (heroDone && engineReady) { startCine(); }
+	}
+	// the early script routes coin presses here once we're up
+	window.__onCoin = function () {
+		if (heroDone) { return; }
+		heroDone = true;
+		if (engineReady) { maybeAdvance(); }
+		else { dropHero(); }   // reveal the loading bar beneath
+	};
 
 	const TIPS = [
 		'Hatch chikimons from eggs — legendaries are 1 in 10…',
@@ -122,6 +276,9 @@ const engine = new Engine(GODOT_CONFIG);
 		console.error(e);
 		err.style.display = 'block';
 		err.textContent = (e && e.message) ? e.message : String(e);
+		// the error card lives on the loading page — pull the hero off so it can be seen
+		dropHero();
+		if (cine.parentNode) { cine.remove(); }
 	}
 
 	// GitHub's web uploader rejects files over 25 MB, so the big engine files ship as
@@ -154,23 +311,26 @@ const engine = new Engine(GODOT_CONFIG);
 		// 1. The engine wasm is chunked too — reassemble it here and intercept the engine's
 		//    own `index.wasm` fetch with the finished Blob. Doing it in-page (not the service
 		//    worker) removes the SW-control race that stalled wasm-instantiate.
+		//    ONLY the manifest lookup is optional — a failed CHUNK download must fail the
+		//    load loudly here, not fall through to a doomed full-pck download.
+		let vt = null;
 		try {
-			const vt = await (await fetch('virtual-files.json', { cache: 'reload' })).json();
-			const w = vt['index.wasm'];
-			if (w && w.parts && w.parts.length) {
-				tip.textContent = 'Downloading the engine…';
-				const wasmChunks = await streamParts(w.parts, w.total, 0.0, 0.12, vt.v || '');
-				const wasmBlob = new Blob(wasmChunks, { type: 'application/wasm' });
-				const realFetch = window.fetch.bind(window);
-				window.fetch = function (input, init) {
-					const u = (typeof input === 'string') ? input : (input && input.url) || '';
-					if (u.split('?')[0].split('#')[0].endsWith('index.wasm')) {
-						return Promise.resolve(new Response(wasmBlob, { status: 200, headers: { 'Content-Type': 'application/wasm' } }));
-					}
-					return realFetch(input, init);
-				};
-			}
+			vt = await (await fetch('virtual-files.json', { cache: 'reload' })).json();
 		} catch (e) { /* no virtual-files table → wasm is a single file; leave fetch alone */ }
+		const w = vt && vt['index.wasm'];
+		if (w && w.parts && w.parts.length) {
+			tip.textContent = 'Downloading the engine…';
+			const wasmChunks = await streamParts(w.parts, w.total, 0.0, 0.12, vt.v || '');
+			const wasmBlob = new Blob(wasmChunks, { type: 'application/wasm' });
+			const realFetch = window.fetch.bind(window);
+			window.fetch = function (input, init) {
+				const u = (typeof input === 'string') ? input : (input && input.url) || '';
+				if (u.split('?')[0].split('#')[0].endsWith('index.wasm')) {
+					return Promise.resolve(new Response(wasmBlob, { status: 200, headers: { 'Content-Type': 'application/wasm' } }));
+				}
+				return realFetch(input, init);
+			};
+		}
 
 		// 2. Reassemble the realm data pack.
 		tip.textContent = 'Building the realm…';
@@ -188,22 +348,30 @@ const engine = new Engine(GODOT_CONFIG);
 				if (cur > 0 && tot > 0) { setBar(0.82 + 0.18 * (cur / tot)); }
 			},
 		});
-		boot.remove();
+		// the realm is built — if the player already pressed the coin, roll the intro clip;
+		// otherwise hold on the hero until they do (the game idles ready behind it)
+		engineReady = true;
+		setBar(1.0);
+		maybeAdvance();
 	}
 
 	const missing = Engine.getMissingFeatures({ threads: GODOT_THREADS_ENABLED });
 	if (missing.length !== 0) {
 		// The isolation service worker usually fixes this after one reload.
-		if ('serviceWorker' in navigator && !sessionStorage.getItem('realm-sw-retry')) {
-			sessionStorage.setItem('realm-sw-retry', '1');
+		if ('serviceWorker' in navigator && window.__ssGet('realm-sw-retry') !== '1') {
+			window.__ssSet('realm-sw-retry', '1');
 			tip.textContent = 'Preparing secure context…';
+			// the hero sits over #boot, so surface the note on the hero's own hint too —
+			// otherwise the first-visit reload looks like a silent freeze
+			const hh = document.getElementById('herohint');
+			if (hh && hero && hero.parentNode) { hh.textContent = 'Preparing secure context…'; }
 			setTimeout(function () { window.location.reload(); }, 1800);
 			return;
 		}
 		fail(new Error('This browser is missing features the realm needs:\n' + missing.join(', ') + '\nTry the latest Chrome, Edge, or Firefox.'));
 		return;
 	}
-	sessionStorage.removeItem('realm-sw-retry');
+	try { sessionStorage.removeItem('realm-sw-retry'); } catch (e) {}
 
 	run().catch(fail);
 }());
