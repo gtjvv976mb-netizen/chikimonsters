@@ -91,25 +91,37 @@ body {
 	animation: hintbob 1.6s ease-in-out infinite;
 }
 @keyframes hintbob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
-/* ---------- loading-page info tabs (moved from the homepage): TOP of the screen ---------- */
+/* ---------- loading-page info bar: ONE carved strip across the whole top ---------- */
 #ltabs {
-	position: absolute; top: 10px; left: 50%; transform: translateX(-50%); z-index: 11;
-	display: flex; flex-wrap: nowrap; justify-content: center; align-items: center;
-	overflow-x: auto; max-width: 97vw;
-	gap: clamp(5px, 1vw, 14px);
-	background: rgba(8, 16, 30, .55); border: 1px solid rgba(255, 233, 120, .3); border-radius: 16px;
-	padding: 8px 12px; -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px);
-	filter: drop-shadow(0 6px 14px rgba(0, 0, 0, .55));
+	position: absolute; top: 0; left: 0; right: 0; z-index: 11;
+	display: flex; flex-wrap: nowrap; justify-content: center; align-items: stretch;
+	overflow-x: auto; gap: 0;
+	background: linear-gradient(180deg, #3a2712 0%, #2a1a09 55%, #1c1106 100%);
+	border-bottom: 3px solid #d9a636;
+	box-shadow: 0 6px 18px rgba(0, 0, 0, .55), inset 0 -6px 12px rgba(0, 0, 0, .35);
 }
-.ltab { height: clamp(15px, 2.5vw, 42px); width: auto; flex: 0 0 auto; cursor: pointer;
-	transition: transform .07s ease, filter .07s ease; -webkit-user-drag: none; user-select: none; }
-.ltab:hover { transform: scale(1.08); }
-.ltab:active { transform: scale(.93); }
-.ltab.active { filter: brightness(1.12) drop-shadow(0 0 9px rgba(255, 233, 120, .92)); }
+.ltab {
+	flex: 0 0 auto; cursor: pointer; border: 0; background: transparent;
+	font-family: "ChikoriaBaloo", "Arial Rounded MT Bold", -apple-system, sans-serif;
+	font-size: clamp(11px, 1.35vw, 17px); letter-spacing: .4px; font-weight: 800;
+	color: #f0d896; padding: clamp(9px, 1.1vw, 14px) clamp(10px, 1.6vw, 22px);
+	text-shadow: 0 2px 0 rgba(20, 12, 4, .85);
+	border-right: 1px solid rgba(255, 233, 120, .14);
+	transition: background .1s ease, color .1s ease;
+	user-select: none; white-space: nowrap;
+}
+.ltab:first-child { border-left: 1px solid rgba(255, 233, 120, .14); }
+.ltab:hover { color: #ffe978; background: rgba(255, 211, 77, .10); }
+.ltab.active {
+	color: #2a1a08;
+	background: linear-gradient(180deg, #ffe07a 0%, #ffc93c 55%, #e09a10 100%);
+	text-shadow: 0 1px 0 rgba(255, 255, 255, .45);
+	box-shadow: inset 0 -3px 6px rgba(122, 62, 0, .35);
+}
 /* pop-out panels drop from under the bar — capped height so the loading bar at the
    bottom always stays visible */
 .lpanel {
-	position: absolute; left: 50%; top: 74px; transform: translateX(-50%) translateY(-8px); z-index: 11;
+	position: absolute; left: 50%; top: 58px; transform: translateX(-50%) translateY(-8px); z-index: 11;
 	width: min(860px, 94vw); max-height: calc(100vh - 300px); overflow-y: auto;
 	background: rgba(8, 18, 34, .97); border: 3px solid #ffd34d; border-radius: 18px;
 	box-shadow: 0 24px 70px rgba(0, 0, 0, .7); padding: 22px 26px;
@@ -137,6 +149,12 @@ body {
 .ldex div.meme span { color: #ffd97a; font-weight: 800; }
 .lnote { font-size: 11.5px; color: #90a6c8; margin-top: 12px; }
 .lmint { font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; word-break: break-all; color: #9fd0ff; }
+.lprize {
+	background: linear-gradient(135deg, #241536, #3a2154); border: 2px solid #b58cff; border-radius: 14px;
+	padding: 14px 16px; margin-top: 10px; box-shadow: 0 0 22px rgba(160, 106, 224, .35);
+}
+.lprize b { color: #ffd97a; } .lprize .big { font-size: 21px; color: #ffe978; display: block; margin: 2px 0 4px; }
+.lhook { color: #ffd97a; font-size: 14.5px; margin-top: 12px; text-align: center; }
 .lpanel a { color: #ffd97a; text-decoration: none; }
 .lpanel a:hover { text-decoration: underline; }
 .lpanel::-webkit-scrollbar { width: 9px; } .lpanel::-webkit-scrollbar-thumb { background: #29476f; border-radius: 5px; }
@@ -169,33 +187,56 @@ body {
 			<!-- info tabs (moved from the homepage): browse the game while the realm loads.
 			     Top of the screen; panels drop from under them — the loading bar stays clear. -->
 			<div id="ltabs">
-				<img class="ltab" data-tab="about"     src="../ui/mt-about.png"     alt="About">
-				<img class="ltab" data-tab="chikis"    src="../ui/mt-chikis.png"    alt="ChikiDex">
-				<img class="ltab" data-tab="play2"     src="../ui/mt-play2.png"     alt="How to Play">
-				<img class="ltab" data-tab="regions"   src="../ui/mt-regions.png"   alt="Regions">
-				<img class="ltab" data-tab="token"     src="../ui/mt-token.png"     alt="$CHIKI">
-				<img class="ltab" data-tab="community" src="../ui/mt-community.png" alt="Community">
+				<button class="ltab" data-tab="about">WELCOME</button>
+				<button class="ltab" data-tab="rewards">&#127942; REWARDS</button>
+				<button class="ltab" data-tab="chikis">CHIKIDEX</button>
+				<button class="ltab" data-tab="play2">HOW TO PLAY</button>
+				<button class="ltab" data-tab="regions">EVERFLAME ISLE</button>
+				<button class="ltab" data-tab="token">$CHIKI</button>
+				<button class="ltab" data-tab="community">COMMUNITY</button>
 			</div>
 
 			<div class="lpanel" id="lp-about">
 				<span class="x" data-close>&#10005;</span>
-				<h2>&#9432; Welcome to Chikoria</h2>
-				<p>Chiki Monsters is a 3D voxel MMO on Solana, tied to the <b>$CHIKI</b> token. Hold at least
-				<b>500,000 $CHIKI</b>, sign in with your wallet (a free, gas-less message signature — we never
-				ask for private keys or seed phrases, and never a transaction), hatch your first Chiki —
-				and step into the realm yourself.</p>
+				<h2>Welcome to Chikoria — your Chiki is waiting</h2>
+				<p>A living 3D voxel world on Solana where your <b>$CHIKI</b> hold hatches a creature that walks
+				beside you. Explore a hand-built island, battle the corruption with real card duels, craft,
+				fish, ride, trade with other players — and get paid real <b>$CHIKI</b> for finishing the story.
+				Sign in with a free, gas-less wallet signature (never a transaction, never your keys).</p>
 				<div class="lgrid">
-					<div class="lcard"><b>&#128035; Hold to Play</b><br>500k $CHIKI = your egg. Whales holding 1M+ nest a second one.</div>
-					<div class="lcard"><b>&#9876; Real Battles</b><br>Card battles vs corruptimons, world PvP duels, and the Chikoria Cup.</div>
-					<div class="lcard"><b>&#9935; Gather &amp; Craft</b><br>14 resources, 130 recipes, 10-level tools, fishing, mounts and trading.</div>
-					<div class="lcard"><b>&#127942; The Campaign</b><br>ACT I &middot; MASTER OF CHIKORIA — 21 chapters that pay real $CHIKI.</div>
+					<div class="lcard"><b>&#128035; Hold to Play</b><br>Hold 500k $CHIKI and tap your egg — a hidden lucky number makes it LEGENDARY. Whales (1M+) nest a second egg.</div>
+					<div class="lcard"><b>&#9876; Real Battles</b><br>Ability-card duels vs corruptimons, PvP anywhere in the world, and the Chikoria Cup with a SOL prize.</div>
+					<div class="lcard"><b>&#9935; A Real Economy</b><br>14 resources, 130 recipes, 10-level tools, 8 fish + 4 sea legends, 6 mounts, and a player Trading Post.</div>
+					<div class="lcard"><b>&#127942; Paid Storyline</b><br>ACT I &middot; MASTER OF CHIKORIA — 21 chapters that pay real on-chain $CHIKI. See the REWARDS tab.</div>
 				</div>
+				<p class="lhook">The realm is building itself behind this page — you'll be standing before the castle in a moment.</p>
+			</div>
+
+			<div class="lpanel" id="lp-rewards">
+				<span class="x" data-close>&#10005;</span>
+				<h2>&#127942; Play the story. Win real $CHIKI.</h2>
+				<div class="lprize">
+					<b>THE GRAND PRIZE</b>
+					<span class="big">10,000,000 $CHIKI &middot; first 10 champions</span>
+					The first <b>10 players</b> to complete ACT I &middot; MASTER OF CHIKORIA win
+					<b>1,000,000 $CHIKI each</b> — paid on-chain from the reward pool.
+				</div>
+				<div class="lgrid">
+					<div class="lcard"><b>&#128220; Every chapter pays</b><br>All 21 chapters carry a real $CHIKI reward — <b>100,000 $CHIKI</b> per player across the full campaign.</div>
+					<div class="lcard"><b>&#9876; Chikoria Cup</b><br>The arena tournament crowns a champion with a SOL prize from the pool.</div>
+					<div class="lcard"><b>&#128737; Fair &amp; verified</b><br>Completions are validated server-side and reviewed before payout — on-chain, verifiable on Solscan.</div>
+					<div class="lcard"><b>&#9200; The race is live</b><br>Champion slots are first-come. Every chapter you clear today is a head start.</div>
+				</div>
+				<p class="lhook">Ten crowns. One island. The Everflame remembers who answered first.</p>
 			</div>
 
 			<div class="lpanel" id="lp-chikis">
 				<span class="x" data-close>&#10005;</span>
-				<h2>&#128062; The ChikiDex — 21 species</h2>
-				<p>Ten elemental lines, five ancient Legendaries, and the six-strong <b>Meme Dynasty</b>.</p>
+				<h2>&#128062; The ChikiDex — 21 species. Which will choose you?</h2>
+				<p>Ten elemental lines, five ancient Legendaries, and the six-strong <b>Meme Dynasty</b>.
+				Your first egg hatches on a tap — press it on a hidden lucky number and a <b>LEGENDARY</b>
+				answers. Every chikimon levels to 50, learns up to 12 ability cards, and grows a
+				personality shaped by how you treat it.</p>
 				<div class="ldex">
 					<div><img src="../chikidex/mushrow.png" alt=""><strong>Mushrow</strong><span>Plant</span></div>
 					<div><img src="../chikidex/electrox.png" alt=""><strong>Electrox</strong><span>Lightning</span></div>
@@ -235,6 +276,7 @@ body {
 				<h3>Care for your team</h3>
 				<p>Chikimons have HP, stamina, hunger and moods — feed them, let them rest, heal free at the
 				Hospital, and bond with them to unlock their personalities.</p>
+				<p class="lhook">You'll learn all of it in your first ten minutes — the tutorial pays 5,000 $CHIKI for the trouble.</p>
 			</div>
 
 			<div class="lpanel" id="lp-regions">
@@ -250,8 +292,8 @@ body {
 					<div class="lcard"><b>&#127967; The Chikiseum</b><br>The grand arena outside the west gate — home of the Chikoria Cup.</div>
 					<div class="lcard"><b>&#127907; The Fishing Coasts</b><br>44 named fishing spots — rare fantasy fish swim the deep water.</div>
 				</div>
-				<p class="lnote">&#127786; ACT II &middot; THE WANDERING GALLEON — the ship sets sail to a brand-new
-				region across the mist in a future update.</p>
+				<p class="lnote">&#127786; ACT II &middot; THE WANDERING GALLEON — the ship at the harbor sets sail to a
+				brand-new region across the mist in a future update. Founders will know the isle by heart before it does.</p>
 			</div>
 
 			<div class="lpanel" id="lp-token">
@@ -269,7 +311,8 @@ body {
 			<div class="lpanel" id="lp-community">
 				<span class="x" data-close>&#10005;</span>
 				<h2>&#128172; Join the Community</h2>
-				<p>Catch 'em! Train 'em! Bond forever! Follow Chiki Monsters and become a Chiki Master.</p>
+				<p>Catch 'em! Train 'em! Bond forever! Thousands of trainers are already registered — the
+				leaderboard, the Cup brackets and the champion race all live in the community.</p>
 				<div class="lgrid">
 					<a class="lcard" href="https://x.com/chikimonsters" target="_blank" rel="noopener noreferrer"><b>&#120143; / Twitter</b><br>@chikimonsters</a>
 					<a class="lcard" href="https://discord.gg/J8Yf7jm2" target="_blank" rel="noopener noreferrer"><b>Discord</b><br>Join the server</a>
