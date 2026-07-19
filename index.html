@@ -60,6 +60,10 @@
       done=false;
 
   function toGame(){if(done)return;done=true;try{vid.pause();}catch(e){}
+    /* the token was already pressed HERE — tell the realm so it skips its own title
+       screen (same art + same token = a confusing double homepage) and goes straight
+       to the loading page. Direct /realm visitors still get the title. */
+    try{sessionStorage.setItem("realm-hero-done","1");}catch(e){}
     location.href="realm/";}   /* the intro now leads straight into the 3D MMO */
   var started=false;
   function start(){
