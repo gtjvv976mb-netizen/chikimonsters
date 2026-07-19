@@ -63,13 +63,6 @@ body {
 	border-radius: 10px; padding: 14px 18px; line-height: 1.4; text-align: center; white-space: pre-wrap;
 	box-shadow: 0 5px 0 rgba(10, 6, 2, .5);
 }
-#back {
-	position: absolute; top: 14px; left: 16px; z-index: 11; text-decoration: none;
-	font-family: "ChikoriaBaloo", -apple-system, sans-serif; font-size: 13px; color: #ffe9b0;
-	background: rgba(14, 10, 4, .55); border: 2px solid rgba(36, 21, 5, .8);
-	padding: 5px 12px; border-radius: 9px; text-shadow: 0 1px 0 #241505;
-}
-#back:hover { color: #ffd34d; background: rgba(14, 10, 4, .75); }
 /* ---------- HTML title screen: the hero art + $CHIKI coin, shown INSTANTLY ---------- */
 #hero {
 	position: absolute; inset: 0; z-index: 12; overflow: hidden;
@@ -101,13 +94,14 @@ body {
 /* ---------- loading-page info tabs (moved from the homepage): TOP of the screen ---------- */
 #ltabs {
 	position: absolute; top: 10px; left: 50%; transform: translateX(-50%); z-index: 11;
-	display: flex; flex-wrap: wrap; justify-content: center; align-items: center;
-	gap: clamp(6px, 1.2vw, 16px); max-width: 96vw;
+	display: flex; flex-wrap: nowrap; justify-content: center; align-items: center;
+	overflow-x: auto; max-width: 97vw;
+	gap: clamp(5px, 1vw, 14px);
 	background: rgba(8, 16, 30, .55); border: 1px solid rgba(255, 233, 120, .3); border-radius: 16px;
 	padding: 8px 12px; -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px);
 	filter: drop-shadow(0 6px 14px rgba(0, 0, 0, .55));
 }
-.ltab { height: clamp(26px, 3.4vw, 46px); width: auto; cursor: pointer;
+.ltab { height: clamp(15px, 2.5vw, 42px); width: auto; flex: 0 0 auto; cursor: pointer;
 	transition: transform .07s ease, filter .07s ease; -webkit-user-drag: none; user-select: none; }
 .ltab:hover { transform: scale(1.08); }
 .ltab:active { transform: scale(.93); }
@@ -172,7 +166,6 @@ body {
 			<div id="pct">0%</div>
 			<div id="tip"></div>
 			<div id="err"></div>
-			<a id="back" href="../">&larr; chikimonsters.com</a>
 			<!-- info tabs (moved from the homepage): browse the game while the realm loads.
 			     Top of the screen; panels drop from under them — the loading bar stays clear. -->
 			<div id="ltabs">
