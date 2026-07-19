@@ -3,7 +3,29 @@
 	<head>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0">
-		<title>Chikoria Realm — Chiki Monsters</title>
+		<title>Chikoria Realm</title>
+		<link rel="icon" type="image/png" href="coin.png">
+		<link rel="apple-touch-icon" href="coin.png">
+		<script>
+		// the engine stamps document.title with the internal project name on boot —
+		// pin the public name (the $CHIKI coin favicon is the "token image" beside it)
+		(function () {
+			var WANT = "Chikoria Realm";
+			function pin() { if (document.title !== WANT) document.title = WANT; }
+			pin();
+			var t = document.querySelector("title");
+			if (t && window.MutationObserver) new MutationObserver(pin).observe(t, { childList: true });
+			setInterval(pin, 3000);   // belt-and-braces: some engines assign title repeatedly
+			// force the $CHIKI coin favicon to win over the engine's injected index.icon.png
+			function coinIcon() {
+				document.querySelectorAll('link[rel~="icon"], link[rel="apple-touch-icon"]').forEach(function (l) {
+					if (l.href.indexOf("coin.png") === -1) l.parentNode.removeChild(l);
+				});
+			}
+			coinIcon();
+			setTimeout(coinIcon, 1500);
+		})();
+		</script>
 		<style>
 html, body, #canvas { margin: 0; padding: 0; border: 0; }
 body {
@@ -397,7 +419,7 @@ body {
 		</script>
 		<script src="index.js"></script>
 		<script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":262622756,"index.wasm":40092042},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":262623988,"index.wasm":40092042},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
 const GODOT_THREADS_ENABLED = true;
 const engine = new Engine(GODOT_CONFIG);
 
