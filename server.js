@@ -937,6 +937,9 @@ app.post("/verify", async (req, res) => {
   const wallet = req.body?.wallet;
   if (!wallet || !isPubkey(wallet)) return res.status(400).json({ error: "valid 'wallet' required" });
   try {
+    // Wallet ownership is established only by the signed Phantom message. An address by
+    // itself remains public lookup data and can never grant creator/admin privileges.
+    const signedIn = verifyWalletSig(wallet, req.body?.authMsg, req.body?.authSig);
     let balance = 0, eligible = true;
     if (verifyOn) { balance = await chikiBalance(wallet); eligible = balance >= MIN; }
     const p = await store.touch(wallet, eligible, balance);
@@ -944,7 +947,13 @@ app.post("/verify", async (req, res) => {
     const whalePending = eligible && balance >= WHALE_MIN && chikis < 2;
     const whaleReadyInMs = whalePending && p.whale_since ? Math.max(0, WHALE_HOLD_MS - (Date.now() - Number(p.whale_since))) : 0;
     const profile = await applyGloryCredit(wallet, p.profile || null);   // deliver any pending Glory gift on this login (clobber-proof)
-    res.json({ wallet, eligible, balance, chikis, whalePending, whaleReadyInMs, minHold: MIN, verified: verifyOn, firstSeen: Number(p.first_seen), profile: profile || null });
+    res.json({
+      wallet, eligible, balance, chikis, whalePending, whaleReadyInMs,
+      minHold: MIN, verified: verifyOn, firstSeen: Number(p.first_seen),
+      profile: profile || null,
+      signedIn,
+      isAdmin: signedIn && isAdminWallet(wallet),
+    });
   } catch (e) { res.status(500).json({ error: "verify failed: " + String(e.message || e) }); }
 });
 
