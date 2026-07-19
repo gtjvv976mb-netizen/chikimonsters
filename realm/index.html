@@ -98,6 +98,57 @@ body {
 	animation: hintbob 1.6s ease-in-out infinite;
 }
 @keyframes hintbob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+/* ---------- loading-page info tabs (moved from the homepage): TOP of the screen ---------- */
+#ltabs {
+	position: absolute; top: 10px; left: 50%; transform: translateX(-50%); z-index: 11;
+	display: flex; flex-wrap: wrap; justify-content: center; align-items: center;
+	gap: clamp(6px, 1.2vw, 16px); max-width: 96vw;
+	background: rgba(8, 16, 30, .55); border: 1px solid rgba(255, 233, 120, .3); border-radius: 16px;
+	padding: 8px 12px; -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px);
+	filter: drop-shadow(0 6px 14px rgba(0, 0, 0, .55));
+}
+.ltab { height: clamp(26px, 3.4vw, 46px); width: auto; cursor: pointer;
+	transition: transform .07s ease, filter .07s ease; -webkit-user-drag: none; user-select: none; }
+.ltab:hover { transform: scale(1.08); }
+.ltab:active { transform: scale(.93); }
+.ltab.active { filter: brightness(1.12) drop-shadow(0 0 9px rgba(255, 233, 120, .92)); }
+/* pop-out panels drop from under the bar — capped height so the loading bar at the
+   bottom always stays visible */
+.lpanel {
+	position: absolute; left: 50%; top: 74px; transform: translateX(-50%) translateY(-8px); z-index: 11;
+	width: min(860px, 94vw); max-height: calc(100vh - 300px); overflow-y: auto;
+	background: rgba(8, 18, 34, .97); border: 3px solid #ffd34d; border-radius: 18px;
+	box-shadow: 0 24px 70px rgba(0, 0, 0, .7); padding: 22px 26px;
+	opacity: 0; pointer-events: none; transition: .22s;
+	font-family: "ChikoriaBaloo", "Arial Rounded MT Bold", -apple-system, sans-serif;
+}
+.lpanel.show { opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0); }
+.lpanel h2 { font-size: 24px; color: #ffd34d; margin: 0 0 6px; }
+.lpanel h3 { font-size: 15px; color: #9fd0ff; margin: 14px 0 6px; }
+.lpanel p, .lpanel li { font-size: 14px; line-height: 1.6; color: #dce8fa; }
+.lpanel ul { margin: 6px 0 6px 20px; padding: 0; }
+.lpanel .x { position: absolute; top: 12px; right: 16px; font-size: 20px; color: #9fb6d8; cursor: pointer; }
+.lpanel .x:hover { color: #fff; }
+.lgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-top: 10px; }
+.lcard { background: #0d2142; border: 1px solid #29476f; border-radius: 12px; padding: 12px; font-size: 13px; color: #dce8fa; }
+.lcard b { color: #ffd34d; }
+.ldex { display: grid; grid-template-columns: repeat(auto-fit, minmax(104px, 1fr)); gap: 10px; margin-top: 10px; }
+.ldex div { background: #0d2142; border: 1px solid #29476f; border-radius: 10px; padding: 8px; text-align: center; }
+.ldex img { display: block; width: 100%; height: 76px; object-fit: contain; margin: 0 auto 4px; -webkit-user-drag: none; }
+.ldex strong { display: block; font-size: 13px; color: #fff; }
+.ldex span { font-size: 10px; color: #9fb6d8; }
+.ldex div.legend { border-color: #a06ae0; box-shadow: 0 0 10px rgba(160, 106, 224, .45); }
+.ldex div.legend span { color: #c79bff; font-weight: 800; }
+.ldex div.meme { border-color: #e0b34a; box-shadow: 0 0 10px rgba(224, 179, 74, .4); }
+.ldex div.meme span { color: #ffd97a; font-weight: 800; }
+.lnote { font-size: 11.5px; color: #90a6c8; margin-top: 12px; }
+.lmint { font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; word-break: break-all; color: #9fd0ff; }
+.lpanel a { color: #ffd97a; text-decoration: none; }
+.lpanel a:hover { text-decoration: underline; }
+.lpanel::-webkit-scrollbar { width: 9px; } .lpanel::-webkit-scrollbar-thumb { background: #29476f; border-radius: 5px; }
+/* the generic "#boot > *" relative rule outranks .lpanel — win it back, or the invisible
+   panels join the flex column and shove the loading bar off the top of the screen */
+#boot #ltabs, #boot .lpanel { position: absolute; }
 /* ---------- post-load intro clip ---------- */
 #cine { position: absolute; inset: 0; z-index: 15; background: #000; display: none; cursor: pointer; }
 #cinevid { width: 100%; height: 100%; object-fit: contain; }
@@ -122,6 +173,114 @@ body {
 			<div id="tip"></div>
 			<div id="err"></div>
 			<a id="back" href="../">&larr; chikimonsters.com</a>
+			<!-- info tabs (moved from the homepage): browse the game while the realm loads.
+			     Top of the screen; panels drop from under them — the loading bar stays clear. -->
+			<div id="ltabs">
+				<img class="ltab" data-tab="about"     src="../ui/mt-about.png"     alt="About">
+				<img class="ltab" data-tab="chikis"    src="../ui/mt-chikis.png"    alt="ChikiDex">
+				<img class="ltab" data-tab="play2"     src="../ui/mt-play2.png"     alt="How to Play">
+				<img class="ltab" data-tab="regions"   src="../ui/mt-regions.png"   alt="Regions">
+				<img class="ltab" data-tab="token"     src="../ui/mt-token.png"     alt="$CHIKI">
+				<img class="ltab" data-tab="community" src="../ui/mt-community.png" alt="Community">
+			</div>
+
+			<div class="lpanel" id="lp-about">
+				<span class="x" data-close>&#10005;</span>
+				<h2>&#9432; Welcome to Chikoria</h2>
+				<p>Chiki Monsters is a 3D voxel MMO on Solana, tied to the <b>$CHIKI</b> token. Hold at least
+				<b>500,000 $CHIKI</b>, link your PUBLIC wallet address (we never ask for keys, seed phrases or
+				signatures), hatch your first Chiki — and step into the realm yourself.</p>
+				<div class="lgrid">
+					<div class="lcard"><b>&#128035; Hold to Play</b><br>500k $CHIKI = your egg. Whales holding 1M+ nest a second one.</div>
+					<div class="lcard"><b>&#9876; Real Battles</b><br>Card battles vs corruptimons, world PvP duels, and the Chikoria Cup.</div>
+					<div class="lcard"><b>&#9935; Gather &amp; Craft</b><br>14 resources, 130 recipes, 10-level tools, fishing, mounts and trading.</div>
+					<div class="lcard"><b>&#127942; The Campaign</b><br>ACT I &middot; MASTER OF CHIKORIA — 21 chapters that pay real $CHIKI.</div>
+				</div>
+			</div>
+
+			<div class="lpanel" id="lp-chikis">
+				<span class="x" data-close>&#10005;</span>
+				<h2>&#128062; The ChikiDex — 21 species</h2>
+				<p>Ten elemental lines, five ancient Legendaries, and the six-strong <b>Meme Dynasty</b>.</p>
+				<div class="ldex">
+					<div><img src="../chikidex/mushrow.png" alt=""><strong>Mushrow</strong><span>Plant</span></div>
+					<div><img src="../chikidex/electrox.png" alt=""><strong>Electrox</strong><span>Lightning</span></div>
+					<div><img src="../chikidex/jellox.png" alt=""><strong>Jellox</strong><span>Ocean</span></div>
+					<div><img src="../chikidex/firix.png" alt=""><strong>Firix</strong><span>Flame</span></div>
+					<div><img src="../chikidex/owzard.png" alt=""><strong>Owzard</strong><span>Ice</span></div>
+					<div><img src="../chikidex/forestle.png" alt=""><strong>Forestle</strong><span>Mountain</span></div>
+					<div><img src="../chikidex/drolax.png" alt=""><strong>Drolax</strong><span>Shadow</span></div>
+					<div><img src="../chikidex/healix.png" alt=""><strong>Healix</strong><span>Crystal</span></div>
+					<div><img src="../chikidex/solarix.png" alt=""><strong>Solarix</strong><span>Wind</span></div>
+					<div><img src="../chikidex/scorplex.png" alt=""><strong>Scorplex</strong><span>Cosmic</span></div>
+					<div class="legend"><img src="../chikidex/galador.png" alt=""><strong>Galador</strong><span>Legendary</span></div>
+					<div class="legend"><img src="../chikidex/adalor.png" alt=""><strong>Adalor</strong><span>Legendary</span></div>
+					<div class="legend"><img src="../chikidex/tyrannos.png" alt=""><strong>Tyrannos</strong><span>Legendary</span></div>
+					<div class="legend"><img src="../chikidex/grovador.png" alt=""><strong>Grovador</strong><span>Legendary</span></div>
+					<div class="legend"><img src="../chikidex/dragonos.png" alt=""><strong>Dragonos</strong><span>Legendary</span></div>
+					<div class="meme"><img src="../chikidex/popcat.png" alt=""><strong>Popcat</strong><span>Meme Dynasty</span></div>
+					<div class="meme"><img src="../chikidex/moodeng.png" alt=""><strong>Moodeng</strong><span>Meme Dynasty</span></div>
+					<div class="meme"><img src="../chikidex/doge.png" alt=""><strong>Doge</strong><span>Meme Dynasty</span></div>
+					<div class="meme"><img src="../chikidex/pepe.png" alt=""><strong>Pepe</strong><span>Meme Dynasty</span></div>
+					<div class="meme"><img src="../chikidex/chillguy.png" alt=""><strong>Chillguy</strong><span>Meme Dynasty</span></div>
+					<div class="meme"><img src="../chikidex/alon.png" alt=""><strong>Alon</strong><span>Founder's Meme</span></div>
+				</div>
+			</div>
+
+			<div class="lpanel" id="lp-play2">
+				<span class="x" data-close>&#10005;</span>
+				<h2>&#127918; How to Play</h2>
+				<ul>
+					<li><b>Connect your wallet</b> — public address only, we never ask for keys or signatures. Hold &ge;500k $CHIKI and tap your egg to hatch (a hidden lucky number wins a Legendary!).</li>
+					<li><b>Move</b> with WASD &middot; Shift to run &middot; Space to jump &middot; right-drag to look &middot; wheel to zoom. On phones: touch joystick + buttons.</li>
+					<li><b>Press E</b> to gather trees, rocks, ores and more &middot; craft tools at the Craft Shop to gather much faster.</li>
+					<li><b>Press P</b> for your menu — quests, satchel, team, mounts, avatar and gear.</li>
+					<li><b>Battle</b> corruptimons with your chikimon's ability cards (1&ndash;4 to play, R ends the turn, V auto) &middot; duel trainers with G &middot; enter the Chikoria Cup at the Chikiseum.</li>
+					<li><b>Follow the campaign</b> — ACT I &middot; MASTER OF CHIKORIA, 21 chapters across 3 parts, paying real $CHIKI from the reward pool.</li>
+				</ul>
+				<h3>Care for your team</h3>
+				<p>Chikimons have HP, stamina, hunger and moods — feed them, let them rest, heal free at the
+				Hospital, and bond with them to unlock their personalities.</p>
+			</div>
+
+			<div class="lpanel" id="lp-regions">
+				<span class="x" data-close>&#10005;</span>
+				<h2>&#128506; Everflame Isle — the Heart of Chikoria</h2>
+				<p>The island with the castle now bears its name on the charts: <b>Everflame Isle</b>, where
+				Chikiville's walls guard the last burning light.</p>
+				<div class="lgrid">
+					<div class="lcard"><b>&#127984; Chikiville &amp; the Castle</b><br>The walled city — shops, the Hospital, the Trading Post and the Everflame.</div>
+					<div class="lcard"><b>&#9968; The Wicked Temple</b><br>Grimwick broods on the mountain peak above the clouds.</div>
+					<div class="lcard"><b>&#9935; The Three Mines</b><br>Gold, iron and crystal lodes ring the mountain.</div>
+					<div class="lcard"><b>&#9875; The Harbor</b><br>Fishing docks, the Harbormaster — and the Wandering Galleon at anchor.</div>
+					<div class="lcard"><b>&#127967; The Chikiseum</b><br>The grand arena outside the west gate — home of the Chikoria Cup.</div>
+					<div class="lcard"><b>&#127907; The Fishing Coasts</b><br>44 named fishing spots — rare fantasy fish swim the deep water.</div>
+				</div>
+				<p class="lnote">&#127786; ACT II &middot; THE WANDERING GALLEON — the ship sets sail to a brand-new
+				region across the mist in a future update.</p>
+			</div>
+
+			<div class="lpanel" id="lp-token">
+				<span class="x" data-close>&#10005;</span>
+				<h2>&#128142; $CHIKI Tokenomics</h2>
+				<div class="lgrid">
+					<div class="lcard"><b>Supply</b><br>1,000,000,000 $CHIKI on Solana — launched on pump.fun.</div>
+					<div class="lcard"><b>&#128035; Hold to Play</b><br>500,000 $CHIKI to enter the realm &middot; 1M+ whales nest a second egg.</div>
+					<div class="lcard"><b>&#127873; Quest Rewards</b><br>Campaign chapters pay real $CHIKI from the reward pool.</div>
+					<div class="lcard"><b>&#128279; Verify On-Chain</b><br><a href="https://solscan.io/token/CPYrgdAYWFQD74ZtsR8mEBWW7qnrXnegcn7gDMobpump" target="_blank" rel="noopener noreferrer">View $CHIKI on Solscan &#8599;</a></div>
+				</div>
+				<p class="lnote">Mint: <span class="lmint">CPYrgdAYWFQD74ZtsR8mEBWW7qnrXnegcn7gDMobpump</span></p>
+			</div>
+
+			<div class="lpanel" id="lp-community">
+				<span class="x" data-close>&#10005;</span>
+				<h2>&#128172; Join the Community</h2>
+				<p>Catch 'em! Train 'em! Bond forever! Follow Chiki Monsters and become a Chiki Master.</p>
+				<div class="lgrid">
+					<a class="lcard" href="https://x.com/chikimonsters" target="_blank" rel="noopener noreferrer"><b>&#120143; / Twitter</b><br>@chikimonsters</a>
+					<a class="lcard" href="https://discord.gg/J8Yf7jm2" target="_blank" rel="noopener noreferrer"><b>Discord</b><br>Join the server</a>
+				</div>
+			</div>
 		</div>
 		<!-- the homepage title screen, in-page: shows INSTANTLY (no waiting for the engine).
 		     Click the coin -> the loading bar (chunks stream behind this the whole time). -->
@@ -174,6 +333,24 @@ body {
 				// tell the main controller if it's up; otherwise just reveal the loading page
 				if (window.__onCoin) { window.__onCoin(); }
 				else if (hero.parentNode) { hero.remove(); }
+			});
+			// --- loading-page info tabs (top bar): pure DOM, live before the engine JS parses ---
+			var tabs = [].slice.call(document.querySelectorAll('.ltab'));
+			function closeTabs() {
+				tabs.forEach(function (t) { t.classList.remove('active'); });
+				[].slice.call(document.querySelectorAll('.lpanel.show')).forEach(function (p) { p.classList.remove('show'); });
+			}
+			tabs.forEach(function (t) {
+				t.addEventListener('click', function () {
+					var p = document.getElementById('lp-' + t.dataset.tab);
+					if (!p) { return; }
+					var was = p.classList.contains('show');
+					closeTabs();
+					if (!was) { t.classList.add('active'); p.classList.add('show'); }
+				});
+			});
+			[].slice.call(document.querySelectorAll('.lpanel [data-close]')).forEach(function (x) {
+				x.addEventListener('click', closeTabs);
 			});
 		}());
 		</script>
