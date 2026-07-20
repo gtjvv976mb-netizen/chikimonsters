@@ -436,18 +436,27 @@ body {
 				const MINT = new W.PublicKey(mint);
 				const sellerPk = new W.PublicKey(seller), teamPk = new W.PublicKey(team);
 				const conn = new W.Connection(rpc, 'confirmed');
-				const unit = Math.pow(10, decimals | 0);
-				const raw = (frac) => BigInt(Math.round(priceWhole * frac)) * BigInt(unit);   // whole-token legs
-				const buyerAta = await T.getAssociatedTokenAddress(MINT, buyer);
-				const sellerAta = await T.getAssociatedTokenAddress(MINT, sellerPk);
-				const teamAta = await T.getAssociatedTokenAddress(MINT, teamPk);
+				// which token program owns this mint? ($CHIKI => Token-2022). Build all ixs against it.
+				const mintAcc = await conn.getAccountInfo(MINT);
+				if (!mintAcc) throw new Error('mint account not found on-chain');
+				const TOKEN_PROG = mintAcc.owner;
+				const dec = decimals | 0;
+				const unit = BigInt(Math.pow(10, dec));
+				const totalBase = BigInt(Math.round(priceWhole)) * unit;              // full price, base units
+				const bps = (frac) => BigInt(Math.round(frac * 10000));               // shares -> basis points
+				const sellerBase = totalBase * bps(sSeller) / BigInt(10000);
+				const teamBase   = totalBase * bps(sTeam)   / BigInt(10000);
+				const burnBase   = totalBase - sellerBase - teamBase;                 // remainder -> burn (exact)
+				const buyerAta  = await T.getAssociatedTokenAddress(MINT, buyer,    false, TOKEN_PROG);
+				const sellerAta = await T.getAssociatedTokenAddress(MINT, sellerPk, false, TOKEN_PROG);
+				const teamAta   = await T.getAssociatedTokenAddress(MINT, teamPk,   false, TOKEN_PROG);
 				const tx = new W.Transaction();
 				// idempotent: creates the seller/team token account only if missing (buyer pays the ~0.002 SOL rent)
-				tx.add(T.createAssociatedTokenAccountIdempotentInstruction(buyer, sellerAta, sellerPk, MINT));
-				tx.add(T.createAssociatedTokenAccountIdempotentInstruction(buyer, teamAta, teamPk, MINT));
-				tx.add(T.createTransferCheckedInstruction(buyerAta, MINT, sellerAta, buyer, raw(sSeller), decimals | 0));
-				tx.add(T.createTransferCheckedInstruction(buyerAta, MINT, teamAta, buyer, raw(sTeam), decimals | 0));
-				tx.add(T.createBurnCheckedInstruction(buyerAta, MINT, buyer, raw(sBurn), decimals | 0));  // REAL burn — supply drops
+				tx.add(T.createAssociatedTokenAccountIdempotentInstruction(buyer, sellerAta, sellerPk, MINT, TOKEN_PROG));
+				tx.add(T.createAssociatedTokenAccountIdempotentInstruction(buyer, teamAta,   teamPk,   MINT, TOKEN_PROG));
+				tx.add(T.createTransferCheckedInstruction(buyerAta, MINT, sellerAta, buyer, sellerBase, dec, [], TOKEN_PROG));
+				tx.add(T.createTransferCheckedInstruction(buyerAta, MINT, teamAta,   buyer, teamBase,   dec, [], TOKEN_PROG));
+				tx.add(T.createBurnCheckedInstruction(buyerAta, MINT, buyer, burnBase, dec, [], TOKEN_PROG));  // REAL burn — supply drops
 				tx.feePayer = buyer;
 				tx.recentBlockhash = (await conn.getLatestBlockhash('finalized')).blockhash;
 				const res = await ph.signAndSendTransaction(tx);
