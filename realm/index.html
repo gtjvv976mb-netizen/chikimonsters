@@ -423,7 +423,9 @@ body {
 		// __chikiBuy: the buyer signs ONE real $CHIKI transaction that splits the price three ways —
 		// sellerShare to the seller, teamShare to the team wallet, burnShare BURNED (supply drops).
 		// Phantom signs + submits; we stash the signature (or error) for the Godot poller to read.
-		// Amounts are rounded to WHOLE $CHIKI per leg (matches the server's tolerance).
+		// $CHIKI is a Token-2022 mint, so we detect the mint's OWNING token program at runtime and build
+		// every instruction against it (legacy vs 2022). Split is done in base units, with the burn leg
+		// taking the remainder so seller+team+burn === the full price exactly (nothing lost or created).
 		window.__chikiBuy = async function (seller, team, mint, priceWhole, decimals, rpc, sSeller, sTeam, sBurn) {
 			window.__chikiBuyDone = ''; window.__chikiBuySig = ''; window.__chikiBuyErr = '';
 			try {
@@ -469,7 +471,7 @@ body {
 		</script>
 		<script src="index.js"></script>
 		<script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":262680340,"index.wasm":40092042},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":262692356,"index.wasm":40092042},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
 const GODOT_THREADS_ENABLED = true;
 const engine = new Engine(GODOT_CONFIG);
 
