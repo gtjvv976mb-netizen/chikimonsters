@@ -200,6 +200,32 @@ body {
 	<body>
 		<canvas id="canvas">Your browser does not support the canvas tag.</canvas>
 		<noscript>Your browser does not support JavaScript.</noscript>
+		<!-- MOBILE: Chikoria plays in LANDSCAPE. On a portrait phone, ask the player to rotate. -->
+		<div id="rotate" style="position:fixed; inset:0; z-index:99999; display:none; flex-direction:column;
+			align-items:center; justify-content:center; gap:18px; text-align:center;
+			background:#0b1f4e url('loading.png') center/cover no-repeat; color:#ffe07a;
+			font-family:'Baloo 2','Segoe UI',sans-serif; padding:24px;">
+			<div style="position:absolute; inset:0; background:rgba(6,14,30,.72);"></div>
+			<div style="position:relative; font-size:64px; animation:rotspin 2.4s ease-in-out infinite;">&#128241;</div>
+			<div style="position:relative; font-size:22px; font-weight:700; text-shadow:0 2px 6px #000;">Rotate your phone to landscape</div>
+			<div style="position:relative; font-size:14px; color:#cfe0ff; max-width:320px; text-shadow:0 2px 6px #000;">Chikoria Realm is best played sideways. Turn your device horizontal to play.</div>
+		</div>
+		<style>@keyframes rotspin{0%,100%{transform:rotate(-18deg)}50%{transform:rotate(72deg)}}</style>
+		<script>
+		(function(){
+			// only nag on real touch phones; tablets/desktops are fine either way
+			var isPhone = ('ontouchstart' in window) && Math.min(screen.width, screen.height) < 820;
+			function apply(){
+				var portrait = (window.matchMedia && matchMedia('(orientation: portrait)').matches) || (innerHeight > innerWidth);
+				document.getElementById('rotate').style.display = (isPhone && portrait) ? 'flex' : 'none';
+			}
+			window.addEventListener('resize', apply);
+			window.addEventListener('orientationchange', apply);
+			// best-effort orientation lock (works in installed/PWA or after a fullscreen gesture; harmless otherwise)
+			try { if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(function(){}); } catch(e){}
+			apply();
+		})();
+		</script>
 		<div id="boot">
 			<!-- no caption: the key art carries the CHIKORIA logo — just the bar + loading details -->
 			<div id="barwrap"><div id="bar"></div></div>
@@ -471,7 +497,7 @@ body {
 		</script>
 		<script src="index.js"></script>
 		<script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":262693348,"index.wasm":40092042},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":240235492,"index.wasm":40092042},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
 const GODOT_THREADS_ENABLED = true;
 const engine = new Engine(GODOT_CONFIG);
 
@@ -613,7 +639,7 @@ const engine = new Engine(GODOT_CONFIG);
 		if (w && w.parts && w.parts.length) {
 			tip.textContent = 'Downloading the engine…';
 			const wasmChunks = await streamParts(w.parts, w.total, 0.0, 0.12, vt.v || '');
-			const wasmBlob = new Blob(wasmChunks, { type: 'application/wasm' });
+			const wasmBlob = new Blob(wasmChunks, { type: 'application/wasm' }); wasmChunks.length = 0;
 			const realFetch = window.fetch.bind(window);
 			window.fetch = function (input, init) {
 				const u = (typeof input === 'string') ? input : (input && input.url) || '';
@@ -628,14 +654,14 @@ const engine = new Engine(GODOT_CONFIG);
 		tip.textContent = 'Building the realm…';
 		const man = await (await fetch('index.pck.manifest.json', { cache: 'reload' })).json();
 		const pckChunks = await streamParts(man.chunks, man.total, 0.12, 0.82, man.v || '');
-		const packUrl = URL.createObjectURL(new Blob(pckChunks, { type: 'application/octet-stream' }));
+		const pckBlob = new Blob(pckChunks, { type: 'application/octet-stream' }); pckChunks.length = 0; const packUrl = URL.createObjectURL(pckBlob);
 
 		// 3. Boot the engine.
 		await engine.startGame({
 			'mainPack': packUrl,
 			// the voxel engine spawns streaming/meshing workers per core — the default
 			// 8-worker emscripten pool exhausts and risks deadlock on bigger machines
-			'emscriptenPoolSize': Math.min(Math.max(navigator.hardwareConcurrency || 8, 8) + 8, 24),
+			'emscriptenPoolSize': ((('ontouchstart' in window) && Math.min(screen.width, screen.height) < 820) ? Math.min((navigator.hardwareConcurrency || 4) + 2, 8) : Math.min(Math.max(navigator.hardwareConcurrency || 8, 8) + 8, 24)),
 			'onProgress': function (cur, tot) {
 				if (cur > 0 && tot > 0) { setBar(0.82 + 0.18 * (cur / tot)); }
 			},
