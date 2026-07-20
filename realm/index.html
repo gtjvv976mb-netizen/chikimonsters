@@ -417,9 +417,50 @@ body {
 			});
 		}());
 		</script>
+		<!-- vendored @solana/web3.js + spl-token (on-chain Trading Post buys); local so the CSP allows it -->
+		<script src="solana-web3.js"></script>
+		<script>
+		// __chikiBuy: the buyer signs ONE real $CHIKI transaction that splits the price three ways —
+		// sellerShare to the seller, teamShare to the team wallet, burnShare BURNED (supply drops).
+		// Phantom signs + submits; we stash the signature (or error) for the Godot poller to read.
+		// Amounts are rounded to WHOLE $CHIKI per leg (matches the server's tolerance).
+		window.__chikiBuy = async function (seller, team, mint, priceWhole, decimals, rpc, sSeller, sTeam, sBurn) {
+			window.__chikiBuyDone = ''; window.__chikiBuySig = ''; window.__chikiBuyErr = '';
+			try {
+				const W = window.SolanaWeb3, T = window.SplToken;
+				if (!W || !T) throw new Error('Solana library failed to load');
+				const ph = (window.phantom && window.phantom.solana) || window.solana;
+				if (!ph) throw new Error('Phantom wallet not found');
+				if (!ph.publicKey) { await ph.connect(); }
+				const buyer = ph.publicKey;
+				const MINT = new W.PublicKey(mint);
+				const sellerPk = new W.PublicKey(seller), teamPk = new W.PublicKey(team);
+				const conn = new W.Connection(rpc, 'confirmed');
+				const unit = Math.pow(10, decimals | 0);
+				const raw = (frac) => BigInt(Math.round(priceWhole * frac)) * BigInt(unit);   // whole-token legs
+				const buyerAta = await T.getAssociatedTokenAddress(MINT, buyer);
+				const sellerAta = await T.getAssociatedTokenAddress(MINT, sellerPk);
+				const teamAta = await T.getAssociatedTokenAddress(MINT, teamPk);
+				const tx = new W.Transaction();
+				// idempotent: creates the seller/team token account only if missing (buyer pays the ~0.002 SOL rent)
+				tx.add(T.createAssociatedTokenAccountIdempotentInstruction(buyer, sellerAta, sellerPk, MINT));
+				tx.add(T.createAssociatedTokenAccountIdempotentInstruction(buyer, teamAta, teamPk, MINT));
+				tx.add(T.createTransferCheckedInstruction(buyerAta, MINT, sellerAta, buyer, raw(sSeller), decimals | 0));
+				tx.add(T.createTransferCheckedInstruction(buyerAta, MINT, teamAta, buyer, raw(sTeam), decimals | 0));
+				tx.add(T.createBurnCheckedInstruction(buyerAta, MINT, buyer, raw(sBurn), decimals | 0));  // REAL burn — supply drops
+				tx.feePayer = buyer;
+				tx.recentBlockhash = (await conn.getLatestBlockhash('finalized')).blockhash;
+				const res = await ph.signAndSendTransaction(tx);
+				window.__chikiBuySig = (res && res.signature) ? res.signature : String(res);
+			} catch (e) {
+				window.__chikiBuyErr = String((e && e.message) || e || 'purchase failed');
+			}
+			window.__chikiBuyDone = '1';   // set LAST — the Godot poller treats this as "flow finished"
+		};
+		</script>
 		<script src="index.js"></script>
 		<script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":262676948,"index.wasm":40092042},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":262680340,"index.wasm":40092042},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
 const GODOT_THREADS_ENABLED = true;
 const engine = new Engine(GODOT_CONFIG);
 
