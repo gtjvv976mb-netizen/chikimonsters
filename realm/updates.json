@@ -1,6 +1,11 @@
 [
  {
   "date": "2026-07-21",
+  "title": "⚡ The island learned to sleep",
+  "body": "A deep performance pass, biggest on phones: the screen now renders at a sane pixel density on 3× retina displays (the UI was being painted at NINE times the pixels it needed), the ocean dropped to a fraction of its triangles on mobile, and the world finally sleeps when you're not looking — far fish schools, livestock, corruptimons and trees all pause simulation and drawing until you approach. The fixed sky no longer recomputes itself every frame either. Desktop looks identical; phones just breathe."
+ },
+ {
+  "date": "2026-07-21",
   "title": "📜 Ancient recipes + Craft Orders",
   "body": "Two big economy unlocks. ANCIENT RECIPES: the five sealed landmarks — the wicked temple, the raid altar, the crystal lode, the sunken galleon and the leviathan's cove — now each whisper a lost double-batch brewing recipe when you stand close and read their legend. Find all five and your cauldron yields 2× on those brews forever. CRAFT ORDERS: the Trading Post's new 📥 Orders tab lets you post what you NEED (\"WTB 20 hide — 400 $CHIKI\"). Your offer is escrowed on the spot; any trainer holding the goods taps Fill, hands them over and keeps 75%. Three open orders max, auto-refund after 25h."
  },
