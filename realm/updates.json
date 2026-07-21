@@ -1,6 +1,11 @@
 [
  {
   "date": "2026-07-21",
+  "title": "⚡ Phones got a serious speed-up",
+  "body": "Mobile now skips building what it never shows: the 168,000-blade grass field, the cloud layer, weather particles and the dynamic street-lamp lights simply don't exist on phones (lamps still glow at night). The world streams a tighter bubble around you. Your avatar, chikimon, and every building look exactly the same — the frame rate doesn't."
+ },
+ {
+  "date": "2026-07-21",
   "title": "🛡 Fairness & mobile hardening",
   "body": "A deep audit pass: one-tap Collect now banks BOTH purses (with the amount on the button and honest ceiling handling), phones always start on LOW graphics with a tighter world bubble, the touch joystick lives in its own bottom-left box, the reel duel is finally winnable by holding the Action button, joystick deflection cancels a gather, and the sideways mode survives every refresh. Plus a save-tampering hole was welded shut."
  },
@@ -43,10 +48,5 @@
   "date": "2026-07-20",
   "title": "🏪 On-chain Trading Post",
   "body": "Player-to-player buys settle as REAL $CHIKI on Solana: you sign in Phantom, the seller gets 75%, 20% feeds the reward pool, 5% burns forever. A Sales-receipts tab keeps your receipts with Solscan links."
- },
- {
-  "date": "2026-07-19",
-  "title": "🎣 Fantasy fish, rebalanced",
-  "body": "The five legends are now truly LEGENDARY: far rarer, gated by your rod level (Golden Chikifish at Rod 2 → Rainbow Fish at Rod 8), landed by your trainer rank, and richer spots roll better odds. Bring one to Mithra and she'll conjure an egg from its spark."
  }
 ]
