@@ -224,14 +224,16 @@ body {
 		</div>
 		<!-- tiny always-there switch to flip the chosen side mid-game (unrotated corner chip,
 		     tucked into the exact corner so it rides the top-bar fringe, never a button) -->
-		<div id="sideflip" style="position:fixed; right:2px; bottom:2px; z-index:99998; display:none; width:32px; height:32px;
-			border-radius:50%; background:rgba(10,22,44,.42); border:1px solid rgba(255,214,104,.4); color:#ffd968;
-			font-size:17px; line-height:30px; text-align:center; cursor:pointer; user-select:none; opacity:.75;">&#10561;</div>
+		<div id="sideflip" style="position:fixed; right:calc(8px + env(safe-area-inset-right, 0px)); bottom:calc(16px + env(safe-area-inset-bottom, 0px));
+			z-index:99998; display:none; width:40px; height:40px;
+			border-radius:50%; background:rgba(10,22,44,.62); border:2px solid rgba(255,214,104,.65); color:#ffd968;
+			font-size:20px; line-height:37px; text-align:center; cursor:pointer; user-select:none;
+			box-shadow:0 2px 8px rgba(0,0,0,.5);">&#10561;</div>
 		<style>@keyframes rotspin{0%,100%{transform:rotate(-18deg)}50%{transform:rotate(72deg)}}</style>
 		<script>
 		(function(){
 			// only on real touch phones; tablets/desktops are untouched (?forcephone = dev testing)
-			var isPhone = (('ontouchstart' in window) && (window.matchMedia && matchMedia('(pointer: coarse)').matches) && Math.min(screen.width, screen.height) < 820) || /[?&]forcephone/.test(location.search);
+			var isPhone = (('ontouchstart' in window) && !(window.matchMedia && matchMedia('(pointer: fine)').matches && matchMedia('(hover: hover)').matches) && Math.min(screen.width, screen.height) < 820) || /[?&]forcephone/.test(location.search);
 			var ov = document.getElementById('rotate');
 			var flipBtn = document.getElementById('sideflip');
 			if (!isPhone) { return; }
@@ -394,7 +396,25 @@ body {
 			try { if (screen.orientation && screen.orientation.lock) { screen.orientation.lock('landscape').catch(function(){}); } } catch(e){}
 			var stored = '';
 			try { stored = localStorage.getItem('chik_side') || ''; } catch(e){}
-			if (stored === 'cw' || stored === 'ccw') { setMode(stored, false); }   // returning player: rotate immediately
+			if (stored === 'cw' || stored === 'ccw') {
+				setMode(stored, false);   // returning player: rotate immediately, no chooser
+				// …but SHOW them where the sideways control lives now (one 6s hint per session)
+				var hinted = false;
+				try { hinted = sessionStorage.getItem('chik_fliphint') === '1'; } catch(e){}
+				if (!hinted) {
+					try { sessionStorage.setItem('chik_fliphint', '1'); } catch(e){}
+					var hint = document.createElement('div');
+					hint.textContent = '⤾ flips your side';
+					hint.style.cssText = 'position:fixed; right:calc(54px + env(safe-area-inset-right, 0px));' +
+						'bottom:calc(24px + env(safe-area-inset-bottom, 0px)); z-index:99998;' +
+						'background:rgba(10,22,44,.85); border:1px solid rgba(255,214,104,.6); color:#ffe07a;' +
+						'font:600 12px "Baloo 2","Segoe UI",sans-serif; padding:6px 10px; border-radius:10px;' +
+						'pointer-events:none; transition:opacity .6s;';
+					document.body.appendChild(hint);
+					setTimeout(function(){ hint.style.opacity = '0'; }, 5400);
+					setTimeout(function(){ if (hint.parentNode) { hint.remove(); } }, 6200);
+				}
+			}
 			else { applyOverlay(); }
 		})();
 		</script>
@@ -906,7 +926,7 @@ const engine = new Engine(GODOT_CONFIG);
 		// a quarter of the texture memory) — the difference between playing and the iOS memory
 		// ceiling. Missing lite manifest → graceful fallback to the HD pack.
 		tip.textContent = 'Building the realm…';
-		const wantLite = (('ontouchstart' in window) && (window.matchMedia && matchMedia('(pointer: coarse)').matches) && Math.min(screen.width, screen.height) < 820) || /[?&]forcephone/.test(location.search);
+		const wantLite = (('ontouchstart' in window) && !(window.matchMedia && matchMedia('(pointer: fine)').matches && matchMedia('(hover: hover)').matches) && Math.min(screen.width, screen.height) < 820) || /[?&]forcephone/.test(location.search);
 		let man = null;
 		if (wantLite) {
 			try {
@@ -925,7 +945,7 @@ const engine = new Engine(GODOT_CONFIG);
 			// 8-worker emscripten pool exhausts and risks deadlock on bigger machines.
 			// Phones run the LEANEST viable pool (4..6): every worker costs real memory on
 			// WKWebView, and memory is what kills + reloads the page there.
-			'emscriptenPoolSize': ((('ontouchstart' in window) && (window.matchMedia && matchMedia('(pointer: coarse)').matches) && Math.min(screen.width, screen.height) < 820) ? Math.min(Math.max(navigator.hardwareConcurrency || 4, 4), 6) : Math.min(Math.max(navigator.hardwareConcurrency || 8, 8) + 8, 24)),
+			'emscriptenPoolSize': ((('ontouchstart' in window) && !(window.matchMedia && matchMedia('(pointer: fine)').matches && matchMedia('(hover: hover)').matches) && Math.min(screen.width, screen.height) < 820) ? Math.min(Math.max(navigator.hardwareConcurrency || 4, 4), 6) : Math.min(Math.max(navigator.hardwareConcurrency || 8, 8) + 8, 24)),
 			'onProgress': function (cur, tot) {
 				if (cur > 0 && tot > 0) { setBar(0.82 + 0.18 * (cur / tot)); }
 			},
@@ -957,7 +977,7 @@ const engine = new Engine(GODOT_CONFIG);
 	} catch (e) {}
 	// the clip ships preload="none" (a parse-time preload="auto" started the 10MB fetch during
 	// the memory-critical load on phones) — non-phones upgrade here for an instant intro
-	if (vid && !((('ontouchstart' in window) && (window.matchMedia && matchMedia('(pointer: coarse)').matches) && Math.min(screen.width, screen.height) < 820) || /[?&]forcephone/.test(location.search))) {
+	if (vid && !((('ontouchstart' in window) && !(window.matchMedia && matchMedia('(pointer: fine)').matches && matchMedia('(hover: hover)').matches) && Math.min(screen.width, screen.height) < 820) || /[?&]forcephone/.test(location.search))) {
 		vid.preload = 'auto';
 	}
 
