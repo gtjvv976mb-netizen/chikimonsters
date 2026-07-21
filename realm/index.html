@@ -200,30 +200,184 @@ body {
 	<body>
 		<canvas id="canvas">Your browser does not support the canvas tag.</canvas>
 		<noscript>Your browser does not support JavaScript.</noscript>
-		<!-- MOBILE: Chikoria plays in LANDSCAPE. On a portrait phone, ask the player to rotate. -->
+		<!-- MOBILE: Chikoria plays in LANDSCAPE, but wallet in-app browsers (Phantom!) can't rotate.
+		     So on a portrait phone we ASK which way the player will turn the phone, then rotate the
+		     whole GAME 90° in CSS — the browser stays portrait, the world plays sideways. -->
 		<div id="rotate" style="position:fixed; inset:0; z-index:99999; display:none; flex-direction:column;
-			align-items:center; justify-content:center; gap:18px; text-align:center;
+			align-items:center; justify-content:center; gap:16px; text-align:center;
 			background:#0b1f4e url('loading.png') center/cover no-repeat; color:#ffe07a;
 			font-family:'Baloo 2','Segoe UI',sans-serif; padding:24px;">
-			<div style="position:absolute; inset:0; background:rgba(6,14,30,.72);"></div>
-			<div style="position:relative; font-size:64px; animation:rotspin 2.4s ease-in-out infinite;">&#128241;</div>
-			<div style="position:relative; font-size:22px; font-weight:700; text-shadow:0 2px 6px #000;">Rotate your phone to landscape</div>
-			<div style="position:relative; font-size:14px; color:#cfe0ff; max-width:320px; text-shadow:0 2px 6px #000;">Chikoria Realm is best played sideways. Turn your device horizontal to play.</div>
+			<div style="position:absolute; inset:0; background:rgba(6,14,30,.78);"></div>
+			<div style="position:relative; font-size:56px; animation:rotspin 2.4s ease-in-out infinite;">&#128241;</div>
+			<div style="position:relative; font-size:22px; font-weight:700; text-shadow:0 2px 6px #000;">Play sideways</div>
+			<div style="position:relative; font-size:14px; color:#cfe0ff; max-width:320px; text-shadow:0 2px 6px #000;">
+				This browser can't rotate on its own, so we'll turn the world for you.<br>Which way will you hold your phone?</div>
+			<div style="position:relative; display:flex; gap:14px;">
+				<button id="rotbtnL" style="font-family:inherit; font-size:16px; font-weight:700; color:#1c1204;
+					background:linear-gradient(180deg,#ffd968,#e8a93c); border:2px solid #8a5c14; border-radius:14px;
+					padding:14px 18px; cursor:pointer; box-shadow:0 4px 0 #6b430c;">&#10226; Turn phone<br>LEFT</button>
+				<button id="rotbtnR" style="font-family:inherit; font-size:16px; font-weight:700; color:#1c1204;
+					background:linear-gradient(180deg,#ffd968,#e8a93c); border:2px solid #8a5c14; border-radius:14px;
+					padding:14px 18px; cursor:pointer; box-shadow:0 4px 0 #6b430c;">&#10227; Turn phone<br>RIGHT</button>
+			</div>
+			<div id="rotskip" style="position:relative; font-size:12px; color:#9fb4d8; text-decoration:underline; cursor:pointer;">my browser rotates by itself — I'll just flip my phone</div>
 		</div>
+		<!-- tiny always-there switch to flip the chosen side mid-game (unrotated corner chip) -->
+		<div id="sideflip" style="position:fixed; right:6px; bottom:6px; z-index:99998; display:none; width:38px; height:38px;
+			border-radius:50%; background:rgba(10,22,44,.55); border:1px solid rgba(255,214,104,.5); color:#ffd968;
+			font-size:20px; line-height:36px; text-align:center; cursor:pointer; user-select:none;">&#10561;</div>
 		<style>@keyframes rotspin{0%,100%{transform:rotate(-18deg)}50%{transform:rotate(72deg)}}</style>
 		<script>
 		(function(){
-			// only nag on real touch phones; tablets/desktops are fine either way
-			var isPhone = ('ontouchstart' in window) && Math.min(screen.width, screen.height) < 820;
-			function apply(){
-				var portrait = (window.matchMedia && matchMedia('(orientation: portrait)').matches) || (innerHeight > innerWidth);
-				document.getElementById('rotate').style.display = (isPhone && portrait) ? 'flex' : 'none';
+			// only on real touch phones; tablets/desktops are untouched (?forcephone = dev testing)
+			var isPhone = (('ontouchstart' in window) && Math.min(screen.width, screen.height) < 820) || /[?&]forcephone/.test(location.search);
+			var ov = document.getElementById('rotate');
+			var flipBtn = document.getElementById('sideflip');
+			if (!isPhone) { return; }
+			var canvas = document.getElementById('canvas');
+			var MODE = '';            // '' | 'cw' (phone turned LEFT) | 'ccw' (phone turned RIGHT)
+			var wrap = null;
+			// real viewport dims, immune to our own innerWidth/innerHeight patch
+			var _wD = Object.getOwnPropertyDescriptor(window, 'innerWidth');
+			var _hD = Object.getOwnPropertyDescriptor(window, 'innerHeight');
+			function rW(){ try { if (_wD && _wD.get) { return _wD.get.call(window); } } catch(e){} return document.documentElement.clientWidth; }
+			function rH(){ try { if (_hD && _hD.get) { return _hD.get.call(window); } } catch(e){} return document.documentElement.clientHeight; }
+			function portrait(){ return rH() > rW(); }
+			function active(){ return MODE !== '' && portrait(); }   // real landscape → rotation auto-suspends
+			// the ENGINE (adaptive canvas sizing) must believe the viewport is landscape while forced
+			try {
+				Object.defineProperty(window, 'innerWidth',  { configurable:true, get:function(){ return active() ? rH() : rW(); } });
+				Object.defineProperty(window, 'innerHeight', { configurable:true, get:function(){ return active() ? rW() : rH(); } });
+			} catch(e) {}
+			// Godot converts touches with canvas.getBoundingClientRect(); a rotated canvas reports its
+			// AABB, so hand it the UNROTATED rect instead — then our remapped coords line up exactly.
+			var bcr0 = canvas.getBoundingClientRect.bind(canvas);
+			canvas.getBoundingClientRect = function(){
+				if (!active()) { return bcr0(); }
+				var w = rH(), h = rW();
+				return { x:0, y:0, left:0, top:0, right:w, bottom:h, width:w, height:h };
+			};
+			var _synthRs = false;
+			function pokeEngine(){ _synthRs = true; try { window.dispatchEvent(new Event('resize')); } catch(e){} _synthRs = false; }
+			function ensureWrap(){
+				if (wrap) { return; }
+				wrap = document.createElement('div');
+				wrap.id = 'rotwrap';
+				wrap.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);';
+				document.body.insertBefore(wrap, canvas);
+				// the WHOLE experience rotates: game canvas + hero + loading + intro video
+				['canvas','boot','hero','cine'].forEach(function(id){
+					var el = document.getElementById(id);
+					if (el) { wrap.appendChild(el); }
+				});
 			}
-			window.addEventListener('resize', apply);
-			window.addEventListener('orientationchange', apply);
-			// best-effort orientation lock (works in installed/PWA or after a fullscreen gesture; harmless otherwise)
-			try { if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(function(){}); } catch(e){}
-			apply();
+			function layout(){
+				var on = active();
+				if (wrap) {
+					wrap.style.width  = (on ? rH() : rW()) + 'px';
+					wrap.style.height = (on ? rW() : rH()) + 'px';
+					wrap.style.transform = 'translate(-50%,-50%)' + (on ? (' rotate(' + (MODE === 'cw' ? '90' : '-90') + 'deg)') : '');
+				}
+				flipBtn.style.display = on ? 'block' : 'none';
+				pokeEngine();
+			}
+			function applyOverlay(){
+				var dismissed = false;
+				try { dismissed = sessionStorage.getItem('chik_norot') === '1'; } catch(e){}
+				ov.style.display = (portrait() && MODE === '' && !dismissed) ? 'flex' : 'none';
+			}
+			function setMode(m, persist){
+				MODE = m;
+				if (m !== '') {
+					ensureWrap();
+					if (persist) { try { localStorage.setItem('chik_side', m); } catch(e){} }
+				}
+				layout();
+				applyOverlay();
+				var c = document.getElementById('canvas');
+				if (c) { try { c.focus(); } catch(e){} }
+			}
+			// ---- input remap: touches on the rotated CANVAS get mapped into game space.
+			// DOM overlays (hero/boot/video/dialogs) hit-test natively through the CSS transform,
+			// so ONLY canvas-targeted events are intercepted. Synthetic events (isTrusted=false)
+			// pass straight through — that's our own re-dispatch.
+			function mapXY(px, py){
+				var W = rW(), H = rH();
+				return (MODE === 'cw') ? { x: py, y: W - px } : { x: H - py, y: px };
+			}
+			function synthTouch(e, tp){
+				if (typeof Touch !== 'function' || typeof TouchEvent !== 'function') { return null; }
+				try {
+					var conv = function(list){
+						var out = [];
+						for (var i = 0; i < list.length; i++){
+							var t = list[i], m = mapXY(t.clientX, t.clientY);
+							out.push(new Touch({ identifier:t.identifier, target:canvas, clientX:m.x, clientY:m.y,
+								screenX:m.x, screenY:m.y, pageX:m.x, pageY:m.y,
+								radiusX:t.radiusX || 1, radiusY:t.radiusY || 1, force:t.force || 1 }));
+						}
+						return out;
+					};
+					return new TouchEvent(tp, { bubbles:true, cancelable:true,
+						touches:conv(e.touches), targetTouches:conv(e.targetTouches), changedTouches:conv(e.changedTouches) });
+				} catch(err) { return null; }
+			}
+			function synthMouseFromTouch(e, tp){
+				// ancient WebView without the Touch constructor: single-finger mouse emulation
+				var mmap = { touchstart:'mousedown', touchmove:'mousemove', touchend:'mouseup', touchcancel:'mouseup' };
+				var t = e.changedTouches && e.changedTouches[0];
+				if (!t) { return; }
+				var m = mapXY(t.clientX, t.clientY);
+				var me = new MouseEvent(mmap[tp], { bubbles:true, cancelable:true, button:0,
+					buttons:(tp === 'touchend' || tp === 'touchcancel') ? 0 : 1, clientX:m.x, clientY:m.y });
+				try { me.__synth = true; } catch(err) {}
+				canvas.dispatchEvent(me);
+			}
+			['touchstart','touchmove','touchend','touchcancel',
+			 'mousedown','mousemove','mouseup',
+			 'pointerdown','pointermove','pointerup','pointercancel'].forEach(function(tp){
+				window.addEventListener(tp, function(e){
+					// __rotTestTrust: dev hook so automated tests can exercise the remap (synthetic
+					// events are never trusted); __synth marks OUR re-dispatch so it always passes through
+					if (!active() || e.__synth || !(e.isTrusted || window.__rotTestTrust) || e.target !== canvas) { return; }
+					e.stopImmediatePropagation(); e.stopPropagation();
+					if (e.cancelable) { e.preventDefault(); }
+					var se = null;
+					if (tp.slice(0, 5) === 'touch') {
+						se = synthTouch(e, tp);
+						if (!se) { synthMouseFromTouch(e, tp); return; }
+					} else if (tp.slice(0, 7) === 'pointer' && window.PointerEvent) {
+						var mp = mapXY(e.clientX, e.clientY);
+						se = new PointerEvent(tp, { bubbles:true, cancelable:true, pointerId:e.pointerId,
+							pointerType:e.pointerType, isPrimary:e.isPrimary, button:e.button, buttons:e.buttons,
+							clientX:mp.x, clientY:mp.y, screenX:mp.x, screenY:mp.y });
+					} else {
+						var mm = mapXY(e.clientX, e.clientY);
+						se = new MouseEvent(tp, { bubbles:true, cancelable:true, button:e.button, buttons:e.buttons,
+							clientX:mm.x, clientY:mm.y, screenX:mm.x, screenY:mm.y });
+					}
+					if (se) {
+						try { se.__synth = true; } catch(err) {}
+						canvas.dispatchEvent(se);
+					}
+				}, { capture:true, passive:false });
+			});
+			// ---- wire the chooser + the mid-game side flip ----
+			document.getElementById('rotbtnL').addEventListener('click', function(){ setMode('cw', true); });
+			document.getElementById('rotbtnR').addEventListener('click', function(){ setMode('ccw', true); });
+			document.getElementById('rotskip').addEventListener('click', function(){
+				try { sessionStorage.setItem('chik_norot', '1'); } catch(e){}
+				applyOverlay();
+			});
+			flipBtn.addEventListener('click', function(){ setMode(MODE === 'cw' ? 'ccw' : 'cw', true); });
+			window.addEventListener('resize', function(){ if (_synthRs) { return; } layout(); applyOverlay(); });
+			window.addEventListener('orientationchange', function(){ layout(); applyOverlay(); });
+			// best-effort REAL orientation lock (works in installed/PWA contexts; harmless otherwise)
+			try { if (screen.orientation && screen.orientation.lock) { screen.orientation.lock('landscape').catch(function(){}); } } catch(e){}
+			var stored = '';
+			try { stored = localStorage.getItem('chik_side') || ''; } catch(e){}
+			if (stored === 'cw' || stored === 'ccw') { setMode(stored, false); }   // returning player: rotate immediately
+			else { applyOverlay(); }
 		})();
 		</script>
 		<div id="boot">
