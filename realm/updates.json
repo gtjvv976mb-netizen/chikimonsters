@@ -1,6 +1,11 @@
 [
  {
   "date": "2026-07-22",
+  "title": "🎮 Pocket Realm, rebuilt for thumbs",
+  "body": "The mobile island got a full make-over: the castle, town walls, shops, streetlights, trees and resource models now render at 4-6x fewer blocks (your trainer, chikimon and other players stay full-detail), the cobblestone road smoothed into a clean plain road, and every label grew ~20% so nothing squints. The touch controls are now carved wood and gold like the rest of the realm — joystick low-left, E / JUMP / RUN in the open lower-right, clear of every panel and bar. And long trainer names now fit their nameplate banner perfectly."
+ },
+ {
+  "date": "2026-07-22",
   "title": "🌍 Fixed: PCs stuck at 82%",
   "body": "Some desktops — mostly touchscreen laptops or screens on high display scaling — were being mistaken for phones. They got the mobile game pack and a phone-sized engine thread pool, which stalled the load at exactly 82% and could crash the tab, or dropped you into the mobile version on a PC. Device detection is now exact: phones get the pocket build, every desktop and tablet gets the full build. If you were stuck at 82%, it was never your PC — try again."
  },
