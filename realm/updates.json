@@ -1,6 +1,11 @@
 [
  {
   "date": "2026-07-21",
+  "title": "🎣 The legends grew rarer",
+  "body": "Fantasy fish are now 2× harder to hook across the board — Golden Chikifish 1-in-167, Crystal Koi 1-in-500, Mystic Eel 1-in-1429, Rainbow Fish 1-in-5000 base per cast (before your rod bonus and spot richness). Landing one MEANS something."
+ },
+ {
+  "date": "2026-07-21",
   "title": "🌟 Pocket Realm — mobile got HALF the weight",
   "body": "Phones now download a dedicated mobile-lite pack: half the bytes, a quarter of the texture memory — made for wallet browsers like Phantom. Desktop keeps full HD. Everyone also saves 50MB from a build-time cleanup, and the loader now survives connection hiccups with automatic retries."
  },
