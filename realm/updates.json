@@ -1,5 +1,10 @@
 [
  {
+  "date": "2026-07-22",
+  "title": "🔗 Choose your door: Wallet or Demo",
+  "body": "The realm no longer assumes who you are. Every session now opens on a clear choice: CONNECT your Phantom wallet to load your real trainer, progress and $CHIKI — or PLAY DEMO to try the whole island first as the Wanderer with three random chikimon and a mount. The demo is a sealed sandbox: explore, gather, fish and battle everywhere, but nothing saves, nothing earns, no trading, and it never touches the live world — reload and connect whenever you're ready to make it real."
+ },
+ {
   "date": "2026-07-21",
   "title": "⚡ The island learned to sleep",
   "body": "A deep performance pass, biggest on phones: the screen now renders at a sane pixel density on 3× retina displays (the UI was being painted at NINE times the pixels it needed), the ocean dropped to a fraction of its triangles on mobile, and the world finally sleeps when you're not looking — far fish schools, livestock, corruptimons and trees all pause simulation and drawing until you approach. The fixed sky no longer recomputes itself every frame either. Desktop looks identical; phones just breathe."
