@@ -1,6 +1,11 @@
 [
  {
   "date": "2026-07-21",
+  "title": "🔨 Crafting, refined",
+  "body": "Brewing grew up: potions and food now craft ×5 or MAX in one tap (with a live 'can make N' count), every missing material tells you exactly WHERE to get it when you hover its red chip, and the artisan's secret is out — every craft has a 12% MASTERWORK chance that refunds half the materials. Gear ladders are untouched: each tier is still a one-off upgrade."
+ },
+ {
+  "date": "2026-07-21",
   "title": "⚡ Phones got a serious speed-up",
   "body": "Mobile now skips building what it never shows: the 168,000-blade grass field, the cloud layer, weather particles and the dynamic street-lamp lights simply don't exist on phones (lamps still glow at night). The world streams a tighter bubble around you. Your avatar, chikimon, and every building look exactly the same — the frame rate doesn't."
  },
@@ -43,10 +48,5 @@
   "date": "2026-07-21",
   "title": "📊 Smart collection pop-ups",
   "body": "Chikidex, Mountdex and Avatars gained live progress meters, Meme Dynasty scarcity bars (minted / cap), rarity glow on what you own, owned-first sorting, a 🎯 'next to finish' nudge — and the 3D viewer now compares any steed or chikimon against YOURS."
- },
- {
-  "date": "2026-07-20",
-  "title": "🏪 On-chain Trading Post",
-  "body": "Player-to-player buys settle as REAL $CHIKI on Solana: you sign in Phantom, the seller gets 75%, 20% feeds the reward pool, 5% burns forever. A Sales-receipts tab keeps your receipts with Solscan links."
  }
 ]
