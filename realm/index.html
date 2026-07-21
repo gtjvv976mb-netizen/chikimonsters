@@ -661,7 +661,7 @@ body {
 		</script>
 		<script src="index.js"></script>
 		<script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":240302376,"index.wasm":40092042},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":198619432,"index.wasm":40092042},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
 const GODOT_THREADS_ENABLED = true;
 const engine = new Engine(GODOT_CONFIG);
 
@@ -856,9 +856,19 @@ const engine = new Engine(GODOT_CONFIG);
 			releaseWasm = function () { hold.blob = null; };
 		}
 
-		// 2. Reassemble the realm data pack.
+		// 2. Reassemble the realm data pack. PHONES load the MOBILE-LITE pack (half the bytes,
+		// a quarter of the texture memory) — the difference between playing and the iOS memory
+		// ceiling. Missing lite manifest → graceful fallback to the HD pack.
 		tip.textContent = 'Building the realm…';
-		const man = await fetchJSON('index.pck.manifest.json', 4);
+		const wantLite = (('ontouchstart' in window) && Math.min(screen.width, screen.height) < 820) || /[?&]forcephone/.test(location.search);
+		let man = null;
+		if (wantLite) {
+			try {
+				man = await fetchJSON('index.pck.lite.manifest.json', 2);
+				tip.textContent = 'Building the pocket realm…';
+			} catch (e) { man = null; }
+		}
+		if (!man) { man = await fetchJSON('index.pck.manifest.json', 4); }
 		const pckChunks = await streamParts(man.chunks, man.total, 0.12, 0.82, man.v || '');
 		const pckBlob = new Blob(pckChunks, { type: 'application/octet-stream' }); pckChunks.length = 0; const packUrl = URL.createObjectURL(pckBlob);
 

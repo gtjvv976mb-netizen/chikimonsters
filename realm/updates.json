@@ -1,6 +1,11 @@
 [
  {
   "date": "2026-07-21",
+  "title": "🌟 Pocket Realm — mobile got HALF the weight",
+  "body": "Phones now download a dedicated mobile-lite pack: half the bytes, a quarter of the texture memory — made for wallet browsers like Phantom. Desktop keeps full HD. Everyone also saves 50MB from a build-time cleanup, and the loader now survives connection hiccups with automatic retries."
+ },
+ {
+  "date": "2026-07-21",
   "title": "📜 System log + Update board + XP bar",
   "body": "The Chat box gained a SYSTEM tab — a timestamped history of every notification (XP, purchases, level-ups, hatches) so nothing vanishes with the toast. This very Update Board is now LIVE-fed each deploy. And your trainer level + XP progress sits under the logo, always on screen."
  },
