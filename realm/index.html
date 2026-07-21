@@ -802,10 +802,15 @@ const engine = new Engine(GODOT_CONFIG);
 					await new Promise(function (ok) { setTimeout(ok, 700 * (attempt + 1)); });
 				}
 			}
-			for (let k = 0; k < chunk.length; k++) { buf.push(chunk[k]); }
+			// wrap the finished chunk into a Blob IMMEDIATELY and drop the raw arrays: WebKit
+			// keeps Blobs in a registry that can spill to disk, so the JS heap only ever holds
+			// ~one 24MB chunk instead of the whole 240MB pck — the double-copy peak was
+			// jetsam-killing iPhone WKWebViews (Phantom) into an endless reload loop.
+			buf.push(new Blob(chunk));
+			chunk.length = 0;
 			done += chunkBytes;
 		}
-		return buf;
+		return buf;   // Blob parts — new Blob(buf) references them without copying
 	}
 
 	async function run() {
@@ -832,18 +837,23 @@ const engine = new Engine(GODOT_CONFIG);
 			vt = await fetchJSON('virtual-files.json', 3);
 		} catch (e) { /* no virtual-files table → wasm is a single file; leave fetch alone */ }
 		const w = vt && vt['index.wasm'];
+		let releaseWasm = null;
 		if (w && w.parts && w.parts.length) {
 			tip.textContent = 'Downloading the engine…';
 			const wasmChunks = await streamParts(w.parts, w.total, 0.0, 0.12, vt.v || '');
-			const wasmBlob = new Blob(wasmChunks, { type: 'application/wasm' }); wasmChunks.length = 0;
+			// holder (not a const capture) so the 40MB blob can be RELEASED once the engine
+			// has compiled it — WKWebView memory is the scarcest resource we have
+			const hold = { blob: new Blob(wasmChunks, { type: 'application/wasm' }) };
+			wasmChunks.length = 0;
 			const realFetch = window.fetch.bind(window);
 			window.fetch = function (input, init) {
 				const u = (typeof input === 'string') ? input : (input && input.url) || '';
-				if (u.split('?')[0].split('#')[0].endsWith('index.wasm')) {
-					return Promise.resolve(new Response(wasmBlob, { status: 200, headers: { 'Content-Type': 'application/wasm' } }));
+				if (hold.blob && u.split('?')[0].split('#')[0].endsWith('index.wasm')) {
+					return Promise.resolve(new Response(hold.blob, { status: 200, headers: { 'Content-Type': 'application/wasm' } }));
 				}
 				return realFetch(input, init);
 			};
+			releaseWasm = function () { hold.blob = null; };
 		}
 
 		// 2. Reassemble the realm data pack.
@@ -856,17 +866,41 @@ const engine = new Engine(GODOT_CONFIG);
 		await engine.startGame({
 			'mainPack': packUrl,
 			// the voxel engine spawns streaming/meshing workers per core — the default
-			// 8-worker emscripten pool exhausts and risks deadlock on bigger machines
-			'emscriptenPoolSize': ((('ontouchstart' in window) && Math.min(screen.width, screen.height) < 820) ? Math.min((navigator.hardwareConcurrency || 4) + 2, 8) : Math.min(Math.max(navigator.hardwareConcurrency || 8, 8) + 8, 24)),
+			// 8-worker emscripten pool exhausts and risks deadlock on bigger machines.
+			// Phones run the LEANEST viable pool (4..6): every worker costs real memory on
+			// WKWebView, and memory is what kills + reloads the page there.
+			'emscriptenPoolSize': ((('ontouchstart' in window) && Math.min(screen.width, screen.height) < 820) ? Math.min(Math.max(navigator.hardwareConcurrency || 4, 4), 6) : Math.min(Math.max(navigator.hardwareConcurrency || 8, 8) + 8, 24)),
 			'onProgress': function (cur, tot) {
 				if (cur > 0 && tot > 0) { setBar(0.82 + 0.18 * (cur / tot)); }
 			},
 		});
-		// the realm is built — if the player already pressed the coin, roll the intro clip;
-		// otherwise hold on the hero until they do (the game idles ready behind it)
+		// the realm is built — free every staging copy NOW: the engine has the pck in its own
+		// filesystem and the wasm is compiled, so the 240MB pack blob + 40MB wasm blob are pure
+		// dead weight. On iPhone WKWebView (Phantom) this margin is the difference between
+		// playing and the OS killing + reloading the page in a loop.
+		try { URL.revokeObjectURL(packUrl); } catch (e) {}
+		if (releaseWasm) { releaseWasm(); }
+		try { sessionStorage.setItem('realm-was-running', '1'); } catch (e) {}
 		engineReady = true;
 		setBar(1.0);
 		maybeAdvance();
+	}
+
+	// OOM-loop detector: 'realm-was-running' is stamped only after a successful boot. If it is
+	// STILL set when this load starts, the previous instance was killed mid-play (iOS reclaims
+	// the tab's memory and silently reloads) — tell the player instead of looping silently.
+	try {
+		if (sessionStorage.getItem('realm-was-running') === '1') {
+			sessionStorage.removeItem('realm-was-running');
+			const oomN = parseInt(sessionStorage.getItem('realm-oom') || '0', 10) + 1;
+			sessionStorage.setItem('realm-oom', String(oomN));
+			err.textContent = '⚠️ The realm restarted — this device ran low on memory. Closing other apps and browser tabs helps a lot.';
+		}
+	} catch (e) {}
+	// phones: don't buffer the 10MB intro clip during the (memory-critical) load — fetch it
+	// only when it actually plays
+	if (('ontouchstart' in window) && Math.min(screen.width, screen.height) < 820 && vid) {
+		vid.preload = 'none';
 	}
 
 	const missing = Engine.getMissingFeatures({ threads: GODOT_THREADS_ENABLED });
