@@ -232,8 +232,17 @@ body {
 		<style>@keyframes rotspin{0%,100%{transform:rotate(-18deg)}50%{transform:rotate(72deg)}}</style>
 		<script>
 		(function(){
-			// only on real touch phones; tablets/desktops are untouched (?forcephone = dev testing)
-			var isPhone = (('ontouchstart' in window) && !(window.matchMedia && matchMedia('(pointer: fine)').matches && matchMedia('(hover: hover)').matches) && Math.min(screen.width, screen.height) < 820) || /[?&]forcephone/.test(location.search);
+			// ONE deterministic phone check for the whole shell. The old touch+screen-size
+			// heuristic misfired on touchscreen / high-display-scaling DESKTOPS (Windows at
+			// 200-250% scaling reports a sub-820px CSS screen), which handed PCs the phone
+			// loader: mobile-lite pack + a 4-6 worker pool -> voxel boot DEADLOCK at 82%.
+			// The user agent is unambiguous here: Phantom/Safari on iPhone always says
+			// iPhone; Android phone browsers always say Android+Mobile. Tablets and every
+			// desktop take the full desktop build. (?forcephone = dev testing)
+			window.CHIK_PHONE = /iPhone|iPod/.test(navigator.userAgent)
+				|| (/Android/i.test(navigator.userAgent) && /Mobile/i.test(navigator.userAgent))
+				|| /[?&]forcephone/.test(location.search);
+			var isPhone = window.CHIK_PHONE;
 			var ov = document.getElementById('rotate');
 			var flipBtn = document.getElementById('sideflip');
 			if (!isPhone) { return; }
@@ -926,7 +935,7 @@ const engine = new Engine(GODOT_CONFIG);
 		// a quarter of the texture memory) — the difference between playing and the iOS memory
 		// ceiling. Missing lite manifest → graceful fallback to the HD pack.
 		tip.textContent = 'Building the realm…';
-		const wantLite = (('ontouchstart' in window) && !(window.matchMedia && matchMedia('(pointer: fine)').matches && matchMedia('(hover: hover)').matches) && Math.min(screen.width, screen.height) < 820) || /[?&]forcephone/.test(location.search);
+		const wantLite = !!window.CHIK_PHONE;
 		let man = null;
 		if (wantLite) {
 			try {
@@ -954,7 +963,7 @@ const engine = new Engine(GODOT_CONFIG);
 			// 8-worker emscripten pool exhausts and risks deadlock on bigger machines.
 			// Phones run the LEANEST viable pool (4..6): every worker costs real memory on
 			// WKWebView, and memory is what kills + reloads the page there.
-			'emscriptenPoolSize': ((('ontouchstart' in window) && !(window.matchMedia && matchMedia('(pointer: fine)').matches && matchMedia('(hover: hover)').matches) && Math.min(screen.width, screen.height) < 820) ? Math.min(Math.max(navigator.hardwareConcurrency || 4, 4), 6) : Math.min(Math.max(navigator.hardwareConcurrency || 8, 8) + 8, 24)),
+			'emscriptenPoolSize': (!!window.CHIK_PHONE ? Math.min(Math.max(navigator.hardwareConcurrency || 4, 4), 6) : Math.min(Math.max(navigator.hardwareConcurrency || 8, 8) + 8, 24)),
 			'onProgress': function (cur, tot) {
 				if (cur > 0 && tot > 0) { setBar(0.82 + 0.18 * (cur / tot)); }
 			},
@@ -986,7 +995,7 @@ const engine = new Engine(GODOT_CONFIG);
 	} catch (e) {}
 	// the clip ships preload="none" (a parse-time preload="auto" started the 10MB fetch during
 	// the memory-critical load on phones) — non-phones upgrade here for an instant intro
-	if (vid && !((('ontouchstart' in window) && !(window.matchMedia && matchMedia('(pointer: fine)').matches && matchMedia('(hover: hover)').matches) && Math.min(screen.width, screen.height) < 820) || /[?&]forcephone/.test(location.search))) {
+	if (vid && !window.CHIK_PHONE) {
 		vid.preload = 'auto';
 	}
 

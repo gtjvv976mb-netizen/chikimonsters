@@ -1,6 +1,11 @@
 [
  {
   "date": "2026-07-22",
+  "title": "🌍 Fixed: PCs stuck at 82%",
+  "body": "Some desktops — mostly touchscreen laptops or screens on high display scaling — were being mistaken for phones. They got the mobile game pack and a phone-sized engine thread pool, which stalled the load at exactly 82% and could crash the tab, or dropped you into the mobile version on a PC. Device detection is now exact: phones get the pocket build, every desktop and tablet gets the full build. If you were stuck at 82%, it was never your PC — try again."
+ },
+ {
+  "date": "2026-07-22",
   "title": "🔗 Choose your door: Wallet or Demo",
   "body": "The realm no longer assumes who you are. Every session now opens on a clear choice: CONNECT your Phantom wallet to load your real trainer, progress and $CHIKI — or PLAY DEMO to try the whole island first as the Wanderer with three random chikimon and a mount. The demo is a sealed sandbox: explore, gather, fish and battle everywhere, but nothing saves, nothing earns, no trading, and it never touches the live world — reload and connect whenever you're ready to make it real."
  },
