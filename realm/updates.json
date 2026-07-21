@@ -1,6 +1,11 @@
 [
  {
   "date": "2026-07-21",
+  "title": "🛡 Fairness & mobile hardening",
+  "body": "A deep audit pass: one-tap Collect now banks BOTH purses (with the amount on the button and honest ceiling handling), phones always start on LOW graphics with a tighter world bubble, the touch joystick lives in its own bottom-left box, the reel duel is finally winnable by holding the Action button, joystick deflection cancels a gather, and the sideways mode survives every refresh. Plus a save-tampering hole was welded shut."
+ },
+ {
+  "date": "2026-07-21",
   "title": "🎣 The legends grew rarer",
   "body": "Fantasy fish are now 2× harder to hook across the board — Golden Chikifish 1-in-167, Crystal Koi 1-in-500, Mystic Eel 1-in-1429, Rainbow Fish 1-in-5000 base per cast (before your rod bonus and spot richness). Landing one MEANS something."
  },
@@ -43,10 +48,5 @@
   "date": "2026-07-19",
   "title": "🎣 Fantasy fish, rebalanced",
   "body": "The five legends are now truly LEGENDARY: far rarer, gated by your rod level (Golden Chikifish at Rod 2 → Rainbow Fish at Rod 8), landed by your trainer rank, and richer spots roll better odds. Bring one to Mithra and she'll conjure an egg from its spark."
- },
- {
-  "date": "2026-07-18",
-  "title": "📖 Act I — 63 chapters",
-  "body": "The campaign tripled: a 63-chapter journey across Chikoria with egg, fishing, market and scroll chapters — and the main-story chapters pay REAL on-chain $CHIKI from the reward pool, server-verified."
  }
 ]

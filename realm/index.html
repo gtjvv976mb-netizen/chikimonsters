@@ -231,7 +231,7 @@ body {
 		<script>
 		(function(){
 			// only on real touch phones; tablets/desktops are untouched (?forcephone = dev testing)
-			var isPhone = (('ontouchstart' in window) && Math.min(screen.width, screen.height) < 820) || /[?&]forcephone/.test(location.search);
+			var isPhone = (('ontouchstart' in window) && (window.matchMedia && matchMedia('(pointer: coarse)').matches) && Math.min(screen.width, screen.height) < 820) || /[?&]forcephone/.test(location.search);
 			var ov = document.getElementById('rotate');
 			var flipBtn = document.getElementById('sideflip');
 			if (!isPhone) { return; }
@@ -261,17 +261,25 @@ body {
 			var _synthRs = false;
 			function pokeEngine(){ _synthRs = true; try { window.dispatchEvent(new Event('resize')); } catch(e){} _synthRs = false; }
 			function ensureWrap(){
-				if (wrap) { return; }
-				wrap = document.createElement('div');
-				wrap.id = 'rotwrap';
-				wrap.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);';
-				document.body.insertBefore(wrap, canvas);
-				// the WHOLE experience rotates: game canvas + hero + loading + intro video
+				if (!wrap) {
+					wrap = document.createElement('div');
+					wrap.id = 'rotwrap';
+					wrap.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);';
+					document.body.insertBefore(wrap, canvas);
+				}
+				// the WHOLE experience rotates: game canvas + hero + loading + intro video.
+				// IDEMPOTENT adoption: this module runs BEFORE #boot/#hero/#cine exist in the
+				// DOM, so a stored side applied at parse time only caught the canvas — the
+				// refreshed homepage/loading page stayed portrait. DOMContentLoaded re-adopts.
 				['canvas','boot','hero','cine'].forEach(function(id){
 					var el = document.getElementById(id);
-					if (el) { wrap.appendChild(el); }
+					if (el && el.parentNode !== wrap) { wrap.appendChild(el); }
 				});
 			}
+			document.addEventListener('DOMContentLoaded', function(){
+				if (MODE !== '') { ensureWrap(); layout(); }
+				applyOverlay();
+			});
 			function layout(){
 				var on = active();
 				if (wrap) {
@@ -403,6 +411,7 @@ body {
 				<button class="ltab" data-tab="rewards">&#127942; REWARDS</button>
 				<button class="ltab" data-tab="chikis">CHIKIDEX</button>
 				<button class="ltab" data-tab="play2">HOW TO PLAY</button>
+				<button class="ltab" data-tab="roles">&#9874; ROLES</button>
 				<button class="ltab" data-tab="regions">EVERFLAME ISLE</button>
 				<button class="ltab" data-tab="token">$CHIKI</button>
 				<button class="ltab" data-tab="community">COMMUNITY</button>
@@ -439,7 +448,7 @@ body {
 					<div class="lcard"><b>&#9876; Chikoria Cup</b><br>The arena tournament crowns a champion with a SOL prize from the pool.</div>
 					<div class="lcard"><b>&#128737; Fair &amp; verified</b><br>Completions are validated server-side and reviewed before payout — on-chain, verifiable on Solscan.</div>
 					<div class="lcard"><b>&#9200; The race is live</b><br>Champion slots are first-come. Every chapter you clear today is a head start.</div>
-					<div class="lcard"><b>&#128188; How you get paid</b><br>Two purses: the COIN POUCH holds in-game coins from dailies &amp; raids (press Collect). The REWARD VAULT holds your real story-quest $CHIKI — track it in the LEDGER tab; payouts release from the pool automatically, no signature, no gas.</div>
+					<div class="lcard"><b>&#128188; How you get paid</b><br>Two purses: the COIN POUCH holds in-game coins from dailies &amp; side quests (press Collect). The REWARD VAULT holds your real story-quest $CHIKI — track it in the LEDGER tab; payouts release from the pool automatically, no signature, no gas.</div>
 				</div>
 				<p class="lhook">Ten crowns. One island. The Everflame remembers who answered first.</p>
 			</div>
@@ -481,18 +490,39 @@ body {
 				<h2>&#127918; How to Play</h2>
 				<ul>
 					<li><b>Sign in with Phantom</b> — a free, gas-less message signature proves the wallet is yours (never a transaction; we never ask for private keys or seed phrases). Hold &ge;500k $CHIKI and tap your egg to hatch (a hidden lucky number wins a Legendary!).</li>
-					<li><b>Move</b> with WASD &middot; Shift to run &middot; Space to jump &middot; right-drag to look &middot; wheel to zoom. On phones: touch joystick + buttons.</li>
-					<li><b>Press E</b> to gather trees, rocks, ores and more &middot; craft tools at the Craft Shop to gather much faster.</li>
-					<li><b>Press P</b> for your menu — quests, satchel, team, mounts, avatar and gear.</li>
-					<li><b>Battle</b> corruptimons with your chikimon's ability cards (1&ndash;4 to play, R ends the turn, V auto) &middot; duel trainers with G &middot; enter the Chikoria Cup at the Chikiseum.</li>
-					<li><b>Follow the campaign</b> — ACT I &middot; MASTER OF CHIKORIA, 21 chapters across 3 parts, paying real $CHIKI from the reward pool.</li>
-					<li><b>Trade with players</b> at the Trading Post — when your listing sells, 95% of the price lands in your purse automatically (5% burns as the market fee).</li>
+					<li><b>Mouse-first movement</b> — click the ground to walk there; <b>HOLD the button ~&frac14;s and you break into a RUN</b> that steers after your cursor (release to finish the trip). WASD &middot; Shift &middot; Space still work &middot; right-drag looks &middot; wheel zooms.</li>
+					<li><b>On phones</b> — pick which way you'll turn your phone and the whole realm plays sideways (wallet browsers can't rotate, so we rotate FOR you). Bottom-left joystick moves, quick-tap walks, drag looks, pinch zooms.</li>
+					<li><b>Press E</b> to gather trees, rocks, ores and more &middot; craft tools at the Craft Shop to gather much faster — every gather is exactly ONE item, for everyone.</li>
+					<li><b>Press P</b> for your menu — quests, satchel, team, mounts, avatar and gear. The <b>System tab in Chat</b> keeps a timestamped log of every notification you missed.</li>
+					<li><b>Battle</b> corruptimons with your chikimon's ability cards (1&ndash;4 to play, R ends the turn, V auto) &middot; spar trainers with G &middot; enter the Chikoria Cup at the Chikiseum.</li>
+					<li><b>Fish for eggs</b> — eggs can't be bought: the four fantasy fish are the only way Mithra conjures new chikimon, mounts, legendaries and Meme Dynasty eggs. Better rods hook deeper legends.</li>
+					<li><b>Follow the campaign</b> — ACT I &middot; MASTER OF CHIKORIA, 21 real-reward chapters (63 total), paying real $CHIKI from the reward pool.</li>
+					<li><b>Trade with players</b> at the Trading Post — real on-chain $CHIKI: you keep <b>75%</b> of every sale, 20% refills the reward pool, 5% burns forever. Receipts with Solscan links in the &#129534; Sales tab.</li>
 					<li><b>Top-left buttons</b> — graphics tier, language (EN / &#26085; / &#20013;) and music, remembered on your device.</li>
 				</ul>
 				<h3>Care for your team</h3>
 				<p>Chikimons have HP, stamina, hunger and moods — feed them, let them rest, heal free at the
 				Hospital, and bond with them to unlock their personalities.</p>
 				<p class="lhook">You'll learn all of it in your first ten minutes — then everything you own, you'll earn out in the world.</p>
+			</div>
+
+			<div class="lpanel" id="lp-roles">
+				<span class="x" data-close>&#10005;</span>
+				<h2>&#9874; Choose your calling — every role earns</h2>
+				<p>Chikoria is a real economy: every resource is player-gathered, every listing is player-made,
+				and real <b>$CHIKI</b> flows to the ones who play their role well. Pick a calling — or mix them all.</p>
+				<div class="lgrid">
+					<div class="lcard"><b>&#127795; Gatherer</b><br>Press E at trees, bushes, hives, shells and flowers. Craft the axe &rarr; drill ladder (10 levels each) to harvest far faster, then sell stacks at the Trading Post — 75% of every sale is yours, settled on-chain.</div>
+					<div class="lcard"><b>&#9935; Miner</b><br>Stone, iron, gold and crystal wait in the three great mines around the mountain. Ores gate the deepest recipes — a miner with gold to spare never goes poor.</div>
+					<div class="lcard"><b>&#127993; Hunter</b><br>Track free-roaming pigs and boars for pork, beef and <b>hide</b> — hide gates every storage craft in the game. Cull corruptimons to keep the roads safe and your team levelled.</div>
+					<div class="lcard"><b>&#127907; Angler</b><br>44 named fishing spots, three richness tiers, a reel-tension duel per catch. The four fantasy fish are the <b>only source of eggs</b> in Chikoria — anglers mint the future. Sell spares to collectors.</div>
+					<div class="lcard"><b>&#129520; Craftsman</b><br>130 recipes: tools, rods, potions, food, gear to Lv 10. Fighters need Healing Draughts, riders need Trail Fodder — brew what the island needs and name your price.</div>
+					<div class="lcard"><b>&#9876; Battler</b><br>Card duels vs corruptimons, friendly spars with any trainer (G), and the Chikoria Cup with a SOL prize. Win streaks multiply your rewards — protect them with a Streak Sigil.</div>
+					<div class="lcard"><b>&#128188; Merchant</b><br>Work the Trading Post: buy low from grinders, list smart, watch the Sales tab receipts land on Solscan. 75% seller &middot; 20% reward pool &middot; 5% burned — every trade feeds the economy.</div>
+					<div class="lcard"><b>&#128052; Explorer</b><br>Six mounts (the Skywing Griffin flies), 63 story chapters, lore beacons at five sealed landmarks, and the richest fishing waters unmarked on any map. Someone has to find them first.</div>
+					<div class="lcard"><b>&#128142; Collector</b><br>21 chikimon, 10 avatar cases (1-of-10 each), the capped Meme Dynasty, 6 mounts, 12 fish. The dex pop-ups track live mint counts — completion is the longest game in Chikoria.</div>
+				</div>
+				<p class="lhook">The story pays $CHIKI. The roles pay each other. The island pays attention.</p>
 			</div>
 
 			<div class="lpanel" id="lp-regions">
@@ -544,7 +574,7 @@ body {
 		</div>
 		<!-- post-load intro clip: plays once the realm is built, then the game -->
 		<div id="cine">
-			<video id="cinevid" src="after_loading.mp4?v=2" preload="auto" playsinline></video>
+			<video id="cinevid" src="after_loading.mp4?v=2" preload="none" playsinline></video>
 			<div id="cineskip">tap to skip &#9656;</div>
 		</div>
 
@@ -579,6 +609,17 @@ body {
 			window.__coinClicked = (ssGet('realm-hero-done') === '1');
 			if (window.__coinClicked) { hero.remove(); }
 			else { coinLayout(); }
+			coin.addEventListener('touchend', function (e) {
+				if (e.cancelable) { e.preventDefault(); }
+				coin.dispatchEvent(new Event('cointap'));
+			});
+			coin.addEventListener('cointap', function () {
+				if (window.__coinClicked) { return; }
+				window.__coinClicked = true;
+				ssSet('realm-hero-done', '1');
+				if (window.__onCoin) { window.__onCoin(); }
+				else if (hero.parentNode) { hero.remove(); }
+			});
 			coin.addEventListener('click', function () {
 				if (window.__coinClicked) { return; }
 				window.__coinClicked = true;
@@ -661,7 +702,7 @@ body {
 		</script>
 		<script src="index.js"></script>
 		<script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":198619496,"index.wasm":40092042},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":198622232,"index.wasm":40092042},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
 const GODOT_THREADS_ENABLED = true;
 const engine = new Engine(GODOT_CONFIG);
 
@@ -824,9 +865,14 @@ const engine = new Engine(GODOT_CONFIG);
 			for (let a = 0; ; a++) {
 				try {
 					const r = await fetch(url, { cache: 'reload' });
-					if (!r.ok) { throw new Error('HTTP ' + r.status); }
+					if (!r.ok) {
+						const he = new Error('HTTP ' + r.status);
+						he.status = r.status;
+						throw he;
+					}
 					return await r.json();
 				} catch (e) {
+					if (e && e.status === 404) { throw e; }   // definitive miss — retries can't help
 					if (a >= tries - 1) { throw e; }
 					await new Promise(function (ok) { setTimeout(ok, 600 * (a + 1)); });
 				}
@@ -860,11 +906,11 @@ const engine = new Engine(GODOT_CONFIG);
 		// a quarter of the texture memory) — the difference between playing and the iOS memory
 		// ceiling. Missing lite manifest → graceful fallback to the HD pack.
 		tip.textContent = 'Building the realm…';
-		const wantLite = (('ontouchstart' in window) && Math.min(screen.width, screen.height) < 820) || /[?&]forcephone/.test(location.search);
+		const wantLite = (('ontouchstart' in window) && (window.matchMedia && matchMedia('(pointer: coarse)').matches) && Math.min(screen.width, screen.height) < 820) || /[?&]forcephone/.test(location.search);
 		let man = null;
 		if (wantLite) {
 			try {
-				man = await fetchJSON('index.pck.lite.manifest.json', 2);
+				man = await fetchJSON('index.pck.lite.manifest.json', 4);   // 404 falls through instantly; network errors retry
 				tip.textContent = 'Building the pocket realm…';
 			} catch (e) { man = null; }
 		}
@@ -879,7 +925,7 @@ const engine = new Engine(GODOT_CONFIG);
 			// 8-worker emscripten pool exhausts and risks deadlock on bigger machines.
 			// Phones run the LEANEST viable pool (4..6): every worker costs real memory on
 			// WKWebView, and memory is what kills + reloads the page there.
-			'emscriptenPoolSize': ((('ontouchstart' in window) && Math.min(screen.width, screen.height) < 820) ? Math.min(Math.max(navigator.hardwareConcurrency || 4, 4), 6) : Math.min(Math.max(navigator.hardwareConcurrency || 8, 8) + 8, 24)),
+			'emscriptenPoolSize': ((('ontouchstart' in window) && (window.matchMedia && matchMedia('(pointer: coarse)').matches) && Math.min(screen.width, screen.height) < 820) ? Math.min(Math.max(navigator.hardwareConcurrency || 4, 4), 6) : Math.min(Math.max(navigator.hardwareConcurrency || 8, 8) + 8, 24)),
 			'onProgress': function (cur, tot) {
 				if (cur > 0 && tot > 0) { setBar(0.82 + 0.18 * (cur / tot)); }
 			},
@@ -905,25 +951,32 @@ const engine = new Engine(GODOT_CONFIG);
 			const oomN = parseInt(sessionStorage.getItem('realm-oom') || '0', 10) + 1;
 			sessionStorage.setItem('realm-oom', String(oomN));
 			err.textContent = '⚠️ The realm restarted — this device ran low on memory. Closing other apps and browser tabs helps a lot.';
+			err.style.display = 'block';   // #err ships display:none — without this the warning never rendered
+			dropHero();                    // the hero (z12) covers #boot (z10); the player must SEE the warning
 		}
 	} catch (e) {}
-	// phones: don't buffer the 10MB intro clip during the (memory-critical) load — fetch it
-	// only when it actually plays
-	if (('ontouchstart' in window) && Math.min(screen.width, screen.height) < 820 && vid) {
-		vid.preload = 'none';
+	// the clip ships preload="none" (a parse-time preload="auto" started the 10MB fetch during
+	// the memory-critical load on phones) — non-phones upgrade here for an instant intro
+	if (vid && !((('ontouchstart' in window) && (window.matchMedia && matchMedia('(pointer: coarse)').matches) && Math.min(screen.width, screen.height) < 820) || /[?&]forcephone/.test(location.search))) {
+		vid.preload = 'auto';
 	}
 
 	const missing = Engine.getMissingFeatures({ threads: GODOT_THREADS_ENABLED });
 	if (missing.length !== 0) {
 		// The isolation service worker usually fixes this after one reload.
-		if ('serviceWorker' in navigator && window.__ssGet('realm-sw-retry') !== '1') {
+		if ('serviceWorker' in navigator && window.__ssGet('realm-sw-retry') !== '1' && !/[?&]swretry/.test(location.search)) {
 			window.__ssSet('realm-sw-retry', '1');
 			tip.textContent = 'Preparing secure context…';
 			// the hero sits over #boot, so surface the note on the hero's own hint too —
 			// otherwise the first-visit reload looks like a silent freeze
 			const hh = document.getElementById('herohint');
 			if (hh && hero && hero.parentNode) { hh.textContent = 'Preparing secure context…'; }
-			setTimeout(function () { window.location.reload(); }, 1800);
+			// carry a URL flag too: with sessionStorage blocked (private-mode WebViews) the
+			// ssGet guard is blind and this reload looped forever
+			setTimeout(function () {
+				var u = location.href.split('#')[0];
+				location.replace(u + (u.indexOf('?') >= 0 ? '&' : '?') + 'swretry=1');
+			}, 1800);
 			return;
 		}
 		fail(new Error('This browser is missing features the realm needs:\n' + missing.join(', ') + '\nTry the latest Chrome, Edge, or Firefox.'));
