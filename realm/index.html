@@ -765,16 +765,35 @@ const engine = new Engine(GODOT_CONFIG);
 			// pck and showed stale/duplicate models after an update). Same-version repeat
 			// loads cache fully = faster. Without a stamp, fall back to ETag revalidation.
 			const url = v ? (names[i] + '?v=' + v) : names[i];
-			const res = await fetch(url, { cache: v ? 'default' : 'no-cache' });
-			if (!res.ok) { throw new Error('Failed to load ' + names[i] + ' (' + res.status + ')'); }
-			const reader = res.body.getReader();
-			for (;;) {
-				const r = await reader.read();
-				if (r.done) { break; }
-				buf.push(r.value);
-				done += r.value.byteLength;
-				setBar(lo + (hi - lo) * (done / total));
+			// RETRY per chunk: one transient hiccup (flaky mobile data, a QUIC reset) used to
+			// throw out of the whole loader and freeze the bar forever. Each attempt streams
+			// into its OWN list so a mid-body failure never leaks partial bytes into the pck.
+			let chunk = null, chunkBytes = 0;
+			for (let attempt = 0; ; attempt++) {
+				const parts = [];
+				let local = 0;
+				try {
+					const res = await fetch(url, { cache: (attempt === 0 && v) ? 'default' : 'reload' });
+					if (!res.ok) { throw new Error('HTTP ' + res.status); }
+					const reader = res.body.getReader();
+					for (;;) {
+						const r = await reader.read();
+						if (r.done) { break; }
+						parts.push(r.value);
+						local += r.value.byteLength;
+						setBar(lo + (hi - lo) * ((done + local) / total));
+					}
+					chunk = parts; chunkBytes = local;
+					break;
+				} catch (e) {
+					if (attempt >= 3) { throw new Error('Failed to load ' + names[i] + ' after 4 tries (' + ((e && e.message) || e) + ')'); }
+					tip.textContent = 'Connection hiccup — retrying part ' + (i + 1) + ' of ' + names.length + '…';
+					setBar(lo + (hi - lo) * (done / total));   // roll the bar back to the last good chunk
+					await new Promise(function (ok) { setTimeout(ok, 700 * (attempt + 1)); });
+				}
 			}
+			for (let k = 0; k < chunk.length; k++) { buf.push(chunk[k]); }
+			done += chunkBytes;
 		}
 		return buf;
 	}
@@ -785,9 +804,22 @@ const engine = new Engine(GODOT_CONFIG);
 		//    worker) removes the SW-control race that stalled wasm-instantiate.
 		//    ONLY the manifest lookup is optional — a failed CHUNK download must fail the
 		//    load loudly here, not fall through to a doomed full-pck download.
+		// tiny JSON fetch with the same transient-hiccup retry as the chunks
+		async function fetchJSON(url, tries) {
+			for (let a = 0; ; a++) {
+				try {
+					const r = await fetch(url, { cache: 'reload' });
+					if (!r.ok) { throw new Error('HTTP ' + r.status); }
+					return await r.json();
+				} catch (e) {
+					if (a >= tries - 1) { throw e; }
+					await new Promise(function (ok) { setTimeout(ok, 600 * (a + 1)); });
+				}
+			}
+		}
 		let vt = null;
 		try {
-			vt = await (await fetch('virtual-files.json', { cache: 'reload' })).json();
+			vt = await fetchJSON('virtual-files.json', 3);
 		} catch (e) { /* no virtual-files table → wasm is a single file; leave fetch alone */ }
 		const w = vt && vt['index.wasm'];
 		if (w && w.parts && w.parts.length) {
@@ -806,7 +838,7 @@ const engine = new Engine(GODOT_CONFIG);
 
 		// 2. Reassemble the realm data pack.
 		tip.textContent = 'Building the realm…';
-		const man = await (await fetch('index.pck.manifest.json', { cache: 'reload' })).json();
+		const man = await fetchJSON('index.pck.manifest.json', 4);
 		const pckChunks = await streamParts(man.chunks, man.total, 0.12, 0.82, man.v || '');
 		const pckBlob = new Blob(pckChunks, { type: 'application/octet-stream' }); pckChunks.length = 0; const packUrl = URL.createObjectURL(pckBlob);
 
