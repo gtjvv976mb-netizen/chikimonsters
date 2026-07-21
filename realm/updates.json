@@ -1,6 +1,11 @@
 [
  {
   "date": "2026-07-22",
+  "title": "🥚 Fixed: vanishing eggs",
+  "body": "A save-verification bug shipped with the Craft Orders update was wrongly flagging honest saves as tampered on every reload — and the anti-cheat's tamper response cleared nesting eggs, chests and the reward vault. The stamp is fixed, every save written during the bad window is recognized as legitimate again, and any wrongly-applied tamper mark is cleared automatically the next time you load. Real save-editing is still detected and punished exactly as before. If your egg vanished during the window, reach out — we can see affected accounts."
+ },
+ {
+  "date": "2026-07-22",
   "title": "🎮 Pocket Realm, rebuilt for thumbs",
   "body": "The mobile island got a full make-over: the castle, town walls, shops, streetlights, trees and resource models now render at 4-6x fewer blocks (your trainer, chikimon and other players stay full-detail), the cobblestone road smoothed into a clean plain road, and every label grew ~20% so nothing squints. The touch controls are now carved wood and gold like the rest of the realm — joystick low-left, E / JUMP / RUN in the open lower-right, clear of every panel and bar. And long trainer names now fit their nameplate banner perfectly."
  },
