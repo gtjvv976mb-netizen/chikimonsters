@@ -80,10 +80,13 @@ body {
 }
 /* MOBILE ONLY (html.chik-phone): on short phone screens the key-art logo sits mid-frame —
    the loading column shrinks and hugs the very bottom edge, well clear of it */
-html.chik-phone #boot { gap: 5px; padding-bottom: 12px; }
-html.chik-phone #barwrap { width: min(300px, 44vw); height: 14px; border-width: 2px; }
-html.chik-phone #pct { font-size: 13px; }
-html.chik-phone #tip { font-size: 11px; min-height: 14px; }
+html.chik-phone #boot { gap: 2px; padding-bottom: 5px; }
+html.chik-phone #barwrap { width: min(240px, 36vw); height: 11px; border-width: 2px; }
+/* % and tip share ONE tiny line each, tight under the bar — the whole column is ~40px tall
+   pinned to the very bottom edge, far below the key-art logo */
+html.chik-phone #pct { font-size: 11px; line-height: 12px; }
+html.chik-phone #tip { font-size: 10px; min-height: 12px; line-height: 12px; max-width: 70vw;
+	white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #err {
 	display: none; max-width: min(640px, 86vw);
 	font-family: "ChikoriaBaloo", -apple-system, sans-serif;
