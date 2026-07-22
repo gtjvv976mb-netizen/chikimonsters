@@ -1,5 +1,10 @@
 [
  {
+  "date": "2026-07-23",
+  "title": "⚡ FREE-PLAY EVENT — the gates are open",
+  "body": "For a limited time, Chikoria needs NO $CHIKI to enter. Sign in with your Phantom wallet — any balance, even zero — and walk in as the Wanderer with one chikimon egg to your name. Keep it warm, tend it in the Team tab, and it hatches your first companion. Every feature is yours: gather, craft, fish, battle, trade. And a permanent change ships with it: every egg now hatches ONLY its own kind — normal eggs hatch normals, legendary eggs hatch legendaries. No more lottery inside the shell."
+ },
+ {
   "date": "2026-07-22",
   "title": "🥚 Fixed: vanishing eggs",
   "body": "A save-verification bug shipped with the Craft Orders update was wrongly flagging honest saves as tampered on every reload — and the anti-cheat's tamper response cleared nesting eggs, chests and the reward vault. The stamp is fixed, every save written during the bad window is recognized as legitimate again, and any wrongly-applied tamper mark is cleared automatically the next time you load. Real save-editing is still detected and punished exactly as before. If your egg vanished during the window, reach out — we can see affected accounts."
