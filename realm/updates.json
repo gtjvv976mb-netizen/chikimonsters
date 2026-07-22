@@ -1,6 +1,11 @@
 [
  {
   "date": "2026-07-23",
+  "title": "⚖ Trade pay restored — automatic restitution",
+  "body": "A bug in the Trading Post let a hidden safety cap swallow order-fill and sale payments for some traders — the goods moved, the $CHIKI didn't. It's fixed, and the realm makes it right on its own: sign in and every payment the cap held back is re-credited automatically from your own sales receipts, with a toast telling you exactly how much came home. Going forward the cap grows with your trade income, so a payment can never vanish again. No claims, no forms — just log in."
+ },
+ {
+  "date": "2026-07-23",
   "title": "⚡ FREE-PLAY EVENT — the gates are open",
   "body": "For a limited time, Chikoria needs NO $CHIKI to enter. Sign in with your Phantom wallet — any balance, even zero — and walk in as the Wanderer with one chikimon egg to your name. Keep it warm, tend it in the Team tab, and it hatches your first companion. Every feature is yours: gather, craft, fish, battle, trade. And a permanent change ships with it: every egg now hatches ONLY its own kind — normal eggs hatch normals, legendary eggs hatch legendaries. No more lottery inside the shell."
  },
