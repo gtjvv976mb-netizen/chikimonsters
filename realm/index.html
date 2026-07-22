@@ -252,7 +252,14 @@ html.chik-phone #tip { font-size: 10px; min-height: 12px; line-height: 12px; max
 				|| (/Android/i.test(navigator.userAgent) && /Mobile/i.test(navigator.userAgent))
 				|| /[?&]forcephone/.test(location.search);
 			if (window.CHIK_PHONE) { document.documentElement.classList.add('chik-phone'); }
-			var isPhone = window.CHIK_PHONE;
+			// TABLETS (iPad incl. desktop-class UA, Android tablets): full desktop game pack,
+			// but wallet browsers portrait-lock them too — so they DO get the sideways-mode
+			// rotation + the corner flip chip. iPads report "Macintosh" + multi-touch.
+			window.CHIK_TABLET = !window.CHIK_PHONE && (
+				/iPad/.test(navigator.userAgent)
+				|| (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1)
+				|| (/Android/i.test(navigator.userAgent) && !/Mobile/i.test(navigator.userAgent) && ('ontouchstart' in window)));
+			var isPhone = window.CHIK_PHONE || window.CHIK_TABLET;
 			var ov = document.getElementById('rotate');
 			var flipBtn = document.getElementById('sideflip');
 			if (!isPhone) { return; }
