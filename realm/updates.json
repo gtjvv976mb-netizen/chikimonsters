@@ -1,6 +1,11 @@
 [
  {
   "date": "2026-07-25",
+  "title": "🪓 Three chops a tree — and then it falls",
+  "body": "Trees are proper resource nodes now: each trunk holds THREE loads of firewood instead of one, so you work the same tree three times before it's spent. Each chop still gives exactly one wood — the one-item-per-gather rule is untouched, there's simply more in each tree, and the message tells you how many loads are left. Take the last one and the tree TOPPLES: it hangs, creaks, then goes over fast and settles into the grass on its own bearing, so a worked patch really looks logged. A felled trunk stops blocking you, and in time a fresh tree stands in its place, full again."
+ },
+ {
+  "date": "2026-07-25",
   "title": "📍 Your map pin now stands in the world",
   "body": "Drop a waypoint on the minimap and a golden beacon rises at that exact spot in Chikoria — a shaft of light you can pick out from across a region, a ring on the ground where it actually lands, and the same pin marker floating above it, drawn on top of the landscape so a hill can never hide your destination. It dims as you walk up to it, and right-clicking the map clears both the pin and its beacon together."
  },
