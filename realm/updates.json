@@ -1,5 +1,10 @@
 [
  {
+  "date": "2026-07-26",
+  "title": "🌍 See what everyone else is actually doing",
+  "body": "Other trainers are no longer sliding mannequins. Whatever they're doing now reaches you: someone chopping a tree across the clearing swings a real axe, a miner works a pickaxe, a prospector runs a drill, an angler holds a rod — the same models, in the same hands, as your own. Their chikimon also finally trail at the RIGHT distance: remote pets were following about three times closer than yours do, which is why other people's teams looked glued to their heels. Both sides now read one shared formation, so they can never disagree again."
+ },
+ {
   "date": "2026-07-25",
   "title": "🪓 Three chops a tree — and then it falls",
   "body": "Trees are proper resource nodes now: each trunk holds THREE loads of firewood instead of one, so you work the same tree three times before it's spent. Each chop still gives exactly one wood — the one-item-per-gather rule is untouched, there's simply more in each tree, and the message tells you how many loads are left. Take the last one and the tree TOPPLES: it hangs, creaks, then goes over fast and settles into the grass on its own bearing, so a worked patch really looks logged. A felled trunk stops blocking you, and in time a fresh tree stands in its place, full again."
