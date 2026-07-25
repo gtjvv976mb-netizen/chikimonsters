@@ -1,5 +1,40 @@
 [
  {
+  "date": "2026-07-25",
+  "title": "🗺 A living map of Chikoria",
+  "body": "Open the minimap in the top-left and the whole island is yours at a glance — your heading, every shop and landmark, ore and berry nodes, other players moving in real time, and the corruptimons you'd rather walk around. Click it for the full-screen chart, zoom through four levels, and drop a waypoint anywhere you want to remember. A legend explains every marker."
+ },
+ {
+  "date": "2026-07-25",
+  "title": "🛒 Fixed: sold listings coming back from the dead",
+  "body": "A listing you'd already sold could reappear in the Buy tab and be bought a SECOND time, duplicating the goods. That's fixed at the root — once a listing is settled it can never be resurrected, no matter how the stalls reconcile. We hammered it with hundreds of randomized trading rounds plus targeted double-buy and simultaneous-buyer tests before shipping. The Trading Post also refreshes every few seconds while you're standing at a stall, so listings, sales and buyouts appear as they happen."
+ },
+ {
+  "date": "2026-07-25",
+  "title": "🌍 Other players feel like they're really there",
+  "body": "Remote riders now show the mount they're actually on instead of walking on air, their chikimon trail in a proper formation instead of clipping through their heels, and everyone's movement is smoothed with the same interpolation technique the big MMOs use — less rubber-banding, truer positions."
+ },
+ {
+  "date": "2026-07-25",
+  "title": "⛏ Gathering feels right again",
+  "body": "The timing-bar experiment is gone — gathering is back to the honest, no-gimmick version, and one gather still gives exactly one item. Your tools swing properly too: the axe bites the tree with its blade instead of its back, the pickaxe drives its point into stone, and the drill faces the crystal instead of your own spine. We measured the tool models to get these angles right rather than eyeballing them."
+ },
+ {
+  "date": "2026-07-25",
+  "title": "🏃 Running now costs breath",
+  "body": "Sprinting is no longer infinite. You get a stamina meter that drains as you run and recovers when you ease off — and how long you last scales with your level AND the boots you're wearing, so better gear genuinely buys you more ground. Run yourself out and you'll be winded for a moment before you can bolt again."
+ },
+ {
+  "date": "2026-07-24",
+  "title": "🐴 Your steeds got their true colors back",
+  "body": "Every mount was rendering far darker than its artwork — a color-space mismatch buried in the rigs. All six have been rebalanced to match their real palette. Dashing was fixed too: mounts now dash on YOUR command with a proper cooldown, each one's speed and stamina matching its temperament, instead of dashing constantly or never at all."
+ },
+ {
+  "date": "2026-07-25",
+  "title": "✨ Quality-of-life pass",
+  "body": "Feed your mounts straight from the Mounts tab without digging through the satchel. Pressing SPACE now always jumps — it no longer re-triggers whatever button you last clicked. Hungry steeds, waypoints, feeding and the chat's Latest jump are all called out with proper artwork instead of placeholder symbols."
+ },
+ {
   "date": "2026-07-24",
   "title": "🛡 Your marketplace $CHIKI is locked down",
   "body": "A deep security pass rebuilt how the Trading Post settles. Every sale, auction and order is now tied to YOUR wallet by a signed session — no stranger can touch, clear or hide the proceeds you're owed, and nothing is ever deleted before you're actually paid. Money you're owed now survives 60 days if you're away (instead of quietly expiring), and on-chain buys can't be double-charged or replayed. If a sale ever settled and the $CHIKI didn't reach you, the realm now pays it out reliably — just sign in."
