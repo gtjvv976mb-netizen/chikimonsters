@@ -1,6 +1,16 @@
 [
  {
   "date": "2026-07-25",
+  "title": "📍 Your map pin now stands in the world",
+  "body": "Drop a waypoint on the minimap and a golden beacon rises at that exact spot in Chikoria — a shaft of light you can pick out from across a region, a ring on the ground where it actually lands, and the same pin marker floating above it, drawn on top of the landscape so a hill can never hide your destination. It dims as you walk up to it, and right-clicking the map clears both the pin and its beacon together."
+ },
+ {
+  "date": "2026-07-25",
+  "title": "📊 The Statistics board, rebuilt",
+  "body": "Every realm figure is now its own card — reward pool, $CHIKI earned and burned, circulating supply, Chikorians online, active chikimons, holders and trainers — each with its own artwork and a one-tap link to verify it on-chain. The numbers refresh every few seconds while the board is open instead of every half-minute, the online count updates live between refreshes, and a line at the bottom tells you exactly how fresh what you're reading is."
+ },
+ {
+  "date": "2026-07-25",
   "title": "🗺 A living map of Chikoria",
   "body": "Open the minimap in the top-left and the whole island is yours at a glance — your heading, every shop and landmark, ore and berry nodes, other players moving in real time, and the corruptimons you'd rather walk around. Click it for the full-screen chart, zoom through four levels, and drop a waypoint anywhere you want to remember. A legend explains every marker."
  },
