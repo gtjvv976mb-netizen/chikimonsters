@@ -1,6 +1,11 @@
 [
  {
   "date": "2026-07-26",
+  "title": "🪓 Fixed: other players looked like they just stopped",
+  "body": "When another trainer was gathering you saw them standing still. Their action was reaching you correctly — the problem was that the avatars have no animation named 'chop' or 'mine', so the game asked for one that didn't exist and fell back to standing idle. Gathering actions now play the swing the rigs actually have, so you can see people working from across the clearing. Also fixed: a cow or pig you were hunting would calmly wander off mid-swing, because the hold on it was re-checked by distance every frame and the animal drifted out of its own hunt. It now stays held until you stop."
+ },
+ {
+  "date": "2026-07-26",
   "title": "⚔ Duels are real multiplayer now",
   "body": "A duel against another trainer is refereed by the server, not by each of you guessing. You both see the same turn, the same hand size and the same health, and a turn only resolves once BOTH of you have locked in — no more one-sided fights or desyncs. Your hand is dealt by the server and every one of your six cards is reachable; the card row has been widened to fit them. Walking out mid-duel is now an honest forfeit that ends the match for your opponent immediately, instead of leaving them waiting. Wild corruptimon fights are untouched and still play exactly as before."
  },
