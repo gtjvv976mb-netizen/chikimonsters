@@ -1,6 +1,11 @@
 [
  {
   "date": "2026-07-26",
+  "title": "⚔ Duels are real multiplayer now",
+  "body": "A duel against another trainer is refereed by the server, not by each of you guessing. You both see the same turn, the same hand size and the same health, and a turn only resolves once BOTH of you have locked in — no more one-sided fights or desyncs. Your hand is dealt by the server and every one of your six cards is reachable; the card row has been widened to fit them. Walking out mid-duel is now an honest forfeit that ends the match for your opponent immediately, instead of leaving them waiting. Wild corruptimon fights are untouched and still play exactly as before."
+ },
+ {
+  "date": "2026-07-26",
   "title": "📖 The Codex is now a proper how-to",
   "body": "The Codex tab has been rebuilt as a guide to the whole game. Twenty-two topics — getting started, eggs, your team, gathering, fishing, crafting, brewing, cooking, battling, PvP and the Cup, mounts, the Trading Post, the three mines, hunting, quests, the $CHIKI economy, collectibles, avatar perks, movement and stamina, map and waypoints, playing together, and caring for your chikimon. Tap any one and you get the real mechanics: numbered steps for exactly what to do in game, then the hard numbers — costs, timers, drop odds, fee splits. No vague advice; if the game rolls a 1-in-1250, it says so."
  },
