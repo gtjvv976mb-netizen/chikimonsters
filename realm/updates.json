@@ -1,5 +1,10 @@
 [
  {
+  "date": "2026-07-28",
+  "title": "🌲 Depleted resources now actually disappear for everyone",
+  "body": "If another trainer emptied a node or felled a tree, you could often still gather it — and you never saw the tree fall. The world was being told about far fewer of those than it should have been.\n\nThe game sends one 'this is taken' message at a time, and any that had to wait was thrown away instead of queued. That was worst right after the server had been idle, when its first reply takes a while — so the opening minutes of a session lost most of them. Those messages now wait their turn and are retried if they get no answer, so what you clear stays cleared for everyone, and what others clear disappears for you."
+ },
+ {
   "date": "2026-07-27",
   "title": "🥚 Older eggs get their migration window back",
   "body": "The protection window for eggs saved by the previous game version has been restored through 26 August at 00:00 UTC. If your original v8 save still holds an egg, log in before the deadline: the egg stays with you and the game automatically upgrades the save to the latest protected format.\n\nThis prevents any further automatic egg loss from the July 27 cutoff. If an egg was already cleared and that empty save replaced both the browser and cloud copies, the original egg record no longer exists to rebuild safely — contact the dev with any backup or purchase record for a manual restoration."
