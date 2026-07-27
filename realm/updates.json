@@ -1,6 +1,11 @@
 [
  {
   "date": "2026-07-27",
+  "title": "🍽️ Hungry steeds and hungry chikimon now look hungry",
+  "body": "Two new pieces of art. A starving steed now shows itself standing over an empty trough, and a starving chikimon shows up over its empty bowl — in the Stable, on the mount card and on the chikimon card.\n\nYour chikimon also now warns you properly when its belly hits zero. A starving chikimon refuses to battle, which was already true but was easy to miss — it now says so on the card, the same way a starving steed tells you it won't carry you."
+ },
+ {
+  "date": "2026-07-27",
   "title": "🥚 Egg protection is now enforced",
   "body": "Eggs are now fully covered by the save's anti-tamper seal, effective immediately. This closes a hole where an edited save could conjure a finished egg and skip the 500,000 $CHIKI cost.\n\nOne consequence to be upfront about: if your save was last written by an older version of the game AND you were holding eggs, those eggs cannot be verified and will be cleared the next time you log in. Nothing else is affected — your $CHIKI, chikimon, gear, materials and progress are untouched. If this hits you, message us and we will restore your eggs.\n\nEggs obtained from here on, including the free starter egg from the Open Gates event, are sealed from the moment you receive them."
  },
