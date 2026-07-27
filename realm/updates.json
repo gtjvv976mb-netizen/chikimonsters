@@ -1,6 +1,11 @@
 [
  {
   "date": "2026-07-27",
+  "title": "🪓 Tools that hang right, and fairer contested nodes",
+  "body": "Every gathering tool is rebuilt to a single shared orientation. The ten levels of each axe, pickaxe, shovel and drill had been modelled facing different ways — some blades sat edge-on and looked like a thin sliver in your hands — so no single swing angle could ever be right for all of them. They now all hang the same way, and other trainers see your tool held exactly as you do rather than at a flat angle. Nothing about how gathering works has changed.\n\nAlso fixed: if two trainers reached the same node at the same moment, BOTH walked away with the item. The loser now correctly gets nothing and is told someone beat them to it — and a full bag can never lose you resources you already had. And cancelling a listing the market had already let go no longer destroys your goods while telling you they sold; your items stay put."
+ },
+ {
+  "date": "2026-07-27",
   "title": "🐟 The same fish for everyone",
   "body": "Every fishing spot stocked itself differently for each player. Two trainers standing at the same named cove were genuinely fishing different water — and because species differ in rarity and value, the same spot could quietly be worth more to one of you than the other. Schools are now stocked from the world itself, so the fish at a spot are the same fish for everybody. Catch rates, rarity and everything you do with a rod are unchanged."
  },
