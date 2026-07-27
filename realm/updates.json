@@ -1,6 +1,11 @@
 [
  {
   "date": "2026-07-27",
+  "title": "🔒 Save integrity and reward fixes",
+  "body": "Three fixes that protect what you have earned.\n\nYour eggs are now covered by the save's tamper seal. They were supposed to be, but a typo meant the check looked at an old unused field and never saw them at all — so an edited save could conjure a finished egg and skip the 500,000 $CHIKI cost.\n\nA momentary failure to read your wallet can no longer wipe your balance ceiling. If the check came back empty because of a hiccup rather than because your wallet was empty, the game believed it instantly. It now waits for a second reading before accepting a zero.\n\nAnd if you started playing after the 24 July chapter update, your completed chapters are no longer wrongly marked as already paid — that was quietly blocking real $CHIKI you were owed."
+ },
+ {
+  "date": "2026-07-27",
   "title": "⚔️ Duels are real now",
   "body": "Walking up to another trainer and pressing G used to start a practice fight against a copy of them run by your own game — they were never told it happened and never played. Now it sends them a real challenge. They can accept or decline, and if they accept you fight each other for real, with the server refereeing every turn. Still no $CHIKI and no stakes.\n\nYou can also now receive a challenge, which was never possible before."
  },
