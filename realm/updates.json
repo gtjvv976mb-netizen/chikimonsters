@@ -1,6 +1,11 @@
 [
  {
   "date": "2026-07-27",
+  "title": "🥚 Egg protection is now enforced",
+  "body": "Eggs are now fully covered by the save's anti-tamper seal, effective immediately. This closes a hole where an edited save could conjure a finished egg and skip the 500,000 $CHIKI cost.\n\nOne consequence to be upfront about: if your save was last written by an older version of the game AND you were holding eggs, those eggs cannot be verified and will be cleared the next time you log in. Nothing else is affected — your $CHIKI, chikimon, gear, materials and progress are untouched. If this hits you, message us and we will restore your eggs.\n\nEggs obtained from here on, including the free starter egg from the Open Gates event, are sealed from the moment you receive them."
+ },
+ {
+  "date": "2026-07-27",
   "title": "⚡ Open Gates — free for everyone, 7 days",
   "body": "The gates are open again. Until 3 August, anyone can enter Chikoria with any wallet balance — no 500,000 $CHIKI required. Sign in with Phantom, walk in as the Wanderer, and you get one egg to nest: keep it warm and it hatches your first chikimon.\n\nEnter before the gates close and your account stays yours forever. When the event ends, only NEW entries close — nothing you have earned goes away. The countdown is live at the top of the News tab."
  },
