@@ -1,6 +1,11 @@
 [
  {
   "date": "2026-07-27",
+  "title": "⚡ Open Gates — free for everyone, 7 days",
+  "body": "The gates are open again. Until 3 August, anyone can enter Chikoria with any wallet balance — no 500,000 $CHIKI required. Sign in with Phantom, walk in as the Wanderer, and you get one egg to nest: keep it warm and it hatches your first chikimon.\n\nEnter before the gates close and your account stays yours forever. When the event ends, only NEW entries close — nothing you have earned goes away. The countdown is live at the top of the News tab."
+ },
+ {
+  "date": "2026-07-27",
   "title": "🔒 Save integrity and reward fixes",
   "body": "Three fixes that protect what you have earned.\n\nYour eggs are now covered by the save's tamper seal. They were supposed to be, but a typo meant the check looked at an old unused field and never saw them at all — so an edited save could conjure a finished egg and skip the 500,000 $CHIKI cost.\n\nA momentary failure to read your wallet can no longer wipe your balance ceiling. If the check came back empty because of a hiccup rather than because your wallet was empty, the game believed it instantly. It now waits for a second reading before accepting a zero.\n\nAnd if you started playing after the 24 July chapter update, your completed chapters are no longer wrongly marked as already paid — that was quietly blocking real $CHIKI you were owed."
  },
