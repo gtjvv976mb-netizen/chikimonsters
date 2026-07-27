@@ -1,6 +1,11 @@
 [
  {
   "date": "2026-07-27",
+  "title": "🛡️ Realm integrity pass — safer wallets, trades and shared resources",
+  "body": "A full economy and multiplayer audit closed several edge cases without changing normal play.\n\nWallet deposits are now counted once against a lifetime high-water mark, so moving the same tokens out and back can never create extra in-game $CHIKI. Trading Post listings now use globally unique IDs, and only a listing that truly left the board can enter the sold-item guard — preventing vanished listings and repeat-sale exploits. Trainer XP bursts and legacy roster imports are sealed against duplication too.\n\nThe shared world is more consistent: tree capacity belongs to the server, and wandering pigs and cows now keep one stable shared identity for every player. The Reward Vault also reports queued quest rewards correctly instead of telling non-finalists they earned nothing."
+ },
+ {
+  "date": "2026-07-27",
   "title": "🛡️ Roster integrity hardened",
   "body": "Your chikimon roster is now rebuilt only from a save the game has already verified, and the roster itself is covered by the anti-tamper seal. This closes a hole where an edited save could conjure a full team of chikimon at any level and sell them on the Trading Post.\n\nNormal play is unchanged — if you are a returning player, your roster rebuilds exactly as before."
  },
