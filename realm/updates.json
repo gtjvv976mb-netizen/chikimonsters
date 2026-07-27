@@ -1,6 +1,11 @@
 [
  {
   "date": "2026-07-27",
+  "title": "⚔️ Duels are real now",
+  "body": "Walking up to another trainer and pressing G used to start a practice fight against a copy of them run by your own game — they were never told it happened and never played. Now it sends them a real challenge. They can accept or decline, and if they accept you fight each other for real, with the server refereeing every turn. Still no $CHIKI and no stakes.\n\nYou can also now receive a challenge, which was never possible before."
+ },
+ {
+  "date": "2026-07-27",
   "title": "🪓 Tools that hang right, and fairer contested nodes",
   "body": "Every gathering tool is rebuilt to a single shared orientation. The ten levels of each axe, pickaxe, shovel and drill had been modelled facing different ways — some blades sat edge-on and looked like a thin sliver in your hands — so no single swing angle could ever be right for all of them. They now all hang the same way, and other trainers see your tool held exactly as you do rather than at a flat angle. Nothing about how gathering works has changed.\n\nAlso fixed: if two trainers reached the same node at the same moment, BOTH walked away with the item. The loser now correctly gets nothing and is told someone beat them to it — and a full bag can never lose you resources you already had. And cancelling a listing the market had already let go no longer destroys your goods while telling you they sold; your items stay put."
  },
