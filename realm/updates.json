@@ -1,6 +1,11 @@
 [
  {
   "date": "2026-07-27",
+  "title": "🐟 The same fish for everyone",
+  "body": "Every fishing spot stocked itself differently for each player. Two trainers standing at the same named cove were genuinely fishing different water — and because species differ in rarity and value, the same spot could quietly be worth more to one of you than the other. Schools are now stocked from the world itself, so the fish at a spot are the same fish for everybody. Catch rates, rarity and everything you do with a rod are unchanged."
+ },
+ {
+  "date": "2026-07-27",
   "title": "🌲 One forest for everyone",
   "body": "Trees were the last resource that each player kept privately. Two trainers could work the same trunk and each see a different forest — one of you felled a tree the other still saw standing. The world now keeps a tree's remaining loads, exactly as it already did for ore, rocks and hives. A trunk another trainer has been working is worked-down for you too, and the tree that finally falls falls for everyone. Nothing about chopping changes: still one wood per swing, still three loads in a full tree, and your swing lands instantly as before. Also fixed: when a lot of trainers were in the world you could be standing right next to someone and not see them at all. The game kept the first sixty players it happened to know about — oldest sessions, not nearest — so anyone who joined later, or reconnected, could be invisible from a few steps away. It now always shows you the sixty nearest trainers."
  },
