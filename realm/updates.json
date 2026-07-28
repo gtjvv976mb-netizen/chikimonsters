@@ -1,6 +1,11 @@
 [
  {
   "date": "2026-07-28",
+  "title": "🪓 Every tool, at every level, rigged one at a time",
+  "body": "Your axe held its blade side-on, your drill gripped its own bit while the handle pointed at the crystal, and your level 10 rod dangled its lure in mid-air. All three were the same underlying problem: each tool has ten separate models, one per level, and they were authored independently — but the game aimed all ten with a single angle. Where a model happened to agree with that angle it looked right, and where it did not, it did not.\n\nSo every model has been measured and rigged on its own. The axe levels disagreed with each other by up to 21 degrees and the shovel by 23; those are gone, and every level of a tool now sits exactly like every other. The drill was a bigger problem — all ten of its models are built bit-first, with the business end sitting where your hand goes — so it is now turned end for end and swung round to face the way you do.\n\nFishing: five of the ten rods were modelled with a hanging line and lure, and five were not. The five without now get a proper line dropped from the rod tip to the water, so the lure sits on the surface where it belongs. The rod itself is held exactly as before — only the line below the tip is new.\n\nThe pickaxe was already right and is essentially untouched."
+ },
+ {
+  "date": "2026-07-28",
   "title": "🛡️ Every chikimon, egg and mount now has a record of its own",
   "body": "Work you will mostly never notice, on the part of the game that decides whether what you own is really yours.\n\nEggs are now registered the moment Mithra conjures one. The egg gets its own identity and its own clock, kept by the server rather than by your save file, and when it hatches the creature keeps a permanent link back to the egg it came from. Your Chikimon can prove where it came from.\n\nOne change you may actually run into: a chikimon can only be up for sale in one place at a time. Listing it and auctioning it at once is no longer possible, and neither is putting the same creature on the board twice. Cancel a listing and it is immediately free to sell again.\n\nNone of this touches how you play. Nothing costs more, nothing takes longer, and no egg, creature or mount you legitimately own is affected."
  },
