@@ -1,6 +1,11 @@
 [
  {
   "date": "2026-07-28",
+  "title": "🛡️ Every chikimon, egg and mount now has a record of its own",
+  "body": "Work you will mostly never notice, on the part of the game that decides whether what you own is really yours.\n\nEggs are now registered the moment Mithra conjures one. The egg gets its own identity and its own clock, kept by the server rather than by your save file, and when it hatches the creature keeps a permanent link back to the egg it came from. Your Chikimon can prove where it came from.\n\nOne change you may actually run into: a chikimon can only be up for sale in one place at a time. Listing it and auctioning it at once is no longer possible, and neither is putting the same creature on the board twice. Cancel a listing and it is immediately free to sell again.\n\nNone of this touches how you play. Nothing costs more, nothing takes longer, and no egg, creature or mount you legitimately own is affected."
+ },
+ {
+  "date": "2026-07-28",
   "title": "🥚 Your lost eggs are coming back — claim within 7 days",
   "body": "On 27 July an egg-protection change went out enforced immediately instead of with its migration window. For about five and a half hours that evening, older saves holding an egg were read as edited, and the anti-cheat's response cleared the nest. That was our mistake, not yours, and simply restoring the window afterwards did not give anything back.\n\nIt does now. Sign in and your egg returns on its own — no button to find. We work out what you are owed from your own records of eggs conjured and eggs hatched, so you get back exactly the kind you lost and nothing you did not.\n\nTwo honest notes. The replacement starts its incubation fresh, so a Legendary Egg is another twelve hours of warming — we could not recover how far along yours was. And if you already made a new egg of that kind, we will not stack a second one on top of it.\n\nThe claim is open until 4 August at 00:00 UTC. Sign in once before then and it is handled.\n\nSeparately, eggs saved by the older game version keep their protection through 26 August, exactly as before. Nothing about that has changed."
  },
