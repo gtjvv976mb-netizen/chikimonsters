@@ -1,6 +1,11 @@
 [
  {
   "date": "2026-07-28",
+  "title": "🏃 One stamina bar, right under your XP",
+  "body": "Your sprint charge used to float near your feet where it was easy to miss. It now sits directly beneath your XP bar on your own nameplate, the same width, so the two read as one stack.\n\nThe same bar becomes your steed's DASH charge the moment you mount up — blue for your own running, amber for the mount's dash. So you are always looking at the resource you are actually spending, and choosing when to ride and when to run on foot is a real decision. Either way it stays hidden while the charge is full, so it never clutters the view."
+ },
+ {
+  "date": "2026-07-28",
   "title": "🌍 Other trainers now look like real players",
   "body": "Everyone you meet in the realm is rendered the way you render yourself.\n\nOther trainers now wear their own themed nameplate banner — the one that matches their avatar — instead of a plain line of text. Their chikimon have proper nameplates too, tinted to their element; before this, a stranger's team was three anonymous creatures following them around. And the tool in their hands is the one they actually crafted, at their real level, held at the same size as yours.\n\nYou will not see another player's XP bar — that stays yours alone."
  },
