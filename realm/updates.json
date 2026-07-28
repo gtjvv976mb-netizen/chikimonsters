@@ -1,6 +1,11 @@
 [
  {
   "date": "2026-07-28",
+  "title": "🪓 Axe and pickaxe no longer swing into the ground",
+  "body": "Chopping and mining drove the tool head straight through the terrain at the bottom of every swing — measured at over a metron and a half below your feet. Both now stop cleanly at ground level.\n\nThe axe blade also faces properly downward as it lands, instead of turning side-on. That was the same problem: lifting the head out of the dirt is what brings the cutting edge round to vertical."
+ },
+ {
+  "date": "2026-07-28",
   "title": "🙈 Other players' XP bars are gone",
   "body": "You no longer see another trainer's experience bar. Their nameplate shows their banner and their name — their progress is their own business.\n\nYour own XP bar, and the run/dash bar beneath it, are unchanged."
  },
