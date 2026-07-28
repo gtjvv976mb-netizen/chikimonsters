@@ -1,6 +1,11 @@
 [
  {
   "date": "2026-07-28",
+  "title": "🪓 The axe chops across the trunk, not past it",
+  "body": "Your axe swung beside you rather than at the tree. Measured, the blade lived entirely off your left shoulder and struck the air a good two metres to the side of the trunk you were aiming at, which is why the chop read as a flat up-and-down bob rather than a swing.\n\nIt now comes down the way you would actually swing an axe: raised high and out to one side, then driven down and across the body onto the wood. The blade travels about four and a half metres diagonally through the stroke and finishes on the centreline, where the tree is.\n\nThe head still stops cleanly at ground level at every axe level, exactly as before."
+ },
+ {
+  "date": "2026-07-28",
   "title": "🎣 Three fishing fixes: the float, the duel, and walking away",
   "body": "Your float now sits exactly where the fish are. The bobber was being planted directly beneath your rod tip while every splash, bite and catch happened out at the spot you actually cast to — up to three units apart — so the water broke beside the float instead of under it. They are the same place now, and the cast stays where you put it even if you turn around.\n\nThe reel duel can no longer trap you. If you never pulled, progress sank to zero and tension faded to nothing, which meant neither landing the fish nor snapping the line could ever happen — the duel simply never ended, and while it was running your action button could not gather, board a boat or talk to anyone. Leave the line slack for six seconds now and the fish shakes itself off, exactly as it should.\n\nAnd walking away ends the session. Before, nothing tore the tackle down when you left: the float would follow you inland and sit bobbing over dry grass. Step away from your cast and the line comes in.\n\nThe line itself also stays properly on the rod now, through turns and through the cast."
  },
