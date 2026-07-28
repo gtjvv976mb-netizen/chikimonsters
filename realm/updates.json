@@ -1,6 +1,11 @@
 [
  {
   "date": "2026-07-28",
+  "title": "🥚 Your lost eggs are coming back — claim within 7 days",
+  "body": "On 27 July an egg-protection change went out enforced immediately instead of with its migration window. For about five and a half hours that evening, older saves holding an egg were read as edited, and the anti-cheat's response cleared the nest. That was our mistake, not yours, and simply restoring the window afterwards did not give anything back.\n\nIt does now. Sign in and your egg returns on its own — no button to find. We work out what you are owed from your own records of eggs conjured and eggs hatched, so you get back exactly the kind you lost and nothing you did not.\n\nTwo honest notes. The replacement starts its incubation fresh, so a Legendary Egg is another twelve hours of warming — we could not recover how far along yours was. And if you already made a new egg of that kind, we will not stack a second one on top of it.\n\nThe claim is open until 4 August at 00:00 UTC. Sign in once before then and it is handled.\n\nSeparately, eggs saved by the older game version keep their protection through 26 August, exactly as before. Nothing about that has changed."
+ },
+ {
+  "date": "2026-07-28",
   "title": "🪓 Axe and pickaxe no longer swing into the ground",
   "body": "Chopping and mining drove the tool head straight through the terrain at the bottom of every swing — measured at over a metron and a half below your feet. Both now stop cleanly at ground level.\n\nThe axe blade also faces properly downward as it lands, instead of turning side-on. That was the same problem: lifting the head out of the dirt is what brings the cutting edge round to vertical."
  },
