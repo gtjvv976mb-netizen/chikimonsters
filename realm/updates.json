@@ -2,7 +2,7 @@
  {
   "date": "2026-07-29",
   "title": "🌳 The forest stays in step for everyone",
-  "body": "When you gathered several things quickly — most often right after loading in — only the first one was reaching the world. The rest were refused for pace and quietly dropped, so trees you had felled and lodes you had emptied kept standing for everyone else, and you would find nodes that looked untouched but gave nothing.\n\nYour gathers are now paced to the world's own rhythm instead of racing it, and one refused for timing waits its turn rather than being lost. What you take is what everyone else sees you take."
+  "body": "When you gathered several things quickly — most often right after loading in — only the first one was reaching the world. The rest were refused for pace and quietly dropped, so trees you had felled and lodes you had emptied kept standing for everyone else, and you would find nodes that looked untouched but gave nothing.\n\nYour gathers are now paced to the world's own rhythm instead of racing it, and one refused for timing waits its turn rather than being lost. What you take is what everyone else sees you take.\n\nAlso fixed alongside it: when two trainers reached the same node at once, the item taken back was whatever you had gathered most recently rather than the one you actually lost — so you kept the thing you lost and lost the thing you kept. The right one goes back now."
  },
  {
   "date": "2026-07-28",
