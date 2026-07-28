@@ -1,6 +1,11 @@
 [
  {
   "date": "2026-07-28",
+  "title": "🐴 New art: royal steed, hunger meter, hungry mount",
+  "body": "The Royal Steed now shows its own barded portrait wherever it is named, the chikimon hunger meter uses a proper roast-drumstick icon, and the 'your mount is too hungry to ride' warning shows the hungry-mount art instead of a plain emoji.\n\nAlso fixed behind the scenes: a hole where someone who knew your wallet address could ask the server for the key to your duel and forfeit it out from under you. Duel keys are now only ever handed to a client that has proven the wallet is theirs."
+ },
+ {
+  "date": "2026-07-28",
   "title": "🏃 One stamina bar, right under your XP",
   "body": "Your sprint charge used to float near your feet where it was easy to miss. It now sits directly beneath your XP bar on your own nameplate, the same width, so the two read as one stack.\n\nThe same bar becomes your steed's DASH charge the moment you mount up — blue for your own running, amber for the mount's dash. So you are always looking at the resource you are actually spending, and choosing when to ride and when to run on foot is a real decision. Either way it stays hidden while the charge is full, so it never clutters the view."
  },
