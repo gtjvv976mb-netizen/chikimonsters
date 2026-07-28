@@ -1,6 +1,11 @@
 [
  {
   "date": "2026-07-28",
+  "title": "💬 Chat stays open when a side panel does not cover it",
+  "body": "Opening any right-hand panel — Avatar, Quests, Satchel, Mounts and the rest — used to hide the chat box completely, even though the chat sits in the bottom-left corner and those panels hug the right edge, so they were never on top of each other.\n\nThe chat now checks whether a panel is actually covering it before getting out of the way. On a normal screen it simply stays open while you browse your gear, so you can keep reading world chat and reply without closing anything. On a narrow window or a phone, where a panel really does span the view, it still steps aside as before."
+ },
+ {
+  "date": "2026-07-28",
   "title": "⚔️ Your Cup duel is the real one now",
   "body": "Pressing FIGHT NOW in the Chikiseum used to start a practice battle against a randomly generated opponent, while the Cup stewards decided your actual match without you — so you could win on screen and still be knocked out, or lose and advance. It now puts you into your real match against your real opponent, and tells you plainly when your duel hasn't been called yet instead of inventing one.\n\nEvery icon in the game also has proper art now. Anything that used to fall back to your device's own font — arrows, stars, the delivery and crown markers — is drawn in the game's own style, so menus look the same on every device."
  },
