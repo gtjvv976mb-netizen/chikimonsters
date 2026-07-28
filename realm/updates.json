@@ -1,6 +1,11 @@
 [
  {
   "date": "2026-07-28",
+  "title": "🪓 Other players' tools are the right size now",
+  "body": "When you watched another trainer gathering, their axe or drill was far too big. Your own tool is deliberately held at a fixed size no matter which avatar you play, but the code that draws other players never did that step — so their tool inherited the whole rig's scaling and came out enormous. It now uses exactly the same size as your own.\n\nAlso: the missing arrows and stars in menus and reward lines are now proper icons instead of falling back to whatever your device's font happened to draw."
+ },
+ {
+  "date": "2026-07-28",
   "title": "🌲 Depleted resources now actually disappear for everyone",
   "body": "If another trainer emptied a node or felled a tree, you could often still gather it — and you never saw the tree fall. The world was being told about far fewer of those than it should have been.\n\nThe game sends one 'this is taken' message at a time, and any that had to wait was thrown away instead of queued. That was worst right after the server had been idle, when its first reply takes a while — so the opening minutes of a session lost most of them. Those messages now wait their turn and are retried if they get no answer, so what you clear stays cleared for everyone, and what others clear disappears for you."
  },
