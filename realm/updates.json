@@ -1,6 +1,11 @@
 [
  {
   "date": "2026-07-28",
+  "title": "🛠️ Fix: the Creator tab now appears when you sign in",
+  "body": "The Creator tab was being decided once, when the game started — before your wallet had finished signing in. Admin status arrives a moment later, and nothing rechecked, so the tab never appeared even on an admin wallet. It now appears the moment sign-in confirms it, and disappears again if it is ever revoked."
+ },
+ {
+  "date": "2026-07-28",
   "title": "🛠️ Creator tab (admin only)",
   "body": "A Creator tab now sits below Potions on the right rail for verified admin wallets, and only for them — an ordinary wallet does not see it at all.\n\nIt puts every gear slot in one place: all five gathering tools at any level with a tap to hold one right away, the bag, pouch and satchel with their real capacities shown as you change them, and the worn gear — sword, shield, gloves, boots, charm. There are one-tap buttons to take everything to Lv 10 or back to Lv 1.\n\nBelow that: jump straight to the nearest trees, stone, crystal, gold, iron, seashells or fishing spot so a tool has something to work on; unlock every chikimon, mount and resource; and try a battle, a mount, flight, the shops and the Trading Post directly.\n\nThese tools existed already but lived on the F8 and F9 keys, which do not exist on a phone."
  },
