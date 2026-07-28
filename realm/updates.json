@@ -1,6 +1,11 @@
 [
  {
   "date": "2026-07-29",
+  "title": "🐎 Your stable is kept safe on the server",
+  "body": "Your mounts are now backed by the game's own records, not just your local save. Every time you sign in, the realm checks which steeds truly belong to you and makes sure your stable matches — so a mount can no longer be lost to a bad save or a hiccup on your device. If something ever went missing, it comes back on your next sign-in.\n\nThis only ever gives steeds back — it can never take one away. If the server's list is still catching up with a mount you just earned, your stable is left exactly as it is until it does. Nothing you own is at risk, and nothing about riding changes.\n\nIt is also a step toward making your mounts real, tradeable, ownable assets in a future update — each one now has a permanent record that is truly yours."
+ },
+ {
+  "date": "2026-07-29",
   "title": "🌳 The forest stays in step for everyone",
   "body": "When you gathered several things quickly — most often right after loading in — only the first one was reaching the world. The rest were refused for pace and quietly dropped, so trees you had felled and lodes you had emptied kept standing for everyone else, and you would find nodes that looked untouched but gave nothing.\n\nYour gathers are now paced to the world's own rhythm instead of racing it, and one refused for timing waits its turn rather than being lost. What you take is what everyone else sees you take.\n\nAlso fixed alongside it: when two trainers reached the same node at once, the item taken back was whatever you had gathered most recently rather than the one you actually lost — so you kept the thing you lost and lost the thing you kept. The right one goes back now.\n\nAnd the world itself now decides what a node gives. Your swing still credits the item the instant it lands — nothing about gathering feels slower — but the server names the material, and if the two ever disagree the world's answer is the one that stands. Honest trainers will never notice; it means a node can no longer be talked into giving something it does not hold."
  },
