@@ -1,6 +1,11 @@
 [
  {
   "date": "2026-07-28",
+  "title": "🙈 Other players' XP bars are gone",
+  "body": "You no longer see another trainer's experience bar. Their nameplate shows their banner and their name — their progress is their own business.\n\nYour own XP bar, and the run/dash bar beneath it, are unchanged."
+ },
+ {
+  "date": "2026-07-28",
   "title": "💬 Chat stays open when a side panel does not cover it",
   "body": "Opening any right-hand panel — Avatar, Quests, Satchel, Mounts and the rest — used to hide the chat box completely, even though the chat sits in the bottom-left corner and those panels hug the right edge, so they were never on top of each other.\n\nThe chat now checks whether a panel is actually covering it before getting out of the way. On a normal screen it simply stays open while you browse your gear, so you can keep reading world chat and reply without closing anything. On a narrow window or a phone, where a panel really does span the view, it still steps aside as before."
  },
