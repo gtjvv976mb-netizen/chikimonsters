@@ -1,6 +1,11 @@
 [
  {
   "date": "2026-07-28",
+  "title": "⚔️ Your Cup duel is the real one now",
+  "body": "Pressing FIGHT NOW in the Chikiseum used to start a practice battle against a randomly generated opponent, while the Cup stewards decided your actual match without you — so you could win on screen and still be knocked out, or lose and advance. It now puts you into your real match against your real opponent, and tells you plainly when your duel hasn't been called yet instead of inventing one.\n\nEvery icon in the game also has proper art now. Anything that used to fall back to your device's own font — arrows, stars, the delivery and crown markers — is drawn in the game's own style, so menus look the same on every device."
+ },
+ {
+  "date": "2026-07-28",
   "title": "☁ Cloud saves are checked before they are restored",
   "body": "When your progress is restored from your wallet, the game now checks that the saved copy has not been altered before adopting it. Previously it was taken as-is and then re-sealed, which meant an edited copy could be laundered into a valid save.\n\nIf a restore ever fails that check your progress is still restored — you are never stranded — but anything that looks injected is neutralised rather than trusted. Ordinary restores are unaffected.\n\nAlso: Chikoria Cup entries now use the deck your champion has actually unlocked, so nobody can enter the bracket claiming cards or tiers they never earned."
  },
