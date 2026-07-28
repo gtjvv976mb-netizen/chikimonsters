@@ -1,6 +1,11 @@
 [
  {
   "date": "2026-07-28",
+  "title": "🌍 Other trainers now look like real players",
+  "body": "Everyone you meet in the realm is rendered the way you render yourself.\n\nOther trainers now wear their own themed nameplate banner — the one that matches their avatar — instead of a plain line of text. Their chikimon have proper nameplates too, tinted to their element; before this, a stranger's team was three anonymous creatures following them around. And the tool in their hands is the one they actually crafted, at their real level, held at the same size as yours.\n\nYou will not see another player's XP bar — that stays yours alone."
+ },
+ {
+  "date": "2026-07-28",
   "title": "🪓 Other players' tools are the right size now",
   "body": "When you watched another trainer gathering, their axe or drill was far too big. Your own tool is deliberately held at a fixed size no matter which avatar you play, but the code that draws other players never did that step — so their tool inherited the whole rig's scaling and came out enormous. It now uses exactly the same size as your own.\n\nAlso: the missing arrows and stars in menus and reward lines are now proper icons instead of falling back to whatever your device's font happened to draw."
  },
