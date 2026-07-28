@@ -1,6 +1,11 @@
 [
  {
   "date": "2026-07-28",
+  "title": "🎣 Why you couldn't land the goldfish — and tools facing the right way again",
+  "body": "The reel duel was teaching you to lose. The hint said to HOLD to reel in, and holding is exactly what snaps the line — the tension climbs faster than the fish tires, so anyone following that advice lost every legend they hooked. Tap in bursts and let the line fall back whenever it runs red, and it lands. The hint now says so.\n\nTwo things the game was quietly hiding. A fantasy fish needs a good enough ROD to bite at all — a Golden Chikifish will not touch a line below a Lv 2 rod, no matter how long you cast or how high your Trainer level — and nothing anywhere told you. The Fish tab now names whichever requirement is actually stopping you, the rod or the rank. And when a legend got away because you were too low a rank, the panel blamed your line tension even though you never got to reel; it now tells you the real reason.\n\nTools: the drill and shovel were pointing behind the trainer. That was my error — I had been measuring which way you face using the wrong reference, so a correction I made earlier turned them the wrong way. Both now lead forward again, the drill sits clear of the ground pointing at the crystal, and the axe's diagonal comes down from the shoulder across the trunk."
+ },
+ {
+  "date": "2026-07-28",
   "title": "⛏️ The drill comes out of the dirt, and your hook finds the water",
   "body": "Two tools were pointing at the wrong thing.\n\nThe drill was aimed almost straight down and its bit sat buried in the terrain — you were boring into the ground beside the crystal rather than into the crystal. It now rides clear of the ground and points forward and down at what you are actually mining.\n\nFishing has lost the drawn-on line and float. There was a line and bobber painted into the scene to reach the water, which never quite belonged to the rod you were holding. They are gone. Instead your rod leans out over the water until its own hook is wet — the way you would actually hold it — so the tackle you see is the tackle on your rod. Every rod reaches, at every level.\n\nOne note of honesty: the level 10 rod is much shorter than the others and cannot reach by leaning alone, so it dips a little as well. It is the only one that does."
  },
