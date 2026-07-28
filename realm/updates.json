@@ -1,6 +1,11 @@
 [
  {
   "date": "2026-07-28",
+  "title": "🛠️ Creator tab (admin only)",
+  "body": "A Creator tab now sits below Potions on the right rail for verified admin wallets, and only for them — an ordinary wallet does not see it at all.\n\nIt puts every gear slot in one place: all five gathering tools at any level with a tap to hold one right away, the bag, pouch and satchel with their real capacities shown as you change them, and the worn gear — sword, shield, gloves, boots, charm. There are one-tap buttons to take everything to Lv 10 or back to Lv 1.\n\nBelow that: jump straight to the nearest trees, stone, crystal, gold, iron, seashells or fishing spot so a tool has something to work on; unlock every chikimon, mount and resource; and try a battle, a mount, flight, the shops and the Trading Post directly.\n\nThese tools existed already but lived on the F8 and F9 keys, which do not exist on a phone."
+ },
+ {
+  "date": "2026-07-28",
   "title": "🎣 Why you couldn't land the goldfish — and tools facing the right way again",
   "body": "The reel duel was teaching you to lose. The hint said to HOLD to reel in, and holding is exactly what snaps the line — the tension climbs faster than the fish tires, so anyone following that advice lost every legend they hooked. Tap in bursts and let the line fall back whenever it runs red, and it lands. The hint now says so.\n\nTwo things the game was quietly hiding. A fantasy fish needs a good enough ROD to bite at all — a Golden Chikifish will not touch a line below a Lv 2 rod, no matter how long you cast or how high your Trainer level — and nothing anywhere told you. The Fish tab now names whichever requirement is actually stopping you, the rod or the rank. And when a legend got away because you were too low a rank, the panel blamed your line tension even though you never got to reel; it now tells you the real reason.\n\nTools: the drill and shovel were pointing behind the trainer. That was my error — I had been measuring which way you face using the wrong reference, so a correction I made earlier turned them the wrong way. Both now lead forward again, the drill sits clear of the ground pointing at the crystal, and the axe's diagonal comes down from the shoulder across the trunk."
  },
