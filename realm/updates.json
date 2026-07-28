@@ -1,6 +1,11 @@
 [
  {
   "date": "2026-07-28",
+  "title": "☁ Cloud saves are checked before they are restored",
+  "body": "When your progress is restored from your wallet, the game now checks that the saved copy has not been altered before adopting it. Previously it was taken as-is and then re-sealed, which meant an edited copy could be laundered into a valid save.\n\nIf a restore ever fails that check your progress is still restored — you are never stranded — but anything that looks injected is neutralised rather than trusted. Ordinary restores are unaffected.\n\nAlso: Chikoria Cup entries now use the deck your champion has actually unlocked, so nobody can enter the bracket claiming cards or tiers they never earned."
+ },
+ {
+  "date": "2026-07-28",
   "title": "🔐 Your whispers are private again",
   "body": "Three holes closed, all of the same kind: your wallet address is public — it shows in the online roster and in world chat — but parts of the game were treating it as if it were a password.\n\nAnyone who knew your address could read your entire whisper history, send whispers pretending to be you, or move your avatar around while you were playing. All three now require your game client to prove the wallet is actually yours. Nothing changes for you — your own client already proves it. Players without a connected wallet are unaffected."
  },
