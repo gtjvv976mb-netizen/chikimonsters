@@ -1,6 +1,11 @@
 [
  {
   "date": "2026-07-29",
+  "title": "🥚 Hatches are sealed by the realm",
+  "body": "When you hatch a registered egg now, the realm itself rolls what comes out and records it the instant it happens — so what you hatch is provably yours and can never be forged or re-rolled by a tampered client. You may notice a brief \"hatching…\" beat while the realm makes it official.\n\nNothing about your odds changes — the same rarities, the same weighting, the same surprises. And if the realm is slow to answer or you're offline, your egg still hatches instantly the way it always has; you are never left waiting on it.\n\nIt is the same groundwork as the safer stable: another step toward every chikimon and steed being a real, permanent, one-day-tradeable asset with a history that is truly yours."
+ },
+ {
+  "date": "2026-07-29",
   "title": "🐎 Your stable is kept safe on the server",
   "body": "Your mounts are now backed by the game's own records, not just your local save. Every time you sign in, the realm checks which steeds truly belong to you and makes sure your stable matches — so a mount can no longer be lost to a bad save or a hiccup on your device. If something ever went missing, it comes back on your next sign-in.\n\nThis only ever gives steeds back — it can never take one away. If the server's list is still catching up with a mount you just earned, your stable is left exactly as it is until it does. Nothing you own is at risk, and nothing about riding changes.\n\nIt is also a step toward making your mounts real, tradeable, ownable assets in a future update — each one now has a permanent record that is truly yours."
  },
