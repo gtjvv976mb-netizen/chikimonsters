@@ -1,6 +1,11 @@
 [
  {
   "date": "2026-07-28",
+  "title": "🔐 Your whispers are private again",
+  "body": "Three holes closed, all of the same kind: your wallet address is public — it shows in the online roster and in world chat — but parts of the game were treating it as if it were a password.\n\nAnyone who knew your address could read your entire whisper history, send whispers pretending to be you, or move your avatar around while you were playing. All three now require your game client to prove the wallet is actually yours. Nothing changes for you — your own client already proves it. Players without a connected wallet are unaffected."
+ },
+ {
+  "date": "2026-07-28",
   "title": "🐴 New art: royal steed, hunger meter, hungry mount",
   "body": "The Royal Steed now shows its own barded portrait wherever it is named, the chikimon hunger meter uses a proper roast-drumstick icon, and the 'your mount is too hungry to ride' warning shows the hungry-mount art instead of a plain emoji.\n\nAlso fixed behind the scenes: a hole where someone who knew your wallet address could ask the server for the key to your duel and forfeit it out from under you. Duel keys are now only ever handed to a client that has proven the wallet is theirs."
  },
