@@ -1,6 +1,11 @@
 [
  {
   "date": "2026-07-29",
+  "title": "🐎 Riders look like riders to everyone",
+  "body": "Other trainers on mounts appeared to stand upright on top of their steed rather than ride it — and on a griffin they floated well above the saddle.\n\nEveryone now renders exactly as they see themselves: seated in the saddle, in the right spot on the mount's back, for all six steeds. No extra delay — the pose rides the same smoothing the rest of a trainer's movement already uses."
+ },
+ {
+  "date": "2026-07-29",
   "title": "🔧 Tools no longer render through you",
   "body": "The heavier drills were reaching back through the trainer's body, and rod handles sat slightly inside it. Both are now held clear, out in front where they belong.\n\nNothing about gathering or fishing changed — purely how the tools sit in your hands."
  },
