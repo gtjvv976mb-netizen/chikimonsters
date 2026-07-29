@@ -1,6 +1,11 @@
 [
  {
   "date": "2026-07-29",
+  "title": "📖 See how rare your collection really is",
+  "body": "The Chikidex, Mountdex and Avatar case now show how many trainers across the whole realm own each one. Live, from the world server.\n\nNow you can see at a glance whether that steed you hatched is one of hundreds — or one of a handful. Rarity you can actually check, instead of guessing."
+ },
+ {
+  "date": "2026-07-29",
   "title": "🧹 Last of the loose ends",
   "body": "A few remaining rough edges are closed. A chikimon put up for auction could, in rare circumstances, become stranded — held by the realm with no way to bring it home. Auctions are now kept safely no matter how busy the board gets.\n\nAlso: the weekly raid prize can no longer be handed out twice, a hatching egg always produces exactly what the realm recorded, and switching wallets on the desktop build now properly reloads into that trainer instead of half-switching."
  },
