@@ -1,6 +1,11 @@
 [
  {
   "date": "2026-07-29",
+  "title": "👀 Other trainers look right",
+  "body": "A pass over how other players appear to you. Griffin riders were floating well above their steed and sitting perfectly still instead of drifting on the wing; jumping trainers walked through the air; anyone mining crystal or digging shells swung an overhead chop instead of working their drill or spade; and every angler held a plain stick rather than their own rod.\n\nAll of it now matches what that trainer sees of themselves. No extra delay — these ride the smoothing your view of other players already used."
+ },
+ {
+  "date": "2026-07-29",
   "title": "🐎 Riders look like riders to everyone",
   "body": "Other trainers on mounts appeared to stand upright on top of their steed rather than ride it — and on a griffin they floated well above the saddle.\n\nEveryone now renders exactly as they see themselves: seated in the saddle, in the right spot on the mount's back, for all six steeds. No extra delay — the pose rides the same smoothing the rest of a trainer's movement already uses."
  },
