@@ -1,6 +1,11 @@
 [
  {
   "date": "2026-07-29",
+  "title": "🥚 Your egg caravan travels with you, for everyone",
+  "body": "The little carts carrying your incubating eggs were only ever visible to you — to other trainers you walked alone. They now trundle along behind you wherever you go, seen by everyone.\n\nSprinting reads correctly too: other players run when you run, rather than the game guessing from how fast you happen to be moving."
+ },
+ {
+  "date": "2026-07-29",
   "title": "🏠 No more trainers standing on roofs",
   "body": "If you stood under a bridge, an overhang or inside a building, other players could see you up on the roof instead — and once it happened it stuck until you walked clear. Your own client now has the final say on where you are, so you appear exactly where you stand.\n\nAlso: name banners rise with riders onto the saddle instead of sitting inside the mount, other trainers' animations blend instead of snapping, and their drills are held clear of the body."
  },
