@@ -1,6 +1,11 @@
 [
  {
   "date": "2026-07-29",
+  "title": "🏠 No more trainers standing on roofs",
+  "body": "If you stood under a bridge, an overhang or inside a building, other players could see you up on the roof instead — and once it happened it stuck until you walked clear. Your own client now has the final say on where you are, so you appear exactly where you stand.\n\nAlso: name banners rise with riders onto the saddle instead of sitting inside the mount, other trainers' animations blend instead of snapping, and their drills are held clear of the body."
+ },
+ {
+  "date": "2026-07-29",
   "title": "👀 Other trainers look right",
   "body": "A pass over how other players appear to you. Griffin riders were floating well above their steed and sitting perfectly still instead of drifting on the wing; jumping trainers walked through the air; anyone mining crystal or digging shells swung an overhead chop instead of working their drill or spade; and every angler held a plain stick rather than their own rod.\n\nAll of it now matches what that trainer sees of themselves. No extra delay — these ride the smoothing your view of other players already used."
  },
