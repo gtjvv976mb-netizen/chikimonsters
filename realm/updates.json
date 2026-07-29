@@ -1,6 +1,11 @@
 [
  {
   "date": "2026-07-29",
+  "title": "🔏 More of your progress is sealed against tampering",
+  "body": "Your save already protected the important things — your $CHIKI, resources, chikimon and mounts. A handful of smaller records sat outside that seal: auction escrow, task boards, potion effects, discovered recipes, the hospital timer and a few reward cooldowns.\n\nThey're all sealed now. Nothing about your game changes and nothing needs doing on your part — your save simply re-seals itself the next time it saves, and existing saves keep loading exactly as before.\n\nThis closes off ways the rewards could be claimed more than once, which keeps what everyone earns fair and keeps the value of traded goods real."
+ },
+ {
+  "date": "2026-07-29",
   "title": "🐉 MALGROTH's weekly prize is now guarded by the realm",
   "body": "The great warden's weekly reward is now recorded by the realm itself rather than trusted to each device. Everyone still gets their full prize once a week — 500 $CHIKI and 25 Crystal Shards — and the smaller consolation for repeat visits, exactly as before.\n\nThe difference is that the weekly limit can no longer be quietly bypassed, so the raid rewards stay fair and their value stays real for the trainers who earn them. If you're offline or the realm is slow to answer, your raid still pays out normally."
  },
