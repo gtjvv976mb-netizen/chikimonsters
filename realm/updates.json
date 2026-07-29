@@ -1,6 +1,11 @@
 [
  {
   "date": "2026-07-29",
+  "title": "🛡️ A pre-launch pass over everything new",
+  "body": "A full sweep over this week's changes turned up a handful of rough edges and they're all fixed. The one that could have cost you something: in a rare case a chikimon returning from a withdrawn auction could go missing while the game told you it was safe — it now comes home properly, and the realm confirms which chikimon it was.\n\nAlso fixed: the message telling you Dark Energy didn't fit in a full bag had stopped appearing, resource bookkeeping dropped part of a big crafting burst, and a few internal safeguards were tightened. Nothing about how the game plays has changed."
+ },
+ {
+  "date": "2026-07-29",
   "title": "🔏 More of your progress is sealed against tampering",
   "body": "Your save already protected the important things — your $CHIKI, resources, chikimon and mounts. A handful of smaller records sat outside that seal: auction escrow, task boards, potion effects, discovered recipes, the hospital timer and a few reward cooldowns.\n\nThey're all sealed now. Nothing about your game changes and nothing needs doing on your part — your save simply re-seals itself the next time it saves, and existing saves keep loading exactly as before.\n\nThis closes off ways the rewards could be claimed more than once, which keeps what everyone earns fair and keeps the value of traded goods real."
  },
