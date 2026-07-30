@@ -263,6 +263,9 @@ html.chik-phone #tip { font-size: 10px; min-height: 12px; line-height: 12px; max
 								});
 							}));
 						} catch (e) {}
+						// the pack cache is Cache Storage, not IndexedDB — "reset ALL local data" has to
+						// mean all of it, or 236MB of chunks survives a wipe the player asked for
+						try { if (window.caches) { await caches.delete('chikoria-realm-chunks'); } } catch (e) {}
 						location.replace(location.pathname);
 					})();
 				} else location.replace(location.pathname);
@@ -880,13 +883,25 @@ const engine = new Engine(GODOT_CONFIG);
 	// GitHub's web uploader rejects files over 25 MB, so the big engine files ship as
 	// numbered part-chunks (index.pck.0…, index.wasm.0…). Stream a part list back into
 	// one Blob, reporting progress across [lo, hi] of the loading bar.
+	const CHUNK_CACHE = 'chikoria-realm-chunks';
+	async function openChunkCache(v) {
+		// No stamp means no immutability guarantee, so do not cache at all.
+		if (!v || !window.caches) { return null; }
+		try {
+			const c = await caches.open(CHUNK_CACHE);
+			// Drop every chunk from a PREVIOUS build. Parsed properly rather than by substring: one
+			// build hash can be a prefix of another, and a false match would keep a stale chunk forever.
+			const keys = await c.keys();
+			for (const req of keys) {
+				let stamp = null;
+				try { stamp = new URL(req.url).searchParams.get('v'); } catch (e) { stamp = null; }
+				if (stamp !== v) { try { await c.delete(req); } catch (e) {} }
+			}
+			return c;
+		} catch (e) { return null; }   // private mode, disabled storage, quota — just use the network
+	}
+
 	async function streamParts(names, total, lo, hi, v) {
-		// PARALLEL ON DESKTOP, STRICTLY SEQUENTIAL ON PHONES. This was one `await fetch` inside a
-		// for-loop, so nine 25MB chunks arrived one at a time: every request paid a fresh round trip
-		// and restarted TCP slow-start, leaving most of a fast link idle between chunks. Measured
-		// against the live CDN, the pack is ~212MB on desktop, so the gaps are the difference between
-		// "long" and "very long" on anything with latency.
-		//
 		// DEFAULTS TO 1 — IDENTICAL TO THE OLD SEQUENTIAL BEHAVIOUR — because I could not measure that
 		// parallelism helps, and shipping an unverified change to the load path is not worth it.
 		// What I measured, honestly: sequential throughput to the live CDN came back at 0.3, 2.4, 7.0
@@ -905,6 +920,8 @@ const engine = new Engine(GODOT_CONFIG);
 		const buf = new Array(names.length);   // BY INDEX — parallel completion must not reorder the pck
 		let received = 0;                      // bytes across every chunk, in flight or finished
 		let cursor = 0;
+		let served = 0;                        // chunks answered from disk rather than the network
+		const cache = await openChunkCache(v);
 
 		async function fetchOne(i) {
 			// Version-stamped chunk URLs: every deploy carries a fresh ?v=<build-hash>, so a
@@ -912,6 +929,24 @@ const engine = new Engine(GODOT_CONFIG);
 			// pck and showed stale/duplicate models after an update). Same-version repeat
 			// loads cache fully = faster. Without a stamp, fall back to ETag revalidation.
 			const url = v ? (names[i] + '?v=' + v) : names[i];
+			// ALREADY ON DISK? Then this chunk costs nothing at all — no request, no bytes.
+			if (cache) {
+				try {
+					const hit = await cache.match(url);
+					if (hit) {
+						const blob = await hit.blob();
+						// a truncated entry (a quota eviction mid-write) must never reach the pck
+						if (blob && blob.size > 0) {
+							buf[i] = blob;
+							received += blob.size;
+							served++;
+							setBar(lo + (hi - lo) * (received / total));
+							return;
+						}
+						try { await cache.delete(url); } catch (e) {}
+					}
+				} catch (e) { /* unreadable entry — fall through to the network */ }
+			}
 			// RETRY per chunk: one transient hiccup (flaky mobile data, a QUIC reset) used to
 			// throw out of the whole loader and freeze the bar forever. Each attempt streams
 			// into its OWN list so a mid-body failure never leaks partial bytes into the pck.
@@ -936,6 +971,9 @@ const engine = new Engine(GODOT_CONFIG);
 					// jetsam-killing iPhone WKWebViews (Phantom) into an endless reload loop.
 					buf[i] = new Blob(parts);
 					parts.length = 0;
+					// Keep it for next time. A failure here is NEVER fatal: the pack is already in hand,
+					// and a full disk simply means the next visit downloads again.
+					if (cache) { try { await cache.put(url, new Response(buf[i])); } catch (e) {} }
 					return;
 				} catch (e) {
 					received -= local;   // un-count this attempt, or the bar overruns on a retry
@@ -959,6 +997,7 @@ const engine = new Engine(GODOT_CONFIG);
 		const pool = [];
 		for (let w = 0; w < Math.min(CONC, names.length); w++) { pool.push(worker()); }
 		await Promise.all(pool);   // one rejection fails the load, exactly as the sequential version did
+		if (served === names.length && names.length) { tip.textContent = 'Realm loaded from this device…'; }
 		return buf;   // Blob parts, in order — new Blob(buf) references them without copying
 	}
 
