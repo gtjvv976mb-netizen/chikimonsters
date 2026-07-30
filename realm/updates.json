@@ -1,6 +1,11 @@
 [
   {
     "date": "2026-07-31",
+    "title": "📱 A mobile pass: buttons, scrolling, and a save that crossed devices wrong",
+    "body": "Four faults, and the last one was quietly costing people progress. Tapping Run, Jump or Action also walked your trainer to wherever that button sits on screen — those controls are painted rather than being real buttons, so nothing was claiming your finger and the tap fell through to the ground beneath. Pop-ups could not be scrolled by touch at all, because a finger dragged across a list was being read as a camera swing; they scroll properly now, and the desktop scrollbars are gone since nobody can hit them accurately anyway. The catalog no longer repeats how many of each thing you are carrying — it is there to tell you what a resource IS, and your satchel already answers the other question. And the big one: when the same trainer was opened on two devices, the game decided which save was newer by comparing each device's own clock. A phone running a few minutes ahead of a desktop therefore won regardless of which actually held newer progress, which is how a player hatched an egg on desktop and found it unhatched on their phone — and then the older save was written back over the real one. Both devices now defer to the server's clock, which is the only one they share."
+  },
+  {
+    "date": "2026-07-31",
     "title": "👻 Distant corruptimons stop standing there frozen",
     "body": "Walk away from a corruptimon and it used to stay on screen with its legs stopped mid-stride, like a statue of itself. The game deliberately switches off a monster's mind once you are far enough away — twenty-four of them thinking every frame across the island is work nobody sees — but it kept drawing them anyway, so you got the frozen pose instead of nothing at all. They are simply hidden now, and because a monster's wandering is worked out from the clock rather than remembered, one that comes back into view picks up where it should be rather than where it stopped."
   },
