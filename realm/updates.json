@@ -1,6 +1,11 @@
 [
   {
     "date": "2026-07-30",
+    "title": "🪟 Switch tabs and come back without losing the world",
+    "body": "Leaving the tab freezes the whole game — browsers stop driving the engine for a hidden tab, and no web game escapes that. What was fixable was the return. While you were away your trainer stopped announcing itself, so after twelve seconds the world let go of you and everyone else's game did not freeze your avatar, it deleted it — then popped you back as if you had just arrived. And your own view came back holding everyone where they stood minutes ago. Now the game notices the gap the moment you return: it announces you again on that very frame instead of waiting its turn, throws away the stale picture of where everyone was, and if you were gone long enough to have been dropped it tells you it is reconnecting you. You will still see about a quarter second of stillness while the first fresh update arrives."
+  },
+  {
+    "date": "2026-07-30",
     "title": "🐴 Other players stop losing their mounts (and the world stops freezing)",
     "body": "Three receiver-side bugs, all found by auditing the multiplayer layer rather than trusting it. The egg caravan and the run/walk flag were being sent correctly and relayed correctly, but the client never stored them onto the peer it draws from — so nobody ever saw anyone else's egg carts, and everyone's run-versus-walk was still being guessed from travel speed. Both now arrive. Second: when another player changed their avatar or swapped their team, their rig was rebuilt but their mount and held tool were not, leaving a rider hovering at saddle height over nothing and swinging an invisible axe until they next changed either one. Third, and worst: if the server answered with a page that was not our data — the kind of thing a gateway or proxy returns as a success — the game treated it as a healthy reply, reset its own failure count, and quietly stopped updating. Every other player froze mid-stride, the online count kept insisting they were there, and it never recovered or told you. A reply is only healthy now once it actually parses."
   },
