@@ -881,9 +881,32 @@ const engine = new Engine(GODOT_CONFIG);
 	// numbered part-chunks (index.pck.0…, index.wasm.0…). Stream a part list back into
 	// one Blob, reporting progress across [lo, hi] of the loading bar.
 	async function streamParts(names, total, lo, hi, v) {
-		let done = 0;
-		const buf = [];
-		for (let i = 0; i < names.length; i++) {
+		// PARALLEL ON DESKTOP, STRICTLY SEQUENTIAL ON PHONES. This was one `await fetch` inside a
+		// for-loop, so nine 25MB chunks arrived one at a time: every request paid a fresh round trip
+		// and restarted TCP slow-start, leaving most of a fast link idle between chunks. Measured
+		// against the live CDN, the pack is ~212MB on desktop, so the gaps are the difference between
+		// "long" and "very long" on anything with latency.
+		//
+		// DEFAULTS TO 1 — IDENTICAL TO THE OLD SEQUENTIAL BEHAVIOUR — because I could not measure that
+		// parallelism helps, and shipping an unverified change to the load path is not worth it.
+		// What I measured, honestly: sequential throughput to the live CDN came back at 0.3, 2.4, 7.0
+		// and 6.9 MB/s across four runs — 23x variance on the same operation — and the one clean
+		// comparison where BOTH sides were cache-cold had parallel-of-3 SLOWER (2.4 -> 1.6 MB/s), which
+		// makes sense: on a Cloudflare MISS three concurrent requests split one origin pull from
+		// GitHub Pages rather than adding bandwidth. A later run took 150s for 18MB, which looks like
+		// rate-limiting from my own repeated probing. None of that is a basis for a decision.
+		//
+		// So the POOL is here and tested (order, retry, failure, phone safety) and the knob is one
+		// line. Raise it once someone can measure a real first load from a real browser on a real
+		// connection — devtools Network panel, cache disabled, compare total time at 1 vs 2 vs 3.
+		// If you do raise it, keep phones at 1: the memory note below is load-bearing, since three
+		// chunks in flight is 75MB of raw arrays on devices that were being jetsam-killed at 25.
+		const CONC = (window.CHIK_PHONE ? 1 : 1);
+		const buf = new Array(names.length);   // BY INDEX — parallel completion must not reorder the pck
+		let received = 0;                      // bytes across every chunk, in flight or finished
+		let cursor = 0;
+
+		async function fetchOne(i) {
 			// Version-stamped chunk URLs: every deploy carries a fresh ?v=<build-hash>, so a
 			// browser/CDN can NEVER mix old cached chunks with new ones (which corrupted the
 			// pck and showed stale/duplicate models after an update). Same-version repeat
@@ -892,7 +915,6 @@ const engine = new Engine(GODOT_CONFIG);
 			// RETRY per chunk: one transient hiccup (flaky mobile data, a QUIC reset) used to
 			// throw out of the whole loader and freeze the bar forever. Each attempt streams
 			// into its OWN list so a mid-body failure never leaks partial bytes into the pck.
-			let chunk = null, chunkBytes = 0;
 			for (let attempt = 0; ; attempt++) {
 				const parts = [];
 				let local = 0;
@@ -905,26 +927,39 @@ const engine = new Engine(GODOT_CONFIG);
 						if (r.done) { break; }
 						parts.push(r.value);
 						local += r.value.byteLength;
-						setBar(lo + (hi - lo) * ((done + local) / total));
+						received += r.value.byteLength;
+						setBar(lo + (hi - lo) * (received / total));
 					}
-					chunk = parts; chunkBytes = local;
-					break;
+					// wrap the finished chunk into a Blob IMMEDIATELY and drop the raw arrays: WebKit
+					// keeps Blobs in a registry that can spill to disk, so the JS heap only ever holds
+					// ~CONC chunks instead of the whole 240MB pck — the double-copy peak was
+					// jetsam-killing iPhone WKWebViews (Phantom) into an endless reload loop.
+					buf[i] = new Blob(parts);
+					parts.length = 0;
+					return;
 				} catch (e) {
+					received -= local;   // un-count this attempt, or the bar overruns on a retry
+					parts.length = 0;
 					if (attempt >= 3) { throw new Error('Failed to load ' + names[i] + ' after 4 tries (' + ((e && e.message) || e) + ')'); }
 					tip.textContent = 'Connection hiccup — retrying part ' + (i + 1) + ' of ' + names.length + '…';
-					setBar(lo + (hi - lo) * (done / total));   // roll the bar back to the last good chunk
+					setBar(lo + (hi - lo) * (received / total));
 					await new Promise(function (ok) { setTimeout(ok, 700 * (attempt + 1)); });
 				}
 			}
-			// wrap the finished chunk into a Blob IMMEDIATELY and drop the raw arrays: WebKit
-			// keeps Blobs in a registry that can spill to disk, so the JS heap only ever holds
-			// ~one 24MB chunk instead of the whole 240MB pck — the double-copy peak was
-			// jetsam-killing iPhone WKWebViews (Phantom) into an endless reload loop.
-			buf.push(new Blob(chunk));
-			chunk.length = 0;
-			done += chunkBytes;
 		}
-		return buf;   // Blob parts — new Blob(buf) references them without copying
+
+		// a fixed pool pulling from a shared cursor: no chunk is fetched twice and none is skipped
+		async function worker() {
+			for (;;) {
+				const i = cursor++;
+				if (i >= names.length) { return; }
+				await fetchOne(i);
+			}
+		}
+		const pool = [];
+		for (let w = 0; w < Math.min(CONC, names.length); w++) { pool.push(worker()); }
+		await Promise.all(pool);   // one rejection fails the load, exactly as the sequential version did
+		return buf;   // Blob parts, in order — new Blob(buf) references them without copying
 	}
 
 	async function run() {
