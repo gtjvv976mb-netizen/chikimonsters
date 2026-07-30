@@ -1,6 +1,16 @@
 [
   {
     "date": "2026-07-30",
+    "title": "📡 Half the network traffic, same world",
+    "body": "Every couple of seconds the game was told each nearby trainer's name, look, team, element and level all over again — none of which changes while you are playing. Now it hears those once and afterwards only what actually moves. Measured at just over half the traffic removed, which matters most on a phone and on a hotel connection, and leaves far more room for a crowded island. If somebody changes their outfit or swaps their team you are told immediately, and only about them."
+  },
+  {
+    "date": "2026-07-30",
+    "title": "🐺 Every trainer sees the same monster in the same place",
+    "body": "Two players standing shoulder to shoulder were watching the same corruptimon in different spots, sometimes tens of units apart. Two things caused it. The wander was rolled independently on each machine, and — the one that made it unfixable by seeding alone — a monster's mind switches off entirely once no player is within 120 units, so where it ends up depends on how long somebody happened to stand nearby. Two trainers arriving at different times could never agree, however the dice fell. So a monster's idle path is no longer walked, it is read: ask where a corruptimon is at a given moment and every machine computes the same answer, with nothing sent over the wire to make it so. They keep to their own patch of the island as before, they still hunt your chikimon exactly as they did, and one that has been out of sight simply picks up where it should be rather than where it was frozen."
+  },
+  {
+    "date": "2026-07-30",
     "title": "🪟 Switch tabs and come back without losing the world",
     "body": "Leaving the tab freezes the whole game — browsers stop driving the engine for a hidden tab, and no web game escapes that. What was fixable was the return. While you were away your trainer stopped announcing itself, so after twelve seconds the world let go of you and everyone else's game did not freeze your avatar, it deleted it — then popped you back as if you had just arrived. And your own view came back holding everyone where they stood minutes ago. Now the game notices the gap the moment you return: it announces you again on that very frame instead of waiting its turn, throws away the stale picture of where everyone was, and if you were gone long enough to have been dropped it tells you it is reconnecting you. You will still see about a quarter second of stillness while the first fresh update arrives."
   },
