@@ -1,6 +1,11 @@
 [
   {
     "date": "2026-07-31",
+    "title": "👻 Distant corruptimons stop standing there frozen",
+    "body": "Walk away from a corruptimon and it used to stay on screen with its legs stopped mid-stride, like a statue of itself. The game deliberately switches off a monster's mind once you are far enough away — twenty-four of them thinking every frame across the island is work nobody sees — but it kept drawing them anyway, so you got the frozen pose instead of nothing at all. They are simply hidden now, and because a monster's wandering is worked out from the clock rather than remembered, one that comes back into view picks up where it should be rather than where it stopped."
+  },
+  {
+    "date": "2026-07-31",
     "title": "🔮 The legend placards read properly now",
     "body": "The coming-soon placards at the Wicked Temple, the Crystal Lode, MALGROTH's arena, the wandering galleon and the Leviathan's waters had two faults. Each title carried a little symbol that simply did not exist in the font the card is drawn with, so instead of a crystal ball or a gem you got an empty box — it looked right on a desktop editor only because the computer quietly lent its own emoji font, which a browser will not do. Those are proper artwork now. And every card was built exactly as tall as its contents with nothing spare, so the line under COMING SOON was sliced in half at the bottom edge. The card is taller and the whole ribbon fits."
   },
