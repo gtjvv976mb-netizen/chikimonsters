@@ -275,6 +275,21 @@ html.chik-phone #tip { font-size: 10px; min-height: 12px; line-height: 12px; max
 			// heuristic misfired on touchscreen / high-display-scaling DESKTOPS (Windows at
 			// 200-250% scaling reports a sub-820px CSS screen), which handed PCs the phone
 			// loader: mobile-lite pack + a 4-6 worker pool -> voxel boot DEADLOCK at 82%.
+			// THE PACK LIVES IN OBJECT STORAGE, not in this repo. Committing a fresh ~370MB of chunks on
+			// every release grew .git to about 45GB and GitHub Pages stopped publishing entirely —
+			// nothing reached players for a day. Serving the binaries from R2 keeps the repo at source
+			// size, so a release is a few KB again.
+			//
+			// Verified before switching over: all 16 objects present at the bucket root, byte-identical
+			// to the build (R2 returns the md5 as ETag, and all 16 matched), and
+			// Access-Control-Allow-Origin: https://chikimonsters.com is present — which is the one that
+			// matters, because this page runs under Cross-Origin-Embedder-Policy: require-corp and a
+			// cross-origin fetch without CORS would fail before coi-serviceworker could stamp CORP on it.
+			//
+			// ?nocdn falls back to same-origin, for testing or if the bucket ever misbehaves. The loader
+			// also falls back per-chunk on its own after two failed attempts (see chunkUrl/streamParts).
+			window.CHIK_CDN = /[?&]nocdn/.test(location.search) ? ''
+				: 'https://pub-20414795ec4e418396e813e5efd167e8.r2.dev';
 			// The user agent is unambiguous here: Phantom/Safari on iPhone always says
 			// iPhone; Android phone browsers always say Android+Mobile. Tablets and every
 			// desktop take the full desktop build. (?forcephone = dev testing)
