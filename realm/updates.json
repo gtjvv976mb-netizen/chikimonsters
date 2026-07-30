@@ -1,6 +1,11 @@
 [
   {
     "date": "2026-07-30",
+    "title": "🐴 Other players stop losing their mounts (and the world stops freezing)",
+    "body": "Three receiver-side bugs, all found by auditing the multiplayer layer rather than trusting it. The egg caravan and the run/walk flag were being sent correctly and relayed correctly, but the client never stored them onto the peer it draws from — so nobody ever saw anyone else's egg carts, and everyone's run-versus-walk was still being guessed from travel speed. Both now arrive. Second: when another player changed their avatar or swapped their team, their rig was rebuilt but their mount and held tool were not, leaving a rider hovering at saddle height over nothing and swinging an invisible axe until they next changed either one. Third, and worst: if the server answered with a page that was not our data — the kind of thing a gateway or proxy returns as a success — the game treated it as a healthy reply, reset its own failure count, and quietly stopped updating. Every other player froze mid-stride, the online count kept insisting they were there, and it never recovered or told you. A reply is only healthy now once it actually parses."
+  },
+  {
+    "date": "2026-07-30",
     "title": "💬 The chatbox lets go of you",
     "body": "Clicking into the chat used to lock you out of your own game: the only way back to walking was to find the Escape key, because clicking the world does not release a typing cursor, and sending a message re-grabbed it anyway. Now a click anywhere on the world hands the keyboard straight back — and the same click still starts you walking there, so it costs no extra gesture. Sending a message also hands it back; Enter puts you straight back in the box if you want to keep talking. And a message refused for being too quick, or for having no whisper target picked, is given back to you with the cursor at the end instead of being quietly thrown away. The fold arrow in the corner is redrawn too: minimise and maximise are now the same arrow mirrored, so they finally sit level with the channel tabs."
   },
