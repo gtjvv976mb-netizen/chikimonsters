@@ -883,6 +883,11 @@ const engine = new Engine(GODOT_CONFIG);
 	// GitHub's web uploader rejects files over 25 MB, so the big engine files ship as
 	// numbered part-chunks (index.pck.0…, index.wasm.0…). Stream a part list back into
 	// one Blob, reporting progress across [lo, hi] of the loading bar.
+	const CHUNK_CDN = (window.CHIK_CDN || '').replace(/\/+$/, '');
+	function chunkUrl(name, v, sameOrigin) {
+		const base = (CHUNK_CDN && !sameOrigin) ? (CHUNK_CDN + '/' + name) : name;
+		return v ? (base + '?v=' + v) : base;
+	}
 	const CHUNK_CACHE = 'chikoria-realm-chunks';
 	async function openChunkCache(v) {
 		// No stamp means no immutability guarantee, so do not cache at all.
@@ -928,7 +933,10 @@ const engine = new Engine(GODOT_CONFIG);
 			// browser/CDN can NEVER mix old cached chunks with new ones (which corrupted the
 			// pck and showed stale/duplicate models after an update). Same-version repeat
 			// loads cache fully = faster. Without a stamp, fall back to ETag revalidation.
-			const url = v ? (names[i] + '?v=' + v) : names[i];
+			// A CDN failure must never be an outage: after two attempts against the bucket, fall back to
+			// same-origin for the rest of this chunk's tries. If the bucket is misconfigured (missing CORS
+			// is the likely one) the game still loads, just slower, and the console says why.
+			const url = chunkUrl(names[i], v, false);
 			// ALREADY ON DISK? Then this chunk costs nothing at all — no request, no bytes.
 			if (cache) {
 				try {
@@ -954,7 +962,9 @@ const engine = new Engine(GODOT_CONFIG);
 				const parts = [];
 				let local = 0;
 				try {
-					const res = await fetch(url, { cache: (attempt === 0 && v) ? 'default' : 'reload' });
+					const tryUrl = (CHUNK_CDN && attempt >= 2) ? chunkUrl(names[i], v, true) : url;
+					if (tryUrl !== url) { console.warn('realm: falling back to same-origin for ' + names[i]); }
+					const res = await fetch(tryUrl, { cache: (attempt === 0 && v) ? 'default' : 'reload' });
 					if (!res.ok) { throw new Error('HTTP ' + res.status); }
 					const reader = res.body.getReader();
 					for (;;) {
@@ -973,6 +983,8 @@ const engine = new Engine(GODOT_CONFIG);
 					parts.length = 0;
 					// Keep it for next time. A failure here is NEVER fatal: the pack is already in hand,
 					// and a full disk simply means the next visit downloads again.
+					// keyed on the CDN url regardless of which origin served it, so a fallback fetch does not
+					// create a second entry for the same chunk
 					if (cache) { try { await cache.put(url, new Response(buf[i])); } catch (e) {} }
 					return;
 				} catch (e) {
