@@ -1,5 +1,15 @@
 [
   {
+    "date": "2026-07-31",
+    "title": "🔮 The legend placards read properly now",
+    "body": "The coming-soon placards at the Wicked Temple, the Crystal Lode, MALGROTH's arena, the wandering galleon and the Leviathan's waters had two faults. Each title carried a little symbol that simply did not exist in the font the card is drawn with, so instead of a crystal ball or a gem you got an empty box — it looked right on a desktop editor only because the computer quietly lent its own emoji font, which a browser will not do. Those are proper artwork now. And every card was built exactly as tall as its contents with nothing spare, so the line under COMING SOON was sliced in half at the bottom edge. The card is taller and the whole ribbon fits."
+  },
+  {
+    "date": "2026-07-31",
+    "title": "🔇 No more \"welcome back\" every time you switch tabs",
+    "body": "Coming back to the tab announced itself in the System log, every time. Switching tabs is something you do constantly and you already know you did it, so the log filled up with a notice about your own deliberate action. The reconnect still happens exactly as before — your trainer re-announces itself the instant you return and everyone else's position is refreshed rather than replayed from minutes ago — it simply does it quietly now."
+  },
+  {
     "date": "2026-07-30",
     "title": "📡 Half the network traffic, same world",
     "body": "Every couple of seconds the game was told each nearby trainer's name, look, team, element and level all over again — none of which changes while you are playing. Now it hears those once and afterwards only what actually moves. Measured at just over half the traffic removed, which matters most on a phone and on a hotel connection, and leaves far more room for a crowded island. If somebody changes their outfit or swaps their team you are told immediately, and only about them."
