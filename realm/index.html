@@ -202,6 +202,12 @@ html.chik-phone #tip { font-size: 10px; min-height: 12px; line-height: 12px; max
 }
 		</style>
 		<link rel="preload" as="image" href="hero.jpg">
+		<!-- warm DNS + the TLS ticket for the game backend while the pack downloads. The socket itself
+		     rarely survives (different origin from the pck; browsers close idle preconnects in ~10s),
+		     but on a Render cold start the TLS leg alone measured ~4.9s — this is the cheap half of it.
+		     Host must match Net.gd BACKEND exactly: backend-wffd.onrender.com. -->
+		<link rel="preconnect" href="https://backend-wffd.onrender.com" crossorigin>
+		<link rel="dns-prefetch" href="https://backend-wffd.onrender.com">
 		<link id="-gd-engine-icon" rel="icon" type="image/png" href="index.icon.png" />
 <link rel="apple-touch-icon" href="index.apple-touch-icon.png"/>
 <script src="coi-serviceworker.min.js"></script>
@@ -793,7 +799,7 @@ html.chik-phone #tip { font-size: 10px; min-height: 12px; line-height: 12px; max
 		</script>
 		<script src="index.js"></script>
 		<script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":222643968,"index.wasm":40092042},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":215921296,"index.wasm":40092042},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
 const GODOT_THREADS_ENABLED = true;
 const engine = new Engine(GODOT_CONFIG);
 
@@ -915,6 +921,17 @@ const engine = new Engine(GODOT_CONFIG);
 	// Cross-Origin-Resource-Policy: cross-origin on the response, so CORP is covered. What the bucket
 	// must still provide is Access-Control-Allow-Origin, or the CORS fetch fails before the worker sees it.
 	const CHUNK_CDN = (window.CHIK_CDN || '').replace(/\/+$/, '');
+	// THE BUCKET DOES NOT HOLD THE MOBILE-LITE PACK. Measured against the live bucket 2026-07-31:
+	// <stamp>/index.pck.0.bin and <stamp>/index.wasm.0.bin answer 206, but all five
+	// <stamp>/index.pck.lite.N.bin answer 404 — the lite chunks were uploaded to the bucket ROOT
+	// instead of into their own stamp folder, and the lite pack carries a DIFFERENT stamp from the
+	// HD pack, which is exactly how that gets missed. So every phone asked the CDN five times for a
+	// pack that was not there, paid two failed round trips and 2.1s of backoff per chunk, and then
+	// downloaded from same-origin anyway. Same-origin is also SMALLER: Cloudflare serves these
+	// gzipped (86.7MB for the lite pack, measured) while R2 sends them raw (125.2MB, no
+	// content-encoding), so routing phones to the bucket would cost them 38.5MB MORE even once the
+	// upload is fixed. Flip this to true only if the lite chunks are uploaded WITH gzip metadata.
+	const CDN_HAS_LITE = false;
 	// THE BUILD HASH IS A FOLDER, NOT A QUERY STRING, on the CDN side. Object storage serves by KEY and
 	// ignores ?v= entirely, so a flat layout means a release that ships before its upload finishes
 	// serves the PREVIOUS build's chunks under the new manifest — a silently corrupted pack that looks
@@ -927,24 +944,44 @@ const engine = new Engine(GODOT_CONFIG);
 		return v ? (name + '?v=' + v) : name;
 	}
 	const CHUNK_CACHE = 'chikoria-realm-chunks';
-	async function openChunkCache(v) {
-		// No stamp means no immutability guarantee, so do not cache at all.
-		if (!v || !window.caches) { return null; }
+	// CACHE KEY IS ALWAYS THE SAME-ORIGIN FORM, whichever origin actually served the bytes.
+	// It used to be keyed on the fetch URL, which under a CDN is https://<bucket>/<stamp>/<name> —
+	// and the eviction pass below read the stamp with searchParams.get('v'), which is null for that
+	// shape. Null never equals the current stamp, so EVERY entry was deleted on open, on every load,
+	// before a single chunk was read. The cache was written (~97MB of writes a load) and never once
+	// served. Keying and evicting on one canonical form makes both halves agree.
+	function chunkCacheKey(name, v) {
+		return new URL(name + (v ? '?v=' + v : ''), location.href).href;
+	}
+	async function openChunkCache() {
+		if (!window.caches) { return null; }
+		try { return await caches.open(CHUNK_CACHE); }
+		catch (e) { return null; }   // private mode, disabled storage, quota — just use the network
+	}
+	// Drop chunks from PREVIOUS builds. Runs ONCE, after every family's stamp is known, and never
+	// before the chunks have been read: openChunkCache used to evict per streamParts call, so the
+	// wasm pass (one stamp) deleted the pck pass's entries (a different stamp) and vice versa —
+	// two families could never be cached at the same time even with the key bug fixed.
+	// Parsed rather than substring-matched: one build hash can be a prefix of another.
+	async function evictOtherBuilds(cache, stamps) {
+		if (!cache) { return 0; }
+		const keep = new Set(stamps.filter(Boolean));
+		if (!keep.size) { return 0; }
+		let dropped = 0;
 		try {
-			const c = await caches.open(CHUNK_CACHE);
-			// Drop every chunk from a PREVIOUS build. Parsed properly rather than by substring: one
-			// build hash can be a prefix of another, and a false match would keep a stale chunk forever.
-			const keys = await c.keys();
-			for (const req of keys) {
+			for (const req of await cache.keys()) {
 				let stamp = null;
 				try { stamp = new URL(req.url).searchParams.get('v'); } catch (e) { stamp = null; }
-				if (stamp !== v) { try { await c.delete(req); } catch (e) {} }
+				if (!keep.has(stamp)) { try { await cache.delete(req); dropped++; } catch (e) {} }
 			}
-			return c;
-		} catch (e) { return null; }   // private mode, disabled storage, quota — just use the network
+		} catch (e) {}
+		return dropped;
 	}
 
-	async function streamParts(names, total, lo, hi, v) {
+	// `cache` is opened ONCE by the caller and shared by every family (see evictOtherBuilds).
+	// `sameOriginOnly` skips the CDN for a family the bucket does not actually hold — asking for a
+	// chunk that 404s costs two failed round trips and 2.1s of backoff BEFORE the fallback, per chunk.
+	async function streamParts(names, total, lo, hi, v, cache, sameOriginOnly) {
 		// DEFAULTS TO 1 — IDENTICAL TO THE OLD SEQUENTIAL BEHAVIOUR — because I could not measure that
 		// parallelism helps, and shipping an unverified change to the load path is not worth it.
 		// What I measured, honestly: sequential throughput to the live CDN came back at 0.3, 2.4, 7.0
@@ -964,7 +1001,10 @@ const engine = new Engine(GODOT_CONFIG);
 		let received = 0;                      // bytes across every chunk, in flight or finished
 		let cursor = 0;
 		let served = 0;                        // chunks answered from disk rather than the network
-		const cache = await openChunkCache(v);
+		const useCdn = !!CHUNK_CDN && !sameOriginOnly;
+		// No build stamp = no immutability guarantee = no caching. The caller passes the cache
+		// unconditionally; the stamp decides whether it may be used.
+		if (!v) { cache = null; }
 
 		async function fetchOne(i) {
 			// Version-stamped chunk URLs: every deploy carries a fresh ?v=<build-hash>, so a
@@ -974,11 +1014,12 @@ const engine = new Engine(GODOT_CONFIG);
 			// A CDN failure must never be an outage: after two attempts against the bucket, fall back to
 			// same-origin for the rest of this chunk's tries. If the bucket is misconfigured (missing CORS
 			// is the likely one) the game still loads, just slower, and the console says why.
-			const url = chunkUrl(names[i], v, false);
+			const url = chunkUrl(names[i], v, !useCdn);
+			const key = chunkCacheKey(names[i], v);   // origin-independent; see chunkCacheKey
 			// ALREADY ON DISK? Then this chunk costs nothing at all — no request, no bytes.
 			if (cache) {
 				try {
-					const hit = await cache.match(url);
+					const hit = await cache.match(key);
 					if (hit) {
 						const blob = await hit.blob();
 						// a truncated entry (a quota eviction mid-write) must never reach the pck
@@ -989,7 +1030,7 @@ const engine = new Engine(GODOT_CONFIG);
 							setBar(lo + (hi - lo) * (received / total));
 							return;
 						}
-						try { await cache.delete(url); } catch (e) {}
+						try { await cache.delete(key); } catch (e) {}
 					}
 				} catch (e) { /* unreadable entry — fall through to the network */ }
 			}
@@ -1000,7 +1041,7 @@ const engine = new Engine(GODOT_CONFIG);
 				const parts = [];
 				let local = 0;
 				try {
-					const tryUrl = (CHUNK_CDN && attempt >= 2) ? chunkUrl(names[i], v, true) : url;
+					const tryUrl = (useCdn && attempt >= 2) ? chunkUrl(names[i], v, true) : url;
 					if (tryUrl !== url) { console.warn('realm: falling back to same-origin for ' + names[i]); }
 					const res = await fetch(tryUrl, { cache: (attempt === 0 && v) ? 'default' : 'reload' });
 					if (!res.ok) { throw new Error('HTTP ' + res.status); }
@@ -1023,7 +1064,7 @@ const engine = new Engine(GODOT_CONFIG);
 					// and a full disk simply means the next visit downloads again.
 					// keyed on the CDN url regardless of which origin served it, so a fallback fetch does not
 					// create a second entry for the same chunk
-					if (cache) { try { await cache.put(url, new Response(buf[i])); } catch (e) {} }
+					if (cache) { try { await cache.put(key, new Response(buf[i])); } catch (e) {} }
 					return;
 				} catch (e) {
 					received -= local;   // un-count this attempt, or the bar overruns on a retry
@@ -1075,6 +1116,8 @@ const engine = new Engine(GODOT_CONFIG);
 				}
 			}
 		}
+		// ONE cache for every family — see evictOtherBuilds for why this must not be per-family
+		const chunkCache = await openChunkCache();
 		let vt = null;
 		try {
 			vt = await fetchJSON('virtual-files.json', 3);
@@ -1083,7 +1126,7 @@ const engine = new Engine(GODOT_CONFIG);
 		let releaseWasm = null;
 		if (w && w.parts && w.parts.length) {
 			tip.textContent = 'Downloading the engine…';
-			const wasmChunks = await streamParts(w.parts, w.total, 0.0, 0.12, vt.v || '');
+			const wasmChunks = await streamParts(w.parts, w.total, 0.0, 0.12, vt.v || '', chunkCache, false);
 			// holder (not a const capture) so the 40MB blob can be RELEASED once the engine
 			// has compiled it — WKWebView memory is the scarcest resource we have
 			const hold = { blob: new Blob(wasmChunks, { type: 'application/wasm' }) };
@@ -1103,16 +1146,30 @@ const engine = new Engine(GODOT_CONFIG);
 		// a quarter of the texture memory) — the difference between playing and the iOS memory
 		// ceiling. Missing lite manifest → graceful fallback to the HD pack.
 		tip.textContent = 'Building the realm…';
-		const wantLite = !!window.CHIK_PHONE;
+		const oomN = (function () { try { return parseInt(sessionStorage.getItem('realm-oom') || '0', 10) || 0; } catch (e) { return 0; } })();
+		// A device that has ALREADY been memory-killed loads the lite pack whatever its UA says.
+		// This is the net under the devices the UA test cannot catch: an iPad reports a desktop-class
+		// UA ("Macintosh"), and an iPhone with Safari's "Request Desktop Website" on does the same —
+		// both pull the 222MB HD pack today and hit the exact ceiling the lite pack exists to avoid.
+		// sessionStorage-scoped, so a fresh tab starts clean rather than being degraded forever.
+		const wantLite = !!window.CHIK_PHONE || oomN >= 1;
 		let man = null;
+		let usedLite = false;
 		if (wantLite) {
 			try {
 				man = await fetchJSON('index.pck.lite.manifest.json', 4);   // 404 falls through instantly; network errors retry
+				usedLite = true;
 				tip.textContent = 'Building the pocket realm…';
 			} catch (e) { man = null; }
 		}
 		if (!man) { man = await fetchJSON('index.pck.manifest.json', 4); }
-		const pckChunks = await streamParts(man.chunks, man.total, 0.12, 0.82, man.v || '');
+		const pckChunks = await streamParts(man.chunks, man.total, 0.12, 0.82, man.v || '',
+			chunkCache, usedLite && !CDN_HAS_LITE);
+		// Now that every family's stamp is known, drop other builds. Deferred to here on purpose:
+		// evicting at open time is what made the cache delete entries it was about to need.
+		evictOtherBuilds(chunkCache, [vt && vt.v, man && man.v]).then(function (dropped) {
+			if (dropped) { console.log('realm: dropped ' + dropped + ' chunk(s) from older builds'); }
+		});
 		const pckBlob = new Blob(pckChunks, { type: 'application/octet-stream' }); pckChunks.length = 0; const packUrl = URL.createObjectURL(pckBlob);
 
 		// 3. Cap the canvas backing store on phones: UI/compositor cost scales with DPR^2 and
@@ -1125,17 +1182,38 @@ const engine = new Engine(GODOT_CONFIG);
 			} catch (e) { /* locked-down WebView: keep native DPR */ }
 		}
 		// 3b. Boot the engine.
-		await engine.startGame({
-			'mainPack': packUrl,
-			// the voxel engine spawns streaming/meshing workers per core — the default
-			// 8-worker emscripten pool exhausts and risks deadlock on bigger machines.
-			// Phones run the LEANEST viable pool (4..6): every worker costs real memory on
-			// WKWebView, and memory is what kills + reloads the page there.
-			'emscriptenPoolSize': (!!window.CHIK_PHONE ? Math.min(Math.max(navigator.hardwareConcurrency || 4, 4), 6) : Math.min(Math.max(navigator.hardwareConcurrency || 8, 8) + 8, 24)),
-			'onProgress': function (cur, tot) {
-				if (cur > 0 && tot > 0) { setBar(0.82 + 0.18 * (cur / tot)); }
-			},
-		});
+		// THE BAR CANNOT MOVE ON ITS OWN PAST 82%. GODOT_CONFIG.fileSizes is keyed by the literal
+		// 'index.pck', but startGame is handed a blob: URL, so the engine's loadFetch finds no total
+		// and onProgress below never passes its own cur>0/tot>0 guard. Structural, not flaky — the
+		// longest silent stretch of the whole boot (wasm compile + a full pck copyToFS) showed a
+		// motionless bar, on the exact site that already froze at 82% once before. Ease the bar
+		// asymptotically toward 98% instead; it can never claim 100% early because only the real
+		// resolve below sets 1.0.
+		tip.textContent = 'Compiling the engine…';
+		try { sessionStorage.setItem('realm-loading', '1'); } catch (e) {}   // see the OOM detector
+		var bootT0 = Date.now();
+		var bootTick = setInterval(function () {
+			var t = (Date.now() - bootT0) / 20000;            // ~20s to close most of the gap
+			setBar(0.82 + 0.16 * (1 - Math.exp(-t * 3)));     // 0.82 -> asymptote 0.98
+			if (t > 0.4) { tip.textContent = 'Building the realm…'; }
+		}, 250);
+		try {
+			await engine.startGame({
+				'mainPack': packUrl,
+				// the voxel engine spawns streaming/meshing workers per core — the default
+				// 8-worker emscripten pool exhausts and risks deadlock on bigger machines.
+				// Phones run the LEANEST viable pool (4..6): every worker costs real memory on
+				// WKWebView, and memory is what kills + reloads the page there. A device that has
+				// ALREADY been OOM-killed once runs the floor of 4 — headroom beats speed there.
+				'emscriptenPoolSize': (!!window.CHIK_PHONE
+					? (oomN >= 1 ? 4 : Math.min(Math.max(navigator.hardwareConcurrency || 4, 4), 6))
+					: Math.min(Math.max(navigator.hardwareConcurrency || 8, 8) + 8, 24)),
+				'onProgress': function (cur, tot) {
+					if (cur > 0 && tot > 0) { setBar(0.82 + 0.18 * (cur / tot)); }
+				},
+			});
+		} finally { clearInterval(bootTick); }
+		try { sessionStorage.removeItem('realm-loading'); } catch (e) {}
 		// the realm is built — free every staging copy NOW: the engine has the pck in its own
 		// filesystem and the wasm is compiled, so the 240MB pack blob + 40MB wasm blob are pure
 		// dead weight. On iPhone WKWebView (Phantom) this margin is the difference between
@@ -1156,14 +1234,25 @@ const engine = new Engine(GODOT_CONFIG);
 		// iOS never fires pagehide, so the detector still catches it. Desktop refreshes were
 		// false-positives ("device ran low on memory" on every F5) — the warning is PHONE-only.
 		window.addEventListener('pagehide', function () {
-			try { sessionStorage.removeItem('realm-was-running'); } catch (e) {}
+			try { sessionStorage.removeItem('realm-was-running'); sessionStorage.removeItem('realm-loading'); } catch (e) {}
 		});
-		if (sessionStorage.getItem('realm-was-running') === '1') {
-			sessionStorage.removeItem('realm-was-running');
-			if (window.CHIK_PHONE) {
+		// A kill DURING the load counts too. The load is the peak-memory phase — pck blob + wasm blob
+		// + engine all resident at once — so it is the MOST likely moment to be jetsam-killed, and the
+		// old detector (armed only after startGame resolved) could never see it: a device dying at 90%
+		// reloaded, died at 90%, forever, with the counter at zero. 'realm-loading' is set just before
+		// startGame and cleared on resolve, so either flag surviving into this load means a kill.
+		const wasKilled = sessionStorage.getItem('realm-was-running') === '1'
+			|| sessionStorage.getItem('realm-loading') === '1';
+		sessionStorage.removeItem('realm-was-running');
+		sessionStorage.removeItem('realm-loading');
+		if (wasKilled) {
+			// Tablets count as well: an iPad's desktop-class UA is exactly why it needs the net —
+			// it takes the HD pack and has no other path to the lite one. Desktop stays exempt
+			// (F5 false-positives are why this is guarded at all).
+			if (window.CHIK_PHONE || window.CHIK_TABLET) {
 				const oomN = parseInt(sessionStorage.getItem('realm-oom') || '0', 10) + 1;
 				sessionStorage.setItem('realm-oom', String(oomN));
-				err.textContent = '⚠️ The realm restarted — this device ran low on memory. Closing other apps and browser tabs helps a lot.';
+				err.textContent = '⚠️ The realm restarted — this device ran low on memory. Loading the lighter pack this time. Closing other apps and tabs helps; opening a fresh tab starts clean.';
 				err.style.display = 'block';   // #err ships display:none — without this the warning never rendered
 				dropHero();                    // the hero (z12) covers #boot (z10); the player must SEE the warning
 			}
