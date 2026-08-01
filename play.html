@@ -1597,7 +1597,7 @@ const solCostOf=lv=>+(chikiCostOf(lv)*TOKEN_PRICE*1.15).toFixed(4);
 const CHAIN={
   MINT:"CPYrgdAYWFQD74ZtsR8mEBWW7qnrXnegcn7gDMobpump",   /* $CHIKI mint (pump.fun) — live balance check ON */
   RPC:"https://mainnet.helius-rpc.com/?api-key=4aec5974-6a75-4693-9d26-6b2050c2464b",  /* Helius RPC */
-  BACKEND:"https://backend-wffd.onrender.com",   /* live verify/payout backend */
+  BACKEND:"https://api.chikimonsters.com",   /* region-independent live backend */
   TREASURY:"7AkAC12DJUtWxUGPJYzCaq1obUJhDJ21ifzG799JERQ1",       /* reward pool — gets the POOL share of $CHIKI spends (49.5% default · 40% Legendary Egg · 39% reroll). Rotated after compromise. */
   TEAM:"CmY2ZXVPVG2gbAHeVWHw7PQrAKtTcrWsq2raaWgg8YJ9",          /* team wallet — gets the TEAM share (49.5% default · 59% Legendary Egg · 60% reroll) */
   ONCHAIN_SPENDS:true,           /* true = spends (feed/level/eggs) are REAL on-chain $CHIKI tx. Default split 1% burn / 49.5% pool / 49.5% team (eggs & reroll use their own splits below). false = simulated */
