@@ -1,5 +1,10 @@
 [
  {
+  "date": "2026-08-05",
+  "title": "🔄 Every number you read is the live one",
+  "body": "Tabs and pop-ups now refresh the moment you open them, so prices, stock, purse, timers and roster all show what the island says right now instead of whatever they were when you last looked. That includes a real fix at the Trading Post: when a bidder raised their own offer, the auction card kept showing the old price and pre-filled a bid the server would refuse as too low — raises now land on the card the moment they happen, so you always bid against the true leader. The Chikiseum has also raised its banner high above the arena, readable from the plaza and from the west gate approach."
+ },
+ {
   "date": "2026-08-04",
   "title": "📡 Know your connection",
   "body": "A live ping pill now sits beside the online count — your real round-trip to the island, updated every second. Green under 120 ms, amber to 249, red beyond. When the road is the problem, now you can see it."
