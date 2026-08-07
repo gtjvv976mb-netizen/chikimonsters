@@ -1,6 +1,11 @@
 [
  {
   "date": "2026-08-07",
+  "title": "🐴 Every steed gets its own display case",
+  "body": "The mount collection no longer shares one sealed scroll: all six steeds now sit in their own painted display cases, each with its name on the plaque. Three names were tidied to match what the plaques actually say — the Cluck Courser is now the 🐔 Chiki Roost, the Direwolf is the 🐺 Dire Wolf, and the Skywing Griffin is simply the 🦅 Griffin. Same steeds, same speeds, same perks; only the nameplates changed."
+ },
+ {
+  "date": "2026-08-07",
   "title": "🗺️ The campaign opens up — every chapter is reachable now",
   "body": "If you started here in the realm rather than the old game, Act I quietly stopped at Chapter 19. The gate that decides when the next chapter opens was counting only a rarer companion, and a trainer who begins in Chikoria starts with commons and a ceremony egg — so chapters 19 through 63 never unlocked, and the winner's slot could never be reached. That gate now counts what you actually have. The whole campaign is open, and every chapter you had already earned is still yours: nothing was reset and nothing was revalued. If chapters credit a little late while the realm catches up, they will land.\n\nThe Trading Post also learned to take no for an answer. If you had the game open somewhere else — a second tab, your phone — a purchase could take your $CHIKI and hand you the goods while the stall never recorded the sale, leaving the same stack on the board for the next buyer. A refused purchase now puts everything back exactly as it was and tells you why, instead of failing in silence.\n\nUnderneath, the island's footing is fixed: the realm has been running its movement rules against an older copy of the ground than the one it thought it had. And a hiccup reading your quest record used to look like an empty record; it now says \"try again\" rather than forgetting an Act you finished."
  },
