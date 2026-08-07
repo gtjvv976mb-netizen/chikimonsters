@@ -1,5 +1,15 @@
 [
  {
+  "date": "2026-08-07",
+  "title": "🗺️ The campaign opens up — every chapter is reachable now",
+  "body": "If you started here in the realm rather than the old game, Act I quietly stopped at Chapter 19. The gate that decides when the next chapter opens was counting only a rarer companion, and a trainer who begins in Chikoria starts with commons and a ceremony egg — so chapters 19 through 63 never unlocked, and the winner's slot could never be reached. That gate now counts what you actually have. The whole campaign is open, and every chapter you had already earned is still yours: nothing was reset and nothing was revalued. If chapters credit a little late while the realm catches up, they will land.\n\nThe Trading Post also learned to take no for an answer. If you had the game open somewhere else — a second tab, your phone — a purchase could take your $CHIKI and hand you the goods while the stall never recorded the sale, leaving the same stack on the board for the next buyer. A refused purchase now puts everything back exactly as it was and tells you why, instead of failing in silence.\n\nUnderneath, the island's footing is fixed: the realm has been running its movement rules against an older copy of the ground than the one it thought it had. And a hiccup reading your quest record used to look like an empty record; it now says \"try again\" rather than forgetting an Act you finished."
+ },
+ {
+  "date": "2026-08-06",
+  "title": "🏆 Hatch a Legendary, enter the Cup — and the mint button tells the truth",
+  "body": "If your Legendary was hatched here in the realm, the Chikoria Cup now lets you in. It used to read only the old game's roster, so a trainer who hatched a Legendary from their own egg was turned away with \"Hatch a Legendary first\" — the exact thing they had just done. The realm's own hatches now count, and the world's Legendary tally counts them too, so the number on the board is the real one. The mint button has also stopped appearing on normal chikimon: normals were never mintable — they belong at the Trading Post auction — and the button was showing on cards it could not act on."
+ },
+ {
   "date": "2026-08-05",
   "title": "🔄 Every number you read is the live one",
   "body": "Tabs and pop-ups now refresh the moment you open them, so prices, stock, purse, timers and roster all show what the island says right now instead of whatever they were when you last looked. That includes a real fix at the Trading Post: when a bidder raised their own offer, the auction card kept showing the old price and pre-filled a bid the server would refuse as too low — raises now land on the card the moment they happen, so you always bid against the true leader. The Chikiseum has also raised its banner high above the arena, readable from the plaza and from the west gate approach."
