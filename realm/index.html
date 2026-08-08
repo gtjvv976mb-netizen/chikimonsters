@@ -797,9 +797,307 @@ html.chik-phone #tip { font-size: 10px; min-height: 12px; line-height: 12px; max
 			window.__chikiBuyDone = '1';   // set LAST — the Godot poller treats this as "flow finished"
 		};
 		</script>
+		<script>
+		// ---- CHIKI-ME-BRIDGE BEGIN ----
+		// __chikiMeSign: sign + submit a transaction that CHIKORIA'S BACKEND already built.
+		//
+		// This is NOT __chikiBuy. __chikiBuy builds its own transaction here in the browser (it knows the
+		// mint, the split and the ATAs). This one RECEIVES finished bytes from our server — which got them
+		// from Magic Eden's instruction API — so it must never touch feePayer, blockhash or the account
+		// list: any of those edits invalidates the transaction, and rebuilding it from its message alone
+		// would DESTROY a cosigner signature Magic Eden may already have put on it.
+		//
+		// Contract, mirroring __chikiBuy's proven poll shape so the Godot side barely changes:
+		//   window.__chikiMeBusy      '1' while a flow is in flight (a second call is IGNORED, not queued)
+		//   window.__chikiMeDone      '1' when the flow finished — set LAST, poll on this
+		//   window.__chikiMeSig       the transaction signature on success, '' otherwise
+		//   window.__chikiMeErr       human-readable failure text, '' otherwise
+		//   window.__chikiMeCode      stable machine-readable reason (branch on THIS, never on prose)
+		//   window.__chikiMeRejected  '1' when the PLAYER pressed Cancel in the wallet — not an error
+		//   window.__chikiMePath      which code path ran: legacy-native | legacy-shim | v0-native | v0-shim
+		//   window.__chikiMeReady()   capability probe -> JSON string, safe to call any time
+		//
+		// Reason codes: '' (ok) | rejected | no_lib | no_wallet | no_connect | bad_tx | sign_failed |
+		//               send_failed | no_send
+		//
+		// PRIVACY: the transaction bytes live in a local const and are never written to window, never
+		// logged, never echoed. No wallet address is ever exposed by this bridge — the probe reports only
+		// a connected true/false. Nothing here reads or keeps anything it does not need to sign one tx.
+		(function () {
+			'use strict';
+
+			var B58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+
+			function bytesFromB64(s) {
+				var bin = atob(s);
+				var out = new Uint8Array(bin.length);
+				for (var i = 0; i < bin.length; i++) { out[i] = bin.charCodeAt(i) & 0xff; }
+				return out;
+			}
+
+			// base58 is only a FALLBACK. Our backend sends base64 (recon settled that), but a base58 string
+			// is also valid base64 charset-wise, so "it decoded" proves nothing — shapeOf() below is what
+			// actually picks the winner.
+			function bytesFromB58(s) {
+				var acc = [0];
+				for (var i = 0; i < s.length; i++) {
+					var v = B58.indexOf(s.charAt(i));
+					if (v < 0) { throw new Error('not base58'); }
+					var carry = v;
+					for (var j = 0; j < acc.length; j++) {
+						carry += acc[j] * 58;
+						acc[j] = carry & 0xff;
+						carry = carry >> 8;
+					}
+					while (carry > 0) { acc.push(carry & 0xff); carry = carry >> 8; }
+				}
+				for (var k = 0; k < s.length && s.charAt(k) === '1'; k++) { acc.push(0); }
+				return new Uint8Array(acc.reverse());
+			}
+
+			// Parse a serialized Solana transaction far enough to (a) confirm it IS one and (b) learn its
+			// version. Layout: compact-u16 signature count, that many 64-byte signatures, then the message.
+			// D3 from recon: a versioned message's FIRST byte has the high bit set (0x80 | version); a
+			// legacy message's first byte is numRequiredSignatures, which can never reach 0x80. One byte
+			// decides it — no guessing, no trusting a hint from the network.
+			function shapeOf(raw) {
+				if (!raw || raw.length < 70) { return null; }
+				var off = 0, n = 0, shift = 0, b;
+				for (;;) {
+					if (off >= raw.length) { return null; }
+					b = raw[off++];
+					n |= (b & 0x7f) << shift;
+					if ((b & 0x80) === 0) { break; }
+					shift += 7;
+					if (shift > 14) { return null; }
+				}
+				if (n < 1 || n > 19) { return null; }          // a marketplace tx signs 1-3 keys, never 20
+				var msgOff = off + n * 64;
+				if (msgOff + 4 > raw.length) { return null; }
+				var b0 = raw[msgOff];
+				if ((b0 & 0x80) !== 0) { return { ver: (b0 & 0x7f), sigs: n, strong: true }; }
+				// legacy: web3.js always serializes exactly numRequiredSignatures signatures, so b0 === n
+				// on any real transaction. Treat a mismatch as weak evidence rather than a hard reject.
+				return { ver: -1, sigs: n, strong: (b0 === n) };
+			}
+
+			// Accepts: base64 string (what our backend sends), base58 string, a plain byte array, a
+			// Uint8Array, or Magic Eden's raw {type:'Buffer',data:[...]} envelope if it is ever passed
+			// through unconverted. Returns Uint8Array or throws.
+			function toBytes(tx) {
+				if (tx instanceof Uint8Array) { return tx; }
+				if (Array.isArray(tx)) { return Uint8Array.from(tx); }
+				if (tx && typeof tx === 'object' && Array.isArray(tx.data)) { return Uint8Array.from(tx.data); }
+				if (typeof tx !== 'string' || tx.length < 16) { throw new Error('no transaction supplied'); }
+				var s = tx.replace(/\s+/g, '');
+				var cand = [], r;
+				try { r = bytesFromB64(s); if (r.length) { cand.push(r); } } catch (e1) { /* not base64 */ }
+				try { r = bytesFromB58(s); if (r.length) { cand.push(r); } } catch (e2) { /* not base58 */ }
+				var weak = null, i, sh;
+				for (i = 0; i < cand.length; i++) {
+					sh = shapeOf(cand[i]);
+					if (sh && sh.strong) { return cand[i]; }
+					if (sh && !weak) { weak = cand[i]; }
+				}
+				if (weak) { return weak; }
+				// Refuse rather than hand Phantom something unreadable: a garbage transaction shows the
+				// player a scary unknown approval dialog instead of an honest error.
+				throw new Error('server sent an unreadable transaction');
+			}
+
+			// A duck-typed stand-in for a web3.js transaction object. The vendored solana-web3.js bundle
+			// exports only {Connection, PublicKey, Transaction} — it has NO VersionedTransaction (measured:
+			// 0 occurrences in realm/solana-web3.js) — while Magic Eden's own SDK reads only the v0 slot.
+			// Phantom serializes whatever it is given and branches on `'version' in tx`, so a minimal
+			// object carrying the finished bytes is enough to present a v0 transaction without the class.
+			// UNVERIFIED against a real Phantom build; the native class is always preferred when present.
+			function shimTx(raw, ver) {
+				var o = {
+					signatures: [],
+					serialize: function () { return raw; }
+				};
+				if (ver >= 0) { o.version = ver; }
+				return o;
+			}
+
+			function isRejection(e) {
+				var code = e && (e.code !== undefined ? e.code : (e.data && e.data.code));
+				if (code === 4001 || code === '4001') { return true; }
+				var m = String((e && e.message) || e || '').toLowerCase();
+				return m.indexOf('user rejected') >= 0 || m.indexOf('user denied') >= 0 ||
+					m.indexOf('rejected the request') >= 0 || m.indexOf('request rejected') >= 0 ||
+					m.indexOf('user cancel') >= 0 || m.indexOf('cancelled by user') >= 0 ||
+					m.indexOf('canceled by user') >= 0 || m.indexOf('declined') >= 0;
+			}
+
+			// Only these mean "this wallet build has no signAndSendTransaction". Anything else that throws
+			// out of signAndSendTransaction must NOT be retried through sign-then-send: the first call may
+			// already have broadcast, and a second broadcast is a second charge.
+			function isUnsupported(e) {
+				var code = e && e.code;
+				if (code === -32601) { return true; }
+				var m = String((e && e.message) || e || '').toLowerCase();
+				return m.indexOf('unsupported method') >= 0 || m.indexOf('method not found') >= 0 ||
+					m.indexOf('not a function') >= 0 || m.indexOf('not supported') >= 0;
+			}
+
+			function provider() {
+				return (window.phantom && window.phantom.solana) || window.solana || null;
+			}
+
+			// Honest capability report. Returns a JSON STRING so the Godot side can read it straight out of
+			// JavaScriptBridge.eval. Call it before showing a Buy/List button and degrade to the Magic Eden
+			// deep-link when ok is false.
+			window.__chikiMeReady = function () {
+				var W = window.SolanaWeb3;
+				var ph = provider();
+				var legacyNative = !!(W && W.Transaction && typeof W.Transaction.from === 'function');
+				var v0Native = !!(W && W.VersionedTransaction && typeof W.VersionedTransaction.deserialize === 'function');
+				var canConn = !!(W && W.Connection);
+				var sas = !!(ph && typeof ph.signAndSendTransaction === 'function');
+				var sonly = !!(ph && typeof ph.signTransaction === 'function');
+				// signAndSendTransaction needs no library at all (Phantom serializes + broadcasts).
+				// sign-then-send needs Connection from the bundle to broadcast the signed bytes.
+				var ok = !!ph && (sas || (sonly && canConn));
+				// the probe's reason must be the SAME code __chikiMeSign would report, or the UI
+				// explains the wrong problem to the player
+				var reason = '';
+				if (!ph) { reason = 'no_wallet'; }
+				else if (!sas && !sonly) { reason = 'no_send'; }
+				else if (!ok) { reason = 'no_lib'; }
+				return JSON.stringify({
+					ok: ok,
+					lib: legacyNative,
+					phantom: !!ph,
+					connected: !!(ph && ph.publicKey),      // boolean only — never the address
+					signAndSend: sas,
+					signOnly: sonly,
+					legacy: legacyNative ? 'native' : 'shim',
+					v0: v0Native ? 'native' : 'shim',
+					busy: window.__chikiMeBusy === '1',
+					reason: reason
+				});
+			};
+
+			// Clear the result globals for a fresh flow. Refuses while a flow is in flight so a late
+			// caller can never blank an in-flight result the poller has not read yet.
+			window.__chikiMeReset = function () {
+				if (window.__chikiMeBusy === '1') { return '0'; }
+				window.__chikiMeDone = ''; window.__chikiMeSig = ''; window.__chikiMeErr = '';
+				window.__chikiMeCode = ''; window.__chikiMeRejected = ''; window.__chikiMePath = '';
+				return '1';
+			};
+			window.__chikiMeReset();
+
+			// tx  : base64 transaction bytes from OUR backend (base58 / byte array also accepted)
+			// ver : optional hint ('legacy' | 'v0') — advisory only; the bytes decide (see shapeOf)
+			// rpc : optional RPC url, used ONLY by the sign-then-send fallback
+			window.__chikiMeSign = async function (tx, ver, rpc) {
+				// Re-entry lock. A second flow must NOT clobber the first one's globals — that is how a
+				// player ends up reading a stale success, or approving two Phantom prompts for one item.
+				if (window.__chikiMeBusy === '1') { return; }
+				window.__chikiMeBusy = '1';
+				window.__chikiMeDone = ''; window.__chikiMeSig = ''; window.__chikiMeErr = '';
+				window.__chikiMeCode = ''; window.__chikiMeRejected = ''; window.__chikiMePath = '';
+				try {
+					var W = window.SolanaWeb3;
+					var ph = provider();
+					if (!ph) { var e0 = new Error('Phantom wallet not found'); e0.chikiCode = 'no_wallet'; throw e0; }
+					var sas = (typeof ph.signAndSendTransaction === 'function');
+					var sonly = (typeof ph.signTransaction === 'function');
+					if (!sas && !sonly) { var e1 = new Error('this wallet cannot sign transactions'); e1.chikiCode = 'no_send'; throw e1; }
+					if (!sas && !(W && W.Connection)) {
+						var e2 = new Error('Solana library failed to load');
+						e2.chikiCode = 'no_lib'; throw e2;
+					}
+
+					if (!ph.publicKey) {
+						try { await ph.connect(); }
+						catch (ec) {
+							var e3 = new Error(isRejection(ec) ? 'wallet connection cancelled' : 'wallet would not connect');
+							e3.chikiCode = isRejection(ec) ? 'rejected' : 'no_connect';
+							throw e3;
+						}
+					}
+
+					var raw;
+					try { raw = toBytes(tx); }
+					catch (eb) { var e4 = new Error(String(eb && eb.message || eb)); e4.chikiCode = 'bad_tx'; throw e4; }
+					var shape = shapeOf(raw);
+					var isV0 = !!(shape && shape.ver >= 0);
+					// the hint from the server is advisory; if it disagrees with the bytes, the bytes win
+					if (!shape && String(ver || '') === 'v0') { isV0 = true; }
+
+					var txObj, path;
+					if (isV0) {
+						if (W && W.VersionedTransaction && typeof W.VersionedTransaction.deserialize === 'function') {
+							txObj = W.VersionedTransaction.deserialize(raw); path = 'v0-native';
+						} else {
+							txObj = shimTx(raw, shape ? shape.ver : 0); path = 'v0-shim';
+						}
+					} else {
+						if (W && W.Transaction && typeof W.Transaction.from === 'function') {
+							// Transaction.from PRESERVES any signature already on the bytes — that is how
+							// Magic Eden's cosigner survives to the chain.
+							txObj = W.Transaction.from(raw); path = 'legacy-native';
+						} else {
+							txObj = shimTx(raw, -1); path = 'legacy-shim';
+						}
+					}
+					window.__chikiMePath = path;
+
+					var sig = '';
+					if (sas) {
+						try {
+							var res = await ph.signAndSendTransaction(txObj);
+							sig = (res && res.signature) ? String(res.signature) : String(res);
+						} catch (es) {
+							if (isRejection(es)) { throw es; }
+							if (!(isUnsupported(es) && sonly && W && W.Connection)) {
+								var e5 = new Error(String((es && es.message) || es || 'wallet could not sign'));
+								e5.chikiCode = 'sign_failed'; throw e5;
+							}
+							sas = false;   // fall through to sign-then-send: the method genuinely is absent
+						}
+					}
+					if (!sig) {
+						// fallback: Phantom signs, we broadcast. Only reached when signAndSendTransaction is
+						// missing or provably unsupported — never as a retry after a real send failure.
+						var signed = await ph.signTransaction(txObj);
+						var bytes = (signed && typeof signed.serialize === 'function') ? signed.serialize() : signed;
+						try {
+							var conn = new W.Connection(String(rpc || ''), 'confirmed');
+							sig = String(await conn.sendRawTransaction(bytes, { skipPreflight: false, maxRetries: 3 }));
+						} catch (esend) {
+							var e6 = new Error(String((esend && esend.message) || esend || 'broadcast failed'));
+							e6.chikiCode = 'send_failed'; throw e6;
+						}
+					}
+					window.__chikiMeSig = sig;
+				} catch (e) {
+					// isRejection() reads the WALLET'S error; chikiCode === 'rejected' is the tag we put
+					// on a cancel we already classified upstream (the connect prompt). Both are the
+					// player saying no — check both or a refused connect reads as a hard failure.
+					if (isRejection(e) || (e && e.chikiCode === 'rejected')) {
+						// A player who pressed Cancel did nothing wrong. The UI must say "cancelled",
+						// not "failed", and must not offer a scary retry.
+						window.__chikiMeRejected = '1';
+						window.__chikiMeCode = 'rejected';
+						window.__chikiMeErr = (e && e.chikiCode === 'rejected' && e.message) ? String(e.message) : 'cancelled in your wallet';
+					} else {
+						window.__chikiMeCode = String((e && e.chikiCode) || 'sign_failed');
+						window.__chikiMeErr = String((e && e.message) || e || 'transaction failed');
+					}
+				}
+				window.__chikiMeDone = '1';    // set LAST — the Godot poller treats this as "flow finished"
+				window.__chikiMeBusy = '';     // and only then release the lock
+			};
+		}());
+		// ---- CHIKI-ME-BRIDGE END ----
+		</script>
 		<script src="index.js"></script>
 		<script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":219259556,"index.wasm":40092042},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":219429732,"index.wasm":40092042},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
 const GODOT_THREADS_ENABLED = true;
 const engine = new Engine(GODOT_CONFIG);
 

@@ -1,5 +1,10 @@
 [
  {
+  "date": "2026-08-08",
+  "title": "🖱️ The wheel stays in the menu, and the Trading Post stops shoving",
+  "body": "Two small irritations are gone. Scrolling a right-hand pop-up used to zoom the world camera behind it, so reading a long list dragged the view in and out under the parchment. The wheel now stays inside whatever panel it is over — shop windows, tab pop-ups and the model viewer alike — and still zooms normally the moment you point it at the open world. The Trading Post has also stopped landing on top of your side panels: the two were docked to the same corner and overlapped, so opening either one now tidies the other away first. The left-hand info pop is unaffected and still sits happily beside everything else."
+ },
+ {
   "date": "2026-08-07",
   "title": "🔨 The Mint button is off normal chikimon for good",
   "body": "A Mint button was still turning up on ordinary chikimon — an offer the vault would only ever refuse. A creature the realm had never registered was borrowing the card of a Legendary that happened to share its species, and inheriting its mint offer. Normals are traded at the Trading Post, not minted, and the button no longer appears on them. Anything already certified keeps its certificate."
