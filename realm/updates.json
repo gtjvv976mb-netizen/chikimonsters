@@ -1,5 +1,10 @@
 [
  {
+  "date": "2026-08-09",
+  "title": "🥚 Stuck eggs hatch, and a hatched egg hands over its chikimon",
+  "body": "Eggs that had gone quiet are moving again. Some eggs simply refused to hatch no matter how long you tapped, and others answered with \"that egg already hatched on the server — reload to collect what came out\" — except reloading never collected anything, and the egg sat in your nest while the chikimon it became waited unclaimed. Both are fixed. The realm now states outright which chikimon an egg turned into and hands you that exact one, instead of working it out by process of elimination — a guess that could never settle for any trainer who had ever sold a creature. Nothing was lost in the meantime: every egg caught in that state still holds the chikimon it hatched into, and it comes to you the next time you hatch. And if the realm still cannot say for certain what an egg became, it leaves the egg safely in your nest rather than risk handing you the wrong chikimon."
+ },
+ {
   "date": "2026-08-08",
   "title": "🖱️ The wheel stays in the menu, and the Trading Post stops shoving",
   "body": "Two small irritations are gone. Scrolling a right-hand pop-up used to zoom the world camera behind it, so reading a long list dragged the view in and out under the parchment. The wheel now stays inside whatever panel it is over — shop windows, tab pop-ups and the model viewer alike — and still zooms normally the moment you point it at the open world. The Trading Post has also stopped landing on top of your side panels: the two were docked to the same corner and overlapped, so opening either one now tidies the other away first. The left-hand info pop is unaffected and still sits happily beside everything else."
