@@ -1,6 +1,11 @@
 [
  {
   "date": "2026-08-10",
+  "title": "🪄 Magic Eden, polished and perfectly placed",
+  "body": "The desktop Magic Eden counter now opens with a compact transparent banner and clearer Marketplace and My Collection tabs, each carrying its own new voxel icon. Around the realm, utility controls now sit flush beneath the main navigation and the right-side tabs begin immediately below the world clock — less empty space, no overlap, and more room for the island."
+ },
+ {
+  "date": "2026-08-10",
   "title": "📱 Pocket Realm, perfectly fitted",
   "body": "Lite mode now keeps every part of the HUD in its own space: the world clock no longer covers Avatar, compact utilities sit neatly below the top tabs, Flip Camera lives beside Controls, and the smaller mini-map places trainers on the actual island instead of out at sea. Pop-ups use compact text headers, Island's Chronicles rests as a small pill, and wallet/time readouts no longer resemble loading hourglasses. HD and Lite still share the same live world and player updates."
  },
