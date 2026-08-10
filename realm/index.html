@@ -1097,7 +1097,7 @@ html.chik-phone #tip { font-size: 10px; min-height: 12px; line-height: 12px; max
 		</script>
 		<script src="index.js"></script>
 		<script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":222753532,"index.wasm":40092042},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":223477104,"index.wasm":40092042},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
 const GODOT_THREADS_ENABLED = true;
 const engine = new Engine(GODOT_CONFIG);
 
@@ -1461,6 +1461,8 @@ const engine = new Engine(GODOT_CONFIG);
 			} catch (e) { man = null; }
 		}
 		if (!man) { man = await fetchJSON('index.pck.manifest.json', 4); }
+		// Runtime layout follows the pack that actually mounted, not a fallible device/UA guess.
+		window.CHIK_LITE = usedLite;
 		const pckChunks = await streamParts(man.chunks, man.total, 0.12, 0.82, man.v || '',
 			chunkCache, usedLite && !CDN_HAS_LITE);
 		// Now that every family's stamp is known, drop other builds. Deferred to here on purpose:
