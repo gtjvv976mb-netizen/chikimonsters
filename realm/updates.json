@@ -1,6 +1,11 @@
 [
  {
   "date": "2026-08-11",
+  "title": "🔧 Sharper market art + stronger saves",
+  "body": "The Collectors' Market header is crisp again, and a big round of under-the-hood work landed: your save now flushes the moment you sign out, rapid changes can't be lost between devices, and the Trading Post is being fitted with real escrow — listed items leave your satchel, cancelled listings come back, sold ones transfer for good. These protections switch on fully over the coming days as the server side is enabled."
+ },
+ {
+  "date": "2026-08-11",
   "title": "🛠️ Collectors' Market polish + a smoother realm",
   "body": "The Collectors' Market got a clean-up: bare NFT cards (just the case art and a Mint button), live floor price and listed count, a new Activity feed of recent sales, shorter clearer text everywhere, and the pop now closes by tapping outside it. Minting is player-paid — you approve the small network fee in Phantom when you mint or sell. Also fixed: the Stable's vanishing scroll bar, the empty-stable text glitch, slimmer pop-up headers for more room, a screen-flip button for phone players in the utility cluster, and the clock's sun icon and your $CHIKI coin badge are back where they belong."
  },
