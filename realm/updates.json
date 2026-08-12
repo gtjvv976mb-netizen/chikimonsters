@@ -1,17 +1,22 @@
 [
  {
   "date": "2026-08-12",
+  "title": "🖼 Sharper creatures — and a free legend to win",
+  "body": "A pass over the newest arrivals so they look like themselves again: Vesperos wears his true violet instead of near-black, Ansem Blackbull's face stands out better against his dark coat, Proud Baby Goat has his golden laurels back, Doge has his side-eye again, This Is Fine Dog got his mouth back, and several others had shadowy patches cleaned off. Showcases now frame the whole creature — no more wings or flames cut off at the edge of the picture — and the Collectors' Market tabs sit in one tidy row again. And the FOUNDER DROP: the first fifty players who genuinely play during the event each receive one of the eleven new Meme Dynasty legends, free. Watch the plaque in the top bar for how many are left."
+ },
+ {
+  "date": "2026-08-12",
   "title": "🌟 Twenty new chikimon join the realm",
   "body": "Nine new Legendaries — Astraya, Bamboran, Borealon, Horoxyn, Rivaros, Solvarex, Astragor, Crysalune and Vesperos — take their place beside the original five, with the same rarity and the same chance from every Legendary Egg. And eleven new Meme Dynasty legends arrive with their own strictly limited editions: Ansem Blackbull, Success Kid, Side-eye Chloe, Grumpy Cat, Peanut, Crying Cat, This Is Fine Dog, Proud Baby Goat, Triple T, Stonks and Nervous Monkey. Every one is rigged and animated to its own character — Horoxyn flies, Bamboran fights on two feet, Crysalune hovers — and each carries a twelve-card battle kit written for who they are. The Collectors' Market also gets its new Mint, Marketplace, My Collection and Activities plaques."
  },
  {
   "date": "2026-08-11",
-  "title": "🎪 Events are coming — and a sharper realm",
+  "title": "🎉 Events are coming — and a sharper realm",
   "body": "Three celebrations are being prepared: OPEN GATES (the realm free to enter for seven days), a five-day FISHING FESTIVAL with quadrupled fantasy-fish odds, and a FOUNDER DROP — brand-new legendary chikimon, one each, for the first fifty players who truly play during the event. Watch the top bar for the banner when they begin. Also in this build: the Magic Eden header is crisp and full-size, and the utility buttons now sit flush beneath the top bar."
  },
  {
   "date": "2026-08-11",
-  "title": "🔧 Sharper market art + stronger saves",
+  "title": "⚙ Sharper market art + stronger saves",
   "body": "The Collectors' Market header is crisp again, and a big round of under-the-hood work landed: your save now flushes the moment you sign out, rapid changes can't be lost between devices, and the Trading Post is being fitted with real escrow — listed items leave your satchel, cancelled listings come back, sold ones transfer for good. These protections switch on fully over the coming days as the server side is enabled."
  },
  {
@@ -21,17 +26,17 @@
  },
  {
   "date": "2026-08-10",
-  "title": "🪄 Magic Eden, polished and perfectly placed",
+  "title": "✨ Magic Eden, polished and perfectly placed",
   "body": "The desktop Magic Eden counter now opens with a compact transparent banner and clearer Marketplace and My Collection tabs, each carrying its own new voxel icon. Around the realm, utility controls now sit flush beneath the main navigation and the right-side tabs begin immediately below the world clock — less empty space, no overlap, and more room for the island."
  },
  {
   "date": "2026-08-10",
-  "title": "📱 Pocket Realm, perfectly fitted",
+  "title": "🎮 Pocket Realm, perfectly fitted",
   "body": "Lite mode now keeps every part of the HUD in its own space: the world clock no longer covers Avatar, compact utilities sit neatly below the top tabs, Flip Camera lives beside Controls, and the smaller mini-map places trainers on the actual island instead of out at sea. Pop-ups use compact text headers, Island's Chronicles rests as a small pill, and wallet/time readouts no longer resemble loading hourglasses. HD and Lite still share the same live world and player updates."
  },
  {
   "date": "2026-08-10",
-  "title": "🪄 The Collectors' Market opens",
+  "title": "💎 The Collectors' Market opens",
   "body": "The Magic Eden marketplace is now open in-game: a new door below Potions browses the real Chiki Monsters collection — live listings, your own certificates, the lot. Buying and listing from inside the realm unlock when our marketplace key arrives; until then, every listing links straight to Magic Eden. Plus: the market door now appears the moment you sign in, and pop-up scrolling got smoother."
  },
  {
@@ -46,7 +51,7 @@
  },
  {
   "date": "2026-08-08",
-  "title": "🖱️ The wheel stays in the menu, and the Trading Post stops shoving",
+  "title": "👆 The wheel stays in the menu, and the Trading Post stops shoving",
   "body": "Two small irritations are gone. Scrolling a right-hand pop-up used to zoom the world camera behind it, so reading a long list dragged the view in and out under the parchment. The wheel now stays inside whatever panel it is over — shop windows, tab pop-ups and the model viewer alike — and still zooms normally the moment you point it at the open world. The Trading Post has also stopped landing on top of your side panels: the two were docked to the same corner and overlapped, so opening either one now tidies the other away first. The left-hand info pop is unaffected and still sits happily beside everything else."
  },
  {
@@ -76,7 +81,7 @@
  },
  {
   "date": "2026-08-04",
-  "title": "📡 Know your connection",
+  "title": "🔗 Know your connection",
   "body": "A live ping pill now sits beside the online count — your real round-trip to the island, updated every second. Green under 120 ms, amber to 249, red beyond. When the road is the problem, now you can see it."
  },
  {
@@ -121,12 +126,12 @@
  },
  {
   "date": "2026-07-31",
-  "title": "📱⚡ The big mobile pass: faster loads, a steadier world, and a phone that stops fighting you",
+  "title": "💨⚡ The big mobile pass: faster loads, a steadier world, and a phone that stops fighting you",
   "body": "A deep audit of the phone experience, and the fixes go from the first second to the last. Loading: your device keeps the realm's data after the first visit — coming back is now close to instant instead of re-downloading everything (a returning phone fetches nothing at all), phones no longer waste half a minute asking a storage server for files it never had (the bar just stalled while a message blamed your connection — it was never your connection), and the loading bar no longer freezes at 82% while the engine compiles: it keeps moving and tells you what stage it is on. If your device ever runs out of memory and the game restarts, it now notices — including when it died during loading, which the old detector could never see — and automatically loads the lighter pack with a smaller engine crew the next time, instead of dying the same way forever. Stability: the graphics chip on a phone can no longer step up to the full desktop world — that setting was quietly handing phones a world several times their memory budget, which is exactly the crash-and-reload some of you hit after tapping it twice. The network got real lag armour: a two-second connection hiccup now costs about two seconds — it used to trigger up to ninety seconds of an empty world, during which you also vanished from everyone else's screen. Other players are no longer destroyed and rebuilt over a single dropped update; they just wait out the blip. On slow connections the game now keeps two requests in flight and time-stamps every movement sample, so other trainers move where they actually are instead of where the lag guessed, and their walk animation stops flickering into a sprint on every jitter spike. Housekeeping that you will feel as battery: closed panels used to keep rendering a 3D scene behind themselves forever; they stop now, and several oversized art files were trimmed to the size they actually draw at — about 35 MB of texture memory back. Small touches: the on-screen joystick ring now tucks itself away when you are not steering, and locked buttons finally explain themselves on a phone — tap one and a toast tells you exactly what it needs (\"Need 40 more $CHIKI\"), instead of sitting grey and silent because its explanation only appeared on mouse hover. And a correction from the same pass: hiding the scrollbars was meant for touchscreens only — on desktop the bar is how you see a list continues, and it is back there. Phones keep the clean bar-free look with drag-to-scroll."
  },
  {
   "date": "2026-07-31",
-  "title": "📱 A mobile pass: the camera, buttons, scrolling, and a save that crossed devices wrong",
+  "title": "✋ A mobile pass: the camera, buttons, scrolling, and a save that crossed devices wrong",
   "body": "Four faults, and the last one was quietly costing people progress. Tapping Run, Jump or Action also walked your trainer to wherever that button sits on screen — those controls are painted rather than being real buttons, so nothing was claiming your finger and the tap fell through to the ground beneath. Pop-ups could not be scrolled by touch at all, because a finger dragged across a list was being read as a camera swing; they scroll properly now, and the desktop scrollbars are gone since nobody can hit them accurately anyway. The catalog no longer repeats how many of each thing you are carrying — it is there to tell you what a resource IS, and your satchel already answers the other question. And the big one: when the same trainer was opened on two devices, the game decided which save was newer by comparing each device's own clock. A phone running a few minutes ahead of a desktop therefore won regardless of which actually held newer progress, which is how a player hatched an egg on desktop and found it unhatched on their phone — and then the older save was written back over the real one. Both devices now defer to the server's clock, which is the only one they share. One more, reported after the rest: on a phone you could not turn the camera at all. Dragging the right of the screen is meant to swing your view around your trainer, and it did nothing — the code that works out how far your finger travelled stored the new position one line before it read the old one, so every swing was measured as a movement of exactly zero. Look, tilt and pinch-to-zoom all work now."
  },
  {
@@ -141,12 +146,12 @@
  },
  {
   "date": "2026-07-31",
-  "title": "🔇 No more \"welcome back\" every time you switch tabs",
+  "title": "💤 No more \"welcome back\" every time you switch tabs",
   "body": "Coming back to the tab announced itself in the System log, every time. Switching tabs is something you do constantly and you already know you did it, so the log filled up with a notice about your own deliberate action. The reconnect still happens exactly as before — your trainer re-announces itself the instant you return and everyone else's position is refreshed rather than replayed from minutes ago — it simply does it quietly now."
  },
  {
   "date": "2026-07-30",
-  "title": "📡 Half the network traffic, same world",
+  "title": "⇄ Half the network traffic, same world",
   "body": "Every couple of seconds the game was told each nearby trainer's name, look, team, element and level all over again — none of which changes while you are playing. Now it hears those once and afterwards only what actually moves. Measured at just over half the traffic removed, which matters most on a phone and on a hotel connection, and leaves far more room for a crowded island. If somebody changes their outfit or swaps their team you are told immediately, and only about them."
  },
  {
@@ -156,7 +161,7 @@
  },
  {
   "date": "2026-07-30",
-  "title": "🪟 Switch tabs and come back without losing the world",
+  "title": "🌐 Switch tabs and come back without losing the world",
   "body": "Leaving the tab freezes the whole game — browsers stop driving the engine for a hidden tab, and no web game escapes that. What was fixable was the return. While you were away your trainer stopped announcing itself, so after twelve seconds the world let go of you and everyone else's game did not freeze your avatar, it deleted it — then popped you back as if you had just arrived. And your own view came back holding everyone where they stood minutes ago. Now the game notices the gap the moment you return: it announces you again on that very frame instead of waiting its turn, throws away the stale picture of where everyone was, and if you were gone long enough to have been dropped it tells you it is reconnecting you. You will still see about a quarter second of stillness while the first fresh update arrives."
  },
  {
@@ -176,12 +181,12 @@
  },
  {
   "date": "2026-07-29",
-  "title": "🏠 No more trainers standing on roofs",
+  "title": "🏗 No more trainers standing on roofs",
   "body": "If you stood under a bridge, an overhang or inside a building, other players could see you up on the roof instead — and once it happened it stuck until you walked clear. Your own client now has the final say on where you are, so you appear exactly where you stand.\n\nAlso: name banners rise with riders onto the saddle instead of sitting inside the mount, other trainers' animations blend instead of snapping, and their drills are held clear of the body."
  },
  {
   "date": "2026-07-29",
-  "title": "👀 Other trainers look right",
+  "title": "👤 Other trainers look right",
   "body": "A pass over how other players appear to you. Griffin riders were floating well above their steed and sitting perfectly still instead of drifting on the wing; jumping trainers walked through the air; anyone mining crystal or digging shells swung an overhead chop instead of working their drill or spade; and every angler held a plain stick rather than their own rod.\n\nAll of it now matches what that trainer sees of themselves. No extra delay — these ride the smoothing your view of other players already used."
  },
  {
@@ -191,7 +196,7 @@
  },
  {
   "date": "2026-07-29",
-  "title": "🔧 Tools no longer render through you",
+  "title": "⚒ Tools no longer render through you",
   "body": "The heavier drills were reaching back through the trainer's body, and rod handles sat slightly inside it. Both are now held clear, out in front where they belong.\n\nNothing about gathering or fishing changed — purely how the tools sit in your hands."
  },
  {
@@ -216,12 +221,12 @@
  },
  {
   "date": "2026-07-29",
-  "title": "🧹 Last of the loose ends",
+  "title": "✅ Last of the loose ends",
   "body": "A few remaining rough edges are closed. A chikimon put up for auction could, in rare circumstances, become stranded — held by the realm with no way to bring it home. Auctions are now kept safely no matter how busy the board gets.\n\nAlso: the weekly raid prize can no longer be handed out twice, a hatching egg always produces exactly what the realm recorded, and switching wallets on the desktop build now properly reloads into that trainer instead of half-switching."
  },
  {
   "date": "2026-07-29",
-  "title": "📱 One device at a time — no more lost sessions",
+  "title": "🪪 One device at a time — no more lost sessions",
   "body": "If you opened your trainer on a second device, the two could quietly fight over your save and whichever one saved last won — meaning a whole session of play could vanish without warning.\n\nNow the realm keeps one live session per wallet. The most recent sign-in is the live one, and an older one tells you straight away that your trainer was opened elsewhere and stops saving, instead of letting you play on into progress that can never be kept. You are never locked out of your own wallet — signing in again always takes the session back."
  },
  {
@@ -231,7 +236,7 @@
  },
  {
   "date": "2026-07-29",
-  "title": "🔏 More of your progress is sealed against tampering",
+  "title": "🛡️ More of your progress is sealed against tampering",
   "body": "Your save already protected the important things — your $CHIKI, resources, chikimon and mounts. A handful of smaller records sat outside that seal: auction escrow, task boards, potion effects, discovered recipes, the hospital timer and a few reward cooldowns.\n\nThey're all sealed now. Nothing about your game changes and nothing needs doing on your part — your save simply re-seals itself the next time it saves, and existing saves keep loading exactly as before.\n\nThis closes off ways the rewards could be claimed more than once, which keeps what everyone earns fair and keeps the value of traded goods real."
  },
  {
@@ -271,7 +276,7 @@
  },
  {
   "date": "2026-07-29",
-  "title": "🌳 The forest stays in step for everyone",
+  "title": "🌿 The forest stays in step for everyone",
   "body": "When you gathered several things quickly — most often right after loading in — only the first one was reaching the world. The rest were refused for pace and quietly dropped, so trees you had felled and lodes you had emptied kept standing for everyone else, and you would find nodes that looked untouched but gave nothing.\n\nYour gathers are now paced to the world's own rhythm instead of racing it, and one refused for timing waits its turn rather than being lost. What you take is what everyone else sees you take.\n\nAlso fixed alongside it: when two trainers reached the same node at once, the item taken back was whatever you had gathered most recently rather than the one you actually lost — so you kept the thing you lost and lost the thing you kept. The right one goes back now.\n\nAnd the world itself now decides what a node gives. Your swing still credits the item the instant it lands — nothing about gathering feels slower — but the server names the material, and if the two ever disagree the world's answer is the one that stands. Honest trainers will never notice; it means a node can no longer be talked into giving something it does not hold."
  },
  {
@@ -326,7 +331,7 @@
  },
  {
   "date": "2026-07-28",
-  "title": "🙈 Other players' XP bars are gone",
+  "title": "✕ Other players' XP bars are gone",
   "body": "You no longer see another trainer's experience bar. Their nameplate shows their banner and their name — their progress is their own business.\n\nYour own XP bar, and the run/dash bar beneath it, are unchanged."
  },
  {
@@ -346,7 +351,7 @@
  },
  {
   "date": "2026-07-28",
-  "title": "🔐 Your whispers are private again",
+  "title": "🔒 Your whispers are private again",
   "body": "Three holes closed, all of the same kind: your wallet address is public — it shows in the online roster and in world chat — but parts of the game were treating it as if it were a password.\n\nAnyone who knew your address could read your entire whisper history, send whispers pretending to be you, or move your avatar around while you were playing. All three now require your game client to prove the wallet is actually yours. Nothing changes for you — your own client already proves it. Players without a connected wallet are unaffected."
  },
  {
@@ -371,7 +376,7 @@
  },
  {
   "date": "2026-07-28",
-  "title": "🌲 Depleted resources now actually disappear for everyone",
+  "title": "🍂 Depleted resources now actually disappear for everyone",
   "body": "If another trainer emptied a node or felled a tree, you could often still gather it — and you never saw the tree fall. The world was being told about far fewer of those than it should have been.\n\nThe game sends one 'this is taken' message at a time, and any that had to wait was thrown away instead of queued. That was worst right after the server had been idle, when its first reply takes a while — so the opening minutes of a session lost most of them. Those messages now wait their turn and are retried if they get no answer, so what you clear stays cleared for everyone, and what others clear disappears for you."
  },
  {
@@ -426,7 +431,7 @@
  },
  {
   "date": "2026-07-27",
-  "title": "🌲 One forest for everyone",
+  "title": "🪵 One forest for everyone",
   "body": "Trees were the last resource that each player kept privately. Two trainers could work the same trunk and each see a different forest — one of you felled a tree the other still saw standing. The world now keeps a tree's remaining loads, exactly as it already did for ore, rocks and hives. A trunk another trainer has been working is worked-down for you too, and the tree that finally falls falls for everyone. Nothing about chopping changes: still one wood per swing, still three loads in a full tree, and your swing lands instantly as before. Also fixed: when a lot of trainers were in the world you could be standing right next to someone and not see them at all. The game kept the first sixty players it happened to know about — oldest sessions, not nearest — so anyone who joined later, or reconnected, could be invisible from a few steps away. It now always shows you the sixty nearest trainers."
  },
  {
