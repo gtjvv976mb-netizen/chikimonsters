@@ -1,642 +1,647 @@
 [
- {
-  "date": "2026-08-14",
-  "title": "👀 A closer look at those eyes",
-  "body": "Doge's eyes are now two colours and nothing else — a clean white crescent and solid black, with the muddy brown shading that sat between them gone entirely. Success Kid's iris is a brighter blue that finally matches the one on his card, and the white catchlight at the corner of each eye is back where it belongs.\n\nWe also compared the rest of yesterday's eye work side by side and decided the older faces were simply better, so Nervous Monkey, Jellox, This Is Fine Dog and the dire wolf are all back exactly as they were before that pass. Nothing else about any of them has moved."
- },
- {
-  "date": "2026-08-13",
-  "title": "✨ Event chips you can tap — and creatures that look you in the eye",
-  "body": "The chips in your top bar now match the rest of the row exactly, and each one wears its own colour: the fishing festival in bright blue, the Founder Drop in gold. Tap either and its details open in the same tidy pop-up as the online-trainers list, so you can check what is running without leaving what you are doing.\n\nWe also went back over the creatures themselves. Doge has his proper coal-black eyes again, the dire wolf's amber stare is back, Jellox's green iris returned, Success Kid got his blue eyes rebuilt with a fresh glint, and This Is Fine reads right again. Beyond the eyes: Astragor is no longer washed out, Healix walks forwards instead of sideways, Vesperos finally flies rather than trudging, Popcat's mouth is a real open bowl, Crysalune is crisper up close, and Mushrow and Nervous Monkey both got their colours put right."
- },
- {
-  "date": "2026-08-12",
-  "title": "🖼 Sharper creatures — and a free legend to win",
-  "body": "A pass over the newest arrivals so they look like themselves again: Vesperos wears his true violet instead of near-black, Ansem Blackbull's face stands out better against his dark coat, Proud Baby Goat has his golden laurels back, Doge has his side-eye again, This Is Fine Dog got his mouth back, and several others had shadowy patches cleaned off. Showcases now frame the whole creature — no more wings or flames cut off at the edge of the picture — and the Collectors' Market tabs sit in one tidy row again. And the FOUNDER DROP: the first fifty players who genuinely play during the event each receive one of the eleven new Meme Dynasty legends, free. Watch the plaque in the top bar for how many are left."
- },
- {
-  "date": "2026-08-12",
-  "title": "🌟 Twenty new chikimon join the realm",
-  "body": "Nine new Legendaries — Astraya, Bamboran, Borealon, Horoxyn, Rivaros, Solvarex, Astragor, Crysalune and Vesperos — take their place beside the original five, with the same rarity and the same chance from every Legendary Egg. And eleven new Meme Dynasty legends arrive with their own strictly limited editions: Ansem Blackbull, Success Kid, Side-eye Chloe, Grumpy Cat, Peanut, Crying Cat, This Is Fine Dog, Proud Baby Goat, Triple T, Stonks and Nervous Monkey. Every one is rigged and animated to its own character — Horoxyn flies, Bamboran fights on two feet, Crysalune hovers — and each carries a twelve-card battle kit written for who they are. The Collectors' Market also gets its new Mint, Marketplace, My Collection and Activities plaques."
- },
- {
-  "date": "2026-08-11",
-  "title": "🎉 Events are coming — and a sharper realm",
-  "body": "Three celebrations are being prepared: OPEN GATES (the realm free to enter for seven days), a five-day FISHING FESTIVAL with quadrupled fantasy-fish odds, and a FOUNDER DROP — brand-new legendary chikimon, one each, for the first fifty players who truly play during the event. Watch the top bar for the banner when they begin. Also in this build: the Magic Eden header is crisp and full-size, and the utility buttons now sit flush beneath the top bar."
- },
- {
-  "date": "2026-08-11",
-  "title": "⚙ Sharper market art + stronger saves",
-  "body": "The Collectors' Market header is crisp again, and a big round of under-the-hood work landed: your save now flushes the moment you sign out, rapid changes can't be lost between devices, and the Trading Post is being fitted with real escrow — listed items leave your satchel, cancelled listings come back, sold ones transfer for good. These protections switch on fully over the coming days as the server side is enabled."
- },
- {
-  "date": "2026-08-11",
-  "title": "🛠️ Collectors' Market polish + a smoother realm",
-  "body": "The Collectors' Market got a clean-up: bare NFT cards (just the case art and a Mint button), live floor price and listed count, a new Activity feed of recent sales, shorter clearer text everywhere, and the pop now closes by tapping outside it. Minting is player-paid — you approve the small network fee in Phantom when you mint or sell. Also fixed: the Stable's vanishing scroll bar, the empty-stable text glitch, slimmer pop-up headers for more room, a screen-flip button for phone players in the utility cluster, and the clock's sun icon and your $CHIKI coin badge are back where they belong."
- },
- {
-  "date": "2026-08-10",
-  "title": "✨ Magic Eden, polished and perfectly placed",
-  "body": "The desktop Magic Eden counter now opens with a compact transparent banner and clearer Marketplace and My Collection tabs, each carrying its own new voxel icon. Around the realm, utility controls now sit flush beneath the main navigation and the right-side tabs begin immediately below the world clock — less empty space, no overlap, and more room for the island."
- },
- {
-  "date": "2026-08-10",
-  "title": "🎮 Pocket Realm, perfectly fitted",
-  "body": "Lite mode now keeps every part of the HUD in its own space: the world clock no longer covers Avatar, compact utilities sit neatly below the top tabs, Flip Camera lives beside Controls, and the smaller mini-map places trainers on the actual island instead of out at sea. Pop-ups use compact text headers, Island's Chronicles rests as a small pill, and wallet/time readouts no longer resemble loading hourglasses. HD and Lite still share the same live world and player updates."
- },
- {
-  "date": "2026-08-10",
-  "title": "💎 The Collectors' Market opens",
-  "body": "The Magic Eden marketplace is now open in-game: a new door below Potions browses the real Chiki Monsters collection — live listings, your own certificates, the lot. Buying and listing from inside the realm unlock when our marketplace key arrives; until then, every listing links straight to Magic Eden. Plus: the market door now appears the moment you sign in, and pop-up scrolling got smoother."
- },
- {
-  "date": "2026-08-10",
-  "title": "🐣 The Hatch Ceremony",
-  "body": "Hatching is an event now: tap your egg to crack it open — shake by shake — until the shell bursts, meet your new companion face to face, and give it a name of your own before it joins your roster. The whole world dims for the moment. Every hatch is still the server's honest roll: no taps, tricks or timing can change what's inside."
- },
- {
-  "date": "2026-08-09",
-  "title": "🥚 Stuck eggs hatch, and a hatched egg hands over its chikimon",
-  "body": "Eggs that had gone quiet are moving again. Some eggs simply refused to hatch no matter how long you tapped, and others answered with \"that egg already hatched on the server — reload to collect what came out\" — except reloading never collected anything, and the egg sat in your nest while the chikimon it became waited unclaimed. Both are fixed. The realm now states outright which chikimon an egg turned into and hands you that exact one, instead of working it out by process of elimination — a guess that could never settle for any trainer who had ever sold a creature. Nothing was lost in the meantime: every egg caught in that state still holds the chikimon it hatched into, and it comes to you the next time you hatch. And if the realm still cannot say for certain what an egg became, it leaves the egg safely in your nest rather than risk handing you the wrong chikimon."
- },
- {
-  "date": "2026-08-08",
-  "title": "👆 The wheel stays in the menu, and the Trading Post stops shoving",
-  "body": "Two small irritations are gone. Scrolling a right-hand pop-up used to zoom the world camera behind it, so reading a long list dragged the view in and out under the parchment. The wheel now stays inside whatever panel it is over — shop windows, tab pop-ups and the model viewer alike — and still zooms normally the moment you point it at the open world. The Trading Post has also stopped landing on top of your side panels: the two were docked to the same corner and overlapped, so opening either one now tidies the other away first. The left-hand info pop is unaffected and still sits happily beside everything else."
- },
- {
-  "date": "2026-08-07",
-  "title": "🔨 The Mint button is off normal chikimon for good",
-  "body": "A Mint button was still turning up on ordinary chikimon — an offer the vault would only ever refuse. A creature the realm had never registered was borrowing the card of a Legendary that happened to share its species, and inheriting its mint offer. Normals are traded at the Trading Post, not minted, and the button no longer appears on them. Anything already certified keeps its certificate."
- },
- {
-  "date": "2026-08-07",
-  "title": "🐴 Every steed gets its own display case",
-  "body": "The mount collection no longer shares one sealed scroll: all six steeds now sit in their own painted display cases, each with its name on the plaque. Three names were tidied to match what the plaques actually say — the Cluck Courser is now the 🐔 Chiki Roost, the Direwolf is the 🐺 Dire Wolf, and the Skywing Griffin is simply the 🦅 Griffin. Same steeds, same speeds, same perks; only the nameplates changed."
- },
- {
-  "date": "2026-08-07",
-  "title": "🗺️ The campaign opens up — every chapter is reachable now",
-  "body": "If you started here in the realm rather than the old game, Act I quietly stopped at Chapter 19. The gate that decides when the next chapter opens was counting only a rarer companion, and a trainer who begins in Chikoria starts with commons and a ceremony egg — so chapters 19 through 63 never unlocked, and the winner's slot could never be reached. That gate now counts what you actually have. The whole campaign is open, and every chapter you had already earned is still yours: nothing was reset and nothing was revalued. If chapters credit a little late while the realm catches up, they will land.\n\nThe Trading Post also learned to take no for an answer. If you had the game open somewhere else — a second tab, your phone — a purchase could take your $CHIKI and hand you the goods while the stall never recorded the sale, leaving the same stack on the board for the next buyer. A refused purchase now puts everything back exactly as it was and tells you why, instead of failing in silence.\n\nUnderneath, the island's footing is fixed: the realm has been running its movement rules against an older copy of the ground than the one it thought it had. And a hiccup reading your quest record used to look like an empty record; it now says \"try again\" rather than forgetting an Act you finished."
- },
- {
-  "date": "2026-08-06",
-  "title": "🏆 Hatch a Legendary, enter the Cup — and the mint button tells the truth",
-  "body": "If your Legendary was hatched here in the realm, the Chikoria Cup now lets you in. It used to read only the old game's roster, so a trainer who hatched a Legendary from their own egg was turned away with \"Hatch a Legendary first\" — the exact thing they had just done. The realm's own hatches now count, and the world's Legendary tally counts them too, so the number on the board is the real one. The mint button has also stopped appearing on normal chikimon: normals were never mintable — they belong at the Trading Post auction — and the button was showing on cards it could not act on."
- },
- {
-  "date": "2026-08-05",
-  "title": "🔄 Every number you read is the live one",
-  "body": "Tabs and pop-ups now refresh the moment you open them, so prices, stock, purse, timers and roster all show what the island says right now instead of whatever they were when you last looked. That includes a real fix at the Trading Post: when a bidder raised their own offer, the auction card kept showing the old price and pre-filled a bid the server would refuse as too low — raises now land on the card the moment they happen, so you always bid against the true leader. The Chikiseum has also raised its banner high above the arena, readable from the plaza and from the west gate approach."
- },
- {
-  "date": "2026-08-04",
-  "title": "🔗 Know your connection",
-  "body": "A live ping pill now sits beside the online count — your real round-trip to the island, updated every second. Green under 120 ms, amber to 249, red beyond. When the road is the problem, now you can see it."
- },
- {
-  "date": "2026-08-01",
-  "title": "🌍 The island now runs the world",
-  "body": "Movement, gathering, fishing and shared corruptimon fights are now judged by the island itself. Honest older clients keep a generous grace path while they update, pre-existing fantasy fish remain yours permanently, and every authority still has an emergency kill switch. This build also gives the realm one address under chikimonsters.com with an automatic fallback to the current server, so a future move to Singapore can happen without splitting players into two worlds."
- },
- {
-  "date": "2026-08-01",
-  "title": "🎣 Your catch IS the world's catch",
-  "body": "Fishing now rolls ONE die — the island itself decides what took your line, and the Island's Chronicles announce the very fish you were shown. Legendary catches finally ring out across the realm the moment they're landed, festivals included."
- },
- {
-  "date": "2026-08-01",
-  "title": "🛡️ The island keeps honest score",
-  "body": "A deep security pass hardened hatching, gathering, teleports and the market: rare creatures can no longer be conjured, duplicated or claimed in someone else's name. Every griffin, dragonos and meme legend in existence is now counted — caps are law."
- },
- {
-  "date": "2026-08-01",
-  "title": "⚡ A truer, faster world",
-  "body": "The realm now speaks WebSockets (up to 4× snappier player sync), parties of four with their own chat, a bigger tap-friendly map, compact phone HUD, and the server has learned the island's every hill — groundwork for full server-run movement."
- },
- {
-  "date": "2026-08-01",
-  "title": "🛡️ Nobody can gather, seat or spend in your name — and a refused hatch keeps your egg",
-  "body": "A client-side integrity wave, all of it in your favour. Your wallet address is public — it's on the roster, in world chat and on the market board — and three things used to accept it as proof. They don't now: every node claim, every Cup entry and every chapter you report carries the sign-in you already made, so a stranger can no longer burn the nodes at your feet, seat you in a tournament you never entered, or act as you anywhere. Hatching got honest too: when the registry refuses an egg — the pool is empty, an edition is capped, it's still incubating, the server is cold — your egg now STAYS IN YOUR NEST with the reason shown, instead of quietly hatching a creature the world never minted. If a reply is lost after the server already hatched it, the client asks the registry what came out rather than inventing a second one. Gathering: a claim that timed out and was retried can now be corrected or refunded properly (it used to forget what it gave you), and a lapsed connection retries instead of silently going unrecorded. Fishing: your cast finally tells the world WHERE you fished and with WHAT rod, so rare catches can be witnessed at all, and a fishing festival's odds now end exactly when the festival does even if you go offline. Ancient recipes from the lore beacons pay the crafting XP for BOTH brews — using them was quietly slower than never leaving town. Plus: a cloud restore on a new browser no longer double-pays chapters you were already paid for, orders that come home are always credited, and Azulon's scroll now registers the face it gives you."
- },
- {
-  "date": "2026-07-31",
-  "title": "🥚🪓 Egg carts you can finally see, and tools that tell the truth",
-  "body": "Two multiplayer fidelity fixes. First: other trainers' egg caravans were arriving as EMPTY wagons — the egg itself was only ever seated on your own cart, never on anyone else's. Every towed egg now rides visibly on its cart for the whole island, in its true kind and colours. Second: what a trainer holds now matches what they're doing. Picking berries after chopping wood used to show you swinging your AXE at the bush on everyone else's screen — the game reported whatever was left in your hand instead of what the gather actually uses. Bare-hand gathers now show bare hands, tool gathers show the right tool at its real crafted level, everywhere. Under the hood this wave also carried a full phone-versus-desktop synchronisation audit: every field a trainer broadcasts — position, look, mount, companions, eggs, sprint, actions, shared monsters, festival state — was traced from sender to server to every other screen, and measured landing within a single network beat (95th percentile 275 milliseconds)."
- },
- {
-  "date": "2026-07-31",
-  "title": "📣🎣 The island talks: a live world feed, and the Fishing Festival switch",
-  "body": "A new chronicle lives under your minimap: whenever any trainer anywhere catches a fantasy fish or hatches a legendary, a Meme Dynasty chikimon, or a new steed, the whole island hears about it the moment it happens — each headline wearing the creature's own portrait. Every line is server-witnessed: these are rolls the realm itself made, so no one can fake their way into the chronicle. And the realm just gained a festival lever: when a Fishing Festival is declared, fantasy fish odds multiply for everyone — a golden banner under the online count shows the boost and counts down the hours, your first cast of the festival gets a toast, and when it ends the odds settle back to their legendary rarity. Keep your rod ready: the first 24-hour ×4 festival is coming. Also in this build: every avatar's icon now floats free of its backdrop — including The Wanderer, whose icon just joined the set — so the switcher and your look panes render clean on any panel. And your own rare moments now LOOK rare: hatching a legendary, a Meme Dynasty chikimon or a new steed — or landing a fantasy fish — raises a full celebration banner with the creature's portrait, tier colours, a sparkle burst and a fanfare. Ordinary hatches stay humble on purpose: if everything is celebrated, nothing is. Phone readers: the whole interface steps up another size on mobile and every letter is now drawn with scale-proof lettering — text stays sharp at any zoom instead of softening as it shrinks. And the island mist now closes in on phones: distance fades into fog just inside your view instead of the world ending in a hard lit edge — swinging the camera costs less and looks better doing it. Desktop vistas are untouched."
- },
- {
-  "date": "2026-07-31",
-  "title": "🌍⚔️ One shared world, a real rival, and scrolling that finally obeys your thumb",
-  "body": "Touch scrolling is truly fixed this time — and we owe an honest correction: the last patch handed your drag to the scroll panels, but the engine's panels ignore touch entirely, so nothing moved. The controls now drive the scrolling themselves: every pop-up, list and tab pans under your finger with a natural flick, taps still press what you tap, and letting go of a scroll never accidentally fires the card under your thumb. THE WORLD IS NOW ONE WORLD: corruptimons are shared across every player — when another trainer's blow lands first, that monster falls on your screen too, its corpse cannot be farmed twice, and it respawns for everyone at the same moment. (This half arrives as the server updates; until then the wilds behave as before.) The practice rival in the Creator's training grounds got a real brain: it reads lethal, respects shields, values its energy, and duels now run seven to twelve rounds instead of ending in two — beatable, but no longer a pushover. Balance news: we measured every meme chikimon against the whole roster across twelve thousand simulated bouts — the overpowered-memes rumor is false, they sit exactly in the pack; the only change is a BUFF to popcat, who was quietly underperforming and now holds its own. Early Act I pacing: two grind walls (before chapters 12 and 30) are gone — early chapter XP is up to 3.5x richer so the story flows without forced filler; later chapters are untouched. And whispers were audited end to end: clicking a name, whispering, replying and the self-echo all verified working, with impersonation refused. Late addition to this wave: every avatar now has its own hand-drawn icon — you'll see the faces in the Choose Your Look panes and the creator's switcher, while the full NFT artwork stays on the collectible cards where it belongs."
- },
- {
-  "date": "2026-07-31",
-  "title": "💨⚡ The big mobile pass: faster loads, a steadier world, and a phone that stops fighting you",
-  "body": "A deep audit of the phone experience, and the fixes go from the first second to the last. Loading: your device keeps the realm's data after the first visit — coming back is now close to instant instead of re-downloading everything (a returning phone fetches nothing at all), phones no longer waste half a minute asking a storage server for files it never had (the bar just stalled while a message blamed your connection — it was never your connection), and the loading bar no longer freezes at 82% while the engine compiles: it keeps moving and tells you what stage it is on. If your device ever runs out of memory and the game restarts, it now notices — including when it died during loading, which the old detector could never see — and automatically loads the lighter pack with a smaller engine crew the next time, instead of dying the same way forever. Stability: the graphics chip on a phone can no longer step up to the full desktop world — that setting was quietly handing phones a world several times their memory budget, which is exactly the crash-and-reload some of you hit after tapping it twice. The network got real lag armour: a two-second connection hiccup now costs about two seconds — it used to trigger up to ninety seconds of an empty world, during which you also vanished from everyone else's screen. Other players are no longer destroyed and rebuilt over a single dropped update; they just wait out the blip. On slow connections the game now keeps two requests in flight and time-stamps every movement sample, so other trainers move where they actually are instead of where the lag guessed, and their walk animation stops flickering into a sprint on every jitter spike. Housekeeping that you will feel as battery: closed panels used to keep rendering a 3D scene behind themselves forever; they stop now, and several oversized art files were trimmed to the size they actually draw at — about 35 MB of texture memory back. Small touches: the on-screen joystick ring now tucks itself away when you are not steering, and locked buttons finally explain themselves on a phone — tap one and a toast tells you exactly what it needs (\"Need 40 more $CHIKI\"), instead of sitting grey and silent because its explanation only appeared on mouse hover. And a correction from the same pass: hiding the scrollbars was meant for touchscreens only — on desktop the bar is how you see a list continues, and it is back there. Phones keep the clean bar-free look with drag-to-scroll."
- },
- {
-  "date": "2026-07-31",
-  "title": "✋ A mobile pass: the camera, buttons, scrolling, and a save that crossed devices wrong",
-  "body": "Four faults, and the last one was quietly costing people progress. Tapping Run, Jump or Action also walked your trainer to wherever that button sits on screen — those controls are painted rather than being real buttons, so nothing was claiming your finger and the tap fell through to the ground beneath. Pop-ups could not be scrolled by touch at all, because a finger dragged across a list was being read as a camera swing; they scroll properly now, and the desktop scrollbars are gone since nobody can hit them accurately anyway. The catalog no longer repeats how many of each thing you are carrying — it is there to tell you what a resource IS, and your satchel already answers the other question. And the big one: when the same trainer was opened on two devices, the game decided which save was newer by comparing each device's own clock. A phone running a few minutes ahead of a desktop therefore won regardless of which actually held newer progress, which is how a player hatched an egg on desktop and found it unhatched on their phone — and then the older save was written back over the real one. Both devices now defer to the server's clock, which is the only one they share. One more, reported after the rest: on a phone you could not turn the camera at all. Dragging the right of the screen is meant to swing your view around your trainer, and it did nothing — the code that works out how far your finger travelled stored the new position one line before it read the old one, so every swing was measured as a movement of exactly zero. Look, tilt and pinch-to-zoom all work now."
- },
- {
-  "date": "2026-07-31",
-  "title": "👻 Distant corruptimons stop standing there frozen",
-  "body": "Walk away from a corruptimon and it used to stay on screen with its legs stopped mid-stride, like a statue of itself. The game deliberately switches off a monster's mind once you are far enough away — twenty-four of them thinking every frame across the island is work nobody sees — but it kept drawing them anyway, so you got the frozen pose instead of nothing at all. They are simply hidden now, and because a monster's wandering is worked out from the clock rather than remembered, one that comes back into view picks up where it should be rather than where it stopped."
- },
- {
-  "date": "2026-07-31",
-  "title": "🔮 The legend placards read properly now",
-  "body": "The coming-soon placards at the Wicked Temple, the Crystal Lode, MALGROTH's arena, the wandering galleon and the Leviathan's waters had two faults. Each title carried a little symbol that simply did not exist in the font the card is drawn with, so instead of a crystal ball or a gem you got an empty box — it looked right on a desktop editor only because the computer quietly lent its own emoji font, which a browser will not do. Those are proper artwork now. And every card was built exactly as tall as its contents with nothing spare, so the line under COMING SOON was sliced in half at the bottom edge. The card is taller and the whole ribbon fits."
- },
- {
-  "date": "2026-07-31",
-  "title": "💤 No more \"welcome back\" every time you switch tabs",
-  "body": "Coming back to the tab announced itself in the System log, every time. Switching tabs is something you do constantly and you already know you did it, so the log filled up with a notice about your own deliberate action. The reconnect still happens exactly as before — your trainer re-announces itself the instant you return and everyone else's position is refreshed rather than replayed from minutes ago — it simply does it quietly now."
- },
- {
-  "date": "2026-07-30",
-  "title": "⇄ Half the network traffic, same world",
-  "body": "Every couple of seconds the game was told each nearby trainer's name, look, team, element and level all over again — none of which changes while you are playing. Now it hears those once and afterwards only what actually moves. Measured at just over half the traffic removed, which matters most on a phone and on a hotel connection, and leaves far more room for a crowded island. If somebody changes their outfit or swaps their team you are told immediately, and only about them."
- },
- {
-  "date": "2026-07-30",
-  "title": "🐺 Every trainer sees the same monster in the same place",
-  "body": "Two players standing shoulder to shoulder were watching the same corruptimon in different spots, sometimes tens of units apart. Two things caused it. The wander was rolled independently on each machine, and — the one that made it unfixable by seeding alone — a monster's mind switches off entirely once no player is within 120 units, so where it ends up depends on how long somebody happened to stand nearby. Two trainers arriving at different times could never agree, however the dice fell. So a monster's idle path is no longer walked, it is read: ask where a corruptimon is at a given moment and every machine computes the same answer, with nothing sent over the wire to make it so. They keep to their own patch of the island as before, they still hunt your chikimon exactly as they did, and one that has been out of sight simply picks up where it should be rather than where it was frozen."
- },
- {
-  "date": "2026-07-30",
-  "title": "🌐 Switch tabs and come back without losing the world",
-  "body": "Leaving the tab freezes the whole game — browsers stop driving the engine for a hidden tab, and no web game escapes that. What was fixable was the return. While you were away your trainer stopped announcing itself, so after twelve seconds the world let go of you and everyone else's game did not freeze your avatar, it deleted it — then popped you back as if you had just arrived. And your own view came back holding everyone where they stood minutes ago. Now the game notices the gap the moment you return: it announces you again on that very frame instead of waiting its turn, throws away the stale picture of where everyone was, and if you were gone long enough to have been dropped it tells you it is reconnecting you. You will still see about a quarter second of stillness while the first fresh update arrives."
- },
- {
-  "date": "2026-07-30",
-  "title": "🐴 Other players stop losing their mounts (and the world stops freezing)",
-  "body": "Three receiver-side bugs, all found by auditing the multiplayer layer rather than trusting it. The egg caravan and the run/walk flag were being sent correctly and relayed correctly, but the client never stored them onto the peer it draws from — so nobody ever saw anyone else's egg carts, and everyone's run-versus-walk was still being guessed from travel speed. Both now arrive. Second: when another player changed their avatar or swapped their team, their rig was rebuilt but their mount and held tool were not, leaving a rider hovering at saddle height over nothing and swinging an invisible axe until they next changed either one. Third, and worst: if the server answered with a page that was not our data — the kind of thing a gateway or proxy returns as a success — the game treated it as a healthy reply, reset its own failure count, and quietly stopped updating. Every other player froze mid-stride, the online count kept insisting they were there, and it never recovered or told you. A reply is only healthy now once it actually parses."
- },
- {
-  "date": "2026-07-30",
-  "title": "💬 The chatbox lets go of you",
-  "body": "Clicking into the chat used to lock you out of your own game: the only way back to walking was to find the Escape key, because clicking the world does not release a typing cursor, and sending a message re-grabbed it anyway. Now a click anywhere on the world hands the keyboard straight back — and the same click still starts you walking there, so it costs no extra gesture. Sending a message also hands it back; Enter puts you straight back in the box if you want to keep talking. And a message refused for being too quick, or for having no whisper target picked, is given back to you with the cursor at the end instead of being quietly thrown away. The fold arrow in the corner is redrawn too: minimise and maximise are now the same arrow mirrored, so they finally sit level with the channel tabs."
- },
- {
-  "date": "2026-07-29",
-  "title": "🥚 Your egg caravan travels with you, for everyone",
-  "body": "The little carts carrying your incubating eggs were only ever visible to you — to other trainers you walked alone. They now trundle along behind you wherever you go, seen by everyone.\n\nSprinting reads correctly too: other players run when you run, rather than the game guessing from how fast you happen to be moving."
- },
- {
-  "date": "2026-07-29",
-  "title": "🏗 No more trainers standing on roofs",
-  "body": "If you stood under a bridge, an overhang or inside a building, other players could see you up on the roof instead — and once it happened it stuck until you walked clear. Your own client now has the final say on where you are, so you appear exactly where you stand.\n\nAlso: name banners rise with riders onto the saddle instead of sitting inside the mount, other trainers' animations blend instead of snapping, and their drills are held clear of the body."
- },
- {
-  "date": "2026-07-29",
-  "title": "👤 Other trainers look right",
-  "body": "A pass over how other players appear to you. Griffin riders were floating well above their steed and sitting perfectly still instead of drifting on the wing; jumping trainers walked through the air; anyone mining crystal or digging shells swung an overhead chop instead of working their drill or spade; and every angler held a plain stick rather than their own rod.\n\nAll of it now matches what that trainer sees of themselves. No extra delay — these ride the smoothing your view of other players already used."
- },
- {
-  "date": "2026-07-29",
-  "title": "🐎 Riders look like riders to everyone",
-  "body": "Other trainers on mounts appeared to stand upright on top of their steed rather than ride it — and on a griffin they floated well above the saddle.\n\nEveryone now renders exactly as they see themselves: seated in the saddle, in the right spot on the mount's back, for all six steeds. No extra delay — the pose rides the same smoothing the rest of a trainer's movement already uses."
- },
- {
-  "date": "2026-07-29",
-  "title": "⚒ Tools no longer render through you",
-  "body": "The heavier drills were reaching back through the trainer's body, and rod handles sat slightly inside it. Both are now held clear, out in front where they belong.\n\nNothing about gathering or fishing changed — purely how the tools sit in your hands."
- },
- {
-  "date": "2026-07-29",
-  "title": "🎣 Rods are held like rods again",
-  "body": "Fishing rods were being tipped forward hard enough to drop the hook onto the water — on some levels almost 90 degrees, which read as a bent stick rather than a rod being held.\n\nEvery rod now sits at a natural angle. On a few of them the hook hangs a little above the surface as a result, but casting, biting and reeling are completely unchanged."
- },
- {
-  "date": "2026-07-29",
-  "title": "🪓 A taller, straighter chop",
-  "body": "The axe now swings straight up and down again rather than cutting across the body, and it lifts noticeably higher over the shoulder before it comes down.\n\nChopping speed and yield are unchanged — this is purely how the swing looks."
- },
- {
-  "date": "2026-07-29",
-  "title": "⛏️ Tools sit right at every level",
-  "body": "Some pickaxe, axe and drill levels were held at the wrong angle while gathering — the head turned side-on instead of facing the swing, and a few drills sat too low, biting into the ground.\n\nEvery level of all three now sits the way it should. Nothing about gather speed or yield changed — just how the tool looks in your hands."
- },
- {
-  "date": "2026-07-29",
-  "title": "📖 See how rare your collection really is",
-  "body": "The Chikidex, Mountdex and Avatar case now show how many trainers across the whole realm own each one. Live, from the world server.\n\nNow you can see at a glance whether that steed you hatched is one of hundreds — or one of a handful. Rarity you can actually check, instead of guessing."
- },
- {
-  "date": "2026-07-29",
-  "title": "✅ Last of the loose ends",
-  "body": "A few remaining rough edges are closed. A chikimon put up for auction could, in rare circumstances, become stranded — held by the realm with no way to bring it home. Auctions are now kept safely no matter how busy the board gets.\n\nAlso: the weekly raid prize can no longer be handed out twice, a hatching egg always produces exactly what the realm recorded, and switching wallets on the desktop build now properly reloads into that trainer instead of half-switching."
- },
- {
-  "date": "2026-07-29",
-  "title": "🪪 One device at a time — no more lost sessions",
-  "body": "If you opened your trainer on a second device, the two could quietly fight over your save and whichever one saved last won — meaning a whole session of play could vanish without warning.\n\nNow the realm keeps one live session per wallet. The most recent sign-in is the live one, and an older one tells you straight away that your trainer was opened elsewhere and stops saving, instead of letting you play on into progress that can never be kept. You are never locked out of your own wallet — signing in again always takes the session back."
- },
- {
-  "date": "2026-07-29",
-  "title": "🛡️ A pre-launch pass over everything new",
-  "body": "A full sweep over this week's changes turned up a handful of rough edges and they're all fixed. The one that could have cost you something: in a rare case a chikimon returning from a withdrawn auction could go missing while the game told you it was safe — it now comes home properly, and the realm confirms which chikimon it was.\n\nAlso fixed: the message telling you Dark Energy didn't fit in a full bag had stopped appearing, resource bookkeeping dropped part of a big crafting burst, and a few internal safeguards were tightened. Nothing about how the game plays has changed."
- },
- {
-  "date": "2026-07-29",
-  "title": "🛡️ More of your progress is sealed against tampering",
-  "body": "Your save already protected the important things — your $CHIKI, resources, chikimon and mounts. A handful of smaller records sat outside that seal: auction escrow, task boards, potion effects, discovered recipes, the hospital timer and a few reward cooldowns.\n\nThey're all sealed now. Nothing about your game changes and nothing needs doing on your part — your save simply re-seals itself the next time it saves, and existing saves keep loading exactly as before.\n\nThis closes off ways the rewards could be claimed more than once, which keeps what everyone earns fair and keeps the value of traded goods real."
- },
- {
-  "date": "2026-07-29",
-  "title": "🐉 MALGROTH's weekly prize is now guarded by the realm",
-  "body": "The great warden's weekly reward is now recorded by the realm itself rather than trusted to each device. Everyone still gets their full prize once a week — 500 $CHIKI and 25 Crystal Shards — and the smaller consolation for repeat visits, exactly as before.\n\nThe difference is that the weekly limit can no longer be quietly bypassed, so the raid rewards stay fair and their value stays real for the trainers who earn them. If you're offline or the realm is slow to answer, your raid still pays out normally."
- },
- {
-  "date": "2026-07-29",
-  "title": "⚖️ The realm now sees the whole picture of your resources",
-  "body": "Until now the realm could see what you gathered, but not what you spent it on. Crafting, tending eggs, bartering with Mithra and Azulon, feeding your chikimon — all of it was invisible. Now the full journey of every resource is part of your honest record.\n\nNothing costs more, nothing is slower, and no recipe changed — every price is exactly what it was. This is bookkeeping, not balance. It simply means your inventory tells a complete and verifiable story: what you found, and what you made with it.\n\nThat completeness is what will eventually let your resources be as provably yours as your eggs, steeds and chikimon already are."
- },
- {
-  "date": "2026-07-29",
-  "title": "🌑 Combat spoils count too — every resource is now covered",
-  "body": "Dark Energy from battle now goes on your honest record the same way fishing and gathering already do. That was the last resource the realm didn't observe, so from now on a full stack of any material — mined, caught, or won in combat — is simply proof of the work you put in, never mistaken for anything else.\n\nCombat is unchanged: same drops, same feel. This just closes the last gap, so every resource you hold is grounded in a record that's genuinely yours."
- },
- {
-  "date": "2026-07-29",
-  "title": "🎣 Your catches count toward your honest record",
-  "body": "Fishing now contributes to the same authenticity records as gathering. Before, the realm never saw your catches, so an honest angler who sold a big haul of fish could be mistaken for something they weren't. Now every catch is on the record, at a natural pace, and a full net is simply proof of a good day at the water.\n\nNothing about fishing changes — same spots, same rare catches, same feel. This is quiet groundwork so that one day your whole inventory, not just your eggs and companions, is provably yours."
- },
- {
-  "date": "2026-07-29",
-  "title": "🐾 Every chikimon is now a real, permanent asset",
-  "body": "Your whole roster is now backed by the realm's own records, not just your save. Each chikimon you hold is registered as a permanent asset with an honest history — so a companion can no longer be forged by a tampered client or erased by a bad save. What you raised is provably yours.\n\nNothing about your chikimon changes: every level, nickname, bond and battle card stays exactly as you earned it — those live in your save and are never touched. This only adds a permanent certificate of existence alongside them, quietly, at sign-in.\n\nTogether with the safer stable and sealed hatches, it means eggs, steeds and chikimon alike are becoming real, ownable, one-day-tradeable assets — each with a lineage that belongs to you."
- },
- {
-  "date": "2026-07-29",
-  "title": "🥚 Hatches are sealed by the realm",
-  "body": "When you hatch a registered egg now, the realm itself rolls what comes out and records it the instant it happens — so what you hatch is provably yours and can never be forged or re-rolled by a tampered client. You may notice a brief \"hatching…\" beat while the realm makes it official.\n\nNothing about your odds changes — the same rarities, the same weighting, the same surprises. And if the realm is slow to answer or you're offline, your egg still hatches instantly the way it always has; you are never left waiting on it.\n\nIt is the same groundwork as the safer stable: another step toward every chikimon and steed being a real, permanent, one-day-tradeable asset with a history that is truly yours."
- },
- {
-  "date": "2026-07-29",
-  "title": "🐎 Your stable is kept safe on the server",
-  "body": "Your mounts are now backed by the game's own records, not just your local save. Every time you sign in, the realm checks which steeds truly belong to you and makes sure your stable matches — so a mount can no longer be lost to a bad save or a hiccup on your device. If something ever went missing, it comes back on your next sign-in.\n\nThis only ever gives steeds back — it can never take one away. If the server's list is still catching up with a mount you just earned, your stable is left exactly as it is until it does. Nothing you own is at risk, and nothing about riding changes.\n\nIt is also a step toward making your mounts real, tradeable, ownable assets in a future update — each one now has a permanent record that is truly yours."
- },
- {
-  "date": "2026-07-29",
-  "title": "🌿 The forest stays in step for everyone",
-  "body": "When you gathered several things quickly — most often right after loading in — only the first one was reaching the world. The rest were refused for pace and quietly dropped, so trees you had felled and lodes you had emptied kept standing for everyone else, and you would find nodes that looked untouched but gave nothing.\n\nYour gathers are now paced to the world's own rhythm instead of racing it, and one refused for timing waits its turn rather than being lost. What you take is what everyone else sees you take.\n\nAlso fixed alongside it: when two trainers reached the same node at once, the item taken back was whatever you had gathered most recently rather than the one you actually lost — so you kept the thing you lost and lost the thing you kept. The right one goes back now.\n\nAnd the world itself now decides what a node gives. Your swing still credits the item the instant it lands — nothing about gathering feels slower — but the server names the material, and if the two ever disagree the world's answer is the one that stands. Honest trainers will never notice; it means a node can no longer be talked into giving something it does not hold."
- },
- {
-  "date": "2026-07-28",
-  "title": "🛠️ Fix: the Creator tab now appears when you sign in",
-  "body": "The Creator tab was being decided once, when the game started — before your wallet had finished signing in. Admin status arrives a moment later, and nothing rechecked, so the tab never appeared even on an admin wallet. It now appears the moment sign-in confirms it, and disappears again if it is ever revoked."
- },
- {
-  "date": "2026-07-28",
-  "title": "🛠️ Creator tab (admin only)",
-  "body": "A Creator tab now sits below Potions on the right rail for verified admin wallets, and only for them — an ordinary wallet does not see it at all.\n\nIt puts every gear slot in one place: all five gathering tools at any level with a tap to hold one right away, the bag, pouch and satchel with their real capacities shown as you change them, and the worn gear — sword, shield, gloves, boots, charm. There are one-tap buttons to take everything to Lv 10 or back to Lv 1.\n\nBelow that: jump straight to the nearest trees, stone, crystal, gold, iron, seashells or fishing spot so a tool has something to work on; unlock every chikimon, mount and resource; and try a battle, a mount, flight, the shops and the Trading Post directly.\n\nThese tools existed already but lived on the F8 and F9 keys, which do not exist on a phone."
- },
- {
-  "date": "2026-07-28",
-  "title": "🎣 Why you couldn't land the goldfish — and tools facing the right way again",
-  "body": "The reel duel was teaching you to lose. The hint said to HOLD to reel in, and holding is exactly what snaps the line — the tension climbs faster than the fish tires, so anyone following that advice lost every legend they hooked. Tap in bursts and let the line fall back whenever it runs red, and it lands. The hint now says so.\n\nTwo things the game was quietly hiding. A fantasy fish needs a good enough ROD to bite at all — a Golden Chikifish will not touch a line below a Lv 2 rod, no matter how long you cast or how high your Trainer level — and nothing anywhere told you. The Fish tab now names whichever requirement is actually stopping you, the rod or the rank. And when a legend got away because you were too low a rank, the panel blamed your line tension even though you never got to reel; it now tells you the real reason.\n\nTools: the drill and shovel were pointing behind the trainer. That was my error — I had been measuring which way you face using the wrong reference, so a correction I made earlier turned them the wrong way. Both now lead forward again, the drill sits clear of the ground pointing at the crystal, and the axe's diagonal comes down from the shoulder across the trunk."
- },
- {
-  "date": "2026-07-28",
-  "title": "⛏️ The drill comes out of the dirt, and your hook finds the water",
-  "body": "Two tools were pointing at the wrong thing.\n\nThe drill was aimed almost straight down and its bit sat buried in the terrain — you were boring into the ground beside the crystal rather than into the crystal. It now rides clear of the ground and points forward and down at what you are actually mining.\n\nFishing has lost the drawn-on line and float. There was a line and bobber painted into the scene to reach the water, which never quite belonged to the rod you were holding. They are gone. Instead your rod leans out over the water until its own hook is wet — the way you would actually hold it — so the tackle you see is the tackle on your rod. Every rod reaches, at every level.\n\nOne note of honesty: the level 10 rod is much shorter than the others and cannot reach by leaning alone, so it dips a little as well. It is the only one that does."
- },
- {
-  "date": "2026-07-28",
-  "title": "🪓 The axe chops across the trunk, not past it",
-  "body": "Your axe swung beside you rather than at the tree. Measured, the blade lived entirely off your left shoulder and struck the air a good two metres to the side of the trunk you were aiming at, which is why the chop read as a flat up-and-down bob rather than a swing.\n\nIt now comes down the way you would actually swing an axe: raised high and out to one side, then driven down and across the body onto the wood. The blade travels about four and a half metres diagonally through the stroke and finishes on the centreline, where the tree is.\n\nThe head still stops cleanly at ground level at every axe level, exactly as before."
- },
- {
-  "date": "2026-07-28",
-  "title": "🎣 Three fishing fixes: the float, the duel, and walking away",
-  "body": "Your float now sits exactly where the fish are. The bobber was being planted directly beneath your rod tip while every splash, bite and catch happened out at the spot you actually cast to — up to three units apart — so the water broke beside the float instead of under it. They are the same place now, and the cast stays where you put it even if you turn around.\n\nThe reel duel can no longer trap you. If you never pulled, progress sank to zero and tension faded to nothing, which meant neither landing the fish nor snapping the line could ever happen — the duel simply never ended, and while it was running your action button could not gather, board a boat or talk to anyone. Leave the line slack for six seconds now and the fish shakes itself off, exactly as it should.\n\nAnd walking away ends the session. Before, nothing tore the tackle down when you left: the float would follow you inland and sit bobbing over dry grass. Step away from your cast and the line comes in.\n\nThe line itself also stays properly on the rod now, through turns and through the cast."
- },
- {
-  "date": "2026-07-28",
-  "title": "🪓 Every tool, at every level, rigged one at a time",
-  "body": "Your axe held its blade side-on, your drill gripped its own bit while the handle pointed at the crystal, and your level 10 rod dangled its lure in mid-air. All three were the same underlying problem: each tool has ten separate models, one per level, and they were authored independently — but the game aimed all ten with a single angle. Where a model happened to agree with that angle it looked right, and where it did not, it did not.\n\nSo every model has been measured and rigged on its own. The axe levels disagreed with each other by up to 21 degrees and the shovel by 23; those are gone, and every level of a tool now sits exactly like every other. The drill was a bigger problem, and not a uniform one: three of its ten models are built bit-first, with the business end sitting where your hand goes, and seven are built the ordinary way round. Those three are now turned end for end; the rest were already correct and are left alone. Every drill leads with its bit and points where you do.\n\nFishing: the lure now reaches the water on every rod, at every level. Five of the ten rods were modelled with no hanging line at all, and three of the five that do have one were still leaving the lure short of the surface. Rather than patch those by name, the line simply pays out from wherever your tackle ends down to the water — so it works from a low beach or a high bank alike. The rod is held exactly as before; only the line below it is new. A separate slip had casts landing 35cm above the sea, which is fixed too. And the line now stays on the rod while you move: it used to be laid down once, at the spot you cast from, so turning around could leave it hanging in the water well behind you — it now follows the rod tip every frame, through turns and through the cast whip.\n\nThe shovel now bites the ground. It was held facing away from you and stopped short of the earth at the bottom of every scoop, so it swung through thin air. It is turned to face the way you do, and the blade now measures the ground directly beneath itself each frame and closes the gap — beneath the blade, not beneath your boots, which is what makes it land properly on a slope or a beach rather than only on the flat. It settles in one motion now, too, instead of the fine shudder it had while it hunted for the ground in steps too coarse to ever land on it. All of this works with the plain tools you start with and not only crafted ones — an uncrafted tool was invisible to that ground check, and every dig frame threw it a long way off as a result.\n\nThe pickaxe was already right and is essentially untouched."
- },
- {
-  "date": "2026-07-28",
-  "title": "🛡️ Every chikimon, egg and mount now has a record of its own",
-  "body": "Work you will mostly never notice, on the part of the game that decides whether what you own is really yours.\n\nEggs are now registered the moment Mithra conjures one. The egg gets its own identity and its own clock, kept by the server rather than by your save file, and when it hatches the creature keeps a permanent link back to the egg it came from. Your Chikimon can prove where it came from.\n\nOne change you may actually run into: a chikimon can only be up for sale in one place at a time. Listing it and auctioning it at once is no longer possible, and neither is putting the same creature on the board twice. Cancel a listing and it is immediately free to sell again.\n\nNone of this touches how you play. Nothing costs more, nothing takes longer, and no egg, creature or mount you legitimately own is affected."
- },
- {
-  "date": "2026-07-28",
-  "title": "🥚 Your lost eggs are coming back — claim within 7 days",
-  "body": "On 27 July an egg-protection change went out enforced immediately instead of with its migration window. For about five and a half hours that evening, older saves holding an egg were read as edited, and the anti-cheat's response cleared the nest. That was our mistake, not yours, and simply restoring the window afterwards did not give anything back.\n\nIt does now. Sign in and your egg returns on its own — no button to find. We work out what you are owed from your own records of eggs conjured and eggs hatched, so you get back exactly the kind you lost and nothing you did not.\n\nTwo honest notes. The replacement starts its incubation fresh, so a Legendary Egg is another twelve hours of warming — we could not recover how far along yours was. And if you already made a new egg of that kind, we will not stack a second one on top of it.\n\nThe claim is open until 4 August at 00:00 UTC. Sign in once before then and it is handled.\n\nSeparately, eggs saved by the older game version keep their protection through 26 August, exactly as before. Nothing about that has changed."
- },
- {
-  "date": "2026-07-28",
-  "title": "🪓 Axe and pickaxe no longer swing into the ground",
-  "body": "Chopping and mining drove the tool head straight through the terrain at the bottom of every swing — measured at over a metron and a half below your feet. Both now stop cleanly at ground level.\n\nThe axe blade also faces properly downward as it lands, instead of turning side-on. That was the same problem: lifting the head out of the dirt is what brings the cutting edge round to vertical."
- },
- {
-  "date": "2026-07-28",
-  "title": "✕ Other players' XP bars are gone",
-  "body": "You no longer see another trainer's experience bar. Their nameplate shows their banner and their name — their progress is their own business.\n\nYour own XP bar, and the run/dash bar beneath it, are unchanged."
- },
- {
-  "date": "2026-07-28",
-  "title": "💬 Chat stays open when a side panel does not cover it",
-  "body": "Opening any right-hand panel — Avatar, Quests, Satchel, Mounts and the rest — used to hide the chat box completely, even though the chat sits in the bottom-left corner and those panels hug the right edge, so they were never on top of each other.\n\nThe chat now checks whether a panel is actually covering it before getting out of the way. On a normal screen it simply stays open while you browse your gear, so you can keep reading world chat and reply without closing anything. On a narrow window or a phone, where a panel really does span the view, it still steps aside as before."
- },
- {
-  "date": "2026-07-28",
-  "title": "⚔️ Your Cup duel is the real one now",
-  "body": "Pressing FIGHT NOW in the Chikiseum used to start a practice battle against a randomly generated opponent, while the Cup stewards decided your actual match without you — so you could win on screen and still be knocked out, or lose and advance. It now puts you into your real match against your real opponent, and tells you plainly when your duel hasn't been called yet instead of inventing one.\n\nEvery icon in the game also has proper art now. Anything that used to fall back to your device's own font — arrows, stars, the delivery and crown markers — is drawn in the game's own style, so menus look the same on every device."
- },
- {
-  "date": "2026-07-28",
-  "title": "☁ Cloud saves are checked before they are restored",
-  "body": "When your progress is restored from your wallet, the game now checks that the saved copy has not been altered before adopting it. Previously it was taken as-is and then re-sealed, which meant an edited copy could be laundered into a valid save.\n\nIf a restore ever fails that check your progress is still restored — you are never stranded — but anything that looks injected is neutralised rather than trusted. Ordinary restores are unaffected.\n\nAlso: Chikoria Cup entries now use the deck your champion has actually unlocked, so nobody can enter the bracket claiming cards or tiers they never earned."
- },
- {
-  "date": "2026-07-28",
-  "title": "🔒 Your whispers are private again",
-  "body": "Three holes closed, all of the same kind: your wallet address is public — it shows in the online roster and in world chat — but parts of the game were treating it as if it were a password.\n\nAnyone who knew your address could read your entire whisper history, send whispers pretending to be you, or move your avatar around while you were playing. All three now require your game client to prove the wallet is actually yours. Nothing changes for you — your own client already proves it. Players without a connected wallet are unaffected."
- },
- {
-  "date": "2026-07-28",
-  "title": "🐴 New art: royal steed, hunger meter, hungry mount",
-  "body": "The Royal Steed now shows its own barded portrait wherever it is named, the chikimon hunger meter uses a proper roast-drumstick icon, and the 'your mount is too hungry to ride' warning shows the hungry-mount art instead of a plain emoji.\n\nAlso fixed behind the scenes: a hole where someone who knew your wallet address could ask the server for the key to your duel and forfeit it out from under you. Duel keys are now only ever handed to a client that has proven the wallet is theirs."
- },
- {
-  "date": "2026-07-28",
-  "title": "🏃 One stamina bar, right under your XP",
-  "body": "Your sprint charge used to float near your feet where it was easy to miss. It now sits directly beneath your XP bar on your own nameplate, the same width, so the two read as one stack.\n\nThe same bar becomes your steed's DASH charge the moment you mount up — blue for your own running, amber for the mount's dash. So you are always looking at the resource you are actually spending, and choosing when to ride and when to run on foot is a real decision. Either way it stays hidden while the charge is full, so it never clutters the view."
- },
- {
-  "date": "2026-07-28",
-  "title": "🌍 Other trainers now look like real players",
-  "body": "Everyone you meet in the realm is rendered the way you render yourself.\n\nOther trainers now wear their own themed nameplate banner — the one that matches their avatar — instead of a plain line of text. Their chikimon have proper nameplates too, tinted to their element; before this, a stranger's team was three anonymous creatures following them around. And the tool in their hands is the one they actually crafted, at their real level, held at the same size as yours.\n\nYou will not see another player's XP bar — that stays yours alone."
- },
- {
-  "date": "2026-07-28",
-  "title": "🪓 Other players' tools are the right size now",
-  "body": "When you watched another trainer gathering, their axe or drill was far too big. Your own tool is deliberately held at a fixed size no matter which avatar you play, but the code that draws other players never did that step — so their tool inherited the whole rig's scaling and came out enormous. It now uses exactly the same size as your own.\n\nAlso: the missing arrows and stars in menus and reward lines are now proper icons instead of falling back to whatever your device's font happened to draw."
- },
- {
-  "date": "2026-07-28",
-  "title": "🍂 Depleted resources now actually disappear for everyone",
-  "body": "If another trainer emptied a node or felled a tree, you could often still gather it — and you never saw the tree fall. The world was being told about far fewer of those than it should have been.\n\nThe game sends one 'this is taken' message at a time, and any that had to wait was thrown away instead of queued. That was worst right after the server had been idle, when its first reply takes a while — so the opening minutes of a session lost most of them. Those messages now wait their turn and are retried if they get no answer, so what you clear stays cleared for everyone, and what others clear disappears for you."
- },
- {
-  "date": "2026-07-27",
-  "title": "🥚 Older eggs get their migration window back",
-  "body": "The protection window for eggs saved by the previous game version has been restored through 26 August at 00:00 UTC. If your original v8 save still holds an egg, log in before the deadline: the egg stays with you and the game automatically upgrades the save to the latest protected format.\n\nThis prevents any further automatic egg loss from the July 27 cutoff. If an egg was already cleared and that empty save replaced both the browser and cloud copies, the original egg record no longer exists to rebuild safely — contact the dev with any backup or purchase record for a manual restoration."
- },
- {
-  "date": "2026-07-27",
-  "title": "🛡️ Realm integrity pass — safer wallets, trades and shared resources",
-  "body": "A full economy and multiplayer audit closed several edge cases without changing normal play.\n\nWallet deposits are now counted once against a lifetime high-water mark, so moving the same tokens out and back can never create extra in-game $CHIKI. Trading Post listings now use globally unique IDs, and only a listing that truly left the board can enter the sold-item guard — preventing vanished listings and repeat-sale exploits. Trainer XP bursts and legacy roster imports are sealed against duplication too.\n\nThe shared world is more consistent: tree capacity belongs to the server, and wandering pigs and cows now keep one stable shared identity for every player. The Reward Vault also reports queued quest rewards correctly instead of telling non-finalists they earned nothing."
- },
- {
-  "date": "2026-07-27",
-  "title": "🛡️ Roster integrity hardened",
-  "body": "Your chikimon roster is now rebuilt only from a save the game has already verified, and the roster itself is covered by the anti-tamper seal. This closes a hole where an edited save could conjure a full team of chikimon at any level and sell them on the Trading Post.\n\nNormal play is unchanged — if you are a returning player, your roster rebuilds exactly as before."
- },
- {
-  "date": "2026-07-27",
-  "title": "🍽️ Hungry steeds and hungry chikimon now look hungry",
-  "body": "Two new pieces of art. A starving steed now shows itself standing over an empty trough, and a starving chikimon shows up over its empty bowl — in the Stable, on the mount card and on the chikimon card.\n\nYour chikimon also now warns you properly when its belly hits zero. A starving chikimon refuses to battle, which was already true but was easy to miss — it now says so on the card, the same way a starving steed tells you it won't carry you."
- },
- {
-  "date": "2026-07-27",
-  "title": "🥚 Egg protection is now enforced",
-  "body": "Eggs are now fully covered by the save's anti-tamper seal, effective immediately. This closes a hole where an edited save could conjure a finished egg and skip the 500,000 $CHIKI cost.\n\nOne consequence to be upfront about: if your save was last written by an older version of the game AND you were holding eggs, those eggs cannot be verified and will be cleared the next time you log in. Nothing else is affected — your $CHIKI, chikimon, gear, materials and progress are untouched. If this hits you, message us and we will restore your eggs.\n\nEggs obtained from here on, including the free starter egg from the Open Gates event, are sealed from the moment you receive them."
- },
- {
-  "date": "2026-07-27",
-  "title": "⚡ Open Gates — free for everyone, 7 days",
-  "body": "The gates are open again. Until 3 August, anyone can enter Chikoria with any wallet balance — no 500,000 $CHIKI required. Sign in with Phantom, walk in as the Wanderer, and you get one egg to nest: keep it warm and it hatches your first chikimon.\n\nEnter before the gates close and your account stays yours forever. When the event ends, only NEW entries close — nothing you have earned goes away. The countdown is live at the top of the News tab."
- },
- {
-  "date": "2026-07-27",
-  "title": "🔒 Save integrity and reward fixes",
-  "body": "Three fixes that protect what you have earned.\n\nYour eggs are now covered by the save's tamper seal. They were supposed to be, but a typo meant the check looked at an old unused field and never saw them at all — so an edited save could conjure a finished egg and skip the 500,000 $CHIKI cost.\n\nA momentary failure to read your wallet can no longer wipe your balance ceiling. If the check came back empty because of a hiccup rather than because your wallet was empty, the game believed it instantly. It now waits for a second reading before accepting a zero.\n\nAnd if you started playing after the 24 July chapter update, your completed chapters are no longer wrongly marked as already paid — that was quietly blocking real $CHIKI you were owed."
- },
- {
-  "date": "2026-07-27",
-  "title": "⚔️ Duels are real now",
-  "body": "Walking up to another trainer and pressing G used to start a practice fight against a copy of them run by your own game — they were never told it happened and never played. Now it sends them a real challenge. They can accept or decline, and if they accept you fight each other for real, with the server refereeing every turn. Still no $CHIKI and no stakes.\n\nYou can also now receive a challenge, which was never possible before."
- },
- {
-  "date": "2026-07-27",
-  "title": "🪓 Tools that hang right, and fairer contested nodes",
-  "body": "Every gathering tool is rebuilt to a single shared orientation. The ten levels of each axe, pickaxe, shovel and drill had been modelled facing different ways — some blades sat edge-on and looked like a thin sliver in your hands — so no single swing angle could ever be right for all of them. They now all hang the same way, and other trainers see your tool held exactly as you do rather than at a flat angle. Nothing about how gathering works has changed.\n\nAlso fixed: if two trainers reached the same node at the same moment, BOTH walked away with the item. The loser now correctly gets nothing and is told someone beat them to it — and a full bag can never lose you resources you already had. And cancelling a listing the market had already let go no longer destroys your goods while telling you they sold; your items stay put."
- },
- {
-  "date": "2026-07-27",
-  "title": "🐟 The same fish for everyone",
-  "body": "Every fishing spot stocked itself differently for each player. Two trainers standing at the same named cove were genuinely fishing different water — and because species differ in rarity and value, the same spot could quietly be worth more to one of you than the other. Schools are now stocked from the world itself, so the fish at a spot are the same fish for everybody. Catch rates, rarity and everything you do with a rod are unchanged."
- },
- {
-  "date": "2026-07-27",
-  "title": "🪵 One forest for everyone",
-  "body": "Trees were the last resource that each player kept privately. Two trainers could work the same trunk and each see a different forest — one of you felled a tree the other still saw standing. The world now keeps a tree's remaining loads, exactly as it already did for ore, rocks and hives. A trunk another trainer has been working is worked-down for you too, and the tree that finally falls falls for everyone. Nothing about chopping changes: still one wood per swing, still three loads in a full tree, and your swing lands instantly as before. Also fixed: when a lot of trainers were in the world you could be standing right next to someone and not see them at all. The game kept the first sixty players it happened to know about — oldest sessions, not nearest — so anyone who joined later, or reconnected, could be invisible from a few steps away. It now always shows you the sixty nearest trainers."
- },
- {
-  "date": "2026-07-26",
-  "title": "🪓 Fixed: other players looked like they just stopped",
-  "body": "When another trainer was gathering you saw them standing still. Their action was reaching you correctly — the problem was that the avatars have no animation named 'chop' or 'mine', so the game asked for one that didn't exist and fell back to standing idle. Gathering actions now play the swing the rigs actually have, so you can see people working from across the clearing. Also fixed: a cow or pig you were hunting would calmly wander off mid-swing, because the hold on it was re-checked by distance every frame and the animal drifted out of its own hunt. It now stays held until you stop."
- },
- {
-  "date": "2026-07-26",
-  "title": "⚔ Duels are real multiplayer now",
-  "body": "A duel against another trainer is refereed by the server, not by each of you guessing. You both see the same turn, the same hand size and the same health, and a turn only resolves once BOTH of you have locked in — no more one-sided fights or desyncs. Your hand is dealt by the server and every one of your six cards is reachable; the card row has been widened to fit them. Walking out mid-duel is now an honest forfeit that ends the match for your opponent immediately, instead of leaving them waiting. Wild corruptimon fights are untouched and still play exactly as before."
- },
- {
-  "date": "2026-07-26",
-  "title": "📖 The Codex is now a proper how-to",
-  "body": "The Codex tab has been rebuilt as a guide to the whole game. Twenty-two topics — getting started, eggs, your team, gathering, fishing, crafting, brewing, cooking, battling, PvP and the Cup, mounts, the Trading Post, the three mines, hunting, quests, the $CHIKI economy, collectibles, avatar perks, movement and stamina, map and waypoints, playing together, and caring for your chikimon. Tap any one and you get the real mechanics: numbered steps for exactly what to do in game, then the hard numbers — costs, timers, drop odds, fee splits. No vague advice; if the game rolls a 1-in-1250, it says so."
- },
- {
-  "date": "2026-07-26",
-  "title": "🌍 One world — everyone sees the same Chikoria",
-  "body": "Other trainers are no longer sliding mannequins. Whatever they're doing reaches you: someone chopping across the clearing swings a real axe, a miner works a pickaxe, a prospector runs a drill, an angler holds a rod — the same models, in the same hands, as your own. Jumps show up too; heights are shared now, so a leap actually reads as a leap instead of a slide along the ground. Their chikimon finally trail at the RIGHT distance — remote pets were following about three times closer than yours do, which is why other people's teams looked glued to their heels. And resources are one shared world: the rock you mine is the same rock everyone else sees, so it can't be harvested twice, and it comes back for the whole realm at once."
- },
- {
-  "date": "2026-07-25",
-  "title": "🪓 Three chops a tree — and then it falls",
-  "body": "Trees are proper resource nodes now: each trunk holds THREE loads of firewood instead of one, so you work the same tree three times before it's spent. Each chop still gives exactly one wood — the one-item-per-gather rule is untouched, there's simply more in each tree, and the message tells you how many loads are left. Take the last one and the tree TOPPLES: it hangs, creaks, then goes over fast and settles into the grass on its own bearing, so a worked patch really looks logged. A felled trunk stops blocking you, and in time a fresh tree stands in its place, full again."
- },
- {
-  "date": "2026-07-25",
-  "title": "📍 Your map pin now stands in the world",
-  "body": "Drop a waypoint on the minimap and a golden beacon rises at that exact spot in Chikoria — a shaft of light you can pick out from across a region, a ring on the ground where it actually lands, and the same pin marker floating above it, drawn on top of the landscape so a hill can never hide your destination. It dims as you walk up to it, and right-clicking the map clears both the pin and its beacon together."
- },
- {
-  "date": "2026-07-25",
-  "title": "📊 The Statistics board, rebuilt",
-  "body": "Every realm figure is now its own card — reward pool, $CHIKI earned and burned, circulating supply, Chikorians online, active chikimons, holders and trainers — each with its own artwork and a one-tap link to verify it on-chain. The numbers refresh every few seconds while the board is open instead of every half-minute, the online count updates live between refreshes, and a line at the bottom tells you exactly how fresh what you're reading is."
- },
- {
-  "date": "2026-07-25",
-  "title": "🗺 A living map of Chikoria",
-  "body": "Open the minimap in the top-left and the whole island is yours at a glance — your heading, every shop and landmark, ore and berry nodes, other players moving in real time, and the corruptimons you'd rather walk around. Click it for the full-screen chart, zoom through four levels, and drop a waypoint anywhere you want to remember. A legend explains every marker."
- },
- {
-  "date": "2026-07-25",
-  "title": "🛒 Fixed: sold listings coming back from the dead",
-  "body": "A listing you'd already sold could reappear in the Buy tab and be bought a SECOND time, duplicating the goods. That's fixed at the root — once a listing is settled it can never be resurrected, no matter how the stalls reconcile. We hammered it with hundreds of randomized trading rounds plus targeted double-buy and simultaneous-buyer tests before shipping. The Trading Post also refreshes every few seconds while you're standing at a stall, so listings, sales and buyouts appear as they happen."
- },
- {
-  "date": "2026-07-25",
-  "title": "🌍 Other players feel like they're really there",
-  "body": "Remote riders now show the mount they're actually on instead of walking on air, their chikimon trail in a proper formation instead of clipping through their heels, and everyone's movement is smoothed with the same interpolation technique the big MMOs use — less rubber-banding, truer positions."
- },
- {
-  "date": "2026-07-25",
-  "title": "⛏ Gathering feels right again",
-  "body": "The timing-bar experiment is gone — gathering is back to the honest, no-gimmick version, and one gather still gives exactly one item. Your tools swing properly too: the axe bites the tree with its blade instead of its back, the pickaxe drives its point into stone, and the drill faces the crystal instead of your own spine. We measured the tool models to get these angles right rather than eyeballing them."
- },
- {
-  "date": "2026-07-25",
-  "title": "🏃 Running now costs breath",
-  "body": "Sprinting is no longer infinite. You get a stamina meter that drains as you run and recovers when you ease off — and how long you last scales with your level AND the boots you're wearing, so better gear genuinely buys you more ground. Run yourself out and you'll be winded for a moment before you can bolt again."
- },
- {
-  "date": "2026-07-24",
-  "title": "🐴 Your steeds got their true colors back",
-  "body": "Every mount was rendering far darker than its artwork — a color-space mismatch buried in the rigs. All six have been rebalanced to match their real palette. Dashing was fixed too: mounts now dash on YOUR command with a proper cooldown, each one's speed and stamina matching its temperament, instead of dashing constantly or never at all."
- },
- {
-  "date": "2026-07-25",
-  "title": "✨ Quality-of-life pass",
-  "body": "Feed your mounts straight from the Mounts tab without digging through the satchel. Pressing SPACE now always jumps — it no longer re-triggers whatever button you last clicked. Hungry steeds, waypoints, feeding and the chat's Latest jump are all called out with proper artwork instead of placeholder symbols."
- },
- {
-  "date": "2026-07-24",
-  "title": "🛡 Your marketplace $CHIKI is locked down",
-  "body": "A deep security pass rebuilt how the Trading Post settles. Every sale, auction and order is now tied to YOUR wallet by a signed session — no stranger can touch, clear or hide the proceeds you're owed, and nothing is ever deleted before you're actually paid. Money you're owed now survives 60 days if you're away (instead of quietly expiring), and on-chain buys can't be double-charged or replayed. If a sale ever settled and the $CHIKI didn't reach you, the realm now pays it out reliably — just sign in."
- },
- {
-  "date": "2026-07-24",
-  "title": "⚔ Rivals fight back — real duels at last",
-  "body": "PvP and Chikoria Cup duels are no longer a stat check. Your rival now plays a REAL hand — spending energy on strikes, guards, drains and charges, raising a shield against your combos, and going for the kill when your chikimon drops low. Read its telegraphs, bait out its guard, and time your burst. Every duel is a fight now."
- },
- {
-  "date": "2026-07-24",
-  "title": "🥚 Eggs grow while you're away — plus a big feel pass",
-  "body": "Nesting eggs now keep growing while the game is closed — warm one, then go live your life and come back to a hatchling. Mounts stay fed far longer (no more starving mid-ride), landing a fish is more forgiving, the jump no longer eats a late tap on uneven ground, and the News & System chat tabs finally let you scroll up through the whole history. Egg fish costs dropped hard, too: a Meme Egg now needs just ONE Rainbow Fish."
- },
- {
-  "date": "2026-07-24",
-  "title": "📈 Progression rebalance",
-  "body": "Trainer (Avatar) levels now take more to earn, so each rank you reach means more. In exchange your CHIKIMON level up faster, and their full 12-card ability kit is now in hand by Level 45 instead of being back-loaded to 50 — every chikimon shows its whole personality sooner."
- },
- {
-  "date": "2026-07-23",
-  "title": "📜 Every chapter now pays REAL $CHIKI",
-  "body": "All 63 story chapters of Act I now pay REAL on-chain $CHIKI — the 42 chapters that used to pay soft coins have been promoted. A full campaign run is now worth 112,030 REAL $CHIKI in your Reward Vault (open the LEDGER tab to track it). Already claimed those chapters? You're covered: the realm re-reports them to the vault automatically the next time you log in. The first 10 trainers to finish Chapter 63 still take home the 1,000,000 $CHIKI champion prize."
- },
- {
-  "date": "2026-07-23",
-  "title": "🔨 The Auction House opens — chikimon go under the hammer",
-  "body": "Chikimon are no longer sold at flat prices. The Trading Post's new Auction tab puts every chikimon under a 12-hour hammer: set an opening bid, watch trainers outbid each other, and the highest bid wins when time runs out. Outbid? Your escrowed $CHIKI returns instantly. Sellers keep 75% of the hammer price (20% reward pool, 5% burned). Rare chikimon finally sell for what the realm thinks they're worth."
- },
- {
-  "date": "2026-07-23",
-  "title": "🔒 One wallet, one save",
-  "body": "Every wallet now has its OWN save. Switching wallets swaps to that trainer's world; disconnecting locks your progress away until you sign back in — nothing lingers on a shared device. Tip: to play a different wallet, switch the active account inside Phantom itself, then connect. Need a clean slate on this device? Visit /realm/?wipelocal — cloud-saved progress returns when you sign in."
- },
- {
-  "date": "2026-07-23",
-  "title": "⚖ Trade pay restored — automatic restitution",
-  "body": "A bug let a hidden safety cap swallow order-fill and sale payments for some traders — the goods moved, the $CHIKI didn't. Fixed, and the realm makes it right on its own: sign in and every payment the cap held back is re-credited automatically from your own sales receipts. Going forward the cap grows with your trade income, so a payment can never vanish again."
- },
- {
-  "date": "2026-07-23",
-  "title": "⚡ FREE-PLAY EVENT — the gates close July 26!",
-  "body": "For a limited time, Chikoria needs NO $CHIKI to enter. Sign in with your Phantom wallet — any balance, even zero — and walk in as the Wanderer with one chikimon egg to your name. Keep it warm, tend it in the Team tab, and it hatches your first companion. Every feature is yours: gather, craft, fish, battle, trade. And a permanent change ships with it: every egg now hatches ONLY its own kind — normal eggs hatch normals, legendary eggs hatch legendaries. No more lottery inside the shell. ⏳ The free gates close on JULY 26 — enter before then and your account, egg and progress stay yours forever."
- },
- {
-  "date": "2026-07-22",
-  "title": "🥚 Fixed: vanishing eggs",
-  "body": "A save-verification bug shipped with the Craft Orders update was wrongly flagging honest saves as tampered on every reload — and the anti-cheat's tamper response cleared nesting eggs, chests and the reward vault. The stamp is fixed, every save written during the bad window is recognized as legitimate again, and any wrongly-applied tamper mark is cleared automatically the next time you load. Real save-editing is still detected and punished exactly as before. If your egg vanished during the window, reach out — we can see affected accounts."
- },
- {
-  "date": "2026-07-22",
-  "title": "🎮 Pocket Realm, rebuilt for thumbs",
-  "body": "The mobile island got a full make-over: the castle, town walls, shops, streetlights, trees and resource models now render at 4-6x fewer blocks (your trainer, chikimon and other players stay full-detail), the cobblestone road smoothed into a clean plain road, and every label grew ~20% so nothing squints. The touch controls are now carved wood and gold like the rest of the realm — joystick low-left, E / JUMP / RUN in the open lower-right, clear of every panel and bar. And long trainer names now fit their nameplate banner perfectly."
- },
- {
-  "date": "2026-07-22",
-  "title": "🌍 Fixed: PCs stuck at 82%",
-  "body": "Some desktops — mostly touchscreen laptops or screens on high display scaling — were being mistaken for phones. They got the mobile game pack and a phone-sized engine thread pool, which stalled the load at exactly 82% and could crash the tab, or dropped you into the mobile version on a PC. Device detection is now exact: phones get the pocket build, every desktop and tablet gets the full build. If you were stuck at 82%, it was never your PC — try again."
- },
- {
-  "date": "2026-07-22",
-  "title": "🔗 Choose your door: Wallet or Demo",
-  "body": "The realm no longer assumes who you are. Every session now opens on a clear choice: CONNECT your Phantom wallet to load your real trainer, progress and $CHIKI — or PLAY DEMO to try the whole island first as the Wanderer with three random chikimon and a mount. The demo is a sealed sandbox: explore, gather, fish and battle everywhere, but nothing saves, nothing earns, no trading, and it never touches the live world — reload and connect whenever you're ready to make it real."
- },
- {
-  "date": "2026-07-21",
-  "title": "⚡ The island learned to sleep",
-  "body": "A deep performance pass, biggest on phones: the screen now renders at a sane pixel density on 3× retina displays (the UI was being painted at NINE times the pixels it needed), the ocean dropped to a fraction of its triangles on mobile, and the world finally sleeps when you're not looking — far fish schools, livestock, corruptimons and trees all pause simulation and drawing until you approach. The fixed sky no longer recomputes itself every frame either. Desktop looks identical; phones just breathe."
- },
- {
-  "date": "2026-07-21",
-  "title": "📜 Ancient recipes + Craft Orders",
-  "body": "Two big economy unlocks. ANCIENT RECIPES: the five sealed landmarks — the wicked temple, the raid altar, the crystal lode, the sunken galleon and the leviathan's cove — now each whisper a lost double-batch brewing recipe when you stand close and read their legend. Find all five and your cauldron yields 2× on those brews forever. CRAFT ORDERS: the Trading Post's new 📥 Orders tab lets you post what you NEED (\"WTB 20 hide — 400 $CHIKI\"). Your offer is escrowed on the spot; any trainer holding the goods taps Fill, hands them over and keeps 75%. Three open orders max, auto-refund after 25h."
- },
- {
-  "date": "2026-07-21",
-  "title": "🔨 Crafting, refined",
-  "body": "Brewing grew up: potions and food now craft ×5 or MAX in one tap (with a live 'can make N' count), every missing material tells you exactly WHERE to get it when you hover its red chip, and the artisan's secret is out — every craft has a 12% MASTERWORK chance that refunds half the materials. Gear ladders are untouched: each tier is still a one-off upgrade."
- },
- {
-  "date": "2026-07-21",
-  "title": "⚡ Phones got a serious speed-up",
-  "body": "Mobile now skips building what it never shows: the 168,000-blade grass field, the cloud layer, weather particles and the dynamic street-lamp lights simply don't exist on phones (lamps still glow at night). The world streams a tighter bubble around you. Your avatar, chikimon, and every building look exactly the same — the frame rate doesn't."
- },
- {
-  "date": "2026-07-21",
-  "title": "🛡 Fairness & mobile hardening",
-  "body": "A deep audit pass: one-tap Collect now banks BOTH purses (with the amount on the button and honest ceiling handling), phones always start on LOW graphics with a tighter world bubble, the touch joystick lives in its own bottom-left box, the reel duel is finally winnable by holding the Action button, joystick deflection cancels a gather, and the sideways mode survives every refresh. Plus a save-tampering hole was welded shut."
- },
- {
-  "date": "2026-07-21",
-  "title": "🎣 The legends grew rarer",
-  "body": "Fantasy fish are now 2× harder to hook across the board — Golden Chikifish 1-in-167, Crystal Koi 1-in-500, Mystic Eel 1-in-1429, Rainbow Fish 1-in-5000 base per cast (before your rod bonus and spot richness). Landing one MEANS something."
- },
- {
-  "date": "2026-07-21",
-  "title": "🌟 Pocket Realm — mobile got HALF the weight",
-  "body": "Phones now download a dedicated mobile-lite pack: half the bytes, a quarter of the texture memory — made for wallet browsers like Phantom. Desktop keeps full HD. Everyone also saves 50MB from a build-time cleanup, and the loader now survives connection hiccups with automatic retries."
- },
- {
-  "date": "2026-07-21",
-  "title": "📜 System log + Update board + XP bar",
-  "body": "The Chat box gained a SYSTEM tab — a timestamped history of every notification (XP, purchases, level-ups, hatches) so nothing vanishes with the toast. This very Update Board is now LIVE-fed each deploy. And your trainer level + XP progress sits under the logo, always on screen."
- },
- {
-  "date": "2026-07-21",
-  "title": "🏃 Hold to run",
-  "body": "Mouse-first movement grew up: quick-click walks you there; HOLD the button ~¼s and your avatar breaks into a RUN, steering after your cursor the whole time. Release and they finish the trip on their own."
- },
- {
-  "date": "2026-07-21",
-  "title": "🌟 Sideways mode for wallet browsers",
-  "body": "Phantom's in-app browser can't rotate — so now Chikoria rotates FOR you. Pick which way you'll turn your phone and the whole realm plays fullscreen landscape inside the portrait browser. Your choice is remembered; a tiny corner chip flips sides."
- },
- {
-  "date": "2026-07-21",
-  "title": "🌍 Multiplayer rendering v2",
-  "body": "Other trainers now stand on the TRUE ground (no more sinking), bring their whole 3-chikimon party trailing in formation at real size, and move with buttery MMO-grade motion smoothing. Far-off trainers cost nothing until you approach."
- },
- {
-  "date": "2026-07-21",
-  "title": "📊 Smart collection pop-ups",
-  "body": "Chikidex, Mountdex and Avatars gained live progress meters, Meme Dynasty scarcity bars (minted / cap), rarity glow on what you own, owned-first sorting, a 🎯 'next to finish' nudge — and the 3D viewer now compares any steed or chikimon against YOURS."
- }
+  {
+    "date": "2026-08-14",
+    "title": "👀 A closer look at those eyes",
+    "body": "Doge's eyes are now two colours and nothing else — a clean white crescent and solid black, with the muddy brown shading that sat between them gone entirely. Success Kid's iris is a brighter blue that finally matches the one on his card, and the white catchlight at the corner of each eye is back where it belongs.\n\nWe also compared the rest of yesterday's eye work side by side and decided the older faces were simply better, so Nervous Monkey, Jellox, This Is Fine Dog and the dire wolf are all back exactly as they were before that pass. Nothing else about any of them has moved."
+  },
+  {
+    "date": "2026-08-13",
+    "title": "✨ Event chips you can tap — and creatures that look you in the eye",
+    "body": "The chips in your top bar now match the rest of the row exactly, and each one wears its own colour: the fishing festival in bright blue, the Founder Drop in gold. Tap either and its details open in the same tidy pop-up as the online-trainers list, so you can check what is running without leaving what you are doing.\n\nWe also went back over the creatures themselves. Doge has his proper coal-black eyes again, the dire wolf's amber stare is back, Jellox's green iris returned, Success Kid got his blue eyes rebuilt with a fresh glint, and This Is Fine reads right again. Beyond the eyes: Astragor is no longer washed out, Healix walks forwards instead of sideways, Vesperos finally flies rather than trudging, Popcat's mouth is a real open bowl, Crysalune is crisper up close, and Mushrow and Nervous Monkey both got their colours put right."
+  },
+  {
+    "date": "2026-08-12",
+    "title": "🖼 Sharper creatures — and a free legend to win",
+    "body": "A pass over the newest arrivals so they look like themselves again: Vesperos wears his true violet instead of near-black, Ansem Blackbull's face stands out better against his dark coat, Proud Baby Goat has his golden laurels back, Doge has his side-eye again, This Is Fine Dog got his mouth back, and several others had shadowy patches cleaned off. Showcases now frame the whole creature — no more wings or flames cut off at the edge of the picture — and the Collectors' Market tabs sit in one tidy row again. And the FOUNDER DROP: the first fifty players who genuinely play during the event each receive one of the eleven new Meme Dynasty legends, free. Watch the plaque in the top bar for how many are left."
+  },
+  {
+    "date": "2026-08-12",
+    "title": "🌟 Twenty new chikimon join the realm",
+    "body": "Nine new Legendaries — Astraya, Bamboran, Borealon, Horoxyn, Rivaros, Solvarex, Astragor, Crysalune and Vesperos — take their place beside the original five, with the same rarity and the same chance from every Legendary Egg. And eleven new Meme Dynasty legends arrive with their own strictly limited editions: Ansem Blackbull, Success Kid, Side-eye Chloe, Grumpy Cat, Peanut, Crying Cat, This Is Fine Dog, Proud Baby Goat, Triple T, Stonks and Nervous Monkey. Every one is rigged and animated to its own character — Horoxyn flies, Bamboran fights on two feet, Crysalune hovers — and each carries a twelve-card battle kit written for who they are. The Collectors' Market also gets its new Mint, Marketplace, My Collection and Activities plaques."
+  },
+  {
+    "date": "2026-08-11",
+    "title": "🎉 Events are coming — and a sharper realm",
+    "body": "Three celebrations are being prepared: OPEN GATES (the realm free to enter for seven days), a five-day FISHING FESTIVAL with quadrupled fantasy-fish odds, and a FOUNDER DROP — brand-new legendary chikimon, one each, for the first fifty players who truly play during the event. Watch the top bar for the banner when they begin. Also in this build: the Magic Eden header is crisp and full-size, and the utility buttons now sit flush beneath the top bar."
+  },
+  {
+    "date": "2026-08-11",
+    "title": "⚙ Sharper market art + stronger saves",
+    "body": "The Collectors' Market header is crisp again, and a big round of under-the-hood work landed: your save now flushes the moment you sign out, rapid changes can't be lost between devices, and the Trading Post is being fitted with real escrow — listed items leave your satchel, cancelled listings come back, sold ones transfer for good. These protections switch on fully over the coming days as the server side is enabled."
+  },
+  {
+    "date": "2026-08-11",
+    "title": "🛠️ Collectors' Market polish + a smoother realm",
+    "body": "The Collectors' Market got a clean-up: bare NFT cards (just the case art and a Mint button), live floor price and listed count, a new Activity feed of recent sales, shorter clearer text everywhere, and the pop now closes by tapping outside it. Minting is player-paid — you approve the small network fee in Phantom when you mint or sell. Also fixed: the Stable's vanishing scroll bar, the empty-stable text glitch, slimmer pop-up headers for more room, a screen-flip button for phone players in the utility cluster, and the clock's sun icon and your $CHIKI coin badge are back where they belong."
+  },
+  {
+    "date": "2026-08-10",
+    "title": "✨ Magic Eden, polished and perfectly placed",
+    "body": "The desktop Magic Eden counter now opens with a compact transparent banner and clearer Marketplace and My Collection tabs, each carrying its own new voxel icon. Around the realm, utility controls now sit flush beneath the main navigation and the right-side tabs begin immediately below the world clock — less empty space, no overlap, and more room for the island."
+  },
+  {
+    "date": "2026-08-10",
+    "title": "🎮 Pocket Realm, perfectly fitted",
+    "body": "Lite mode now keeps every part of the HUD in its own space: the world clock no longer covers Avatar, compact utilities sit neatly below the top tabs, Flip Camera lives beside Controls, and the smaller mini-map places trainers on the actual island instead of out at sea. Pop-ups use compact text headers, Island's Chronicles rests as a small pill, and wallet/time readouts no longer resemble loading hourglasses. HD and Lite still share the same live world and player updates."
+  },
+  {
+    "date": "2026-08-10",
+    "title": "💎 The Collectors' Market opens",
+    "body": "The Magic Eden marketplace is now open in-game: a new door below Potions browses the real Chiki Monsters collection — live listings, your own certificates, the lot. Buying and listing from inside the realm unlock when our marketplace key arrives; until then, every listing links straight to Magic Eden. Plus: the market door now appears the moment you sign in, and pop-up scrolling got smoother."
+  },
+  {
+    "date": "2026-08-10",
+    "title": "🐣 The Hatch Ceremony",
+    "body": "Hatching is an event now: tap your egg to crack it open — shake by shake — until the shell bursts, meet your new companion face to face, and give it a name of your own before it joins your roster. The whole world dims for the moment. Every hatch is still the server's honest roll: no taps, tricks or timing can change what's inside."
+  },
+  {
+    "date": "2026-08-09",
+    "title": "🥚 Stuck eggs hatch, and a hatched egg hands over its chikimon",
+    "body": "Eggs that had gone quiet are moving again. Some eggs simply refused to hatch no matter how long you tapped, and others answered with \"that egg already hatched on the server — reload to collect what came out\" — except reloading never collected anything, and the egg sat in your nest while the chikimon it became waited unclaimed. Both are fixed. The realm now states outright which chikimon an egg turned into and hands you that exact one, instead of working it out by process of elimination — a guess that could never settle for any trainer who had ever sold a creature. Nothing was lost in the meantime: every egg caught in that state still holds the chikimon it hatched into, and it comes to you the next time you hatch. And if the realm still cannot say for certain what an egg became, it leaves the egg safely in your nest rather than risk handing you the wrong chikimon."
+  },
+  {
+    "date": "2026-08-08",
+    "title": "👆 The wheel stays in the menu, and the Trading Post stops shoving",
+    "body": "Two small irritations are gone. Scrolling a right-hand pop-up used to zoom the world camera behind it, so reading a long list dragged the view in and out under the parchment. The wheel now stays inside whatever panel it is over — shop windows, tab pop-ups and the model viewer alike — and still zooms normally the moment you point it at the open world. The Trading Post has also stopped landing on top of your side panels: the two were docked to the same corner and overlapped, so opening either one now tidies the other away first. The left-hand info pop is unaffected and still sits happily beside everything else."
+  },
+  {
+    "date": "2026-08-07",
+    "title": "🔨 The Mint button is off normal chikimon for good",
+    "body": "A Mint button was still turning up on ordinary chikimon — an offer the vault would only ever refuse. A creature the realm had never registered was borrowing the card of a Legendary that happened to share its species, and inheriting its mint offer. Normals are traded at the Trading Post, not minted, and the button no longer appears on them. Anything already certified keeps its certificate."
+  },
+  {
+    "date": "2026-08-07",
+    "title": "🐴 Every steed gets its own display case",
+    "body": "The mount collection no longer shares one sealed scroll: all six steeds now sit in their own painted display cases, each with its name on the plaque. Three names were tidied to match what the plaques actually say — the Cluck Courser is now the 🐔 Chiki Roost, the Direwolf is the 🐺 Dire Wolf, and the Skywing Griffin is simply the 🦅 Griffin. Same steeds, same speeds, same perks; only the nameplates changed."
+  },
+  {
+    "date": "2026-08-07",
+    "title": "🗺️ The campaign opens up — every chapter is reachable now",
+    "body": "If you started here in the realm rather than the old game, Act I quietly stopped at Chapter 19. The gate that decides when the next chapter opens was counting only a rarer companion, and a trainer who begins in Chikoria starts with commons and a ceremony egg — so chapters 19 through 63 never unlocked, and the winner's slot could never be reached. That gate now counts what you actually have. The whole campaign is open, and every chapter you had already earned is still yours: nothing was reset and nothing was revalued. If chapters credit a little late while the realm catches up, they will land.\n\nThe Trading Post also learned to take no for an answer. If you had the game open somewhere else — a second tab, your phone — a purchase could take your $CHIKI and hand you the goods while the stall never recorded the sale, leaving the same stack on the board for the next buyer. A refused purchase now puts everything back exactly as it was and tells you why, instead of failing in silence.\n\nUnderneath, the island's footing is fixed: the realm has been running its movement rules against an older copy of the ground than the one it thought it had. And a hiccup reading your quest record used to look like an empty record; it now says \"try again\" rather than forgetting an Act you finished."
+  },
+  {
+    "date": "2026-08-06",
+    "title": "🏆 Hatch a Legendary, enter the Cup — and the mint button tells the truth",
+    "body": "If your Legendary was hatched here in the realm, the Chikoria Cup now lets you in. It used to read only the old game's roster, so a trainer who hatched a Legendary from their own egg was turned away with \"Hatch a Legendary first\" — the exact thing they had just done. The realm's own hatches now count, and the world's Legendary tally counts them too, so the number on the board is the real one. The mint button has also stopped appearing on normal chikimon: normals were never mintable — they belong at the Trading Post auction — and the button was showing on cards it could not act on."
+  },
+  {
+    "date": "2026-08-05",
+    "title": "🔄 Every number you read is the live one",
+    "body": "Tabs and pop-ups now refresh the moment you open them, so prices, stock, purse, timers and roster all show what the island says right now instead of whatever they were when you last looked. That includes a real fix at the Trading Post: when a bidder raised their own offer, the auction card kept showing the old price and pre-filled a bid the server would refuse as too low — raises now land on the card the moment they happen, so you always bid against the true leader. The Chikiseum has also raised its banner high above the arena, readable from the plaza and from the west gate approach."
+  },
+  {
+    "date": "2026-08-04",
+    "title": "🔗 Know your connection",
+    "body": "A live ping pill now sits beside the online count — your real round-trip to the island, updated every second. Green under 120 ms, amber to 249, red beyond. When the road is the problem, now you can see it."
+  },
+  {
+    "date": "2026-08-01",
+    "title": "🌍 The island now runs the world",
+    "body": "Movement, gathering, fishing and shared corruptimon fights are now judged by the island itself. Honest older clients keep a generous grace path while they update, pre-existing fantasy fish remain yours permanently, and every authority still has an emergency kill switch. This build also gives the realm one address under chikimonsters.com with an automatic fallback to the current server, so a future move to Singapore can happen without splitting players into two worlds."
+  },
+  {
+    "date": "2026-08-01",
+    "title": "🎣 Your catch IS the world's catch",
+    "body": "Fishing now rolls ONE die — the island itself decides what took your line, and the Island's Chronicles announce the very fish you were shown. Legendary catches finally ring out across the realm the moment they're landed, festivals included."
+  },
+  {
+    "date": "2026-08-01",
+    "title": "🛡️ The island keeps honest score",
+    "body": "A deep security pass hardened hatching, gathering, teleports and the market: rare creatures can no longer be conjured, duplicated or claimed in someone else's name. Every griffin, dragonos and meme legend in existence is now counted — caps are law."
+  },
+  {
+    "date": "2026-08-01",
+    "title": "⚡ A truer, faster world",
+    "body": "The realm now speaks WebSockets (up to 4× snappier player sync), parties of four with their own chat, a bigger tap-friendly map, compact phone HUD, and the server has learned the island's every hill — groundwork for full server-run movement."
+  },
+  {
+    "date": "2026-08-01",
+    "title": "🛡️ Nobody can gather, seat or spend in your name — and a refused hatch keeps your egg",
+    "body": "A client-side integrity wave, all of it in your favour. Your wallet address is public — it's on the roster, in world chat and on the market board — and three things used to accept it as proof. They don't now: every node claim, every Cup entry and every chapter you report carries the sign-in you already made, so a stranger can no longer burn the nodes at your feet, seat you in a tournament you never entered, or act as you anywhere. Hatching got honest too: when the registry refuses an egg — the pool is empty, an edition is capped, it's still incubating, the server is cold — your egg now STAYS IN YOUR NEST with the reason shown, instead of quietly hatching a creature the world never minted. If a reply is lost after the server already hatched it, the client asks the registry what came out rather than inventing a second one. Gathering: a claim that timed out and was retried can now be corrected or refunded properly (it used to forget what it gave you), and a lapsed connection retries instead of silently going unrecorded. Fishing: your cast finally tells the world WHERE you fished and with WHAT rod, so rare catches can be witnessed at all, and a fishing festival's odds now end exactly when the festival does even if you go offline. Ancient recipes from the lore beacons pay the crafting XP for BOTH brews — using them was quietly slower than never leaving town. Plus: a cloud restore on a new browser no longer double-pays chapters you were already paid for, orders that come home are always credited, and Azulon's scroll now registers the face it gives you."
+  },
+  {
+    "date": "2026-07-31",
+    "title": "🥚🪓 Egg carts you can finally see, and tools that tell the truth",
+    "body": "Two multiplayer fidelity fixes. First: other trainers' egg caravans were arriving as EMPTY wagons — the egg itself was only ever seated on your own cart, never on anyone else's. Every towed egg now rides visibly on its cart for the whole island, in its true kind and colours. Second: what a trainer holds now matches what they're doing. Picking berries after chopping wood used to show you swinging your AXE at the bush on everyone else's screen — the game reported whatever was left in your hand instead of what the gather actually uses. Bare-hand gathers now show bare hands, tool gathers show the right tool at its real crafted level, everywhere. Under the hood this wave also carried a full phone-versus-desktop synchronisation audit: every field a trainer broadcasts — position, look, mount, companions, eggs, sprint, actions, shared monsters, festival state — was traced from sender to server to every other screen, and measured landing within a single network beat (95th percentile 275 milliseconds)."
+  },
+  {
+    "date": "2026-07-31",
+    "title": "📣🎣 The island talks: a live world feed, and the Fishing Festival switch",
+    "body": "A new chronicle lives under your minimap: whenever any trainer anywhere catches a fantasy fish or hatches a legendary, a Meme Dynasty chikimon, or a new steed, the whole island hears about it the moment it happens — each headline wearing the creature's own portrait. Every line is server-witnessed: these are rolls the realm itself made, so no one can fake their way into the chronicle. And the realm just gained a festival lever: when a Fishing Festival is declared, fantasy fish odds multiply for everyone — a golden banner under the online count shows the boost and counts down the hours, your first cast of the festival gets a toast, and when it ends the odds settle back to their legendary rarity. Keep your rod ready: the first 24-hour ×4 festival is coming. Also in this build: every avatar's icon now floats free of its backdrop — including The Wanderer, whose icon just joined the set — so the switcher and your look panes render clean on any panel. And your own rare moments now LOOK rare: hatching a legendary, a Meme Dynasty chikimon or a new steed — or landing a fantasy fish — raises a full celebration banner with the creature's portrait, tier colours, a sparkle burst and a fanfare. Ordinary hatches stay humble on purpose: if everything is celebrated, nothing is. Phone readers: the whole interface steps up another size on mobile and every letter is now drawn with scale-proof lettering — text stays sharp at any zoom instead of softening as it shrinks. And the island mist now closes in on phones: distance fades into fog just inside your view instead of the world ending in a hard lit edge — swinging the camera costs less and looks better doing it. Desktop vistas are untouched."
+  },
+  {
+    "date": "2026-07-31",
+    "title": "🌍⚔️ One shared world, a real rival, and scrolling that finally obeys your thumb",
+    "body": "Touch scrolling is truly fixed this time — and we owe an honest correction: the last patch handed your drag to the scroll panels, but the engine's panels ignore touch entirely, so nothing moved. The controls now drive the scrolling themselves: every pop-up, list and tab pans under your finger with a natural flick, taps still press what you tap, and letting go of a scroll never accidentally fires the card under your thumb. THE WORLD IS NOW ONE WORLD: corruptimons are shared across every player — when another trainer's blow lands first, that monster falls on your screen too, its corpse cannot be farmed twice, and it respawns for everyone at the same moment. (This half arrives as the server updates; until then the wilds behave as before.) The practice rival in the Creator's training grounds got a real brain: it reads lethal, respects shields, values its energy, and duels now run seven to twelve rounds instead of ending in two — beatable, but no longer a pushover. Balance news: we measured every meme chikimon against the whole roster across twelve thousand simulated bouts — the overpowered-memes rumor is false, they sit exactly in the pack; the only change is a BUFF to popcat, who was quietly underperforming and now holds its own. Early Act I pacing: two grind walls (before chapters 12 and 30) are gone — early chapter XP is up to 3.5x richer so the story flows without forced filler; later chapters are untouched. And whispers were audited end to end: clicking a name, whispering, replying and the self-echo all verified working, with impersonation refused. Late addition to this wave: every avatar now has its own hand-drawn icon — you'll see the faces in the Choose Your Look panes and the creator's switcher, while the full NFT artwork stays on the collectible cards where it belongs."
+  },
+  {
+    "date": "2026-07-31",
+    "title": "💨⚡ The big mobile pass: faster loads, a steadier world, and a phone that stops fighting you",
+    "body": "A deep audit of the phone experience, and the fixes go from the first second to the last. Loading: your device keeps the realm's data after the first visit — coming back is now close to instant instead of re-downloading everything (a returning phone fetches nothing at all), phones no longer waste half a minute asking a storage server for files it never had (the bar just stalled while a message blamed your connection — it was never your connection), and the loading bar no longer freezes at 82% while the engine compiles: it keeps moving and tells you what stage it is on. If your device ever runs out of memory and the game restarts, it now notices — including when it died during loading, which the old detector could never see — and automatically loads the lighter pack with a smaller engine crew the next time, instead of dying the same way forever. Stability: the graphics chip on a phone can no longer step up to the full desktop world — that setting was quietly handing phones a world several times their memory budget, which is exactly the crash-and-reload some of you hit after tapping it twice. The network got real lag armour: a two-second connection hiccup now costs about two seconds — it used to trigger up to ninety seconds of an empty world, during which you also vanished from everyone else's screen. Other players are no longer destroyed and rebuilt over a single dropped update; they just wait out the blip. On slow connections the game now keeps two requests in flight and time-stamps every movement sample, so other trainers move where they actually are instead of where the lag guessed, and their walk animation stops flickering into a sprint on every jitter spike. Housekeeping that you will feel as battery: closed panels used to keep rendering a 3D scene behind themselves forever; they stop now, and several oversized art files were trimmed to the size they actually draw at — about 35 MB of texture memory back. Small touches: the on-screen joystick ring now tucks itself away when you are not steering, and locked buttons finally explain themselves on a phone — tap one and a toast tells you exactly what it needs (\"Need 40 more $CHIKI\"), instead of sitting grey and silent because its explanation only appeared on mouse hover. And a correction from the same pass: hiding the scrollbars was meant for touchscreens only — on desktop the bar is how you see a list continues, and it is back there. Phones keep the clean bar-free look with drag-to-scroll."
+  },
+  {
+    "date": "2026-07-31",
+    "title": "✋ A mobile pass: the camera, buttons, scrolling, and a save that crossed devices wrong",
+    "body": "Four faults, and the last one was quietly costing people progress. Tapping Run, Jump or Action also walked your trainer to wherever that button sits on screen — those controls are painted rather than being real buttons, so nothing was claiming your finger and the tap fell through to the ground beneath. Pop-ups could not be scrolled by touch at all, because a finger dragged across a list was being read as a camera swing; they scroll properly now, and the desktop scrollbars are gone since nobody can hit them accurately anyway. The catalog no longer repeats how many of each thing you are carrying — it is there to tell you what a resource IS, and your satchel already answers the other question. And the big one: when the same trainer was opened on two devices, the game decided which save was newer by comparing each device's own clock. A phone running a few minutes ahead of a desktop therefore won regardless of which actually held newer progress, which is how a player hatched an egg on desktop and found it unhatched on their phone — and then the older save was written back over the real one. Both devices now defer to the server's clock, which is the only one they share. One more, reported after the rest: on a phone you could not turn the camera at all. Dragging the right of the screen is meant to swing your view around your trainer, and it did nothing — the code that works out how far your finger travelled stored the new position one line before it read the old one, so every swing was measured as a movement of exactly zero. Look, tilt and pinch-to-zoom all work now."
+  },
+  {
+    "date": "2026-07-31",
+    "title": "👻 Distant corruptimons stop standing there frozen",
+    "body": "Walk away from a corruptimon and it used to stay on screen with its legs stopped mid-stride, like a statue of itself. The game deliberately switches off a monster's mind once you are far enough away — twenty-four of them thinking every frame across the island is work nobody sees — but it kept drawing them anyway, so you got the frozen pose instead of nothing at all. They are simply hidden now, and because a monster's wandering is worked out from the clock rather than remembered, one that comes back into view picks up where it should be rather than where it stopped."
+  },
+  {
+    "date": "2026-07-31",
+    "title": "🔮 The legend placards read properly now",
+    "body": "The coming-soon placards at the Wicked Temple, the Crystal Lode, MALGROTH's arena, the wandering galleon and the Leviathan's waters had two faults. Each title carried a little symbol that simply did not exist in the font the card is drawn with, so instead of a crystal ball or a gem you got an empty box — it looked right on a desktop editor only because the computer quietly lent its own emoji font, which a browser will not do. Those are proper artwork now. And every card was built exactly as tall as its contents with nothing spare, so the line under COMING SOON was sliced in half at the bottom edge. The card is taller and the whole ribbon fits."
+  },
+  {
+    "date": "2026-07-31",
+    "title": "💤 No more \"welcome back\" every time you switch tabs",
+    "body": "Coming back to the tab announced itself in the System log, every time. Switching tabs is something you do constantly and you already know you did it, so the log filled up with a notice about your own deliberate action. The reconnect still happens exactly as before — your trainer re-announces itself the instant you return and everyone else's position is refreshed rather than replayed from minutes ago — it simply does it quietly now."
+  },
+  {
+    "date": "2026-07-30",
+    "title": "⇄ Half the network traffic, same world",
+    "body": "Every couple of seconds the game was told each nearby trainer's name, look, team, element and level all over again — none of which changes while you are playing. Now it hears those once and afterwards only what actually moves. Measured at just over half the traffic removed, which matters most on a phone and on a hotel connection, and leaves far more room for a crowded island. If somebody changes their outfit or swaps their team you are told immediately, and only about them."
+  },
+  {
+    "date": "2026-07-30",
+    "title": "🐺 Every trainer sees the same monster in the same place",
+    "body": "Two players standing shoulder to shoulder were watching the same corruptimon in different spots, sometimes tens of units apart. Two things caused it. The wander was rolled independently on each machine, and — the one that made it unfixable by seeding alone — a monster's mind switches off entirely once no player is within 120 units, so where it ends up depends on how long somebody happened to stand nearby. Two trainers arriving at different times could never agree, however the dice fell. So a monster's idle path is no longer walked, it is read: ask where a corruptimon is at a given moment and every machine computes the same answer, with nothing sent over the wire to make it so. They keep to their own patch of the island as before, they still hunt your chikimon exactly as they did, and one that has been out of sight simply picks up where it should be rather than where it was frozen."
+  },
+  {
+    "date": "2026-07-30",
+    "title": "🌐 Switch tabs and come back without losing the world",
+    "body": "Leaving the tab freezes the whole game — browsers stop driving the engine for a hidden tab, and no web game escapes that. What was fixable was the return. While you were away your trainer stopped announcing itself, so after twelve seconds the world let go of you and everyone else's game did not freeze your avatar, it deleted it — then popped you back as if you had just arrived. And your own view came back holding everyone where they stood minutes ago. Now the game notices the gap the moment you return: it announces you again on that very frame instead of waiting its turn, throws away the stale picture of where everyone was, and if you were gone long enough to have been dropped it tells you it is reconnecting you. You will still see about a quarter second of stillness while the first fresh update arrives."
+  },
+  {
+    "date": "2026-07-30",
+    "title": "🐴 Other players stop losing their mounts (and the world stops freezing)",
+    "body": "Three receiver-side bugs, all found by auditing the multiplayer layer rather than trusting it. The egg caravan and the run/walk flag were being sent correctly and relayed correctly, but the client never stored them onto the peer it draws from — so nobody ever saw anyone else's egg carts, and everyone's run-versus-walk was still being guessed from travel speed. Both now arrive. Second: when another player changed their avatar or swapped their team, their rig was rebuilt but their mount and held tool were not, leaving a rider hovering at saddle height over nothing and swinging an invisible axe until they next changed either one. Third, and worst: if the server answered with a page that was not our data — the kind of thing a gateway or proxy returns as a success — the game treated it as a healthy reply, reset its own failure count, and quietly stopped updating. Every other player froze mid-stride, the online count kept insisting they were there, and it never recovered or told you. A reply is only healthy now once it actually parses."
+  },
+  {
+    "date": "2026-07-30",
+    "title": "💬 The chatbox lets go of you",
+    "body": "Clicking into the chat used to lock you out of your own game: the only way back to walking was to find the Escape key, because clicking the world does not release a typing cursor, and sending a message re-grabbed it anyway. Now a click anywhere on the world hands the keyboard straight back — and the same click still starts you walking there, so it costs no extra gesture. Sending a message also hands it back; Enter puts you straight back in the box if you want to keep talking. And a message refused for being too quick, or for having no whisper target picked, is given back to you with the cursor at the end instead of being quietly thrown away. The fold arrow in the corner is redrawn too: minimise and maximise are now the same arrow mirrored, so they finally sit level with the channel tabs."
+  },
+  {
+    "date": "2026-07-29",
+    "title": "🥚 Your egg caravan travels with you, for everyone",
+    "body": "The little carts carrying your incubating eggs were only ever visible to you — to other trainers you walked alone. They now trundle along behind you wherever you go, seen by everyone.\n\nSprinting reads correctly too: other players run when you run, rather than the game guessing from how fast you happen to be moving."
+  },
+  {
+    "date": "2026-07-29",
+    "title": "🏗 No more trainers standing on roofs",
+    "body": "If you stood under a bridge, an overhang or inside a building, other players could see you up on the roof instead — and once it happened it stuck until you walked clear. Your own client now has the final say on where you are, so you appear exactly where you stand.\n\nAlso: name banners rise with riders onto the saddle instead of sitting inside the mount, other trainers' animations blend instead of snapping, and their drills are held clear of the body."
+  },
+  {
+    "date": "2026-07-29",
+    "title": "👤 Other trainers look right",
+    "body": "A pass over how other players appear to you. Griffin riders were floating well above their steed and sitting perfectly still instead of drifting on the wing; jumping trainers walked through the air; anyone mining crystal or digging shells swung an overhead chop instead of working their drill or spade; and every angler held a plain stick rather than their own rod.\n\nAll of it now matches what that trainer sees of themselves. No extra delay — these ride the smoothing your view of other players already used."
+  },
+  {
+    "date": "2026-07-29",
+    "title": "🐎 Riders look like riders to everyone",
+    "body": "Other trainers on mounts appeared to stand upright on top of their steed rather than ride it — and on a griffin they floated well above the saddle.\n\nEveryone now renders exactly as they see themselves: seated in the saddle, in the right spot on the mount's back, for all six steeds. No extra delay — the pose rides the same smoothing the rest of a trainer's movement already uses."
+  },
+  {
+    "date": "2026-07-29",
+    "title": "⚒ Tools no longer render through you",
+    "body": "The heavier drills were reaching back through the trainer's body, and rod handles sat slightly inside it. Both are now held clear, out in front where they belong.\n\nNothing about gathering or fishing changed — purely how the tools sit in your hands."
+  },
+  {
+    "date": "2026-07-29",
+    "title": "🎣 Rods are held like rods again",
+    "body": "Fishing rods were being tipped forward hard enough to drop the hook onto the water — on some levels almost 90 degrees, which read as a bent stick rather than a rod being held.\n\nEvery rod now sits at a natural angle. On a few of them the hook hangs a little above the surface as a result, but casting, biting and reeling are completely unchanged."
+  },
+  {
+    "date": "2026-07-29",
+    "title": "🪓 A taller, straighter chop",
+    "body": "The axe now swings straight up and down again rather than cutting across the body, and it lifts noticeably higher over the shoulder before it comes down.\n\nChopping speed and yield are unchanged — this is purely how the swing looks."
+  },
+  {
+    "date": "2026-07-29",
+    "title": "⛏️ Tools sit right at every level",
+    "body": "Some pickaxe, axe and drill levels were held at the wrong angle while gathering — the head turned side-on instead of facing the swing, and a few drills sat too low, biting into the ground.\n\nEvery level of all three now sits the way it should. Nothing about gather speed or yield changed — just how the tool looks in your hands."
+  },
+  {
+    "date": "2026-07-29",
+    "title": "📖 See how rare your collection really is",
+    "body": "The Chikidex, Mountdex and Avatar case now show how many trainers across the whole realm own each one. Live, from the world server.\n\nNow you can see at a glance whether that steed you hatched is one of hundreds — or one of a handful. Rarity you can actually check, instead of guessing."
+  },
+  {
+    "date": "2026-07-29",
+    "title": "✅ Last of the loose ends",
+    "body": "A few remaining rough edges are closed. A chikimon put up for auction could, in rare circumstances, become stranded — held by the realm with no way to bring it home. Auctions are now kept safely no matter how busy the board gets.\n\nAlso: the weekly raid prize can no longer be handed out twice, a hatching egg always produces exactly what the realm recorded, and switching wallets on the desktop build now properly reloads into that trainer instead of half-switching."
+  },
+  {
+    "date": "2026-07-29",
+    "title": "🪪 One device at a time — no more lost sessions",
+    "body": "If you opened your trainer on a second device, the two could quietly fight over your save and whichever one saved last won — meaning a whole session of play could vanish without warning.\n\nNow the realm keeps one live session per wallet. The most recent sign-in is the live one, and an older one tells you straight away that your trainer was opened elsewhere and stops saving, instead of letting you play on into progress that can never be kept. You are never locked out of your own wallet — signing in again always takes the session back."
+  },
+  {
+    "date": "2026-07-29",
+    "title": "🛡️ A pre-launch pass over everything new",
+    "body": "A full sweep over this week's changes turned up a handful of rough edges and they're all fixed. The one that could have cost you something: in a rare case a chikimon returning from a withdrawn auction could go missing while the game told you it was safe — it now comes home properly, and the realm confirms which chikimon it was.\n\nAlso fixed: the message telling you Dark Energy didn't fit in a full bag had stopped appearing, resource bookkeeping dropped part of a big crafting burst, and a few internal safeguards were tightened. Nothing about how the game plays has changed."
+  },
+  {
+    "date": "2026-07-29",
+    "title": "🛡️ More of your progress is sealed against tampering",
+    "body": "Your save already protected the important things — your $CHIKI, resources, chikimon and mounts. A handful of smaller records sat outside that seal: auction escrow, task boards, potion effects, discovered recipes, the hospital timer and a few reward cooldowns.\n\nThey're all sealed now. Nothing about your game changes and nothing needs doing on your part — your save simply re-seals itself the next time it saves, and existing saves keep loading exactly as before.\n\nThis closes off ways the rewards could be claimed more than once, which keeps what everyone earns fair and keeps the value of traded goods real."
+  },
+  {
+    "date": "2026-07-29",
+    "title": "🐉 MALGROTH's weekly prize is now guarded by the realm",
+    "body": "The great warden's weekly reward is now recorded by the realm itself rather than trusted to each device. Everyone still gets their full prize once a week — 500 $CHIKI and 25 Crystal Shards — and the smaller consolation for repeat visits, exactly as before.\n\nThe difference is that the weekly limit can no longer be quietly bypassed, so the raid rewards stay fair and their value stays real for the trainers who earn them. If you're offline or the realm is slow to answer, your raid still pays out normally."
+  },
+  {
+    "date": "2026-07-29",
+    "title": "⚖️ The realm now sees the whole picture of your resources",
+    "body": "Until now the realm could see what you gathered, but not what you spent it on. Crafting, tending eggs, bartering with Mithra and Azulon, feeding your chikimon — all of it was invisible. Now the full journey of every resource is part of your honest record.\n\nNothing costs more, nothing is slower, and no recipe changed — every price is exactly what it was. This is bookkeeping, not balance. It simply means your inventory tells a complete and verifiable story: what you found, and what you made with it.\n\nThat completeness is what will eventually let your resources be as provably yours as your eggs, steeds and chikimon already are."
+  },
+  {
+    "date": "2026-07-29",
+    "title": "🌑 Combat spoils count too — every resource is now covered",
+    "body": "Dark Energy from battle now goes on your honest record the same way fishing and gathering already do. That was the last resource the realm didn't observe, so from now on a full stack of any material — mined, caught, or won in combat — is simply proof of the work you put in, never mistaken for anything else.\n\nCombat is unchanged: same drops, same feel. This just closes the last gap, so every resource you hold is grounded in a record that's genuinely yours."
+  },
+  {
+    "date": "2026-07-29",
+    "title": "🎣 Your catches count toward your honest record",
+    "body": "Fishing now contributes to the same authenticity records as gathering. Before, the realm never saw your catches, so an honest angler who sold a big haul of fish could be mistaken for something they weren't. Now every catch is on the record, at a natural pace, and a full net is simply proof of a good day at the water.\n\nNothing about fishing changes — same spots, same rare catches, same feel. This is quiet groundwork so that one day your whole inventory, not just your eggs and companions, is provably yours."
+  },
+  {
+    "date": "2026-07-29",
+    "title": "🐾 Every chikimon is now a real, permanent asset",
+    "body": "Your whole roster is now backed by the realm's own records, not just your save. Each chikimon you hold is registered as a permanent asset with an honest history — so a companion can no longer be forged by a tampered client or erased by a bad save. What you raised is provably yours.\n\nNothing about your chikimon changes: every level, nickname, bond and battle card stays exactly as you earned it — those live in your save and are never touched. This only adds a permanent certificate of existence alongside them, quietly, at sign-in.\n\nTogether with the safer stable and sealed hatches, it means eggs, steeds and chikimon alike are becoming real, ownable, one-day-tradeable assets — each with a lineage that belongs to you."
+  },
+  {
+    "date": "2026-07-29",
+    "title": "🥚 Hatches are sealed by the realm",
+    "body": "When you hatch a registered egg now, the realm itself rolls what comes out and records it the instant it happens — so what you hatch is provably yours and can never be forged or re-rolled by a tampered client. You may notice a brief \"hatching…\" beat while the realm makes it official.\n\nNothing about your odds changes — the same rarities, the same weighting, the same surprises. And if the realm is slow to answer or you're offline, your egg still hatches instantly the way it always has; you are never left waiting on it.\n\nIt is the same groundwork as the safer stable: another step toward every chikimon and steed being a real, permanent, one-day-tradeable asset with a history that is truly yours."
+  },
+  {
+    "date": "2026-07-29",
+    "title": "🐎 Your stable is kept safe on the server",
+    "body": "Your mounts are now backed by the game's own records, not just your local save. Every time you sign in, the realm checks which steeds truly belong to you and makes sure your stable matches — so a mount can no longer be lost to a bad save or a hiccup on your device. If something ever went missing, it comes back on your next sign-in.\n\nThis only ever gives steeds back — it can never take one away. If the server's list is still catching up with a mount you just earned, your stable is left exactly as it is until it does. Nothing you own is at risk, and nothing about riding changes.\n\nIt is also a step toward making your mounts real, tradeable, ownable assets in a future update — each one now has a permanent record that is truly yours."
+  },
+  {
+    "date": "2026-07-29",
+    "title": "🌿 The forest stays in step for everyone",
+    "body": "When you gathered several things quickly — most often right after loading in — only the first one was reaching the world. The rest were refused for pace and quietly dropped, so trees you had felled and lodes you had emptied kept standing for everyone else, and you would find nodes that looked untouched but gave nothing.\n\nYour gathers are now paced to the world's own rhythm instead of racing it, and one refused for timing waits its turn rather than being lost. What you take is what everyone else sees you take.\n\nAlso fixed alongside it: when two trainers reached the same node at once, the item taken back was whatever you had gathered most recently rather than the one you actually lost — so you kept the thing you lost and lost the thing you kept. The right one goes back now.\n\nAnd the world itself now decides what a node gives. Your swing still credits the item the instant it lands — nothing about gathering feels slower — but the server names the material, and if the two ever disagree the world's answer is the one that stands. Honest trainers will never notice; it means a node can no longer be talked into giving something it does not hold."
+  },
+  {
+    "date": "2026-07-28",
+    "title": "🛠️ Fix: the Creator tab now appears when you sign in",
+    "body": "The Creator tab was being decided once, when the game started — before your wallet had finished signing in. Admin status arrives a moment later, and nothing rechecked, so the tab never appeared even on an admin wallet. It now appears the moment sign-in confirms it, and disappears again if it is ever revoked."
+  },
+  {
+    "date": "2026-07-28",
+    "title": "🛠️ Creator tab (admin only)",
+    "body": "A Creator tab now sits below Potions on the right rail for verified admin wallets, and only for them — an ordinary wallet does not see it at all.\n\nIt puts every gear slot in one place: all five gathering tools at any level with a tap to hold one right away, the bag, pouch and satchel with their real capacities shown as you change them, and the worn gear — sword, shield, gloves, boots, charm. There are one-tap buttons to take everything to Lv 10 or back to Lv 1.\n\nBelow that: jump straight to the nearest trees, stone, crystal, gold, iron, seashells or fishing spot so a tool has something to work on; unlock every chikimon, mount and resource; and try a battle, a mount, flight, the shops and the Trading Post directly.\n\nThese tools existed already but lived on the F8 and F9 keys, which do not exist on a phone."
+  },
+  {
+    "date": "2026-07-28",
+    "title": "🎣 Why you couldn't land the goldfish — and tools facing the right way again",
+    "body": "The reel duel was teaching you to lose. The hint said to HOLD to reel in, and holding is exactly what snaps the line — the tension climbs faster than the fish tires, so anyone following that advice lost every legend they hooked. Tap in bursts and let the line fall back whenever it runs red, and it lands. The hint now says so.\n\nTwo things the game was quietly hiding. A fantasy fish needs a good enough ROD to bite at all — a Golden Chikifish will not touch a line below a Lv 2 rod, no matter how long you cast or how high your Trainer level — and nothing anywhere told you. The Fish tab now names whichever requirement is actually stopping you, the rod or the rank. And when a legend got away because you were too low a rank, the panel blamed your line tension even though you never got to reel; it now tells you the real reason.\n\nTools: the drill and shovel were pointing behind the trainer. That was my error — I had been measuring which way you face using the wrong reference, so a correction I made earlier turned them the wrong way. Both now lead forward again, the drill sits clear of the ground pointing at the crystal, and the axe's diagonal comes down from the shoulder across the trunk."
+  },
+  {
+    "date": "2026-07-28",
+    "title": "⛏️ The drill comes out of the dirt, and your hook finds the water",
+    "body": "Two tools were pointing at the wrong thing.\n\nThe drill was aimed almost straight down and its bit sat buried in the terrain — you were boring into the ground beside the crystal rather than into the crystal. It now rides clear of the ground and points forward and down at what you are actually mining.\n\nFishing has lost the drawn-on line and float. There was a line and bobber painted into the scene to reach the water, which never quite belonged to the rod you were holding. They are gone. Instead your rod leans out over the water until its own hook is wet — the way you would actually hold it — so the tackle you see is the tackle on your rod. Every rod reaches, at every level.\n\nOne note of honesty: the level 10 rod is much shorter than the others and cannot reach by leaning alone, so it dips a little as well. It is the only one that does."
+  },
+  {
+    "date": "2026-07-28",
+    "title": "🪓 The axe chops across the trunk, not past it",
+    "body": "Your axe swung beside you rather than at the tree. Measured, the blade lived entirely off your left shoulder and struck the air a good two metres to the side of the trunk you were aiming at, which is why the chop read as a flat up-and-down bob rather than a swing.\n\nIt now comes down the way you would actually swing an axe: raised high and out to one side, then driven down and across the body onto the wood. The blade travels about four and a half metres diagonally through the stroke and finishes on the centreline, where the tree is.\n\nThe head still stops cleanly at ground level at every axe level, exactly as before."
+  },
+  {
+    "date": "2026-07-28",
+    "title": "🎣 Three fishing fixes: the float, the duel, and walking away",
+    "body": "Your float now sits exactly where the fish are. The bobber was being planted directly beneath your rod tip while every splash, bite and catch happened out at the spot you actually cast to — up to three units apart — so the water broke beside the float instead of under it. They are the same place now, and the cast stays where you put it even if you turn around.\n\nThe reel duel can no longer trap you. If you never pulled, progress sank to zero and tension faded to nothing, which meant neither landing the fish nor snapping the line could ever happen — the duel simply never ended, and while it was running your action button could not gather, board a boat or talk to anyone. Leave the line slack for six seconds now and the fish shakes itself off, exactly as it should.\n\nAnd walking away ends the session. Before, nothing tore the tackle down when you left: the float would follow you inland and sit bobbing over dry grass. Step away from your cast and the line comes in.\n\nThe line itself also stays properly on the rod now, through turns and through the cast."
+  },
+  {
+    "date": "2026-07-28",
+    "title": "🪓 Every tool, at every level, rigged one at a time",
+    "body": "Your axe held its blade side-on, your drill gripped its own bit while the handle pointed at the crystal, and your level 10 rod dangled its lure in mid-air. All three were the same underlying problem: each tool has ten separate models, one per level, and they were authored independently — but the game aimed all ten with a single angle. Where a model happened to agree with that angle it looked right, and where it did not, it did not.\n\nSo every model has been measured and rigged on its own. The axe levels disagreed with each other by up to 21 degrees and the shovel by 23; those are gone, and every level of a tool now sits exactly like every other. The drill was a bigger problem, and not a uniform one: three of its ten models are built bit-first, with the business end sitting where your hand goes, and seven are built the ordinary way round. Those three are now turned end for end; the rest were already correct and are left alone. Every drill leads with its bit and points where you do.\n\nFishing: the lure now reaches the water on every rod, at every level. Five of the ten rods were modelled with no hanging line at all, and three of the five that do have one were still leaving the lure short of the surface. Rather than patch those by name, the line simply pays out from wherever your tackle ends down to the water — so it works from a low beach or a high bank alike. The rod is held exactly as before; only the line below it is new. A separate slip had casts landing 35cm above the sea, which is fixed too. And the line now stays on the rod while you move: it used to be laid down once, at the spot you cast from, so turning around could leave it hanging in the water well behind you — it now follows the rod tip every frame, through turns and through the cast whip.\n\nThe shovel now bites the ground. It was held facing away from you and stopped short of the earth at the bottom of every scoop, so it swung through thin air. It is turned to face the way you do, and the blade now measures the ground directly beneath itself each frame and closes the gap — beneath the blade, not beneath your boots, which is what makes it land properly on a slope or a beach rather than only on the flat. It settles in one motion now, too, instead of the fine shudder it had while it hunted for the ground in steps too coarse to ever land on it. All of this works with the plain tools you start with and not only crafted ones — an uncrafted tool was invisible to that ground check, and every dig frame threw it a long way off as a result.\n\nThe pickaxe was already right and is essentially untouched."
+  },
+  {
+    "date": "2026-07-28",
+    "title": "🛡️ Every chikimon, egg and mount now has a record of its own",
+    "body": "Work you will mostly never notice, on the part of the game that decides whether what you own is really yours.\n\nEggs are now registered the moment Mithra conjures one. The egg gets its own identity and its own clock, kept by the server rather than by your save file, and when it hatches the creature keeps a permanent link back to the egg it came from. Your Chikimon can prove where it came from.\n\nOne change you may actually run into: a chikimon can only be up for sale in one place at a time. Listing it and auctioning it at once is no longer possible, and neither is putting the same creature on the board twice. Cancel a listing and it is immediately free to sell again.\n\nNone of this touches how you play. Nothing costs more, nothing takes longer, and no egg, creature or mount you legitimately own is affected."
+  },
+  {
+    "date": "2026-07-28",
+    "title": "🥚 Your lost eggs are coming back — claim within 7 days",
+    "body": "On 27 July an egg-protection change went out enforced immediately instead of with its migration window. For about five and a half hours that evening, older saves holding an egg were read as edited, and the anti-cheat's response cleared the nest. That was our mistake, not yours, and simply restoring the window afterwards did not give anything back.\n\nIt does now. Sign in and your egg returns on its own — no button to find. We work out what you are owed from your own records of eggs conjured and eggs hatched, so you get back exactly the kind you lost and nothing you did not.\n\nTwo honest notes. The replacement starts its incubation fresh, so a Legendary Egg is another twelve hours of warming — we could not recover how far along yours was. And if you already made a new egg of that kind, we will not stack a second one on top of it.\n\nThe claim is open until 4 August at 00:00 UTC. Sign in once before then and it is handled.\n\nSeparately, eggs saved by the older game version keep their protection through 26 August, exactly as before. Nothing about that has changed."
+  },
+  {
+    "date": "2026-07-28",
+    "title": "🪓 Axe and pickaxe no longer swing into the ground",
+    "body": "Chopping and mining drove the tool head straight through the terrain at the bottom of every swing — measured at over a metron and a half below your feet. Both now stop cleanly at ground level.\n\nThe axe blade also faces properly downward as it lands, instead of turning side-on. That was the same problem: lifting the head out of the dirt is what brings the cutting edge round to vertical."
+  },
+  {
+    "date": "2026-07-28",
+    "title": "✕ Other players' XP bars are gone",
+    "body": "You no longer see another trainer's experience bar. Their nameplate shows their banner and their name — their progress is their own business.\n\nYour own XP bar, and the run/dash bar beneath it, are unchanged."
+  },
+  {
+    "date": "2026-07-28",
+    "title": "💬 Chat stays open when a side panel does not cover it",
+    "body": "Opening any right-hand panel — Avatar, Quests, Satchel, Mounts and the rest — used to hide the chat box completely, even though the chat sits in the bottom-left corner and those panels hug the right edge, so they were never on top of each other.\n\nThe chat now checks whether a panel is actually covering it before getting out of the way. On a normal screen it simply stays open while you browse your gear, so you can keep reading world chat and reply without closing anything. On a narrow window or a phone, where a panel really does span the view, it still steps aside as before."
+  },
+  {
+    "date": "2026-07-28",
+    "title": "⚔️ Your Cup duel is the real one now",
+    "body": "Pressing FIGHT NOW in the Chikiseum used to start a practice battle against a randomly generated opponent, while the Cup stewards decided your actual match without you — so you could win on screen and still be knocked out, or lose and advance. It now puts you into your real match against your real opponent, and tells you plainly when your duel hasn't been called yet instead of inventing one.\n\nEvery icon in the game also has proper art now. Anything that used to fall back to your device's own font — arrows, stars, the delivery and crown markers — is drawn in the game's own style, so menus look the same on every device."
+  },
+  {
+    "date": "2026-07-28",
+    "title": "☁ Cloud saves are checked before they are restored",
+    "body": "When your progress is restored from your wallet, the game now checks that the saved copy has not been altered before adopting it. Previously it was taken as-is and then re-sealed, which meant an edited copy could be laundered into a valid save.\n\nIf a restore ever fails that check your progress is still restored — you are never stranded — but anything that looks injected is neutralised rather than trusted. Ordinary restores are unaffected.\n\nAlso: Chikoria Cup entries now use the deck your champion has actually unlocked, so nobody can enter the bracket claiming cards or tiers they never earned."
+  },
+  {
+    "date": "2026-07-28",
+    "title": "🔒 Your whispers are private again",
+    "body": "Three holes closed, all of the same kind: your wallet address is public — it shows in the online roster and in world chat — but parts of the game were treating it as if it were a password.\n\nAnyone who knew your address could read your entire whisper history, send whispers pretending to be you, or move your avatar around while you were playing. All three now require your game client to prove the wallet is actually yours. Nothing changes for you — your own client already proves it. Players without a connected wallet are unaffected."
+  },
+  {
+    "date": "2026-07-28",
+    "title": "🐴 New art: royal steed, hunger meter, hungry mount",
+    "body": "The Royal Steed now shows its own barded portrait wherever it is named, the chikimon hunger meter uses a proper roast-drumstick icon, and the 'your mount is too hungry to ride' warning shows the hungry-mount art instead of a plain emoji.\n\nAlso fixed behind the scenes: a hole where someone who knew your wallet address could ask the server for the key to your duel and forfeit it out from under you. Duel keys are now only ever handed to a client that has proven the wallet is theirs."
+  },
+  {
+    "date": "2026-07-28",
+    "title": "🏃 One stamina bar, right under your XP",
+    "body": "Your sprint charge used to float near your feet where it was easy to miss. It now sits directly beneath your XP bar on your own nameplate, the same width, so the two read as one stack.\n\nThe same bar becomes your steed's DASH charge the moment you mount up — blue for your own running, amber for the mount's dash. So you are always looking at the resource you are actually spending, and choosing when to ride and when to run on foot is a real decision. Either way it stays hidden while the charge is full, so it never clutters the view."
+  },
+  {
+    "date": "2026-07-28",
+    "title": "🌍 Other trainers now look like real players",
+    "body": "Everyone you meet in the realm is rendered the way you render yourself.\n\nOther trainers now wear their own themed nameplate banner — the one that matches their avatar — instead of a plain line of text. Their chikimon have proper nameplates too, tinted to their element; before this, a stranger's team was three anonymous creatures following them around. And the tool in their hands is the one they actually crafted, at their real level, held at the same size as yours.\n\nYou will not see another player's XP bar — that stays yours alone."
+  },
+  {
+    "date": "2026-07-28",
+    "title": "🪓 Other players' tools are the right size now",
+    "body": "When you watched another trainer gathering, their axe or drill was far too big. Your own tool is deliberately held at a fixed size no matter which avatar you play, but the code that draws other players never did that step — so their tool inherited the whole rig's scaling and came out enormous. It now uses exactly the same size as your own.\n\nAlso: the missing arrows and stars in menus and reward lines are now proper icons instead of falling back to whatever your device's font happened to draw."
+  },
+  {
+    "date": "2026-07-28",
+    "title": "🍂 Depleted resources now actually disappear for everyone",
+    "body": "If another trainer emptied a node or felled a tree, you could often still gather it — and you never saw the tree fall. The world was being told about far fewer of those than it should have been.\n\nThe game sends one 'this is taken' message at a time, and any that had to wait was thrown away instead of queued. That was worst right after the server had been idle, when its first reply takes a while — so the opening minutes of a session lost most of them. Those messages now wait their turn and are retried if they get no answer, so what you clear stays cleared for everyone, and what others clear disappears for you."
+  },
+  {
+    "date": "2026-07-27",
+    "title": "🥚 Older eggs get their migration window back",
+    "body": "The protection window for eggs saved by the previous game version has been restored through 26 August at 00:00 UTC. If your original v8 save still holds an egg, log in before the deadline: the egg stays with you and the game automatically upgrades the save to the latest protected format.\n\nThis prevents any further automatic egg loss from the July 27 cutoff. If an egg was already cleared and that empty save replaced both the browser and cloud copies, the original egg record no longer exists to rebuild safely — contact the dev with any backup or purchase record for a manual restoration."
+  },
+  {
+    "date": "2026-07-27",
+    "title": "🛡️ Realm integrity pass — safer wallets, trades and shared resources",
+    "body": "A full economy and multiplayer audit closed several edge cases without changing normal play.\n\nWallet deposits are now counted once against a lifetime high-water mark, so moving the same tokens out and back can never create extra in-game $CHIKI. Trading Post listings now use globally unique IDs, and only a listing that truly left the board can enter the sold-item guard — preventing vanished listings and repeat-sale exploits. Trainer XP bursts and legacy roster imports are sealed against duplication too.\n\nThe shared world is more consistent: tree capacity belongs to the server, and wandering pigs and cows now keep one stable shared identity for every player. The Reward Vault also reports queued quest rewards correctly instead of telling non-finalists they earned nothing."
+  },
+  {
+    "date": "2026-07-27",
+    "title": "🛡️ Roster integrity hardened",
+    "body": "Your chikimon roster is now rebuilt only from a save the game has already verified, and the roster itself is covered by the anti-tamper seal. This closes a hole where an edited save could conjure a full team of chikimon at any level and sell them on the Trading Post.\n\nNormal play is unchanged — if you are a returning player, your roster rebuilds exactly as before."
+  },
+  {
+    "date": "2026-07-27",
+    "title": "🍽️ Hungry steeds and hungry chikimon now look hungry",
+    "body": "Two new pieces of art. A starving steed now shows itself standing over an empty trough, and a starving chikimon shows up over its empty bowl — in the Stable, on the mount card and on the chikimon card.\n\nYour chikimon also now warns you properly when its belly hits zero. A starving chikimon refuses to battle, which was already true but was easy to miss — it now says so on the card, the same way a starving steed tells you it won't carry you."
+  },
+  {
+    "date": "2026-07-27",
+    "title": "🥚 Egg protection is now enforced",
+    "body": "Eggs are now fully covered by the save's anti-tamper seal, effective immediately. This closes a hole where an edited save could conjure a finished egg and skip the 500,000 $CHIKI cost.\n\nOne consequence to be upfront about: if your save was last written by an older version of the game AND you were holding eggs, those eggs cannot be verified and will be cleared the next time you log in. Nothing else is affected — your $CHIKI, chikimon, gear, materials and progress are untouched. If this hits you, message us and we will restore your eggs.\n\nEggs obtained from here on, including the free starter egg from the Open Gates event, are sealed from the moment you receive them."
+  },
+  {
+    "date": "2026-07-27",
+    "title": "⚡ Open Gates — free for everyone, 7 days",
+    "body": "The gates are open again. Until 3 August, anyone can enter Chikoria with any wallet balance — no 500,000 $CHIKI required. Sign in with Phantom, walk in as the Wanderer, and you get one egg to nest: keep it warm and it hatches your first chikimon.\n\nEnter before the gates close and your account stays yours forever. When the event ends, only NEW entries close — nothing you have earned goes away. The countdown is live at the top of the News tab."
+  },
+  {
+    "date": "2026-07-27",
+    "title": "🔒 Save integrity and reward fixes",
+    "body": "Three fixes that protect what you have earned.\n\nYour eggs are now covered by the save's tamper seal. They were supposed to be, but a typo meant the check looked at an old unused field and never saw them at all — so an edited save could conjure a finished egg and skip the 500,000 $CHIKI cost.\n\nA momentary failure to read your wallet can no longer wipe your balance ceiling. If the check came back empty because of a hiccup rather than because your wallet was empty, the game believed it instantly. It now waits for a second reading before accepting a zero.\n\nAnd if you started playing after the 24 July chapter update, your completed chapters are no longer wrongly marked as already paid — that was quietly blocking real $CHIKI you were owed."
+  },
+  {
+    "date": "2026-07-27",
+    "title": "⚔️ Duels are real now",
+    "body": "Walking up to another trainer and pressing G used to start a practice fight against a copy of them run by your own game — they were never told it happened and never played. Now it sends them a real challenge. They can accept or decline, and if they accept you fight each other for real, with the server refereeing every turn. Still no $CHIKI and no stakes.\n\nYou can also now receive a challenge, which was never possible before."
+  },
+  {
+    "date": "2026-07-27",
+    "title": "🪓 Tools that hang right, and fairer contested nodes",
+    "body": "Every gathering tool is rebuilt to a single shared orientation. The ten levels of each axe, pickaxe, shovel and drill had been modelled facing different ways — some blades sat edge-on and looked like a thin sliver in your hands — so no single swing angle could ever be right for all of them. They now all hang the same way, and other trainers see your tool held exactly as you do rather than at a flat angle. Nothing about how gathering works has changed.\n\nAlso fixed: if two trainers reached the same node at the same moment, BOTH walked away with the item. The loser now correctly gets nothing and is told someone beat them to it — and a full bag can never lose you resources you already had. And cancelling a listing the market had already let go no longer destroys your goods while telling you they sold; your items stay put."
+  },
+  {
+    "date": "2026-07-27",
+    "title": "🐟 The same fish for everyone",
+    "body": "Every fishing spot stocked itself differently for each player. Two trainers standing at the same named cove were genuinely fishing different water — and because species differ in rarity and value, the same spot could quietly be worth more to one of you than the other. Schools are now stocked from the world itself, so the fish at a spot are the same fish for everybody. Catch rates, rarity and everything you do with a rod are unchanged."
+  },
+  {
+    "date": "2026-07-27",
+    "title": "🪵 One forest for everyone",
+    "body": "Trees were the last resource that each player kept privately. Two trainers could work the same trunk and each see a different forest — one of you felled a tree the other still saw standing. The world now keeps a tree's remaining loads, exactly as it already did for ore, rocks and hives. A trunk another trainer has been working is worked-down for you too, and the tree that finally falls falls for everyone. Nothing about chopping changes: still one wood per swing, still three loads in a full tree, and your swing lands instantly as before. Also fixed: when a lot of trainers were in the world you could be standing right next to someone and not see them at all. The game kept the first sixty players it happened to know about — oldest sessions, not nearest — so anyone who joined later, or reconnected, could be invisible from a few steps away. It now always shows you the sixty nearest trainers."
+  },
+  {
+    "date": "2026-07-26",
+    "title": "🪓 Fixed: other players looked like they just stopped",
+    "body": "When another trainer was gathering you saw them standing still. Their action was reaching you correctly — the problem was that the avatars have no animation named 'chop' or 'mine', so the game asked for one that didn't exist and fell back to standing idle. Gathering actions now play the swing the rigs actually have, so you can see people working from across the clearing. Also fixed: a cow or pig you were hunting would calmly wander off mid-swing, because the hold on it was re-checked by distance every frame and the animal drifted out of its own hunt. It now stays held until you stop."
+  },
+  {
+    "date": "2026-07-26",
+    "title": "⚔ Duels are real multiplayer now",
+    "body": "A duel against another trainer is refereed by the server, not by each of you guessing. You both see the same turn, the same hand size and the same health, and a turn only resolves once BOTH of you have locked in — no more one-sided fights or desyncs. Your hand is dealt by the server and every one of your six cards is reachable; the card row has been widened to fit them. Walking out mid-duel is now an honest forfeit that ends the match for your opponent immediately, instead of leaving them waiting. Wild corruptimon fights are untouched and still play exactly as before."
+  },
+  {
+    "date": "2026-07-26",
+    "title": "📖 The Codex is now a proper how-to",
+    "body": "The Codex tab has been rebuilt as a guide to the whole game. Twenty-two topics — getting started, eggs, your team, gathering, fishing, crafting, brewing, cooking, battling, PvP and the Cup, mounts, the Trading Post, the three mines, hunting, quests, the $CHIKI economy, collectibles, avatar perks, movement and stamina, map and waypoints, playing together, and caring for your chikimon. Tap any one and you get the real mechanics: numbered steps for exactly what to do in game, then the hard numbers — costs, timers, drop odds, fee splits. No vague advice; if the game rolls a 1-in-1250, it says so."
+  },
+  {
+    "date": "2026-07-26",
+    "title": "🌍 One world — everyone sees the same Chikoria",
+    "body": "Other trainers are no longer sliding mannequins. Whatever they're doing reaches you: someone chopping across the clearing swings a real axe, a miner works a pickaxe, a prospector runs a drill, an angler holds a rod — the same models, in the same hands, as your own. Jumps show up too; heights are shared now, so a leap actually reads as a leap instead of a slide along the ground. Their chikimon finally trail at the RIGHT distance — remote pets were following about three times closer than yours do, which is why other people's teams looked glued to their heels. And resources are one shared world: the rock you mine is the same rock everyone else sees, so it can't be harvested twice, and it comes back for the whole realm at once."
+  },
+  {
+    "date": "2026-07-25",
+    "title": "🪓 Three chops a tree — and then it falls",
+    "body": "Trees are proper resource nodes now: each trunk holds THREE loads of firewood instead of one, so you work the same tree three times before it's spent. Each chop still gives exactly one wood — the one-item-per-gather rule is untouched, there's simply more in each tree, and the message tells you how many loads are left. Take the last one and the tree TOPPLES: it hangs, creaks, then goes over fast and settles into the grass on its own bearing, so a worked patch really looks logged. A felled trunk stops blocking you, and in time a fresh tree stands in its place, full again."
+  },
+  {
+    "date": "2026-07-25",
+    "title": "📍 Your map pin now stands in the world",
+    "body": "Drop a waypoint on the minimap and a golden beacon rises at that exact spot in Chikoria — a shaft of light you can pick out from across a region, a ring on the ground where it actually lands, and the same pin marker floating above it, drawn on top of the landscape so a hill can never hide your destination. It dims as you walk up to it, and right-clicking the map clears both the pin and its beacon together."
+  },
+  {
+    "date": "2026-07-25",
+    "title": "📊 The Statistics board, rebuilt",
+    "body": "Every realm figure is now its own card — reward pool, $CHIKI earned and burned, circulating supply, Chikorians online, active chikimons, holders and trainers — each with its own artwork and a one-tap link to verify it on-chain. The numbers refresh every few seconds while the board is open instead of every half-minute, the online count updates live between refreshes, and a line at the bottom tells you exactly how fresh what you're reading is."
+  },
+  {
+    "date": "2026-07-25",
+    "title": "🗺 A living map of Chikoria",
+    "body": "Open the minimap in the top-left and the whole island is yours at a glance — your heading, every shop and landmark, ore and berry nodes, other players moving in real time, and the corruptimons you'd rather walk around. Click it for the full-screen chart, zoom through four levels, and drop a waypoint anywhere you want to remember. A legend explains every marker."
+  },
+  {
+    "date": "2026-07-25",
+    "title": "🛒 Fixed: sold listings coming back from the dead",
+    "body": "A listing you'd already sold could reappear in the Buy tab and be bought a SECOND time, duplicating the goods. That's fixed at the root — once a listing is settled it can never be resurrected, no matter how the stalls reconcile. We hammered it with hundreds of randomized trading rounds plus targeted double-buy and simultaneous-buyer tests before shipping. The Trading Post also refreshes every few seconds while you're standing at a stall, so listings, sales and buyouts appear as they happen."
+  },
+  {
+    "date": "2026-07-25",
+    "title": "🌍 Other players feel like they're really there",
+    "body": "Remote riders now show the mount they're actually on instead of walking on air, their chikimon trail in a proper formation instead of clipping through their heels, and everyone's movement is smoothed with the same interpolation technique the big MMOs use — less rubber-banding, truer positions."
+  },
+  {
+    "date": "2026-07-25",
+    "title": "⛏ Gathering feels right again",
+    "body": "The timing-bar experiment is gone — gathering is back to the honest, no-gimmick version, and one gather still gives exactly one item. Your tools swing properly too: the axe bites the tree with its blade instead of its back, the pickaxe drives its point into stone, and the drill faces the crystal instead of your own spine. We measured the tool models to get these angles right rather than eyeballing them."
+  },
+  {
+    "date": "2026-07-25",
+    "title": "🏃 Running now costs breath",
+    "body": "Sprinting is no longer infinite. You get a stamina meter that drains as you run and recovers when you ease off — and how long you last scales with your level AND the boots you're wearing, so better gear genuinely buys you more ground. Run yourself out and you'll be winded for a moment before you can bolt again."
+  },
+  {
+    "date": "2026-07-24",
+    "title": "🐴 Your steeds got their true colors back",
+    "body": "Every mount was rendering far darker than its artwork — a color-space mismatch buried in the rigs. All six have been rebalanced to match their real palette. Dashing was fixed too: mounts now dash on YOUR command with a proper cooldown, each one's speed and stamina matching its temperament, instead of dashing constantly or never at all."
+  },
+  {
+    "date": "2026-07-25",
+    "title": "✨ Quality-of-life pass",
+    "body": "Feed your mounts straight from the Mounts tab without digging through the satchel. Pressing SPACE now always jumps — it no longer re-triggers whatever button you last clicked. Hungry steeds, waypoints, feeding and the chat's Latest jump are all called out with proper artwork instead of placeholder symbols."
+  },
+  {
+    "date": "2026-07-24",
+    "title": "🛡 Your marketplace $CHIKI is locked down",
+    "body": "A deep security pass rebuilt how the Trading Post settles. Every sale, auction and order is now tied to YOUR wallet by a signed session — no stranger can touch, clear or hide the proceeds you're owed, and nothing is ever deleted before you're actually paid. Money you're owed now survives 60 days if you're away (instead of quietly expiring), and on-chain buys can't be double-charged or replayed. If a sale ever settled and the $CHIKI didn't reach you, the realm now pays it out reliably — just sign in."
+  },
+  {
+    "date": "2026-07-24",
+    "title": "⚔ Rivals fight back — real duels at last",
+    "body": "PvP and Chikoria Cup duels are no longer a stat check. Your rival now plays a REAL hand — spending energy on strikes, guards, drains and charges, raising a shield against your combos, and going for the kill when your chikimon drops low. Read its telegraphs, bait out its guard, and time your burst. Every duel is a fight now."
+  },
+  {
+    "date": "2026-07-24",
+    "title": "🥚 Eggs grow while you're away — plus a big feel pass",
+    "body": "Nesting eggs now keep growing while the game is closed — warm one, then go live your life and come back to a hatchling. Mounts stay fed far longer (no more starving mid-ride), landing a fish is more forgiving, the jump no longer eats a late tap on uneven ground, and the News & System chat tabs finally let you scroll up through the whole history. Egg fish costs dropped hard, too: a Meme Egg now needs just ONE Rainbow Fish."
+  },
+  {
+    "date": "2026-07-24",
+    "title": "📈 Progression rebalance",
+    "body": "Trainer (Avatar) levels now take more to earn, so each rank you reach means more. In exchange your CHIKIMON level up faster, and their full 12-card ability kit is now in hand by Level 45 instead of being back-loaded to 50 — every chikimon shows its whole personality sooner."
+  },
+  {
+    "date": "2026-07-23",
+    "title": "📜 Every chapter now pays REAL $CHIKI",
+    "body": "All 63 story chapters of Act I now pay REAL on-chain $CHIKI — the 42 chapters that used to pay soft coins have been promoted. A full campaign run is now worth 112,030 REAL $CHIKI in your Reward Vault (open the LEDGER tab to track it). Already claimed those chapters? You're covered: the realm re-reports them to the vault automatically the next time you log in. The first 10 trainers to finish Chapter 63 still take home the 1,000,000 $CHIKI champion prize."
+  },
+  {
+    "date": "2026-07-23",
+    "title": "🔨 The Auction House opens — chikimon go under the hammer",
+    "body": "Chikimon are no longer sold at flat prices. The Trading Post's new Auction tab puts every chikimon under a 12-hour hammer: set an opening bid, watch trainers outbid each other, and the highest bid wins when time runs out. Outbid? Your escrowed $CHIKI returns instantly. Sellers keep 75% of the hammer price (20% reward pool, 5% burned). Rare chikimon finally sell for what the realm thinks they're worth."
+  },
+  {
+    "date": "2026-07-23",
+    "title": "🔒 One wallet, one save",
+    "body": "Every wallet now has its OWN save. Switching wallets swaps to that trainer's world; disconnecting locks your progress away until you sign back in — nothing lingers on a shared device. Tip: to play a different wallet, switch the active account inside Phantom itself, then connect. Need a clean slate on this device? Visit /realm/?wipelocal — cloud-saved progress returns when you sign in."
+  },
+  {
+    "date": "2026-07-23",
+    "title": "⚖ Trade pay restored — automatic restitution",
+    "body": "A bug let a hidden safety cap swallow order-fill and sale payments for some traders — the goods moved, the $CHIKI didn't. Fixed, and the realm makes it right on its own: sign in and every payment the cap held back is re-credited automatically from your own sales receipts. Going forward the cap grows with your trade income, so a payment can never vanish again."
+  },
+  {
+    "date": "2026-07-23",
+    "title": "⚡ FREE-PLAY EVENT — the gates close July 26!",
+    "body": "For a limited time, Chikoria needs NO $CHIKI to enter. Sign in with your Phantom wallet — any balance, even zero — and walk in as the Wanderer with one chikimon egg to your name. Keep it warm, tend it in the Team tab, and it hatches your first companion. Every feature is yours: gather, craft, fish, battle, trade. And a permanent change ships with it: every egg now hatches ONLY its own kind — normal eggs hatch normals, legendary eggs hatch legendaries. No more lottery inside the shell. ⏳ The free gates close on JULY 26 — enter before then and your account, egg and progress stay yours forever."
+  },
+  {
+    "date": "2026-07-22",
+    "title": "🥚 Fixed: vanishing eggs",
+    "body": "A save-verification bug shipped with the Craft Orders update was wrongly flagging honest saves as tampered on every reload — and the anti-cheat's tamper response cleared nesting eggs, chests and the reward vault. The stamp is fixed, every save written during the bad window is recognized as legitimate again, and any wrongly-applied tamper mark is cleared automatically the next time you load. Real save-editing is still detected and punished exactly as before. If your egg vanished during the window, reach out — we can see affected accounts."
+  },
+  {
+    "date": "2026-07-22",
+    "title": "🎮 Pocket Realm, rebuilt for thumbs",
+    "body": "The mobile island got a full make-over: the castle, town walls, shops, streetlights, trees and resource models now render at 4-6x fewer blocks (your trainer, chikimon and other players stay full-detail), the cobblestone road smoothed into a clean plain road, and every label grew ~20% so nothing squints. The touch controls are now carved wood and gold like the rest of the realm — joystick low-left, E / JUMP / RUN in the open lower-right, clear of every panel and bar. And long trainer names now fit their nameplate banner perfectly."
+  },
+  {
+    "date": "2026-07-22",
+    "title": "🌍 Fixed: PCs stuck at 82%",
+    "body": "Some desktops — mostly touchscreen laptops or screens on high display scaling — were being mistaken for phones. They got the mobile game pack and a phone-sized engine thread pool, which stalled the load at exactly 82% and could crash the tab, or dropped you into the mobile version on a PC. Device detection is now exact: phones get the pocket build, every desktop and tablet gets the full build. If you were stuck at 82%, it was never your PC — try again."
+  },
+  {
+    "date": "2026-07-22",
+    "title": "🔗 Choose your door: Wallet or Demo",
+    "body": "The realm no longer assumes who you are. Every session now opens on a clear choice: CONNECT your Phantom wallet to load your real trainer, progress and $CHIKI — or PLAY DEMO to try the whole island first as the Wanderer with three random chikimon and a mount. The demo is a sealed sandbox: explore, gather, fish and battle everywhere, but nothing saves, nothing earns, no trading, and it never touches the live world — reload and connect whenever you're ready to make it real."
+  },
+  {
+    "date": "2026-07-21",
+    "title": "⚡ The island learned to sleep",
+    "body": "A deep performance pass, biggest on phones: the screen now renders at a sane pixel density on 3× retina displays (the UI was being painted at NINE times the pixels it needed), the ocean dropped to a fraction of its triangles on mobile, and the world finally sleeps when you're not looking — far fish schools, livestock, corruptimons and trees all pause simulation and drawing until you approach. The fixed sky no longer recomputes itself every frame either. Desktop looks identical; phones just breathe."
+  },
+  {
+    "date": "2026-07-21",
+    "title": "📜 Ancient recipes + Craft Orders",
+    "body": "Two big economy unlocks. ANCIENT RECIPES: the five sealed landmarks — the wicked temple, the raid altar, the crystal lode, the sunken galleon and the leviathan's cove — now each whisper a lost double-batch brewing recipe when you stand close and read their legend. Find all five and your cauldron yields 2× on those brews forever. CRAFT ORDERS: the Trading Post's new 📥 Orders tab lets you post what you NEED (\"WTB 20 hide — 400 $CHIKI\"). Your offer is escrowed on the spot; any trainer holding the goods taps Fill, hands them over and keeps 75%. Three open orders max, auto-refund after 25h."
+  },
+  {
+    "date": "2026-07-21",
+    "title": "🔨 Crafting, refined",
+    "body": "Brewing grew up: potions and food now craft ×5 or MAX in one tap (with a live 'can make N' count), every missing material tells you exactly WHERE to get it when you hover its red chip, and the artisan's secret is out — every craft has a 12% MASTERWORK chance that refunds half the materials. Gear ladders are untouched: each tier is still a one-off upgrade."
+  },
+  {
+    "date": "2026-07-21",
+    "title": "⚡ Phones got a serious speed-up",
+    "body": "Mobile now skips building what it never shows: the 168,000-blade grass field, the cloud layer, weather particles and the dynamic street-lamp lights simply don't exist on phones (lamps still glow at night). The world streams a tighter bubble around you. Your avatar, chikimon, and every building look exactly the same — the frame rate doesn't."
+  },
+  {
+    "date": "2026-07-21",
+    "title": "🛡 Fairness & mobile hardening",
+    "body": "A deep audit pass: one-tap Collect now banks BOTH purses (with the amount on the button and honest ceiling handling), phones always start on LOW graphics with a tighter world bubble, the touch joystick lives in its own bottom-left box, the reel duel is finally winnable by holding the Action button, joystick deflection cancels a gather, and the sideways mode survives every refresh. Plus a save-tampering hole was welded shut."
+  },
+  {
+    "date": "2026-07-21",
+    "title": "🎣 The legends grew rarer",
+    "body": "Fantasy fish are now 2× harder to hook across the board — Golden Chikifish 1-in-167, Crystal Koi 1-in-500, Mystic Eel 1-in-1429, Rainbow Fish 1-in-5000 base per cast (before your rod bonus and spot richness). Landing one MEANS something."
+  },
+  {
+    "date": "2026-07-21",
+    "title": "🌟 Pocket Realm — mobile got HALF the weight",
+    "body": "Phones now download a dedicated mobile-lite pack: half the bytes, a quarter of the texture memory — made for wallet browsers like Phantom. Desktop keeps full HD. Everyone also saves 50MB from a build-time cleanup, and the loader now survives connection hiccups with automatic retries."
+  },
+  {
+    "date": "2026-07-21",
+    "title": "📜 System log + Update board + XP bar",
+    "body": "The Chat box gained a SYSTEM tab — a timestamped history of every notification (XP, purchases, level-ups, hatches) so nothing vanishes with the toast. This very Update Board is now LIVE-fed each deploy. And your trainer level + XP progress sits under the logo, always on screen."
+  },
+  {
+    "date": "2026-07-21",
+    "title": "🏃 Hold to run",
+    "body": "Mouse-first movement grew up: quick-click walks you there; HOLD the button ~¼s and your avatar breaks into a RUN, steering after your cursor the whole time. Release and they finish the trip on their own."
+  },
+  {
+    "date": "2026-07-21",
+    "title": "🌟 Sideways mode for wallet browsers",
+    "body": "Phantom's in-app browser can't rotate — so now Chikoria rotates FOR you. Pick which way you'll turn your phone and the whole realm plays fullscreen landscape inside the portrait browser. Your choice is remembered; a tiny corner chip flips sides."
+  },
+  {
+    "date": "2026-07-21",
+    "title": "🌍 Multiplayer rendering v2",
+    "body": "Other trainers now stand on the TRUE ground (no more sinking), bring their whole 3-chikimon party trailing in formation at real size, and move with buttery MMO-grade motion smoothing. Far-off trainers cost nothing until you approach."
+  },
+  {
+    "date": "2026-07-21",
+    "title": "📊 Smart collection pop-ups",
+    "body": "Chikidex, Mountdex and Avatars gained live progress meters, Meme Dynasty scarcity bars (minted / cap), rarity glow on what you own, owned-first sorting, a 🎯 'next to finish' nudge — and the 3D viewer now compares any steed or chikimon against YOURS."
+  },
+  {
+    "date": "2026-08-14",
+    "title": "🖼️ New collectible art for the whole roster",
+    "body": "Every chikimon's NFT case has been repainted as a full scenic portrait — the creature standing in its own world, with real ground, contact shadow and matched light, instead of a figure on a plate. Forty species in all, and the ten normals finally have case art of their own rather than the generic sealed scroll. The same masters now serve the on-chain collection, so anything you have already minted shows the new portrait too."
+  }
 ]
