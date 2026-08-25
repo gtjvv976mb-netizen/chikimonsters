@@ -1,6 +1,11 @@
 [
   {
     "date": "2026-08-24",
+    "title": "🦵 Riders, seated properly this time",
+    "body": "The last pass measured the mounts instead of looking at them, and riders were still ending up inside their steeds. Fixed properly now, by putting an avatar on every chikimount and checking the picture.\n\nWrinkle and Snowball no longer swallow you — standing birds carry you on their shoulders, not somewhere in their chest. Tillman stops holding you above his back. Pesto and the griffin put you on the centre line instead of off one flank.\n\nThe griffin is also twenty percent larger, which suits him.\n\nEmmanuel's neck now carries most of the turn he was built with, so he walks much closer to where he is looking."
+  },
+  {
+    "date": "2026-08-24",
     "title": "🦵 Emmanuel walks a straighter line",
     "body": "Emmanuel was built with his head turned. Not by much — eighteen degrees at the neck — but the game was correcting for it by turning his whole body, which meant his feet had been tracking sideways to wherever he was actually going.\n\nHis neck now carries that turn itself, so far less of it has to be corrected away. He still holds his head at a slight angle, the way a curious bird does, but he walks where he is looking a great deal more closely than he used to."
   },
