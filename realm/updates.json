@@ -1,6 +1,11 @@
 [
   {
     "date": "2026-08-24",
+    "title": "🗺 Stable cards say what a steed can do",
+    "body": "Each card in the Stable now carries its steed's name with its marks beside it, and its special ability written underneath — the reason to pick one mount over another, which until now was only visible if you opened the 3D view.\n\nYour avatar collectibles show their own artwork in the collection grid too. They had been falling back to the certificate scroll: the art existed all along, the lookup was simply asking for the wrong filename.\n\nEmmanuel now faces exactly where his rider faces, measured off the avatar rather than guessed."
+  },
+  {
+    "date": "2026-08-24",
     "title": "🦩 Emmanuel turns his head, not his whole body",
     "body": "Emmanuel was built with his head on crooked, and the game had been compensating by turning the entire bird — which straightened his face at the cost of walking his feet sideways.\n\nHis head now carries that correction by itself. Body square, feet tracking where he is going, face pointing the same way you are. Nothing is stretched to achieve it: the turn happens at the joint, so no part of him is dragged out of shape.\n\nHis phone rides with his hands again, where it belongs."
   },
