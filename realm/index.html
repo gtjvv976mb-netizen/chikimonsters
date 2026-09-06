@@ -2,7 +2,7 @@
 <html lang="en">
 	<head>
 		<meta charset="utf-8">
-		<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0">
+		<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, viewport-fit=cover">
 		<title>Chikoria Realm</title>
 		<link rel="icon" type="image/png" href="coin.png">
 		<link rel="apple-touch-icon" href="coin.png">
@@ -28,11 +28,12 @@
 		</script>
 		<style>
 html, body, #canvas { margin: 0; padding: 0; border: 0; }
+html, body { width: 100%; height: 100%; overscroll-behavior: none; }
 body {
 	background: #050f1f; color: #dce8fa; overflow: hidden; touch-action: none;
 	font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
 }
-#canvas { display: block; }
+#canvas { display: block; touch-action: none; user-select: none; -webkit-user-select: none; }
 #canvas:focus { outline: none; }
 /* the game's chunky rounded display font, straight from the pck assets */
 @font-face {
@@ -361,6 +362,7 @@ html.chik-phone #tip { font-size: 10px; min-height: 12px; line-height: 12px; max
 			});
 			function layout(){
 				var on = active();
+				window.CHIK_CANVAS_ROTATION = on ? MODE : '';
 				if (wrap) {
 					wrap.style.width  = (on ? rH() : rW()) + 'px';
 					wrap.style.height = (on ? rW() : rH()) + 'px';
@@ -493,6 +495,53 @@ html.chik-phone #tip { font-size: 10px; min-height: 12px; line-height: 12px; max
 				}
 			}
 			else { applyOverlay(); }
+		})();
+		</script>
+		<script id="chik-mobile-viewport-bridge">
+		// Godot's Temple HUD reads this at most twice per second (or on viewport resize). All
+		// values are CSS px in the unrotated game canvas, never backing pixels or graphics tiers.
+		(function () {
+			var safeProbe = null;
+			function safeInsets() {
+				if (!safeProbe) {
+					safeProbe = document.createElement('div');
+					safeProbe.setAttribute('aria-hidden', 'true');
+					safeProbe.style.cssText = 'position:fixed;width:0;height:0;visibility:hidden;pointer-events:none;' +
+						'padding-left:env(safe-area-inset-left,0px);padding-top:env(safe-area-inset-top,0px);' +
+						'padding-right:env(safe-area-inset-right,0px);padding-bottom:env(safe-area-inset-bottom,0px);';
+					document.body.appendChild(safeProbe);
+				}
+				var style = getComputedStyle(safeProbe);
+				return [style.paddingLeft, style.paddingTop, style.paddingRight, style.paddingBottom]
+					.map(function (value) { return Math.max(0, parseFloat(value) || 0); });
+			}
+			window.CHIK_MOBILE_VIEWPORT = function () {
+				var canvas = document.getElementById('canvas');
+				var rect = canvas && canvas.getBoundingClientRect();
+				var width = rect && rect.width > 0 ? rect.width : window.innerWidth;
+				var height = rect && rect.height > 0 ? rect.height : window.innerHeight;
+				var edges = safeInsets();
+				// CSS rotation maps screen TOP to game LEFT in CW mode and RIGHT in CCW mode.
+				if (window.CHIK_CANVAS_ROTATION === 'cw') {
+					edges = [edges[1], edges[2], edges[3], edges[0]];
+				} else if (window.CHIK_CANVAS_ROTATION === 'ccw') {
+					edges = [edges[3], edges[0], edges[1], edges[2]];
+				} else if (rect) {
+					edges = [Math.max(0, edges[0] - rect.left), Math.max(0, edges[1] - rect.top),
+						Math.max(0, edges[2] - (window.innerWidth - rect.right)),
+						Math.max(0, edges[3] - (window.innerHeight - rect.bottom))];
+				}
+				var coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+				return {css_size:[width, height], safe_insets:edges,
+					touch:!!(window.CHIK_PHONE || window.CHIK_TABLET || (coarse && navigator.maxTouchPoints > 0))};
+			};
+			// Safari/browser chrome can change the visual viewport without a document resize.
+			var resizeQueued = false;
+			if (window.visualViewport) window.visualViewport.addEventListener('resize', function () {
+				if (resizeQueued) return;
+				resizeQueued = true;
+				requestAnimationFrame(function () { resizeQueued = false; window.dispatchEvent(new Event('resize')); });
+			});
 		})();
 		</script>
 		<div id="boot">
@@ -1100,7 +1149,7 @@ html.chik-phone #tip { font-size: 10px; min-height: 12px; line-height: 12px; max
 		</script>
 		<script src="index.js"></script>
 		<script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":288433452,"index.wasm":40092042},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":305699268,"index.wasm":40092042},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
 const GODOT_THREADS_ENABLED = true;
 const engine = new Engine(GODOT_CONFIG);
 
