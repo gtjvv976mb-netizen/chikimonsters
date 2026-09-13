@@ -1,0 +1,15 @@
+/realm/chikiseum-test-1eb4980816/*
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Embedder-Policy: require-corp
+  Cross-Origin-Resource-Policy: same-origin
+  X-Robots-Tag: noindex
+/realm/chikiseum-test-1eb4980816/
+  Cache-Control: no-store
+/realm/chikiseum-test-1eb4980816/index.html
+  Cache-Control: no-store
+/realm/chikiseum-test-1eb4980816/*.bin
+  Content-Type: application/octet-stream
+/realm/chikiseum-test-1eb4980816/*.js
+  Content-Type: application/javascript
+/realm/chikiseum-test-1eb4980816/*.json
+  Content-Type: application/json

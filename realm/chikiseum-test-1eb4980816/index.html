@@ -1,0 +1,1680 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="robots" content="noindex, nofollow">
+		<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, viewport-fit=cover">
+		<title>Chikiseum Test</title>
+		<link rel="icon" type="image/png" href="coin.png">
+		<link rel="apple-touch-icon" href="coin.png">
+		<script>
+		// the engine stamps document.title with the internal project name on boot —
+		// pin the public name (the $CHIKI coin favicon is the "token image" beside it)
+		(function () {
+			var WANT = "Chikiseum Test";
+			function pin() { if (document.title !== WANT) document.title = WANT; }
+			pin();
+			var t = document.querySelector("title");
+			if (t && window.MutationObserver) new MutationObserver(pin).observe(t, { childList: true });
+			setInterval(pin, 3000);   // belt-and-braces: some engines assign title repeatedly
+			// force the $CHIKI coin favicon to win over the engine's injected index.icon.png
+			function coinIcon() {
+				document.querySelectorAll('link[rel~="icon"], link[rel="apple-touch-icon"]').forEach(function (l) {
+					if (l.href.indexOf("coin.png") === -1) l.parentNode.removeChild(l);
+				});
+			}
+			coinIcon();
+			setTimeout(coinIcon, 1500);
+		})();
+		</script>
+		<style>
+html, body, #canvas { margin: 0; padding: 0; border: 0; }
+html, body { width: 100%; height: 100%; overscroll-behavior: none; }
+body {
+	background: #050f1f; color: #dce8fa; overflow: hidden; touch-action: none;
+	font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+#canvas { display: block; touch-action: none; user-select: none; -webkit-user-select: none; }
+#canvas:focus { outline: none; }
+/* the game's chunky rounded display font, straight from the pck assets */
+@font-face {
+	font-family: "ChikoriaBaloo";
+	src: url("loading_font.ttf") format("truetype");
+	font-display: swap;
+}
+#boot {
+	position: absolute; inset: 0; z-index: 10;
+	/* the CHIKORIA key art IS the loading screen (logo baked into the picture) */
+	background: url("loading.png") center 32% / cover no-repeat, #0b1f4e;
+	display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+	gap: 14px; padding-bottom: 8vh;
+}
+/* soft ground shadow so the bar + text read over the bright voxel meadow */
+#boot::before {
+	content: ""; position: absolute; inset: auto 0 0 0; height: 34vh; pointer-events: none;
+	background: linear-gradient(180deg, rgba(6, 14, 4, 0) 0%, rgba(6, 14, 4, .58) 78%, rgba(6, 14, 4, .72) 100%);
+}
+#boot > * { position: relative; }   /* keep the controls above the ::before scrim */
+#barwrap {
+	width: min(560px, 74vw); height: 28px;
+	border: 4px solid #241505; border-radius: 9px;
+	background: linear-gradient(180deg, #171007, #2b1c0a);
+	overflow: hidden;
+	box-shadow: 0 5px 0 rgba(10, 6, 2, .55), inset 0 2px 4px rgba(0, 0, 0, .6), 0 0 0 2px rgba(255, 211, 77, .28);
+}
+#bar {
+	height: 100%; width: 0%; border-radius: 4px; transition: width .2s;
+	/* amber like the CHIKORIA letters, with a blocky voxel shimmer */
+	background:
+		repeating-linear-gradient(90deg, rgba(255, 255, 255, .16) 0 3px, rgba(255, 255, 255, 0) 3px 16px),
+		linear-gradient(180deg, #ffe07a 0%, #ffc93c 45%, #e08c05 100%);
+	box-shadow: inset 0 -4px 6px rgba(122, 62, 0, .55), inset 0 2px 2px rgba(255, 255, 255, .5);
+}
+#pct {
+	font-family: "ChikoriaBaloo", "Arial Rounded MT Bold", -apple-system, sans-serif;
+	color: #ffd34d; font-weight: 800; font-size: 20px; letter-spacing: 1px;
+	text-shadow: 0 2px 0 #241505, -1px 0 0 #241505, 1px 0 0 #241505, 0 -1px 0 #241505, 0 6px 14px rgba(0, 0, 0, .6);
+}
+#tip {
+	font-family: "ChikoriaBaloo", "Arial Rounded MT Bold", -apple-system, sans-serif;
+	color: #f4e9c8; font-size: 15px; min-height: 20px; text-align: center; max-width: 86vw;
+	text-shadow: 0 2px 0 rgba(20, 12, 4, .85), 0 4px 10px rgba(0, 0, 0, .55);
+}
+/* MOBILE ONLY (html.chik-phone): on short phone screens the key-art logo sits mid-frame —
+   the loading column shrinks and hugs the very bottom edge, well clear of it */
+html.chik-phone #boot { gap: 2px; padding-bottom: 5px; }
+html.chik-phone #barwrap { width: min(240px, 36vw); height: 11px; border-width: 2px; }
+/* % and tip share ONE tiny line each, tight under the bar — the whole column is ~40px tall
+   pinned to the very bottom edge, far below the key-art logo */
+html.chik-phone #pct { font-size: 11px; line-height: 12px; }
+html.chik-phone #tip { font-size: 10px; min-height: 12px; line-height: 12px; max-width: 70vw;
+	white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#err {
+	display: none; max-width: min(640px, 86vw);
+	font-family: "ChikoriaBaloo", -apple-system, sans-serif;
+	background: rgba(64, 30, 26, .92); border: 3px solid #241505; color: #ffd9c9;
+	border-radius: 10px; padding: 14px 18px; line-height: 1.4; text-align: center; white-space: pre-wrap;
+	box-shadow: 0 5px 0 rgba(10, 6, 2, .5);
+}
+/* ---------- HTML title screen: the hero art + $CHIKI coin, shown INSTANTLY ---------- */
+#hero {
+	position: absolute; inset: 0; z-index: 12; overflow: hidden;
+	background: #061426; cursor: default;
+}
+/* pure-CSS covered layout: correct framing from the very first paint, no JS needed */
+#heroimg {
+	position: absolute; inset: 0; width: 100%; height: 100%;
+	object-fit: cover; object-position: center;
+	user-select: none; -webkit-user-drag: none; pointer-events: none;
+}
+#coin {
+	position: absolute; padding: 0; border: 0; background: transparent; cursor: pointer;
+	visibility: hidden;   /* the early inline script positions it, then shows it */
+	animation: coinpulse 2.1s ease-in-out infinite;
+	filter: drop-shadow(0 0 18px rgba(255, 211, 77, .55));
+}
+#coin img { width: 100%; height: 100%; display: block; user-select: none; -webkit-user-drag: none; }
+#coin:hover { animation-play-state: paused; transform: scale(1.08); }
+@keyframes coinpulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+#herohint {
+	position: absolute; left: 0; right: 0; bottom: 7vh; text-align: center; pointer-events: none;
+	font-family: "ChikoriaBaloo", "Arial Rounded MT Bold", -apple-system, sans-serif;
+	color: #eaf6ff; font-size: 21px;
+	text-shadow: 0 2px 0 rgba(0, 0, 0, .7), 0 6px 16px rgba(0, 0, 0, .55);
+	animation: hintbob 1.6s ease-in-out infinite;
+}
+@keyframes hintbob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+/* ---------- loading-page info bar: ONE carved strip across the whole top ---------- */
+#ltabs {
+	position: absolute; top: 0; left: 0; right: 0; z-index: 11;
+	display: flex; flex-wrap: nowrap; justify-content: center; align-items: stretch;
+	overflow-x: auto; gap: 0;
+	background: linear-gradient(180deg, #3a2712 0%, #2a1a09 55%, #1c1106 100%);
+	border-bottom: 3px solid #d9a636;
+	box-shadow: 0 6px 18px rgba(0, 0, 0, .55), inset 0 -6px 12px rgba(0, 0, 0, .35);
+}
+.ltab {
+	flex: 0 0 auto; cursor: pointer; border: 0; background: transparent;
+	font-family: "ChikoriaBaloo", "Arial Rounded MT Bold", -apple-system, sans-serif;
+	font-size: clamp(11px, 1.35vw, 17px); letter-spacing: .4px; font-weight: 800;
+	color: #f0d896; padding: clamp(9px, 1.1vw, 14px) clamp(10px, 1.6vw, 22px);
+	text-shadow: 0 2px 0 rgba(20, 12, 4, .85);
+	border-right: 1px solid rgba(255, 233, 120, .14);
+	transition: background .1s ease, color .1s ease;
+	user-select: none; white-space: nowrap;
+}
+.ltab:first-child { border-left: 1px solid rgba(255, 233, 120, .14); }
+.ltab:hover { color: #ffe978; background: rgba(255, 211, 77, .10); }
+.ltab.active {
+	color: #2a1a08;
+	background: linear-gradient(180deg, #ffe07a 0%, #ffc93c 55%, #e09a10 100%);
+	text-shadow: 0 1px 0 rgba(255, 255, 255, .45);
+	box-shadow: inset 0 -3px 6px rgba(122, 62, 0, .35);
+}
+/* pop-out panels drop from under the bar — capped height so the loading bar at the
+   bottom always stays visible */
+.lpanel {
+	position: absolute; left: 50%; top: 58px; transform: translateX(-50%) translateY(-8px); z-index: 11;
+	width: min(860px, 94vw); max-height: calc(100vh - 300px); overflow-y: auto;
+	background: rgba(8, 18, 34, .97); border: 3px solid #ffd34d; border-radius: 18px;
+	box-shadow: 0 24px 70px rgba(0, 0, 0, .7); padding: 22px 26px;
+	opacity: 0; pointer-events: none; transition: .22s;
+	font-family: "ChikoriaBaloo", "Arial Rounded MT Bold", -apple-system, sans-serif;
+}
+.lpanel.show { opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0); }
+.lpanel h2 { font-size: 24px; color: #ffd34d; margin: 0 0 6px; }
+.lpanel h3 { font-size: 15px; color: #9fd0ff; margin: 14px 0 6px; }
+.lpanel p, .lpanel li { font-size: 14px; line-height: 1.6; color: #dce8fa; }
+.lpanel ul { margin: 6px 0 6px 20px; padding: 0; }
+.lpanel .x { position: absolute; top: 12px; right: 16px; font-size: 20px; color: #9fb6d8; cursor: pointer; }
+.lpanel .x:hover { color: #fff; }
+.lgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-top: 10px; }
+.lcard { background: #0d2142; border: 1px solid #29476f; border-radius: 12px; padding: 12px; font-size: 13px; color: #dce8fa; }
+.lcard b { color: #ffd34d; }
+.ldex { display: grid; grid-template-columns: repeat(auto-fit, minmax(104px, 1fr)); gap: 10px; margin-top: 10px; }
+.ldex div { background: #0d2142; border: 1px solid #29476f; border-radius: 10px; padding: 8px; text-align: center; }
+.ldex img { display: block; width: 100%; height: 76px; object-fit: contain; margin: 0 auto 4px; -webkit-user-drag: none; }
+.ldex strong { display: block; font-size: 13px; color: #fff; }
+.ldex span { font-size: 10px; color: #9fb6d8; }
+.ldex div.legend { border-color: #a06ae0; box-shadow: 0 0 10px rgba(160, 106, 224, .45); }
+.ldex div.legend span { color: #c79bff; font-weight: 800; }
+.ldex div.meme { border-color: #e0b34a; box-shadow: 0 0 10px rgba(224, 179, 74, .4); }
+.ldex div.meme span { color: #ffd97a; font-weight: 800; }
+.lnote { font-size: 11.5px; color: #90a6c8; margin-top: 12px; }
+.lmint { font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; word-break: break-all; color: #9fd0ff; }
+.lprize {
+	background: linear-gradient(135deg, #241536, #3a2154); border: 2px solid #b58cff; border-radius: 14px;
+	padding: 14px 16px; margin-top: 10px; box-shadow: 0 0 22px rgba(160, 106, 224, .35);
+}
+.lprize b { color: #ffd97a; } .lprize .big { font-size: 21px; color: #ffe978; display: block; margin: 2px 0 4px; }
+.lhook { color: #ffd97a; font-size: 14.5px; margin-top: 12px; text-align: center; }
+.lpanel a { color: #ffd97a; text-decoration: none; }
+.lpanel a:hover { text-decoration: underline; }
+.lpanel::-webkit-scrollbar { width: 9px; } .lpanel::-webkit-scrollbar-thumb { background: #29476f; border-radius: 5px; }
+/* the generic "#boot > *" relative rule outranks .lpanel — win it back, or the invisible
+   panels join the flex column and shove the loading bar off the top of the screen */
+#boot #ltabs, #boot .lpanel { position: absolute; }
+/* ---------- post-load intro clip ---------- */
+#cine { position: absolute; inset: 0; z-index: 15; background: #000; display: none; cursor: pointer; }
+#cinevid { width: 100%; height: 100%; object-fit: contain; }
+#cineskip {
+	position: absolute; right: 18px; bottom: 14px; pointer-events: none;
+	font-family: "ChikoriaBaloo", -apple-system, sans-serif; font-size: 13px; color: rgba(255, 255, 255, .65);
+	text-shadow: 0 1px 2px rgba(0, 0, 0, .8);
+}
+		</style>
+		<link rel="preload" as="image" href="hero.jpg">
+		<!-- warm DNS + the TLS ticket for the game backend while the pack downloads. The socket itself
+		     rarely survives (different origin from the pck; browsers close idle preconnects in ~10s),
+		     but on a Render cold start the TLS leg alone measured ~4.9s — this is the cheap half of it.
+		     Host must match Net.gd BACKEND exactly: chiki-backend-singapore.onrender.com. -->
+		<link rel="preconnect" href="https://chiki-backend-singapore.onrender.com" crossorigin>
+		<link rel="dns-prefetch" href="https://chiki-backend-singapore.onrender.com">
+		<link id="-gd-engine-icon" rel="icon" type="image/png" href="index.icon.png" />
+<link rel="apple-touch-icon" href="index.apple-touch-icon.png"/>
+<script src="coi-serviceworker.min.js"></script>
+	</head>
+	<body>
+		<canvas id="canvas">Your browser does not support the canvas tag.</canvas>
+		<noscript>Your browser does not support JavaScript.</noscript>
+		<!-- MOBILE: Chikoria plays in LANDSCAPE, but wallet in-app browsers (Phantom!) can't rotate.
+		     So on a portrait phone we ASK which way the player will turn the phone, then rotate the
+		     whole GAME 90° in CSS — the browser stays portrait, the world plays sideways. -->
+		<div id="rotate" style="position:fixed; inset:0; z-index:99999; display:none; flex-direction:column;
+			align-items:center; justify-content:center; gap:16px; text-align:center;
+			background:#0b1f4e url('loading.png') center/cover no-repeat; color:#ffe07a;
+			font-family:'Baloo 2','Segoe UI',sans-serif; padding:24px;">
+			<div style="position:absolute; inset:0; background:rgba(6,14,30,.78);"></div>
+			<div style="position:relative; font-size:56px; animation:rotspin 2.4s ease-in-out infinite;">&#128241;</div>
+			<div style="position:relative; font-size:22px; font-weight:700; text-shadow:0 2px 6px #000;">Play sideways</div>
+			<div style="position:relative; font-size:14px; color:#cfe0ff; max-width:320px; text-shadow:0 2px 6px #000;">
+				This browser can't rotate on its own, so we'll turn the world for you.<br>Which way will you hold your phone?</div>
+			<div style="position:relative; display:flex; gap:14px;">
+				<button id="rotbtnL" style="font-family:inherit; font-size:16px; font-weight:700; color:#1c1204;
+					background:linear-gradient(180deg,#ffd968,#e8a93c); border:2px solid #8a5c14; border-radius:14px;
+					padding:14px 18px; cursor:pointer; box-shadow:0 4px 0 #6b430c;">&#10226; Turn phone<br>LEFT</button>
+				<button id="rotbtnR" style="font-family:inherit; font-size:16px; font-weight:700; color:#1c1204;
+					background:linear-gradient(180deg,#ffd968,#e8a93c); border:2px solid #8a5c14; border-radius:14px;
+					padding:14px 18px; cursor:pointer; box-shadow:0 4px 0 #6b430c;">&#10227; Turn phone<br>RIGHT</button>
+			</div>
+			<div id="rotskip" style="position:relative; font-size:12px; color:#9fb4d8; text-decoration:underline; cursor:pointer;">my browser rotates by itself — I'll just flip my phone</div>
+		</div>
+		<!-- tiny always-there switch to flip the chosen side mid-game (unrotated corner chip,
+		     tucked into the exact corner so it rides the top-bar fringe, never a button) -->
+		<div id="sideflip" style="position:fixed; right:calc(8px + env(safe-area-inset-right, 0px)); bottom:calc(16px + env(safe-area-inset-bottom, 0px));
+			z-index:99998; display:none; width:40px; height:40px;
+			border-radius:50%; background:rgba(10,22,44,.62); border:2px solid rgba(255,214,104,.65); color:#ffd968;
+			font-size:20px; line-height:37px; text-align:center; cursor:pointer; user-select:none;
+			box-shadow:0 2px 8px rgba(0,0,0,.5);">&#10561;</div>
+		<style>@keyframes rotspin{0%,100%{transform:rotate(-18deg)}50%{transform:rotate(72deg)}}</style>
+		<script>
+		(function(){
+			// SUPPORT: /realm/?wipelocal — one-click local reset. Deletes the game's IndexedDB
+			// filesystem (saves, per-wallet slots, settings) on THIS device only; cloud-saved
+			// progress returns at the next wallet sign-in. Repairs saves contaminated by the
+			// pre-slot wallet-inheritance bug. Confirm-gated so a shared link can't nuke data.
+			if (/[?&]wipelocal/.test(location.search)) {
+				if (confirm("Reset ALL local Chikoria data on this device?\n\nCloud-saved progress comes back when you sign in with your wallet.")) {
+					(async function(){
+						try {
+							var names = [];
+							if (indexedDB.databases) {
+								var dbs = await indexedDB.databases();
+								names = (dbs || []).map(function(d){ return d.name; })
+									.filter(function(n){ return n && n.indexOf("userfs") !== -1; });
+							}
+							if (!names.length) names = ["/userfs"];
+							await Promise.all(names.map(function(n){
+								return new Promise(function(res){
+									var r = indexedDB.deleteDatabase(n);
+									r.onsuccess = r.onerror = r.onblocked = res;
+								});
+							}));
+						} catch (e) {}
+						// the pack cache is Cache Storage, not IndexedDB — "reset ALL local data" has to
+						// mean all of it, or 236MB of chunks survives a wipe the player asked for
+						try { if (window.caches) { await caches.delete('chikoria-realm-chunks'); } } catch (e) {}
+						location.replace(location.pathname);
+					})();
+				} else location.replace(location.pathname);
+				return;
+			}
+			// ONE deterministic phone check for the whole shell. The old touch+screen-size
+			// heuristic misfired on touchscreen / high-display-scaling DESKTOPS (Windows at
+			// 200-250% scaling reports a sub-820px CSS screen), which handed PCs the phone
+			// loader: mobile-lite pack + a 4-6 worker pool -> voxel boot DEADLOCK at 82%.
+			// THE PACK LIVES IN OBJECT STORAGE, not in this repo. Committing a fresh ~370MB of chunks on
+			// every release grew .git to about 45GB and GitHub Pages stopped publishing entirely —
+			// nothing reached players for a day. Serving the binaries from R2 keeps the repo at source
+			// size, so a release is a few KB again.
+			//
+			// Verified before switching over: all 16 objects present at the bucket root, byte-identical
+			// to the build (R2 returns the md5 as ETag, and all 16 matched), and
+			// Access-Control-Allow-Origin: https://chikimonsters.com is present — which is the one that
+			// matters, because this page runs under Cross-Origin-Embedder-Policy: require-corp and a
+			// cross-origin fetch without CORS would fail before coi-serviceworker could stamp CORP on it.
+			//
+			// ?nocdn falls back to same-origin, for testing or if the bucket ever misbehaves. The loader
+			// also falls back per-chunk on its own after two failed attempts (see chunkUrl/streamParts).
+			window.CHIK_CDN = '';
+			// The user agent is unambiguous here: Phantom/Safari on iPhone always says
+			// iPhone; Android phone browsers always say Android+Mobile. Tablets and every
+			// desktop take the full desktop build. (?forcephone = dev testing)
+			window.CHIK_PHONE = /iPhone|iPod/.test(navigator.userAgent)
+				|| (/Android/i.test(navigator.userAgent) && /Mobile/i.test(navigator.userAgent))
+				|| /[?&]forcephone/.test(location.search);
+			if (window.CHIK_PHONE) { document.documentElement.classList.add('chik-phone'); }
+			// TABLETS (iPad incl. desktop-class UA, Android tablets): full desktop game pack,
+			// but wallet browsers portrait-lock them too — so they DO get the sideways-mode
+			// rotation + the corner flip chip. iPads report "Macintosh" + multi-touch.
+			window.CHIK_TABLET = !window.CHIK_PHONE && (
+				/iPad/.test(navigator.userAgent)
+				|| (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1)
+				|| (/Android/i.test(navigator.userAgent) && !/Mobile/i.test(navigator.userAgent) && ('ontouchstart' in window)));
+			var isPhone = window.CHIK_PHONE || window.CHIK_TABLET;
+			var ov = document.getElementById('rotate');
+			var flipBtn = document.getElementById('sideflip');
+			if (!isPhone) { return; }
+			var canvas = document.getElementById('canvas');
+			var MODE = '';            // '' | 'cw' (phone turned LEFT) | 'ccw' (phone turned RIGHT)
+			var wrap = null;
+			// real viewport dims, immune to our own innerWidth/innerHeight patch
+			var _wD = Object.getOwnPropertyDescriptor(window, 'innerWidth');
+			var _hD = Object.getOwnPropertyDescriptor(window, 'innerHeight');
+			function rW(){ try { if (_wD && _wD.get) { return _wD.get.call(window); } } catch(e){} return document.documentElement.clientWidth; }
+			function rH(){ try { if (_hD && _hD.get) { return _hD.get.call(window); } } catch(e){} return document.documentElement.clientHeight; }
+			function portrait(){ return rH() > rW(); }
+			function active(){ return MODE !== '' && portrait(); }   // real landscape → rotation auto-suspends
+			// the ENGINE (adaptive canvas sizing) must believe the viewport is landscape while forced
+			try {
+				Object.defineProperty(window, 'innerWidth',  { configurable:true, get:function(){ return active() ? rH() : rW(); } });
+				Object.defineProperty(window, 'innerHeight', { configurable:true, get:function(){ return active() ? rW() : rH(); } });
+			} catch(e) {}
+			// Godot converts touches with canvas.getBoundingClientRect(); a rotated canvas reports its
+			// AABB, so hand it the UNROTATED rect instead — then our remapped coords line up exactly.
+			var bcr0 = canvas.getBoundingClientRect.bind(canvas);
+			canvas.getBoundingClientRect = function(){
+				if (!active()) { return bcr0(); }
+				var w = rH(), h = rW();
+				return { x:0, y:0, left:0, top:0, right:w, bottom:h, width:w, height:h };
+			};
+			var _synthRs = false;
+			function pokeEngine(){ _synthRs = true; try { window.dispatchEvent(new Event('resize')); } catch(e){} _synthRs = false; }
+			function ensureWrap(){
+				if (!wrap) {
+					wrap = document.createElement('div');
+					wrap.id = 'rotwrap';
+					wrap.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);';
+					document.body.insertBefore(wrap, canvas);
+				}
+				// the WHOLE experience rotates: game canvas + hero + loading + intro video.
+				// IDEMPOTENT adoption: this module runs BEFORE #boot/#hero/#cine exist in the
+				// DOM, so a stored side applied at parse time only caught the canvas — the
+				// refreshed homepage/loading page stayed portrait. DOMContentLoaded re-adopts.
+				['canvas','boot','hero','cine'].forEach(function(id){
+					var el = document.getElementById(id);
+					if (el && el.parentNode !== wrap) { wrap.appendChild(el); }
+				});
+			}
+			document.addEventListener('DOMContentLoaded', function(){
+				if (MODE !== '') { ensureWrap(); layout(); }
+				applyOverlay();
+			});
+			function layout(){
+				var on = active();
+				window.CHIK_CANVAS_ROTATION = on ? MODE : '';
+				if (wrap) {
+					wrap.style.width  = (on ? rH() : rW()) + 'px';
+					wrap.style.height = (on ? rW() : rH()) + 'px';
+					wrap.style.transform = 'translate(-50%,-50%)' + (on ? (' rotate(' + (MODE === 'cw' ? '90' : '-90') + 'deg)') : '');
+				}
+				flipBtn.style.display = on ? 'block' : 'none';
+				pokeEngine();
+			}
+			function applyOverlay(){
+				var dismissed = false;
+				try { dismissed = sessionStorage.getItem('chik_norot') === '1'; } catch(e){}
+				ov.style.display = (portrait() && MODE === '' && !dismissed) ? 'flex' : 'none';
+			}
+			function setMode(m, persist){
+				MODE = m;
+				if (m !== '') {
+					ensureWrap();
+					if (persist) { try { localStorage.setItem('chik_side', m); } catch(e){} }
+				}
+				layout();
+				applyOverlay();
+				var c = document.getElementById('canvas');
+				if (c) { try { c.focus(); } catch(e){} }
+			}
+			// ---- input remap: touches on the rotated CANVAS get mapped into game space.
+			// DOM overlays (hero/boot/video/dialogs) hit-test natively through the CSS transform,
+			// so ONLY canvas-targeted events are intercepted. Synthetic events (isTrusted=false)
+			// pass straight through — that's our own re-dispatch.
+			function mapXY(px, py){
+				var W = rW(), H = rH();
+				return (MODE === 'cw') ? { x: py, y: W - px } : { x: H - py, y: px };
+			}
+			function synthTouch(e, tp){
+				if (typeof Touch !== 'function' || typeof TouchEvent !== 'function') { return null; }
+				try {
+					var conv = function(list){
+						var out = [];
+						for (var i = 0; i < list.length; i++){
+							var t = list[i], m = mapXY(t.clientX, t.clientY);
+							out.push(new Touch({ identifier:t.identifier, target:canvas, clientX:m.x, clientY:m.y,
+								screenX:m.x, screenY:m.y, pageX:m.x, pageY:m.y,
+								radiusX:t.radiusX || 1, radiusY:t.radiusY || 1, force:t.force || 1 }));
+						}
+						return out;
+					};
+					return new TouchEvent(tp, { bubbles:true, cancelable:true,
+						touches:conv(e.touches), targetTouches:conv(e.targetTouches), changedTouches:conv(e.changedTouches) });
+				} catch(err) { return null; }
+			}
+			function synthMouseFromTouch(e, tp){
+				// ancient WebView without the Touch constructor: single-finger mouse emulation
+				var mmap = { touchstart:'mousedown', touchmove:'mousemove', touchend:'mouseup', touchcancel:'mouseup' };
+				var t = e.changedTouches && e.changedTouches[0];
+				if (!t) { return; }
+				var m = mapXY(t.clientX, t.clientY);
+				var me = new MouseEvent(mmap[tp], { bubbles:true, cancelable:true, button:0,
+					buttons:(tp === 'touchend' || tp === 'touchcancel') ? 0 : 1, clientX:m.x, clientY:m.y });
+				try { me.__synth = true; } catch(err) {}
+				canvas.dispatchEvent(me);
+			}
+			['touchstart','touchmove','touchend','touchcancel',
+			 'mousedown','mousemove','mouseup',
+			 'pointerdown','pointermove','pointerup','pointercancel'].forEach(function(tp){
+				window.addEventListener(tp, function(e){
+					// __rotTestTrust: dev hook so automated tests can exercise the remap (synthetic
+					// events are never trusted); __synth marks OUR re-dispatch so it always passes through
+					if (!active() || e.__synth || !(e.isTrusted || window.__rotTestTrust) || e.target !== canvas) { return; }
+					e.stopImmediatePropagation(); e.stopPropagation();
+					if (e.cancelable) { e.preventDefault(); }
+					var se = null;
+					if (tp.slice(0, 5) === 'touch') {
+						se = synthTouch(e, tp);
+						if (!se) { synthMouseFromTouch(e, tp); return; }
+					} else if (tp.slice(0, 7) === 'pointer' && window.PointerEvent) {
+						var mp = mapXY(e.clientX, e.clientY);
+						se = new PointerEvent(tp, { bubbles:true, cancelable:true, pointerId:e.pointerId,
+							pointerType:e.pointerType, isPrimary:e.isPrimary, button:e.button, buttons:e.buttons,
+							clientX:mp.x, clientY:mp.y, screenX:mp.x, screenY:mp.y });
+					} else {
+						var mm = mapXY(e.clientX, e.clientY);
+						se = new MouseEvent(tp, { bubbles:true, cancelable:true, button:e.button, buttons:e.buttons,
+							clientX:mm.x, clientY:mm.y, screenX:mm.x, screenY:mm.y });
+					}
+					if (se) {
+						try { se.__synth = true; } catch(err) {}
+						canvas.dispatchEvent(se);
+					}
+				}, { capture:true, passive:false });
+			});
+			// ---- wire the chooser + the mid-game side flip ----
+			// bind BOTH click and touchend: some wallet WebViews synthesize click unreliably on
+			// styled buttons. touchend preventDefault()s so the trailing click never double-fires.
+			function tapOrClick(el, fn){
+				el.addEventListener('click', fn);
+				el.addEventListener('touchend', function(e){
+					if (e.cancelable) { e.preventDefault(); }
+					fn();
+				});
+			}
+			tapOrClick(document.getElementById('rotbtnL'), function(){ setMode('cw', true); });
+			tapOrClick(document.getElementById('rotbtnR'), function(){ setMode('ccw', true); });
+			tapOrClick(document.getElementById('rotskip'), function(){
+				try { sessionStorage.setItem('chik_norot', '1'); } catch(e){}
+				applyOverlay();
+			});
+			tapOrClick(flipBtn, function(){ setMode(MODE === 'cw' ? 'ccw' : 'cw', true); });
+			window.addEventListener('resize', function(){ if (_synthRs) { return; } layout(); applyOverlay(); });
+			window.addEventListener('orientationchange', function(){ layout(); applyOverlay(); });
+			// best-effort REAL orientation lock (works in installed/PWA contexts; harmless otherwise)
+			try { if (screen.orientation && screen.orientation.lock) { screen.orientation.lock('landscape').catch(function(){}); } } catch(e){}
+			var stored = '';
+			try { stored = localStorage.getItem('chik_side') || ''; } catch(e){}
+			if (stored === 'cw' || stored === 'ccw') {
+				setMode(stored, false);   // returning player: rotate immediately, no chooser
+				// …but SHOW them where the sideways control lives now (one 6s hint per session)
+				var hinted = false;
+				try { hinted = sessionStorage.getItem('chik_fliphint') === '1'; } catch(e){}
+				if (!hinted) {
+					try { sessionStorage.setItem('chik_fliphint', '1'); } catch(e){}
+					var hint = document.createElement('div');
+					hint.textContent = '⤾ flips your side';
+					hint.style.cssText = 'position:fixed; right:calc(54px + env(safe-area-inset-right, 0px));' +
+						'bottom:calc(24px + env(safe-area-inset-bottom, 0px)); z-index:99998;' +
+						'background:rgba(10,22,44,.85); border:1px solid rgba(255,214,104,.6); color:#ffe07a;' +
+						'font:600 12px "Baloo 2","Segoe UI",sans-serif; padding:6px 10px; border-radius:10px;' +
+						'pointer-events:none; transition:opacity .6s;';
+					document.body.appendChild(hint);
+					setTimeout(function(){ hint.style.opacity = '0'; }, 5400);
+					setTimeout(function(){ if (hint.parentNode) { hint.remove(); } }, 6200);
+				}
+			}
+			else { applyOverlay(); }
+		})();
+		</script>
+		<script id="chik-mobile-viewport-bridge">
+		// Godot's Temple HUD reads this at most twice per second (or on viewport resize). All
+		// values are CSS px in the unrotated game canvas, never backing pixels or graphics tiers.
+		(function () {
+			var safeProbe = null;
+			function safeInsets() {
+				if (!safeProbe) {
+					safeProbe = document.createElement('div');
+					safeProbe.setAttribute('aria-hidden', 'true');
+					safeProbe.style.cssText = 'position:fixed;width:0;height:0;visibility:hidden;pointer-events:none;' +
+						'padding-left:env(safe-area-inset-left,0px);padding-top:env(safe-area-inset-top,0px);' +
+						'padding-right:env(safe-area-inset-right,0px);padding-bottom:env(safe-area-inset-bottom,0px);';
+					document.body.appendChild(safeProbe);
+				}
+				var style = getComputedStyle(safeProbe);
+				return [style.paddingLeft, style.paddingTop, style.paddingRight, style.paddingBottom]
+					.map(function (value) { return Math.max(0, parseFloat(value) || 0); });
+			}
+			window.CHIK_MOBILE_VIEWPORT = function () {
+				var canvas = document.getElementById('canvas');
+				var rect = canvas && canvas.getBoundingClientRect();
+				var width = rect && rect.width > 0 ? rect.width : window.innerWidth;
+				var height = rect && rect.height > 0 ? rect.height : window.innerHeight;
+				var edges = safeInsets();
+				// CSS rotation maps screen TOP to game LEFT in CW mode and RIGHT in CCW mode.
+				if (window.CHIK_CANVAS_ROTATION === 'cw') {
+					edges = [edges[1], edges[2], edges[3], edges[0]];
+				} else if (window.CHIK_CANVAS_ROTATION === 'ccw') {
+					edges = [edges[3], edges[0], edges[1], edges[2]];
+				} else if (rect) {
+					edges = [Math.max(0, edges[0] - rect.left), Math.max(0, edges[1] - rect.top),
+						Math.max(0, edges[2] - (window.innerWidth - rect.right)),
+						Math.max(0, edges[3] - (window.innerHeight - rect.bottom))];
+				}
+				var coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+				return {css_size:[width, height], safe_insets:edges,
+					touch:!!(window.CHIK_PHONE || window.CHIK_TABLET || (coarse && navigator.maxTouchPoints > 0))};
+			};
+			// Safari/browser chrome can change the visual viewport without a document resize.
+			var resizeQueued = false;
+			if (window.visualViewport) window.visualViewport.addEventListener('resize', function () {
+				if (resizeQueued) return;
+				resizeQueued = true;
+				requestAnimationFrame(function () { resizeQueued = false; window.dispatchEvent(new Event('resize')); });
+			});
+		})();
+		</script>
+		<div id="boot">
+			<!-- no caption: the key art carries the CHIKORIA logo — just the bar + loading details -->
+			<div id="barwrap"><div id="bar"></div></div>
+			<div id="pct">0%</div>
+			<div id="tip"></div>
+			<div id="err"></div>
+			<!-- info tabs (moved from the homepage): browse the game while the realm loads.
+			     Top of the screen; panels drop from under them — the loading bar stays clear. -->
+			<div id="ltabs">
+				<button class="ltab" data-tab="about">WELCOME</button>
+				<button class="ltab" data-tab="rewards">&#127942; REWARDS</button>
+				<button class="ltab" data-tab="chikis">CHIKIDEX</button>
+				<button class="ltab" data-tab="play2">HOW TO PLAY</button>
+				<button class="ltab" data-tab="roles">&#9874; ROLES</button>
+				<button class="ltab" data-tab="regions">EVERFLAME ISLE</button>
+				<button class="ltab" data-tab="token">$CHIKI</button>
+				<button class="ltab" data-tab="community">COMMUNITY</button>
+			</div>
+
+			<div class="lpanel" id="lp-about">
+				<span class="x" data-close>&#10005;</span>
+				<h2>Welcome to Chikoria — your Chiki is waiting</h2>
+				<p>A living 3D voxel world on Solana where your <b>$CHIKI</b> hold hatches a creature that walks
+				beside you. Explore a hand-built island, battle the corruption with real card duels, craft,
+				fish, ride, trade with other players — and get paid real <b>$CHIKI</b> for finishing the story.
+				Sign in with a free, gas-less wallet signature (never a transaction, never your keys).</p>
+				<div class="lgrid">
+					<div class="lcard"><b>&#128035; Hold to Play</b><br>Hold 500k $CHIKI and tap your egg — a hidden lucky number makes it LEGENDARY. Whales (1M+) nest a second egg.</div>
+					<div class="lcard"><b>&#9876; Real Battles</b><br>Ability-card duels vs corruptimons, PvP anywhere in the world, and the Chikoria Cup with a SOL prize.</div>
+					<div class="lcard"><b>&#9935; A Real Economy</b><br>14 resources, 130 recipes, 10-level tools, 8 fish + 4 sea legends, 6 mounts, and a player Trading Post.</div>
+					<div class="lcard"><b>&#127942; Paid Storyline</b><br>ACT I &middot; MASTER OF CHIKORIA — 21 chapters that pay real on-chain $CHIKI. See the REWARDS tab.</div>
+					<div class="lcard"><b>&#127925; Play your way</b><br>Tooltips in English &middot; &#26085;&#26412;&#35486; &middot; &#20013;&#25991;, a rotating island soundtrack with a music switch, and three graphics tiers so any laptop or phone can run it.</div>
+				</div>
+				<p class="lhook">The realm is building itself behind this page — you'll be standing before the castle in a moment.</p>
+			</div>
+
+			<div class="lpanel" id="lp-rewards">
+				<span class="x" data-close>&#10005;</span>
+				<h2>&#127942; Play the story. Win real $CHIKI.</h2>
+				<div class="lprize">
+					<b>THE GRAND PRIZE</b>
+					<span class="big">10,000,000 $CHIKI &middot; first 10 champions</span>
+					The first <b>10 players</b> to complete ACT I &middot; MASTER OF CHIKORIA win
+					<b>1,000,000 $CHIKI each</b> — paid on-chain from the reward pool.
+				</div>
+				<div class="lgrid">
+					<div class="lcard"><b>&#128220; Every chapter pays</b><br>All 21 chapters carry a real $CHIKI reward — <b>100,000 $CHIKI</b> per player across the full campaign.</div>
+					<div class="lcard"><b>&#9876; Chikoria Cup</b><br>The arena tournament crowns a champion with a SOL prize from the pool.</div>
+					<div class="lcard"><b>&#128737; Fair &amp; verified</b><br>Completions are validated server-side and reviewed before payout — on-chain, verifiable on Solscan.</div>
+					<div class="lcard"><b>&#9200; The race is live</b><br>Champion slots are first-come. Every chapter you clear today is a head start.</div>
+					<div class="lcard"><b>&#128188; How you get paid</b><br>Two purses: the COIN POUCH holds in-game coins from dailies &amp; side quests (press Collect). The REWARD VAULT holds your real story-quest $CHIKI — track it in the LEDGER tab; payouts release from the pool automatically, no signature, no gas.</div>
+				</div>
+				<p class="lhook">Ten crowns. One island. The Everflame remembers who answered first.</p>
+			</div>
+
+			<div class="lpanel" id="lp-chikis">
+				<span class="x" data-close>&#10005;</span>
+				<h2>&#128062; The ChikiDex — 21 species. Which will choose you?</h2>
+				<p>Ten elemental lines, five ancient Legendaries, and the six-strong <b>Meme Dynasty</b>.
+				Your first egg hatches on a tap — press it on a hidden lucky number and a <b>LEGENDARY</b>
+				answers. Every chikimon levels to 50, learns up to 12 ability cards, and grows a
+				personality shaped by how you treat it.</p>
+				<div class="ldex">
+					<div><img src="chikidex/mushrow.png" alt=""><strong>Mushrow</strong><span>Plant</span></div>
+					<div><img src="chikidex/electrox.png" alt=""><strong>Electrox</strong><span>Lightning</span></div>
+					<div><img src="chikidex/jellox.png" alt=""><strong>Jellox</strong><span>Ocean</span></div>
+					<div><img src="chikidex/firix.png" alt=""><strong>Firix</strong><span>Flame</span></div>
+					<div><img src="chikidex/owzard.png" alt=""><strong>Owzard</strong><span>Ice</span></div>
+					<div><img src="chikidex/forestle.png" alt=""><strong>Forestle</strong><span>Mountain</span></div>
+					<div><img src="chikidex/drolax.png" alt=""><strong>Drolax</strong><span>Shadow</span></div>
+					<div><img src="chikidex/healix.png" alt=""><strong>Healix</strong><span>Crystal</span></div>
+					<div><img src="chikidex/solarix.png" alt=""><strong>Solarix</strong><span>Wind</span></div>
+					<div><img src="chikidex/scorplex.png" alt=""><strong>Scorplex</strong><span>Cosmic</span></div>
+					<div class="legend"><img src="chikidex/galador.png" alt=""><strong>Galador</strong><span>Legendary</span></div>
+					<div class="legend"><img src="chikidex/adalor.png" alt=""><strong>Adalor</strong><span>Legendary</span></div>
+					<div class="legend"><img src="chikidex/tyrannos.png" alt=""><strong>Tyrannos</strong><span>Legendary</span></div>
+					<div class="legend"><img src="chikidex/grovador.png" alt=""><strong>Grovador</strong><span>Legendary</span></div>
+					<div class="legend"><img src="chikidex/dragonos.png" alt=""><strong>Dragonos</strong><span>Legendary</span></div>
+					<div class="meme"><img src="chikidex/popcat.png" alt=""><strong>Popcat</strong><span>Meme Dynasty</span></div>
+					<div class="meme"><img src="chikidex/moodeng.png" alt=""><strong>Moodeng</strong><span>Meme Dynasty</span></div>
+					<div class="meme"><img src="chikidex/doge.png" alt=""><strong>Doge</strong><span>Meme Dynasty</span></div>
+					<div class="meme"><img src="chikidex/pepe.png" alt=""><strong>Pepe</strong><span>Meme Dynasty</span></div>
+					<div class="meme"><img src="chikidex/chillguy.png" alt=""><strong>Chillguy</strong><span>Meme Dynasty</span></div>
+					<div class="meme"><img src="chikidex/alon.png" alt=""><strong>Alon</strong><span>Founder's Meme</span></div>
+				</div>
+			</div>
+
+			<div class="lpanel" id="lp-play2">
+				<span class="x" data-close>&#10005;</span>
+				<h2>&#127918; How to Play</h2>
+				<ul>
+					<li><b>Sign in with Phantom</b> — a free, gas-less message signature proves the wallet is yours (never a transaction; we never ask for private keys or seed phrases). Hold &ge;500k $CHIKI and tap your egg to hatch (a hidden lucky number wins a Legendary!).</li>
+					<li><b>Mouse-first movement</b> — click the ground to walk there; <b>HOLD the button ~&frac14;s and you break into a RUN</b> that steers after your cursor (release to finish the trip). WASD &middot; Shift &middot; Space still work &middot; right-drag looks &middot; wheel zooms.</li>
+					<li><b>On phones</b> — pick which way you'll turn your phone and the whole realm plays sideways (wallet browsers can't rotate, so we rotate FOR you). Bottom-left joystick moves, quick-tap walks, drag looks, pinch zooms.</li>
+					<li><b>Press E</b> to gather trees, rocks, ores and more &middot; craft tools at the Craft Shop to gather much faster — every gather is exactly ONE item, for everyone.</li>
+					<li><b>Press P</b> for your menu — quests, satchel, team, mounts, avatar and gear. The <b>System tab in Chat</b> keeps a timestamped log of every notification you missed.</li>
+					<li><b>Battle</b> corruptimons with your chikimon's ability cards (1&ndash;4 to play, R ends the turn, V auto) &middot; spar trainers with G &middot; enter the Chikoria Cup at the Chikiseum.</li>
+					<li><b>Fish for eggs</b> — eggs can't be bought: the four fantasy fish are the only way Mithra conjures new chikimon, mounts, legendaries and Meme Dynasty eggs. Better rods hook deeper legends.</li>
+					<li><b>Follow the campaign</b> — ACT I &middot; MASTER OF CHIKORIA, 21 real-reward chapters (63 total), paying real $CHIKI from the reward pool.</li>
+					<li><b>Trade with players</b> at the Trading Post — real on-chain $CHIKI: you keep <b>75%</b> of every sale, 20% refills the reward pool, 5% burns forever. Receipts with Solscan links in the &#129534; Sales tab.</li>
+					<li><b>Top-left buttons</b> — graphics tier, language (EN / &#26085; / &#20013;) and music, remembered on your device.</li>
+				</ul>
+				<h3>Care for your team</h3>
+				<p>Chikimons have HP, stamina, hunger and moods — feed them, let them rest, heal free at the
+				Hospital, and bond with them to unlock their personalities.</p>
+				<p class="lhook">You'll learn all of it in your first ten minutes — then everything you own, you'll earn out in the world.</p>
+			</div>
+
+			<div class="lpanel" id="lp-roles">
+				<span class="x" data-close>&#10005;</span>
+				<h2>&#9874; Choose your calling — every role earns</h2>
+				<p>Chikoria is a real economy: every resource is player-gathered, every listing is player-made,
+				and real <b>$CHIKI</b> flows to the ones who play their role well. Pick a calling — or mix them all.</p>
+				<div class="lgrid">
+					<div class="lcard"><b>&#127795; Gatherer</b><br>Press E at trees, bushes, hives, shells and flowers. Craft the axe &rarr; drill ladder (10 levels each) to harvest far faster, then sell stacks at the Trading Post — 75% of every sale is yours, settled on-chain.</div>
+					<div class="lcard"><b>&#9935; Miner</b><br>Stone, iron, gold and crystal wait in the three great mines around the mountain. Ores gate the deepest recipes — a miner with gold to spare never goes poor.</div>
+					<div class="lcard"><b>&#127993; Hunter</b><br>Track free-roaming pigs and boars for pork, beef and <b>hide</b> — hide gates every storage craft in the game. Cull corruptimons to keep the roads safe and your team levelled.</div>
+					<div class="lcard"><b>&#127907; Angler</b><br>44 named fishing spots, three richness tiers, a reel-tension duel per catch. The four fantasy fish are the <b>only source of eggs</b> in Chikoria — anglers mint the future. Sell spares to collectors.</div>
+					<div class="lcard"><b>&#129520; Craftsman</b><br>130 recipes: tools, rods, potions, food, gear to Lv 10. Fighters need Healing Draughts, riders need Trail Fodder — brew what the island needs and name your price.</div>
+					<div class="lcard"><b>&#9876; Battler</b><br>Card duels vs corruptimons, friendly spars with any trainer (G), and the Chikoria Cup with a SOL prize. Win streaks multiply your rewards — protect them with a Streak Sigil.</div>
+					<div class="lcard"><b>&#128188; Merchant</b><br>Work the Trading Post: buy low from grinders, list smart, watch the Sales tab receipts land on Solscan. 75% seller &middot; 20% reward pool &middot; 5% burned — every trade feeds the economy.</div>
+					<div class="lcard"><b>&#128052; Explorer</b><br>Six mounts (the Skywing Griffin flies), 63 story chapters, lore beacons at five sealed landmarks, and the richest fishing waters unmarked on any map. Someone has to find them first.</div>
+					<div class="lcard"><b>&#128142; Collector</b><br>21 chikimon, 10 avatar cases (1-of-10 each), the capped Meme Dynasty, 6 mounts, 12 fish. The dex pop-ups track live mint counts — completion is the longest game in Chikoria.</div>
+				</div>
+				<p class="lhook">The story pays $CHIKI. The roles pay each other. The island pays attention.</p>
+			</div>
+
+			<div class="lpanel" id="lp-regions">
+				<span class="x" data-close>&#10005;</span>
+				<h2>&#128506; Everflame Isle — the Heart of Chikoria</h2>
+				<p>The island with the castle now bears its name on the charts: <b>Everflame Isle</b>, where
+				Chikiville's walls guard the last burning light.</p>
+				<div class="lgrid">
+					<div class="lcard"><b>&#127984; Chikiville &amp; the Castle</b><br>The walled city — shops, the Hospital, the Trading Post and the Everflame.</div>
+					<div class="lcard"><b>&#9968; The Wicked Temple</b><br>Grimwick broods on the mountain peak above the clouds.</div>
+					<div class="lcard"><b>&#9935; The Three Mines</b><br>Gold, iron and crystal lodes ring the mountain.</div>
+					<div class="lcard"><b>&#9875; The Harbor</b><br>Fishing docks, the Harbormaster — and the Wandering Galleon at anchor.</div>
+					<div class="lcard"><b>&#127967; The Chikiseum</b><br>The grand arena outside the west gate — home of the Chikoria Cup.</div>
+					<div class="lcard"><b>&#127907; The Fishing Coasts</b><br>44 named fishing spots — rare fantasy fish swim the deep water.</div>
+				</div>
+				<p class="lnote">&#127786; ACT II &middot; THE WANDERING GALLEON — the ship at the harbor sets sail to a
+				brand-new region across the mist in a future update. Founders will know the isle by heart before it does.</p>
+			</div>
+
+			<div class="lpanel" id="lp-token">
+				<span class="x" data-close>&#10005;</span>
+				<h2>&#128142; $CHIKI Tokenomics</h2>
+				<div class="lgrid">
+					<div class="lcard"><b>Supply</b><br>1,000,000,000 $CHIKI on Solana — launched on pump.fun.</div>
+					<div class="lcard"><b>&#128035; Hold to Play</b><br>500,000 $CHIKI to enter the realm &middot; 1M+ whales nest a second egg.</div>
+					<div class="lcard"><b>&#127873; Quest Rewards</b><br>Campaign chapters pay real $CHIKI from the reward pool.</div>
+					<div class="lcard"><b>&#128279; Verify On-Chain</b><br><a href="https://solscan.io/token/CPYrgdAYWFQD74ZtsR8mEBWW7qnrXnegcn7gDMobpump" target="_blank" rel="noopener noreferrer">View $CHIKI on Solscan &#8599;</a></div>
+				</div>
+				<p class="lnote">Mint: <span class="lmint">CPYrgdAYWFQD74ZtsR8mEBWW7qnrXnegcn7gDMobpump</span></p>
+			</div>
+
+			<div class="lpanel" id="lp-community">
+				<span class="x" data-close>&#10005;</span>
+				<h2>&#128172; Join the Community</h2>
+				<p>Catch 'em! Train 'em! Bond forever! Thousands of trainers are already registered — the
+				leaderboard, the Cup brackets and the champion race all live in the community.</p>
+				<div class="lgrid">
+					<a class="lcard" href="https://x.com/chikimonsters" target="_blank" rel="noopener noreferrer"><b>&#120143; / Twitter</b><br>@chikimonsters</a>
+					<a class="lcard" href="https://discord.gg/J8Yf7jm2" target="_blank" rel="noopener noreferrer"><b>Discord</b><br>Join the server</a>
+				</div>
+			</div>
+		</div>
+		<!-- the homepage title screen, in-page: shows INSTANTLY (no waiting for the engine).
+		     Click the coin -> the loading bar (chunks stream behind this the whole time). -->
+		<div id="hero">
+			<img id="heroimg" src="hero.jpg" alt="">
+			<button id="coin" aria-label="Play"><img src="coin.png" alt=""></button>
+			<div id="herohint">&#128070; Press the $CHIKI token to play</div>
+		</div>
+		<!-- post-load intro clip: plays once the realm is built, then the game -->
+		<div id="cine">
+			<video id="cinevid" src="after_loading.mp4?v=2" preload="none" playsinline></video>
+			<div id="cineskip">tap to skip &#9656;</div>
+		</div>
+
+		<script>
+		// EARLY hero controller — runs at parse time, BEFORE the multi-hundred-KB engine JS
+		// below, so the title is correctly framed and the coin is live from the first paint.
+		// (The engine script is parser-blocking; without this the coin would sit unstyled and
+		// dead in the corner on slow networks — the exact problem the instant hero solves.)
+		(function () {
+			var hero = document.getElementById('hero');
+			var coin = document.getElementById('coin');
+			function ssGet(k) { try { return sessionStorage.getItem(k); } catch (e) { return null; } }
+			function ssSet(k, v) { try { sessionStorage.setItem(k, v); } catch (e) {} }
+			window.__ssGet = ssGet; window.__ssSet = ssSet;
+			// the coin pins to the art's wreath emblem: KEEP_ASPECT_COVERED math over 1672x941
+			var HERO_W = 1672, HERO_H = 941, SW_X = 0.503, SW_Y = 0.420;
+			function coinLayout() {
+				if (!hero.parentNode) { return; }
+				var vw = window.innerWidth, vh = window.innerHeight;
+				var s = Math.max(vw / HERO_W, vh / HERO_H);
+				var dw = HERO_W * s, dh = HERO_H * s;
+				var ox = (vw - dw) / 2, oy = (vh - dh) / 2;
+				var d = Math.max(52, 0.102 * dw);
+				coin.style.width = d + 'px'; coin.style.height = d + 'px';
+				coin.style.left = (ox + SW_X * dw - d / 2) + 'px';
+				coin.style.top = (oy + SW_Y * dh - d / 2) + 'px';
+				coin.style.visibility = 'visible';
+			}
+			window.addEventListener('resize', coinLayout);
+			// a coin press survives the one-time cross-origin-isolation reload (the COI service
+			// worker reboots the page on first visit) — restore it and skip straight to loading
+			// A direct all-assets link is an intentional one-click test session: skip the title
+			// coin and cinematic, but keep the real loading screen/progress and every OOM guard.
+			window.__autoSandbox = /[?&]sandbox=all(?:&|$)/.test(location.search);
+			window.__coinClicked = window.__autoSandbox || (ssGet('realm-hero-done') === '1');
+			if (window.__coinClicked) { hero.remove(); }
+			else { coinLayout(); }
+			coin.addEventListener('touchend', function (e) {
+				if (e.cancelable) { e.preventDefault(); }
+				coin.dispatchEvent(new Event('cointap'));
+			});
+			coin.addEventListener('cointap', function () {
+				if (window.__coinClicked) { return; }
+				window.__coinClicked = true;
+				ssSet('realm-hero-done', '1');
+				if (window.__onCoin) { window.__onCoin(); }
+				else if (hero.parentNode) { hero.remove(); }
+			});
+			coin.addEventListener('click', function () {
+				if (window.__coinClicked) { return; }
+				window.__coinClicked = true;
+				ssSet('realm-hero-done', '1');
+				// tell the main controller if it's up; otherwise just reveal the loading page
+				if (window.__onCoin) { window.__onCoin(); }
+				else if (hero.parentNode) { hero.remove(); }
+			});
+			// --- loading-page info tabs (top bar): pure DOM, live before the engine JS parses ---
+			var tabs = [].slice.call(document.querySelectorAll('.ltab'));
+			function closeTabs() {
+				tabs.forEach(function (t) { t.classList.remove('active'); });
+				[].slice.call(document.querySelectorAll('.lpanel.show')).forEach(function (p) { p.classList.remove('show'); });
+			}
+			tabs.forEach(function (t) {
+				t.addEventListener('click', function () {
+					var p = document.getElementById('lp-' + t.dataset.tab);
+					if (!p) { return; }
+					var was = p.classList.contains('show');
+					closeTabs();
+					if (!was) { t.classList.add('active'); p.classList.add('show'); }
+				});
+			});
+			[].slice.call(document.querySelectorAll('.lpanel [data-close]')).forEach(function (x) {
+				x.addEventListener('click', closeTabs);
+			});
+		}());
+		</script>
+		<!-- vendored @solana/web3.js + spl-token (on-chain Trading Post buys); local so the CSP allows it -->
+		<script src="solana-web3.js"></script>
+		<script>
+		// __chikiBuy: the buyer signs ONE real $CHIKI transaction that splits the price three ways —
+		// sellerShare to the seller, teamShare to the team wallet, burnShare BURNED (supply drops).
+		// Phantom signs + submits; we stash the signature (or error) for the Godot poller to read.
+		// $CHIKI is a Token-2022 mint, so we detect the mint's OWNING token program at runtime and build
+		// every instruction against it (legacy vs 2022). Split is done in base units, with the burn leg
+		// taking the remainder so seller+team+burn === the full price exactly (nothing lost or created).
+		window.__chikiBuy = async function (seller, team, mint, priceWhole, decimals, rpc, sSeller, sTeam, sBurn) {
+			window.__chikiBuyDone = ''; window.__chikiBuySig = ''; window.__chikiBuyErr = '';
+			try {
+				const W = window.SolanaWeb3, T = window.SplToken;
+				if (!W || !T) throw new Error('Solana library failed to load');
+				const ph = (window.phantom && window.phantom.solana) || window.solana;
+				if (!ph) throw new Error('Phantom wallet not found');
+				if (!ph.publicKey) { await ph.connect(); }
+				const buyer = ph.publicKey;
+				const MINT = new W.PublicKey(mint);
+				const sellerPk = new W.PublicKey(seller), teamPk = new W.PublicKey(team);
+				const conn = new W.Connection(rpc, 'confirmed');
+				// which token program owns this mint? ($CHIKI => Token-2022). Build all ixs against it.
+				const mintAcc = await conn.getAccountInfo(MINT);
+				if (!mintAcc) throw new Error('mint account not found on-chain');
+				const TOKEN_PROG = mintAcc.owner;
+				const dec = decimals | 0;
+				const unit = BigInt(Math.pow(10, dec));
+				const totalBase = BigInt(Math.round(priceWhole)) * unit;              // full price, base units
+				const bps = (frac) => BigInt(Math.round(frac * 10000));               // shares -> basis points
+				const sellerBase = totalBase * bps(sSeller) / BigInt(10000);
+				const teamBase   = totalBase * bps(sTeam)   / BigInt(10000);
+				const burnBase   = totalBase - sellerBase - teamBase;                 // remainder -> burn (exact)
+				const buyerAta  = await T.getAssociatedTokenAddress(MINT, buyer,    false, TOKEN_PROG);
+				const sellerAta = await T.getAssociatedTokenAddress(MINT, sellerPk, false, TOKEN_PROG);
+				const teamAta   = await T.getAssociatedTokenAddress(MINT, teamPk,   false, TOKEN_PROG);
+				const tx = new W.Transaction();
+				// idempotent: creates the seller/team token account only if missing (buyer pays the ~0.002 SOL rent)
+				tx.add(T.createAssociatedTokenAccountIdempotentInstruction(buyer, sellerAta, sellerPk, MINT, TOKEN_PROG));
+				tx.add(T.createAssociatedTokenAccountIdempotentInstruction(buyer, teamAta,   teamPk,   MINT, TOKEN_PROG));
+				tx.add(T.createTransferCheckedInstruction(buyerAta, MINT, sellerAta, buyer, sellerBase, dec, [], TOKEN_PROG));
+				tx.add(T.createTransferCheckedInstruction(buyerAta, MINT, teamAta,   buyer, teamBase,   dec, [], TOKEN_PROG));
+				tx.add(T.createBurnCheckedInstruction(buyerAta, MINT, buyer, burnBase, dec, [], TOKEN_PROG));  // REAL burn — supply drops
+				tx.feePayer = buyer;
+				tx.recentBlockhash = (await conn.getLatestBlockhash('finalized')).blockhash;
+				const res = await ph.signAndSendTransaction(tx);
+				window.__chikiBuySig = (res && res.signature) ? res.signature : String(res);
+			} catch (e) {
+				window.__chikiBuyErr = String((e && e.message) || e || 'purchase failed');
+			}
+			window.__chikiBuyDone = '1';   // set LAST — the Godot poller treats this as "flow finished"
+		};
+		</script>
+		<script>
+		// ---- CHIKI-ME-BRIDGE BEGIN ----
+		// __chikiMeSign: sign + submit a transaction that CHIKORIA'S BACKEND already built.
+		//
+		// This is NOT __chikiBuy. __chikiBuy builds its own transaction here in the browser (it knows the
+		// mint, the split and the ATAs). This one RECEIVES finished bytes from our server — which got them
+		// from Magic Eden's instruction API — so it must never touch feePayer, blockhash or the account
+		// list: any of those edits invalidates the transaction, and rebuilding it from its message alone
+		// would DESTROY a cosigner signature Magic Eden may already have put on it.
+		//
+		// Contract, mirroring __chikiBuy's proven poll shape so the Godot side barely changes:
+		//   window.__chikiMeBusy      '1' while a flow is in flight (a second call is IGNORED, not queued)
+		//   window.__chikiMeDone      '1' when the flow finished — set LAST, poll on this
+		//   window.__chikiMeSig       the transaction signature on success, '' otherwise
+		//   window.__chikiMeErr       human-readable failure text, '' otherwise
+		//   window.__chikiMeCode      stable machine-readable reason (branch on THIS, never on prose)
+		//   window.__chikiMeRejected  '1' when the PLAYER pressed Cancel in the wallet — not an error
+		//   window.__chikiMePath      which code path ran: legacy-native | legacy-shim | v0-native | v0-shim
+		//   window.__chikiMeReady()   capability probe -> JSON string, safe to call any time
+		//
+		// Reason codes: '' (ok) | rejected | no_lib | no_wallet | no_connect | bad_tx | sign_failed |
+		//               send_failed | no_send
+		//
+		// PRIVACY: the transaction bytes live in a local const and are never written to window, never
+		// logged, never echoed. No wallet address is ever exposed by this bridge — the probe reports only
+		// a connected true/false. Nothing here reads or keeps anything it does not need to sign one tx.
+		(function () {
+			'use strict';
+
+			var B58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+
+			function bytesFromB64(s) {
+				var bin = atob(s);
+				var out = new Uint8Array(bin.length);
+				for (var i = 0; i < bin.length; i++) { out[i] = bin.charCodeAt(i) & 0xff; }
+				return out;
+			}
+
+			// base58 is only a FALLBACK. Our backend sends base64 (recon settled that), but a base58 string
+			// is also valid base64 charset-wise, so "it decoded" proves nothing — shapeOf() below is what
+			// actually picks the winner.
+			function bytesFromB58(s) {
+				var acc = [0];
+				for (var i = 0; i < s.length; i++) {
+					var v = B58.indexOf(s.charAt(i));
+					if (v < 0) { throw new Error('not base58'); }
+					var carry = v;
+					for (var j = 0; j < acc.length; j++) {
+						carry += acc[j] * 58;
+						acc[j] = carry & 0xff;
+						carry = carry >> 8;
+					}
+					while (carry > 0) { acc.push(carry & 0xff); carry = carry >> 8; }
+				}
+				for (var k = 0; k < s.length && s.charAt(k) === '1'; k++) { acc.push(0); }
+				return new Uint8Array(acc.reverse());
+			}
+
+			// Parse a serialized Solana transaction far enough to (a) confirm it IS one and (b) learn its
+			// version. Layout: compact-u16 signature count, that many 64-byte signatures, then the message.
+			// D3 from recon: a versioned message's FIRST byte has the high bit set (0x80 | version); a
+			// legacy message's first byte is numRequiredSignatures, which can never reach 0x80. One byte
+			// decides it — no guessing, no trusting a hint from the network.
+			function shapeOf(raw) {
+				if (!raw || raw.length < 70) { return null; }
+				var off = 0, n = 0, shift = 0, b;
+				for (;;) {
+					if (off >= raw.length) { return null; }
+					b = raw[off++];
+					n |= (b & 0x7f) << shift;
+					if ((b & 0x80) === 0) { break; }
+					shift += 7;
+					if (shift > 14) { return null; }
+				}
+				if (n < 1 || n > 19) { return null; }          // a marketplace tx signs 1-3 keys, never 20
+				var msgOff = off + n * 64;
+				if (msgOff + 4 > raw.length) { return null; }
+				var b0 = raw[msgOff];
+				if ((b0 & 0x80) !== 0) { return { ver: (b0 & 0x7f), sigs: n, strong: true }; }
+				// legacy: web3.js always serializes exactly numRequiredSignatures signatures, so b0 === n
+				// on any real transaction. Treat a mismatch as weak evidence rather than a hard reject.
+				return { ver: -1, sigs: n, strong: (b0 === n) };
+			}
+
+			// Accepts: base64 string (what our backend sends), base58 string, a plain byte array, a
+			// Uint8Array, or Magic Eden's raw {type:'Buffer',data:[...]} envelope if it is ever passed
+			// through unconverted. Returns Uint8Array or throws.
+			function toBytes(tx) {
+				if (tx instanceof Uint8Array) { return tx; }
+				if (Array.isArray(tx)) { return Uint8Array.from(tx); }
+				if (tx && typeof tx === 'object' && Array.isArray(tx.data)) { return Uint8Array.from(tx.data); }
+				if (typeof tx !== 'string' || tx.length < 16) { throw new Error('no transaction supplied'); }
+				var s = tx.replace(/\s+/g, '');
+				var cand = [], r;
+				try { r = bytesFromB64(s); if (r.length) { cand.push(r); } } catch (e1) { /* not base64 */ }
+				try { r = bytesFromB58(s); if (r.length) { cand.push(r); } } catch (e2) { /* not base58 */ }
+				var weak = null, i, sh;
+				for (i = 0; i < cand.length; i++) {
+					sh = shapeOf(cand[i]);
+					if (sh && sh.strong) { return cand[i]; }
+					if (sh && !weak) { weak = cand[i]; }
+				}
+				if (weak) { return weak; }
+				// Refuse rather than hand Phantom something unreadable: a garbage transaction shows the
+				// player a scary unknown approval dialog instead of an honest error.
+				throw new Error('server sent an unreadable transaction');
+			}
+
+			// A duck-typed stand-in for a web3.js transaction object. The vendored solana-web3.js bundle
+			// exports only {Connection, PublicKey, Transaction} — it has NO VersionedTransaction (measured:
+			// 0 occurrences in realm/solana-web3.js) — while Magic Eden's own SDK reads only the v0 slot.
+			// Phantom serializes whatever it is given and branches on `'version' in tx`, so a minimal
+			// object carrying the finished bytes is enough to present a v0 transaction without the class.
+			// UNVERIFIED against a real Phantom build; the native class is always preferred when present.
+			function shimTx(raw, ver) {
+				var o = {
+					signatures: [],
+					serialize: function () { return raw; }
+				};
+				if (ver >= 0) { o.version = ver; }
+				return o;
+			}
+
+			function isRejection(e) {
+				var code = e && (e.code !== undefined ? e.code : (e.data && e.data.code));
+				if (code === 4001 || code === '4001') { return true; }
+				var m = String((e && e.message) || e || '').toLowerCase();
+				return m.indexOf('user rejected') >= 0 || m.indexOf('user denied') >= 0 ||
+					m.indexOf('rejected the request') >= 0 || m.indexOf('request rejected') >= 0 ||
+					m.indexOf('user cancel') >= 0 || m.indexOf('cancelled by user') >= 0 ||
+					m.indexOf('canceled by user') >= 0 || m.indexOf('declined') >= 0;
+			}
+
+			// Only these mean "this wallet build has no signAndSendTransaction". Anything else that throws
+			// out of signAndSendTransaction must NOT be retried through sign-then-send: the first call may
+			// already have broadcast, and a second broadcast is a second charge.
+			function isUnsupported(e) {
+				var code = e && e.code;
+				if (code === -32601) { return true; }
+				var m = String((e && e.message) || e || '').toLowerCase();
+				return m.indexOf('unsupported method') >= 0 || m.indexOf('method not found') >= 0 ||
+					m.indexOf('not a function') >= 0 || m.indexOf('not supported') >= 0;
+			}
+
+			function provider() {
+				return (window.phantom && window.phantom.solana) || window.solana || null;
+			}
+
+			// Honest capability report. Returns a JSON STRING so the Godot side can read it straight out of
+			// JavaScriptBridge.eval. Call it before showing a Buy/List button and degrade to the Magic Eden
+			// deep-link when ok is false.
+			window.__chikiMeReady = function () {
+				var W = window.SolanaWeb3;
+				var ph = provider();
+				var legacyNative = !!(W && W.Transaction && typeof W.Transaction.from === 'function');
+				var v0Native = !!(W && W.VersionedTransaction && typeof W.VersionedTransaction.deserialize === 'function');
+				var canConn = !!(W && W.Connection);
+				var sas = !!(ph && typeof ph.signAndSendTransaction === 'function');
+				var sonly = !!(ph && typeof ph.signTransaction === 'function');
+				// signAndSendTransaction needs no library at all (Phantom serializes + broadcasts).
+				// sign-then-send needs Connection from the bundle to broadcast the signed bytes.
+				var ok = !!ph && (sas || (sonly && canConn));
+				// the probe's reason must be the SAME code __chikiMeSign would report, or the UI
+				// explains the wrong problem to the player
+				var reason = '';
+				if (!ph) { reason = 'no_wallet'; }
+				else if (!sas && !sonly) { reason = 'no_send'; }
+				else if (!ok) { reason = 'no_lib'; }
+				return JSON.stringify({
+					ok: ok,
+					lib: legacyNative,
+					phantom: !!ph,
+					connected: !!(ph && ph.publicKey),      // boolean only — never the address
+					signAndSend: sas,
+					signOnly: sonly,
+					legacy: legacyNative ? 'native' : 'shim',
+					v0: v0Native ? 'native' : 'shim',
+					busy: window.__chikiMeBusy === '1',
+					reason: reason
+				});
+			};
+
+			// Clear the result globals for a fresh flow. Refuses while a flow is in flight so a late
+			// caller can never blank an in-flight result the poller has not read yet.
+			window.__chikiMeReset = function () {
+				if (window.__chikiMeBusy === '1') { return '0'; }
+				window.__chikiMeDone = ''; window.__chikiMeSig = ''; window.__chikiMeErr = '';
+				window.__chikiMeCode = ''; window.__chikiMeRejected = ''; window.__chikiMePath = '';
+				return '1';
+			};
+			window.__chikiMeReset();
+
+			// tx  : base64 transaction bytes from OUR backend (base58 / byte array also accepted)
+			// ver : optional hint ('legacy' | 'v0') — advisory only; the bytes decide (see shapeOf)
+			// rpc : optional RPC url, used ONLY by the sign-then-send fallback
+			window.__chikiMeSign = async function (tx, ver, rpc) {
+				// Re-entry lock. A second flow must NOT clobber the first one's globals — that is how a
+				// player ends up reading a stale success, or approving two Phantom prompts for one item.
+				if (window.__chikiMeBusy === '1') { return; }
+				window.__chikiMeBusy = '1';
+				window.__chikiMeDone = ''; window.__chikiMeSig = ''; window.__chikiMeErr = '';
+				window.__chikiMeCode = ''; window.__chikiMeRejected = ''; window.__chikiMePath = '';
+				try {
+					var W = window.SolanaWeb3;
+					var ph = provider();
+					if (!ph) { var e0 = new Error('Phantom wallet not found'); e0.chikiCode = 'no_wallet'; throw e0; }
+					var sas = (typeof ph.signAndSendTransaction === 'function');
+					var sonly = (typeof ph.signTransaction === 'function');
+					if (!sas && !sonly) { var e1 = new Error('this wallet cannot sign transactions'); e1.chikiCode = 'no_send'; throw e1; }
+					if (!sas && !(W && W.Connection)) {
+						var e2 = new Error('Solana library failed to load');
+						e2.chikiCode = 'no_lib'; throw e2;
+					}
+
+					if (!ph.publicKey) {
+						try { await ph.connect(); }
+						catch (ec) {
+							var e3 = new Error(isRejection(ec) ? 'wallet connection cancelled' : 'wallet would not connect');
+							e3.chikiCode = isRejection(ec) ? 'rejected' : 'no_connect';
+							throw e3;
+						}
+					}
+
+					var raw;
+					try { raw = toBytes(tx); }
+					catch (eb) { var e4 = new Error(String(eb && eb.message || eb)); e4.chikiCode = 'bad_tx'; throw e4; }
+					var shape = shapeOf(raw);
+					var isV0 = !!(shape && shape.ver >= 0);
+					// the hint from the server is advisory; if it disagrees with the bytes, the bytes win
+					if (!shape && String(ver || '') === 'v0') { isV0 = true; }
+
+					var txObj, path;
+					if (isV0) {
+						if (W && W.VersionedTransaction && typeof W.VersionedTransaction.deserialize === 'function') {
+							txObj = W.VersionedTransaction.deserialize(raw); path = 'v0-native';
+						} else {
+							txObj = shimTx(raw, shape ? shape.ver : 0); path = 'v0-shim';
+						}
+					} else {
+						if (W && W.Transaction && typeof W.Transaction.from === 'function') {
+							// Transaction.from PRESERVES any signature already on the bytes — that is how
+							// Magic Eden's cosigner survives to the chain.
+							txObj = W.Transaction.from(raw); path = 'legacy-native';
+						} else {
+							txObj = shimTx(raw, -1); path = 'legacy-shim';
+						}
+					}
+					window.__chikiMePath = path;
+
+					var sig = '';
+					if (sas) {
+						try {
+							var res = await ph.signAndSendTransaction(txObj);
+							sig = (res && res.signature) ? String(res.signature) : String(res);
+						} catch (es) {
+							if (isRejection(es)) { throw es; }
+							if (!(isUnsupported(es) && sonly && W && W.Connection)) {
+								var e5 = new Error(String((es && es.message) || es || 'wallet could not sign'));
+								e5.chikiCode = 'sign_failed'; throw e5;
+							}
+							sas = false;   // fall through to sign-then-send: the method genuinely is absent
+						}
+					}
+					if (!sig) {
+						// fallback: Phantom signs, we broadcast. Only reached when signAndSendTransaction is
+						// missing or provably unsupported — never as a retry after a real send failure.
+						var signed = await ph.signTransaction(txObj);
+						var bytes = (signed && typeof signed.serialize === 'function') ? signed.serialize() : signed;
+						try {
+							var conn = new W.Connection(String(rpc || ''), 'confirmed');
+							sig = String(await conn.sendRawTransaction(bytes, { skipPreflight: false, maxRetries: 3 }));
+						} catch (esend) {
+							var e6 = new Error(String((esend && esend.message) || esend || 'broadcast failed'));
+							e6.chikiCode = 'send_failed'; throw e6;
+						}
+					}
+					window.__chikiMeSig = sig;
+				} catch (e) {
+					// isRejection() reads the WALLET'S error; chikiCode === 'rejected' is the tag we put
+					// on a cancel we already classified upstream (the connect prompt). Both are the
+					// player saying no — check both or a refused connect reads as a hard failure.
+					if (isRejection(e) || (e && e.chikiCode === 'rejected')) {
+						// A player who pressed Cancel did nothing wrong. The UI must say "cancelled",
+						// not "failed", and must not offer a scary retry.
+						window.__chikiMeRejected = '1';
+						window.__chikiMeCode = 'rejected';
+						window.__chikiMeErr = (e && e.chikiCode === 'rejected' && e.message) ? String(e.message) : 'cancelled in your wallet';
+					} else {
+						window.__chikiMeCode = String((e && e.chikiCode) || 'sign_failed');
+						window.__chikiMeErr = String((e && e.message) || e || 'transaction failed');
+					}
+				}
+				window.__chikiMeDone = '1';    // set LAST — the Godot poller treats this as "flow finished"
+				window.__chikiMeBusy = '';     // and only then release the lock
+			};
+		}());
+		// ---- CHIKI-ME-BRIDGE END ----
+		</script>
+		<script src="index.js"></script>
+		<script>
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":313445440,"index.wasm":40092042},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+const GODOT_THREADS_ENABLED = true;
+const engine = new Engine(GODOT_CONFIG);
+
+(function () {
+	const bar = document.getElementById('bar');
+	const pct = document.getElementById('pct');
+	const tip = document.getElementById('tip');
+	const err = document.getElementById('err');
+	const boot = document.getElementById('boot');
+	// NOTE: the early script may have ALREADY removed #hero (restored coin press after the
+	// isolation reload) — hero can be null here, so every use below must be guarded.
+	const hero = document.getElementById('hero');
+	const cine = document.getElementById('cine');
+	const vid = document.getElementById('cinevid');
+	function dropHero() { if (hero && hero.parentNode) { hero.remove(); } }
+
+	// ---------- entrance flow: HERO -> (coin click) -> LOADING -> (ready) -> VIDEO -> GAME ----------
+	// Downloads + engine boot run in the background the whole time; these flags only gate
+	// what the player SEES. The coin click is also the user gesture that unlocks audio/autoplay.
+	// The coin itself (layout + click capture + reload-restore) is owned by the EARLY inline
+	// script above the engine <script> — here we just pick up where it left off.
+	let heroDone = !!window.__coinClicked;   // player pressed the coin (possibly pre-engine)
+	let engineReady = false;                 // engine.startGame resolved (the realm is built)
+	let cineStarted = false;
+	let introDone = false;
+	if (heroDone) { dropHero(); }   // restored click → straight to loading
+
+	function finishIntro() {
+		if (introDone) { return; }
+		introDone = true;
+		try { vid.pause(); } catch (e) {}
+		cine.remove();
+		dropHero();
+		if (boot.parentNode) { boot.remove(); }
+		const c = document.getElementById('canvas');
+		if (c) { c.focus(); }
+	}
+
+	function startCine() {
+		if (cineStarted || introDone) { return; }
+		cineStarted = true;
+		cine.style.display = 'block';
+		dropHero();
+		vid.onended = finishIntro;
+		vid.onerror = finishIntro;
+		cine.addEventListener('click', finishIntro);
+		// hard watchdog: a stalled/missing clip must never trap the player outside the game
+		setTimeout(function () {
+			if (!introDone && (vid.readyState < 3 || vid.paused)) { finishIntro(); }
+		}, 6000);
+		setTimeout(finishIntro, 15000);
+		// the coin click gave this page sticky user activation, so audible autoplay is
+		// normally allowed — if the browser still refuses, retry muted, then give up
+		const p = vid.play();
+		if (p && p.catch) {
+			p.catch(function () {
+				vid.muted = true;
+				const p2 = vid.play();
+				if (p2 && p2.catch) { p2.catch(finishIntro); }
+			});
+		}
+	}
+
+	function maybeAdvance() {
+		if (heroDone && engineReady) {
+			if (window.__autoSandbox) { finishIntro(); }
+			else { startCine(); }
+		}
+	}
+	// the early script routes coin presses here once we're up
+	window.__onCoin = function () {
+		if (heroDone) { return; }
+		heroDone = true;
+		if (engineReady) { maybeAdvance(); }
+		else { dropHero(); }   // reveal the loading bar beneath
+	};
+
+	const TIPS = [
+		'Hatch chikimons from eggs — legendaries are 1 in 10…',
+		'Craft tools at Brambleforge to gather much faster.',
+		'Your $CHIKI balance rides with you across the realm.',
+		'Mount the griffin to fly over the castle walls.',
+		'Wicked Grimwick waits at the mountain temple…',
+		'Raid MALGROTH with a sigil from the craft shop.',
+		'Every chikimon unlocks new ability cards up to level 50.',
+	];
+	let tipI = 0;
+	tip.textContent = TIPS[0];
+	setInterval(function () { tipI = (tipI + 1) % TIPS.length; tip.textContent = TIPS[tipI]; }, 4200);
+
+	function setBar(f) {
+		const v = Math.max(0, Math.min(1, f));
+		bar.style.width = (v * 100).toFixed(1) + '%';
+		pct.textContent = Math.round(v * 100) + '%';
+	}
+	function fail(e) {
+		console.error(e);
+		err.style.display = 'block';
+		err.textContent = (e && e.message) ? e.message : String(e);
+		// the error card lives on the loading page — pull the hero off so it can be seen
+		dropHero();
+		if (cine.parentNode) { cine.remove(); }
+	}
+
+	// GitHub's web uploader rejects files over 25 MB, so the big engine files ship as
+	// numbered part-chunks (index.pck.0…, index.wasm.0…). Stream a part list back into
+	// one Blob, reporting progress across [lo, hi] of the loading bar.
+	// The chunk store. Cloudflare sends max-age=14400 on the pack, so a returning player re-downloads
+	// ~236MB every four hours even though the bytes at a given URL can never change — the loader stamps
+	// every chunk URL with the build hash, so a URL IS immutable by construction. Fixing that at the CDN
+	// turned out to be beyond reach from here, so the loader keeps its own copy instead: strictly better
+	// anyway, because it lives in this repo, survives any CDN reconfiguration, and cannot pin anyone to a
+	// stale build the way an over-broad cache rule can.
+	// WHERE THE HEAVY FILES LIVE. Empty means same-origin, which is exactly today's behaviour — this is
+	// inert until a CDN is actually configured and verified. Point it at an R2/S3 bucket to take ~236MB
+	// of binaries out of the Pages repo, which is the real reason deploys broke: committing a fresh copy
+	// of the pack on every release grew .git to 45GB and Pages builds stopped finishing.
+	//
+	// Cross-origin is safe here for a non-obvious reason worth writing down: this page runs under
+	// Cross-Origin-Embedder-Policy: require-corp (for SharedArrayBuffer), which normally BLOCKS
+	// cross-origin subresources. coi-serviceworker.min.js re-fetches every request and stamps
+	// Cross-Origin-Resource-Policy: cross-origin on the response, so CORP is covered. What the bucket
+	// must still provide is Access-Control-Allow-Origin, or the CORS fetch fails before the worker sees it.
+	const CHUNK_CDN = (window.CHIK_CDN || '').replace(/\/+$/, '');
+	// THE BUCKET DOES NOT HOLD THE MOBILE-LITE PACK. Measured against the live bucket 2026-07-31:
+	// <stamp>/index.pck.0.bin and <stamp>/index.wasm.0.bin answer 206, but all five
+	// <stamp>/index.pck.lite.N.bin answer 404 — the lite chunks were uploaded to the bucket ROOT
+	// instead of into their own stamp folder, and the lite pack carries a DIFFERENT stamp from the
+	// HD pack, which is exactly how that gets missed. So every phone asked the CDN five times for a
+	// pack that was not there, paid two failed round trips and 2.1s of backoff per chunk, and then
+	// downloaded from same-origin anyway. Same-origin is also SMALLER: Cloudflare serves these
+	// gzipped (86.7MB for the lite pack, measured) while R2 sends them raw (125.2MB, no
+	// content-encoding), so routing phones to the bucket would cost them 38.5MB MORE even once the
+	// upload is fixed. Flip this to true only if the lite chunks are uploaded WITH gzip metadata.
+	const CDN_HAS_LITE = false;
+	// THE BUILD HASH IS A FOLDER, NOT A QUERY STRING, on the CDN side. Object storage serves by KEY and
+	// ignores ?v= entirely, so a flat layout means a release that ships before its upload finishes
+	// serves the PREVIOUS build's chunks under the new manifest — a silently corrupted pack that looks
+	// like random broken models rather than a load error. Putting the hash in the path makes that
+	// impossible: a missing upload 404s, the loader falls back to same-origin, and the game just loads
+	// slower. Old builds' folders can be deleted whenever; nothing is ever overwritten in place.
+	// Same-origin keeps the query form, because Pages serves one build at a time by definition.
+	function chunkUrl(name, v, sameOrigin) {
+		if (CHUNK_CDN && !sameOrigin) { return CHUNK_CDN + '/' + (v ? (v + '/') : '') + name; }
+		return v ? (name + '?v=' + v) : name;
+	}
+	const CHUNK_CACHE = 'chikoria-realm-chunks';
+	// CACHE KEY IS ALWAYS THE SAME-ORIGIN FORM, whichever origin actually served the bytes.
+	// It used to be keyed on the fetch URL, which under a CDN is https://<bucket>/<stamp>/<name> —
+	// and the eviction pass below read the stamp with searchParams.get('v'), which is null for that
+	// shape. Null never equals the current stamp, so EVERY entry was deleted on open, on every load,
+	// before a single chunk was read. The cache was written (~97MB of writes a load) and never once
+	// served. Keying and evicting on one canonical form makes both halves agree.
+	function chunkCacheKey(name, v) {
+		return new URL(name + (v ? '?v=' + v : ''), location.href).href;
+	}
+	async function openChunkCache() {
+		if (!window.caches) { return null; }
+		try { return await caches.open(CHUNK_CACHE); }
+		catch (e) { return null; }   // private mode, disabled storage, quota — just use the network
+	}
+	// Drop chunks from PREVIOUS builds. Runs ONCE, after every family's stamp is known, and never
+	// before the chunks have been read: openChunkCache used to evict per streamParts call, so the
+	// wasm pass (one stamp) deleted the pck pass's entries (a different stamp) and vice versa —
+	// two families could never be cached at the same time even with the key bug fixed.
+	// Parsed rather than substring-matched: one build hash can be a prefix of another.
+	async function evictOtherBuilds(cache, stamps) {
+		if (!cache) { return 0; }
+		const keep = new Set(stamps.filter(Boolean));
+		if (!keep.size) { return 0; }
+		let dropped = 0;
+		try {
+			for (const req of await cache.keys()) {
+				let stamp = null;
+				try { stamp = new URL(req.url).searchParams.get('v'); } catch (e) { stamp = null; }
+				if (!keep.has(stamp)) { try { await cache.delete(req); dropped++; } catch (e) {} }
+			}
+		} catch (e) {}
+		return dropped;
+	}
+
+	// `cache` is opened ONCE by the caller and shared by every family (see evictOtherBuilds).
+	// `sameOriginOnly` skips the CDN for a family the bucket does not actually hold — asking for a
+	// chunk that 404s costs two failed round trips and 2.1s of backoff BEFORE the fallback, per chunk.
+	async function streamParts(names, total, lo, hi, v, cache, sameOriginOnly) {
+		// DEFAULTS TO 1 — IDENTICAL TO THE OLD SEQUENTIAL BEHAVIOUR — because I could not measure that
+		// parallelism helps, and shipping an unverified change to the load path is not worth it.
+		// What I measured, honestly: sequential throughput to the live CDN came back at 0.3, 2.4, 7.0
+		// and 6.9 MB/s across four runs — 23x variance on the same operation — and the one clean
+		// comparison where BOTH sides were cache-cold had parallel-of-3 SLOWER (2.4 -> 1.6 MB/s), which
+		// makes sense: on a Cloudflare MISS three concurrent requests split one origin pull from
+		// GitHub Pages rather than adding bandwidth. A later run took 150s for 18MB, which looks like
+		// rate-limiting from my own repeated probing. None of that is a basis for a decision.
+		//
+		// So the POOL is here and tested (order, retry, failure, phone safety) and the knob is one
+		// line. Raise it once someone can measure a real first load from a real browser on a real
+		// connection — devtools Network panel, cache disabled, compare total time at 1 vs 2 vs 3.
+		// If you do raise it, keep phones at 1: the memory note below is load-bearing, since three
+		// chunks in flight is 75MB of raw arrays on devices that were being jetsam-killed at 25.
+		const CONC = (window.CHIK_PHONE ? 1 : 1);
+		const buf = new Array(names.length);   // BY INDEX — parallel completion must not reorder the pck
+		let received = 0;                      // bytes across every chunk, in flight or finished
+		let cursor = 0;
+		let served = 0;                        // chunks answered from disk rather than the network
+		const useCdn = !!CHUNK_CDN && !sameOriginOnly;
+		// No build stamp = no immutability guarantee = no caching. The caller passes the cache
+		// unconditionally; the stamp decides whether it may be used.
+		if (!v) { cache = null; }
+
+		async function fetchOne(i) {
+			// Version-stamped chunk URLs: every deploy carries a fresh ?v=<build-hash>, so a
+			// browser/CDN can NEVER mix old cached chunks with new ones (which corrupted the
+			// pck and showed stale/duplicate models after an update). Same-version repeat
+			// loads cache fully = faster. Without a stamp, fall back to ETag revalidation.
+			// A CDN failure must never be an outage: after two attempts against the bucket, fall back to
+			// same-origin for the rest of this chunk's tries. If the bucket is misconfigured (missing CORS
+			// is the likely one) the game still loads, just slower, and the console says why.
+			const url = chunkUrl(names[i], v, !useCdn);
+			const key = chunkCacheKey(names[i], v);   // origin-independent; see chunkCacheKey
+			// ALREADY ON DISK? Then this chunk costs nothing at all — no request, no bytes.
+			if (cache) {
+				try {
+					const hit = await cache.match(key);
+					if (hit) {
+						const blob = await hit.blob();
+						// a truncated entry (a quota eviction mid-write) must never reach the pck
+						if (blob && blob.size > 0) {
+							buf[i] = blob;
+							received += blob.size;
+							served++;
+							setBar(lo + (hi - lo) * (received / total));
+							return;
+						}
+						try { await cache.delete(key); } catch (e) {}
+					}
+				} catch (e) { /* unreadable entry — fall through to the network */ }
+			}
+			// RETRY per chunk: one transient hiccup (flaky mobile data, a QUIC reset) used to
+			// throw out of the whole loader and freeze the bar forever. Each attempt streams
+			// into its OWN list so a mid-body failure never leaks partial bytes into the pck.
+			for (let attempt = 0; ; attempt++) {
+				const parts = [];
+				let local = 0;
+				try {
+					const tryUrl = (useCdn && attempt >= 2) ? chunkUrl(names[i], v, true) : url;
+					if (tryUrl !== url) { console.warn('realm: falling back to same-origin for ' + names[i]); }
+					const res = await fetch(tryUrl, { cache: (attempt === 0 && v) ? 'default' : 'reload' });
+					if (!res.ok) { throw new Error('HTTP ' + res.status); }
+					const reader = res.body.getReader();
+					for (;;) {
+						const r = await reader.read();
+						if (r.done) { break; }
+						parts.push(r.value);
+						local += r.value.byteLength;
+						received += r.value.byteLength;
+						setBar(lo + (hi - lo) * (received / total));
+					}
+					// wrap the finished chunk into a Blob IMMEDIATELY and drop the raw arrays: WebKit
+					// keeps Blobs in a registry that can spill to disk, so the JS heap only ever holds
+					// ~CONC chunks instead of the whole 240MB pck — the double-copy peak was
+					// jetsam-killing iPhone WKWebViews (Phantom) into an endless reload loop.
+					buf[i] = new Blob(parts);
+					parts.length = 0;
+					// Keep it for next time. A failure here is NEVER fatal: the pack is already in hand,
+					// and a full disk simply means the next visit downloads again.
+					// keyed on the CDN url regardless of which origin served it, so a fallback fetch does not
+					// create a second entry for the same chunk
+					if (cache) { try { await cache.put(key, new Response(buf[i])); } catch (e) {} }
+					return;
+				} catch (e) {
+					received -= local;   // un-count this attempt, or the bar overruns on a retry
+					parts.length = 0;
+					if (attempt >= 3) { throw new Error('Failed to load ' + names[i] + ' after 4 tries (' + ((e && e.message) || e) + ')'); }
+					tip.textContent = 'Connection hiccup — retrying part ' + (i + 1) + ' of ' + names.length + '…';
+					setBar(lo + (hi - lo) * (received / total));
+					await new Promise(function (ok) { setTimeout(ok, 700 * (attempt + 1)); });
+				}
+			}
+		}
+
+		// a fixed pool pulling from a shared cursor: no chunk is fetched twice and none is skipped
+		async function worker() {
+			for (;;) {
+				const i = cursor++;
+				if (i >= names.length) { return; }
+				await fetchOne(i);
+			}
+		}
+		const pool = [];
+		for (let w = 0; w < Math.min(CONC, names.length); w++) { pool.push(worker()); }
+		await Promise.all(pool);   // one rejection fails the load, exactly as the sequential version did
+		if (served === names.length && names.length) { tip.textContent = 'Realm loaded from this device…'; }
+		return buf;   // Blob parts, in order — new Blob(buf) references them without copying
+	}
+
+	// BEGIN REVIEWED PACK STARTER — kept independently testable without launching a browser.
+	async function startBoundRealmPack(instance, engineType, config, options, packUrl, manifest) {
+		const format = manifest.format || 'pck';
+		if (format === 'pck') {
+			return instance.startGame(Object.assign({}, options, { mainPack: packUrl }));
+		}
+		if (format !== 'zip' || manifest.fs_name !== 'index.pcz') {
+			throw new Error('Unsupported realm archive format. Please reload the current build.');
+		}
+		// Native Godot identifies ZIP resource packs by .zip/.pcz, unlike magic-based PCKs.
+		// A blob URL has no such suffix: preload to a fixed filesystem name, then use start().
+		// Engine.load fetches WASM; start applies worker/options BEFORE initializing it.
+		// Await both fetches: Godot's init wrapper does not propagate an earlier WASM
+		// download rejection reliably, so do not leave this promise unobserved.
+		await Promise.all([
+			engineType.load(config.executable, (config.fileSizes || {})[config.executable + '.wasm']),
+			instance.preloadFile(packUrl, 'index.pcz')
+		]);
+		return instance.start(Object.assign({}, options, {
+			args: ['--main-pack', 'index.pcz'].concat(config.args || [])
+		}));
+	}
+	// END REVIEWED PACK STARTER
+
+	async function run() {
+		// 1. The engine wasm is chunked too — reassemble it here and intercept the engine's
+		//    own `index.wasm` fetch with the finished Blob. Doing it in-page (not the service
+		//    worker) removes the SW-control race that stalled wasm-instantiate.
+		//    ONLY the manifest lookup is optional — a failed CHUNK download must fail the
+		//    load loudly here, not fall through to a doomed full-pck download.
+		// tiny JSON fetch with the same transient-hiccup retry as the chunks
+		async function fetchJSON(url, tries) {
+			for (let a = 0; ; a++) {
+				try {
+					const r = await fetch(url, { cache: 'reload' });
+					if (!r.ok) {
+						const he = new Error('HTTP ' + r.status);
+						he.status = r.status;
+						throw he;
+					}
+					return await r.json();
+				} catch (e) {
+					if (e && e.status === 404) { throw e; }   // definitive miss — retries can't help
+					if (a >= tries - 1) { throw e; }
+					await new Promise(function (ok) { setTimeout(ok, 600 * (a + 1)); });
+				}
+			}
+		}
+		// ONE cache for every family — see evictOtherBuilds for why this must not be per-family
+		const chunkCache = await openChunkCache();
+		let vt = null;
+		try {
+			vt = await fetchJSON('virtual-files.json', 3);
+		} catch (e) { /* no virtual-files table → wasm is a single file; leave fetch alone */ }
+		const w = vt && vt['index.wasm'];
+		let releaseWasm = null;
+		if (w && w.parts && w.parts.length) {
+			tip.textContent = 'Downloading the engine…';
+			const wasmChunks = await streamParts(w.parts, w.total, 0.0, 0.12, vt.v || '', chunkCache, false);
+			// holder (not a const capture) so the 40MB blob can be RELEASED once the engine
+			// has compiled it — WKWebView memory is the scarcest resource we have
+			const hold = { blob: new Blob(wasmChunks, { type: 'application/wasm' }) };
+			wasmChunks.length = 0;
+			const realFetch = window.fetch.bind(window);
+			window.fetch = function (input, init) {
+				const u = (typeof input === 'string') ? input : (input && input.url) || '';
+				if (hold.blob && u.split('?')[0].split('#')[0].endsWith('index.wasm')) {
+					return Promise.resolve(new Response(hold.blob, { status: 200, headers: { 'Content-Type': 'application/wasm' } }));
+				}
+				return realFetch(input, init);
+			};
+			releaseWasm = function () { hold.blob = null; };
+		}
+
+		// 2. Phones use the smaller resource archive. Creature/card pixels remain exact;
+		// unrelated scenery textures are reduced and optional music streams on demand.
+		// A missing historical lite manifest still falls back to the HD pack.
+		tip.textContent = 'Building the realm…';
+		const oomN = (function () { try { return parseInt(sessionStorage.getItem('realm-oom') || '0', 10) || 0; } catch (e) { return 0; } })();
+		// A device that has ALREADY been memory-killed loads the lite pack whatever its UA says.
+		// This is the net under the devices the UA test cannot catch: an iPad reports a desktop-class
+		// UA ("Macintosh"), and an iPhone with Safari's "Request Desktop Website" on does the same —
+		// both pull the 222MB HD pack today and hit the exact ceiling the lite pack exists to avoid.
+		// sessionStorage-scoped, so a fresh tab starts clean rather than being degraded forever.
+		const wantLite = !!window.CHIK_PHONE || oomN >= 1;
+		let man = null;
+		let usedLite = false;
+		if (wantLite) {
+			try {
+				man = await fetchJSON('index.pck.lite.manifest.json', 4);   // 404 falls through instantly; network errors retry
+				usedLite = true;
+				tip.textContent = 'Building the pocket realm…';
+			} catch (e) { man = null; }
+		}
+		if (!man) { man = await fetchJSON('index.pck.manifest.json', 4); }
+		// Runtime layout follows the pack that actually mounted, not a fallible device/UA guess.
+		window.CHIK_LITE = usedLite;
+		if (man.format && man.format !== 'pck' && man.format !== 'zip') { throw new Error('Unknown realm archive format.'); }
+		if (man.format === 'zip' && man.fs_name !== 'index.pcz') { throw new Error('Invalid realm archive destination.'); }
+		window.CHIK_PACK_FORMAT = man.format || 'pck';
+		const pckChunks = await streamParts(man.chunks, man.total, 0.12, 0.82, man.v || '',
+			chunkCache, usedLite && !CDN_HAS_LITE);
+		// Now that every family's stamp is known, drop other builds. Deferred to here on purpose:
+		// evicting at open time is what made the cache delete entries it was about to need.
+		evictOtherBuilds(chunkCache, [vt && vt.v, man && man.v]).then(function (dropped) {
+			if (dropped) { console.log('realm: dropped ' + dropped + ' chunk(s) from older builds'); }
+		});
+		const pckBlob = new Blob(pckChunks, { type: 'application/octet-stream' }); pckChunks.length = 0; const packUrl = URL.createObjectURL(pckBlob);
+
+		// 3. Cap the canvas backing store on phones: UI/compositor cost scales with DPR^2 and
+		// 3x retina is indistinguishable from 2x at phone viewing distance. Must land BEFORE
+		// startGame — the engine samples devicePixelRatio when it sizes the canvas.
+		if (wantLite) {
+			try {
+				var __realDPR = window.devicePixelRatio || 1;
+				Object.defineProperty(window, 'devicePixelRatio', { get: function () { return Math.min(__realDPR, 2); }, configurable: true });
+			} catch (e) { /* locked-down WebView: keep native DPR */ }
+		}
+		// 3b. Boot the engine.
+		// THE BAR CANNOT MOVE ON ITS OWN PAST 82%. GODOT_CONFIG.fileSizes is keyed by the literal
+		// 'index.pck', but startGame is handed a blob: URL, so the engine's loadFetch finds no total
+		// and onProgress below never passes its own cur>0/tot>0 guard. Structural, not flaky — the
+		// longest silent stretch of the whole boot (wasm compile + a full pck copyToFS) showed a
+		// motionless bar, on the exact site that already froze at 82% once before. Ease the bar
+		// asymptotically toward 98% instead; it can never claim 100% early because only the real
+		// resolve below sets 1.0.
+		tip.textContent = 'Compiling the engine…';
+		try { sessionStorage.setItem('realm-loading', '1'); } catch (e) {}   // see the OOM detector
+		var bootT0 = Date.now();
+		var bootTick = setInterval(function () {
+			var t = (Date.now() - bootT0) / 20000;            // ~20s to close most of the gap
+			setBar(0.82 + 0.16 * (1 - Math.exp(-t * 3)));     // 0.82 -> asymptote 0.98
+			if (t > 0.4) { tip.textContent = 'Building the realm…'; }
+		}, 250);
+		try {
+			await startBoundRealmPack(engine, Engine, GODOT_CONFIG, {
+				// The generated HTML config still carries Godot's export default of four workers.
+				// Override it before init() mounts project.godot, so phones actually receive the same
+				// two-worker budget asserted by the project and release gate.
+				'godotPoolSize': (!!window.CHIK_PHONE ? 2 : (GODOT_CONFIG.godotPoolSize || 4)),
+				// project.godot keeps persistent game work to two Godot workers plus one voxel worker.
+				// Engine initialization also needs renderer/audio/platform pthreads before the PCK is
+				// mounted. Browser smoke proved 12 can still exhaust on a high-core device while 14
+				// reaches the first playable frame in ~12s. Scale 10..14 by reported cores (OOM retries
+				// use two fewer where possible); the lite pack's 130MB texture saving funds this headroom.
+				'emscriptenPoolSize': (!!window.CHIK_PHONE
+					? Math.min(Math.max(navigator.hardwareConcurrency || 4, 4) + (oomN >= 1 ? 6 : 8), 14)
+					: Math.min(Math.max(navigator.hardwareConcurrency || 8, 8) + 8, 24)),
+				'onProgress': function (cur, tot) {
+					if (cur > 0 && tot > 0) { setBar(0.82 + 0.18 * (cur / tot)); }
+				},
+			}, packUrl, man);
+		} finally { clearInterval(bootTick); }
+		try { sessionStorage.removeItem('realm-loading'); } catch (e) {}
+		// the realm is built — free every staging copy NOW: the engine has the pck in its own
+		// filesystem and the wasm is compiled, so the 240MB pack blob + 40MB wasm blob are pure
+		// dead weight. On iPhone WKWebView (Phantom) this margin is the difference between
+		// playing and the OS killing + reloading the page in a loop.
+		try { URL.revokeObjectURL(packUrl); } catch (e) {}
+		if (releaseWasm) { releaseWasm(); }
+		try { sessionStorage.setItem('realm-was-running', '1'); } catch (e) {}
+		engineReady = true;
+		setBar(1.0);
+		maybeAdvance();
+	}
+
+	// OOM-loop detector: 'realm-was-running' is stamped only after a successful boot. If it is
+	// STILL set when this load starts, the previous instance was killed mid-play (iOS reclaims
+	// the tab's memory and silently reloads) — tell the player instead of looping silently.
+	try {
+		// graceful exits (refresh, navigation, tab close) clear the stamp — a REAL OOM kill on
+		// iOS never fires pagehide, so the detector still catches it. Desktop refreshes were
+		// false-positives ("device ran low on memory" on every F5) — the warning is PHONE-only.
+		window.addEventListener('pagehide', function () {
+			try { sessionStorage.removeItem('realm-was-running'); sessionStorage.removeItem('realm-loading'); } catch (e) {}
+		});
+		// A kill DURING the load counts too. The load is the peak-memory phase — pck blob + wasm blob
+		// + engine all resident at once — so it is the MOST likely moment to be jetsam-killed, and the
+		// old detector (armed only after startGame resolved) could never see it: a device dying at 90%
+		// reloaded, died at 90%, forever, with the counter at zero. 'realm-loading' is set just before
+		// startGame and cleared on resolve, so either flag surviving into this load means a kill.
+		const wasKilled = sessionStorage.getItem('realm-was-running') === '1'
+			|| sessionStorage.getItem('realm-loading') === '1';
+		sessionStorage.removeItem('realm-was-running');
+		sessionStorage.removeItem('realm-loading');
+		if (wasKilled) {
+			// Tablets count as well: an iPad's desktop-class UA is exactly why it needs the net —
+			// it takes the HD pack and has no other path to the lite one. Desktop stays exempt
+			// (F5 false-positives are why this is guarded at all).
+			if (window.CHIK_PHONE || window.CHIK_TABLET) {
+				const oomN = parseInt(sessionStorage.getItem('realm-oom') || '0', 10) + 1;
+				sessionStorage.setItem('realm-oom', String(oomN));
+				err.textContent = '⚠️ The realm restarted — this device ran low on memory. Loading the lighter pack this time. Closing other apps and tabs helps; opening a fresh tab starts clean.';
+				err.style.display = 'block';   // #err ships display:none — without this the warning never rendered
+				dropHero();                    // the hero (z12) covers #boot (z10); the player must SEE the warning
+			}
+		}
+	} catch (e) {}
+	// the clip ships preload="none" (a parse-time preload="auto" started the 10MB fetch during
+	// the memory-critical load on phones) — non-phones upgrade here for an instant intro
+	if (vid && !window.CHIK_PHONE) {
+		vid.preload = 'auto';
+	}
+
+	const missing = Engine.getMissingFeatures({ threads: GODOT_THREADS_ENABLED });
+	if (missing.length !== 0) {
+		// The isolation service worker usually fixes this after one reload.
+		if ('serviceWorker' in navigator && window.__ssGet('realm-sw-retry') !== '1' && !/[?&]swretry/.test(location.search)) {
+			window.__ssSet('realm-sw-retry', '1');
+			tip.textContent = 'Preparing secure context…';
+			// the hero sits over #boot, so surface the note on the hero's own hint too —
+			// otherwise the first-visit reload looks like a silent freeze
+			const hh = document.getElementById('herohint');
+			if (hh && hero && hero.parentNode) { hh.textContent = 'Preparing secure context…'; }
+			// carry a URL flag too: with sessionStorage blocked (private-mode WebViews) the
+			// ssGet guard is blind and this reload looped forever
+			setTimeout(function () {
+				var u = location.href.split('#')[0];
+				location.replace(u + (u.indexOf('?') >= 0 ? '&' : '?') + 'swretry=1');
+			}, 1800);
+			return;
+		}
+		fail(new Error('This browser is missing features the realm needs:\n' + missing.join(', ') + '\nTry the latest Chrome, Edge, or Firefox.'));
+		return;
+	}
+	try { sessionStorage.removeItem('realm-sw-retry'); } catch (e) {}
+
+	run().catch(fail);
+}());
+		</script>
+	</body>
+</html>
+

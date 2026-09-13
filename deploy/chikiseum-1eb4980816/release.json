@@ -1,0 +1,32 @@
+{
+  "base_commit": "f4a906a93f0add4f295a2194b9920ef3d18d4ded",
+  "bindings": {
+    "art_manifest_sha256": "c52bbc8c43bfd1a0aaa77e261259846ab20e2911627e58b0d041af322eb559ca",
+    "art_version": "02400b320307",
+    "card_mask_manifest_sha256": "354b8bb8508a888dd17e8edb4cb3deab098378a417b6e033f915a5650ae86a4b",
+    "catalogue_sha256": "8347a90aec5091ae174c6fef17389fa78114ec118efa7ab21cb008c7bd2cd79c",
+    "coi_worker_sha256": "6aae8eaa0d1502c6146635e6f66222bef25c9d6fe7557e621508c1bcb25ebaf4",
+    "navigation_plan_sha256": "4f37041b6c132b542284dd22c4d1b7445ccc3c3900c3ee6a6bdc58e21eea682b"
+  },
+  "build": "1eb4980816",
+  "currency": "NONE",
+  "entry_stake": 0,
+  "financial_rewards_enabled": false,
+  "historical_v2_full_http_receipt_sha256": "c628b4b5315fe936234467860a077e2619c7ac334a1bffa7d4724ab7ef849273",
+  "hosting": "Cloudflare Workers Direct Static Assets",
+  "inventory_sha256": "1103471edbf3fb48136ede283c46a095a03752cf9ac465f6cffced02a0cc1c89",
+  "main_site_changed_by_release_branch": false,
+  "mobile_build": "9117070a6d",
+  "observed_deployment": "d68b7d7b",
+  "official_test_url": "https://chikimonsters.com/realm/chikiseum-test-1eb4980816/?nocdn=1&rev=official-v3",
+  "pages_main_merge_allowed": false,
+  "preparation_proof_sha256": "631d0002f8018d3c67243bcded85d124b64cc5f302ce167d784417e36970ad2d",
+  "pvp_levels": "separate server-earned battle levels",
+  "runtime_bytes": 649089931,
+  "runtime_files": 870,
+  "schema": "chikiseum.frozen-release-branch/v1",
+  "sol_betting_enabled": false,
+  "v3_delta_http_receipt_sha256": "eb30c9e4d717ab555ea24cbff47c756e5822142c335ba6e86c03779a759c63e3",
+  "v3_full_refetch_claimed": false,
+  "verified_public_two_owner_duel_completed": false
+}
