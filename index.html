@@ -29,6 +29,20 @@
   #tokenHint .tk{color:#ffe978}
   @keyframes hintbob{50%{transform:translateX(-50%) translateY(-5px)}}
 
+  /* ---- Chikiseum entry (the free PvP test, hosted separately from realm/) ---- */
+  #arenaLink{position:fixed;left:18px;bottom:18px;z-index:22;display:inline-flex;align-items:center;gap:9px;
+    padding:10px 16px;border-radius:999px;cursor:pointer;white-space:nowrap;
+    font-family:'Baloo 2','Nunito',sans-serif;font-weight:800;font-size:clamp(12px,1.5vw,15px);color:#ffe9a8;
+    background:rgba(8,16,32,.62);border:1px solid rgba(255,211,77,.45);
+    box-shadow:0 4px 14px rgba(0,0,0,.45);-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);
+    transition:transform .12s ease,border-color .18s ease,color .18s ease}
+  #arenaLink:hover{transform:translateY(-2px);border-color:var(--gold);color:#fff}
+  #arenaLink .tag{font-size:.72em;font-weight:800;letter-spacing:.6px;text-transform:uppercase;
+    color:#0e1b30;background:var(--gold);border-radius:999px;padding:2px 8px}
+  body.intro #arenaLink,body.playing #arenaLink{opacity:0;pointer-events:none}
+  @media(max-width:520px){#arenaLink{left:50%;transform:translateX(-50%);bottom:64px}
+    #arenaLink:hover{transform:translateX(-50%) translateY(-2px)}}
+
   .fading{opacity:0 !important;pointer-events:none}
   body.intro #hero,body.intro #tokenBtn,body.intro #tokenHint{opacity:0;pointer-events:none}
   #introVid{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;background:#000;opacity:0;pointer-events:none;transition:opacity .7s ease;z-index:50}
@@ -47,6 +61,14 @@
 <img id="tokenBtn" src="ui/chiki-token-btn.png?v=1" alt="Play" title="Press the $CHIKI token to play" draggable="false">
 
 <div id="tokenHint">👆 Press the <span class="tk">$CHIKI</span> token to play</div>
+
+<!-- The Chikiseum PvP arena is deployed separately (Cloudflare static assets), NOT from this
+     repo's realm/ tree — that release is 649 MB and must not be merged into Pages. This is just
+     a way in. Labelled a test because the two-owner public duel gate is still open; entry is
+     free, currency NONE, no stakes or financial rewards. -->
+<a id="arenaLink" href="realm/chikiseum-test-1eb4980816/?nocdn=1&amp;rev=official-v3">
+  ⚔️ Chikiseum — PvP Arena <span class="tag">Free Test</span>
+</a>
 
 <video id="introVid" src="intro.mp4?v=meme5" playsinline preload="auto"></video>
 <div id="skipHint">Skip ▶</div>
