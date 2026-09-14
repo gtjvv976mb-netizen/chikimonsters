@@ -29,100 +29,19 @@
   #tokenHint .tk{color:#ffe978}
   @keyframes hintbob{50%{transform:translateX(-50%) translateY(-5px)}}
 
-  /* ---- Chikiseum entry (the free PvP test, hosted separately from realm/) ----
-     The arena's own loading screen is the main realm's, so it teaches a player nothing about
-     the Chikiseum and it fronts a ~313MB download. This panel is the brief they never get:
-     what the duel is, what the cards do, what the floor looks like, and what is NOT enabled. */
-  :root{--ckA:#a06ae0;--ckB:#3fd0e8;--ckStone:#0b1424;}
+  /* ---- Chikiseum entry (the free PvP test, hosted separately from realm/) ---- */
   #arenaLink{position:fixed;left:18px;bottom:18px;z-index:22;display:inline-flex;align-items:center;gap:9px;
-    padding:10px 16px;border-radius:999px;cursor:pointer;white-space:nowrap;font:inherit;
+    padding:10px 16px;border-radius:999px;cursor:pointer;white-space:nowrap;
     font-family:'Baloo 2','Nunito',sans-serif;font-weight:800;font-size:clamp(12px,1.5vw,15px);color:#ffe9a8;
     background:rgba(8,16,32,.62);border:1px solid rgba(255,211,77,.45);
     box-shadow:0 4px 14px rgba(0,0,0,.45);-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);
     transition:transform .12s ease,border-color .18s ease,color .18s ease}
   #arenaLink:hover{transform:translateY(-2px);border-color:var(--gold);color:#fff}
-  #arenaLink:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   #arenaLink .tag{font-size:.72em;font-weight:800;letter-spacing:.6px;text-transform:uppercase;
     color:#0e1b30;background:var(--gold);border-radius:999px;padding:2px 8px}
   body.intro #arenaLink,body.playing #arenaLink{opacity:0;pointer-events:none}
   @media(max-width:520px){#arenaLink{left:50%;transform:translateX(-50%);bottom:64px}
     #arenaLink:hover{transform:translateX(-50%) translateY(-2px)}}
-
-  /* ---- the brief ---- */
-  /* `hidden` is the single source of truth for this dialog — no competing .on class that could
-     out-specify it and leave the panel showing over the game. */
-  #ckScrim{position:fixed;inset:0;z-index:40;background:rgba(3,8,18,.82);
-    -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);overflow-y:auto;
-    padding:clamp(12px,3vh,36px) 16px;padding-block-end:max(24px,env(safe-area-inset-bottom))}
-  #ckPanel{position:relative;margin:0 auto;width:min(720px,100%);color:#dce8fa;
-    background:linear-gradient(170deg,#14203a 0%,var(--ckStone) 46%,#070d1a 100%);
-    border:1px solid rgba(255,211,77,.34);border-radius:4px;
-    /* cut corners: the arena's own stonework, not a generic rounded card */
-    clip-path:polygon(18px 0,100% 0,100% calc(100% - 18px),calc(100% - 18px) 100%,0 100%,0 18px);
-    box-shadow:0 30px 90px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.06)}
-  /* the duel's two sides, taken from the arena's real purple/cyan cover bases */
-  #ckPanel::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;
-    background:linear-gradient(90deg,var(--ckA) 0%,var(--ckA) 42%,var(--gold) 50%,var(--ckB) 58%,var(--ckB) 100%)}
-  #ckHead{padding:22px 24px 16px;border-bottom:1px solid rgba(255,211,77,.16)}
-  #ckClose{position:absolute;top:10px;right:12px;z-index:2;width:34px;height:34px;cursor:pointer;
-    background:transparent;border:1px solid rgba(255,211,77,.28);border-radius:3px;color:#9fb6d8;
-    font:700 17px/1 'Nunito',sans-serif}
-  #ckClose:hover{color:#fff;border-color:var(--gold)}
-  #ckClose:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
-  #ckHead h2{font-family:'Baloo 2',sans-serif;font-size:clamp(21px,3.6vw,30px);font-weight:900;
-    letter-spacing:.5px;color:var(--gold);line-height:1.1}
-  #ckHead .sub{margin-top:5px;font-size:clamp(12px,1.8vw,14px);color:#9fb6d8;line-height:1.5;max-width:52ch}
-  #ckLive{display:inline-flex;align-items:center;gap:7px;margin-top:11px;padding:4px 11px;border-radius:999px;
-    font-size:11.5px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;
-    background:rgba(63,208,232,.10);border:1px solid rgba(63,208,232,.34);color:#9fe4f0}
-  #ckLive .dot{width:7px;height:7px;border-radius:50%;background:#6b7f9c;flex:0 0 auto}
-  #ckLive.up .dot{background:#3fe08a;box-shadow:0 0 8px #3fe08a}
-  #ckLive.down{background:rgba(224,120,90,.10);border-color:rgba(224,120,90,.36);color:#f0b7a4}
-  #ckLive.down .dot{background:#e0785a}
-  #ckBody{padding:18px 24px 22px;display:grid;gap:18px}
-  .ckH{font-family:'Baloo 2',sans-serif;font-size:12px;font-weight:800;letter-spacing:1.4px;
-    text-transform:uppercase;color:#7f97bb;margin-bottom:9px;display:flex;align-items:center;gap:9px}
-  .ckH::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(255,211,77,.22),transparent)}
-  #ckStats{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:9px}
-  #ckStats div{background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08);
-    border-left:2px solid var(--gold);padding:9px 11px}
-  #ckStats b{display:block;font-family:'Baloo 2',sans-serif;font-size:17px;font-weight:900;color:#fff;line-height:1.2}
-  #ckStats span{font-size:11px;color:#8fa6c6;letter-spacing:.3px}
-  #ckCards{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:7px}
-  .ckCard{background:linear-gradient(160deg,rgba(255,255,255,.06),rgba(255,255,255,.015));
-    border:1px solid rgba(255,255,255,.10);border-top:2px solid rgba(255,211,77,.5);
-    padding:8px 9px;text-align:left}
-  .ckCard b{display:block;font-family:'Baloo 2',sans-serif;font-size:13px;font-weight:800;color:#ffe9a8;
-    text-transform:capitalize;line-height:1.25}
-  .ckCard span{font-size:10.5px;color:#8fa6c6;font-variant-numeric:tabular-nums}
-  #ckMapWrap{display:grid;grid-template-columns:minmax(0,230px) minmax(0,1fr);gap:18px;align-items:center}
-  #ckMap{width:100%;height:auto;max-width:230px;display:block;margin:0 auto}
-  #ckMap text{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:3.4px}
-  #ckMapKey{display:grid;gap:7px;font-size:12px;color:#a9bcd8;line-height:1.45}
-  #ckMapKey i{display:inline-block;width:9px;height:9px;margin-right:8px;vertical-align:baseline;font-style:normal}
-  #ckNote{background:rgba(255,211,77,.055);border:1px solid rgba(255,211,77,.22);padding:12px 14px;
-    font-size:12.5px;line-height:1.6;color:#cfd9ea}
-  #ckNote b{color:var(--gold)}
-  #ckGo{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
-  #ckEnter{flex:1 1 220px;display:inline-flex;align-items:center;justify-content:center;gap:9px;
-    padding:14px 22px;cursor:pointer;text-align:center;
-    font-family:'Baloo 2',sans-serif;font-weight:900;font-size:16px;letter-spacing:.6px;color:#2a1a08;
-    background:linear-gradient(180deg,#ffe07a,#ffc93c 55%,#e09a10);
-    border:1px solid #7a5205;clip-path:polygon(11px 0,100% 0,100% calc(100% - 11px),calc(100% - 11px) 100%,0 100%,0 11px);
-    box-shadow:0 5px 0 rgba(70,44,2,.55);transition:transform .1s ease,box-shadow .1s ease}
-  #ckEnter:hover{transform:translateY(-1px);box-shadow:0 6px 0 rgba(70,44,2,.55)}
-  #ckEnter:active{transform:translateY(3px);box-shadow:0 2px 0 rgba(70,44,2,.55)}
-  #ckEnter:focus-visible{outline:2px solid #fff;outline-offset:3px}
-  #ckSize{font-size:11.5px;color:#8fa6c6;line-height:1.45;flex:1 1 180px}
-  @media(max-width:560px){
-    #ckHead{padding:20px 16px 14px}#ckBody{padding:16px 16px 20px}
-    #ckMapWrap{grid-template-columns:1fr}
-    #ckCards{grid-template-columns:repeat(auto-fill,minmax(80px,1fr))}
-  }
-  @media(prefers-reduced-motion:reduce){
-    #arenaLink,#ckEnter{transition:none}
-    #tokenBtn{animation:none}#tokenHint{animation:none}
-  }
 
   .fading{opacity:0 !important;pointer-events:none}
   body.intro #hero,body.intro #tokenBtn,body.intro #tokenHint{opacity:0;pointer-events:none}
@@ -143,94 +62,13 @@
 
 <div id="tokenHint">👆 Press the <span class="tk">$CHIKI</span> token to play</div>
 
-<!-- The Chikiseum PvP arena is deployed separately (Cloudflare Workers static assets), NOT from
-     this repo's realm/ tree — that release is 649 MB and must not be merged into Pages. This is
-     just a way in. Labelled a test because the two-owner public duel gate is still open; entry is
+<!-- The Chikiseum PvP arena is deployed separately (Cloudflare static assets), NOT from this
+     repo's realm/ tree — that release is 649 MB and must not be merged into Pages. This is just
+     a way in. Labelled a test because the two-owner public duel gate is still open; entry is
      free, currency NONE, no stakes or financial rewards. -->
-<button id="arenaLink" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="ckScrim">
+<a id="arenaLink" href="realm/chikiseum-test-1eb4980816/?nocdn=1&amp;rev=official-v3">
   ⚔️ Chikiseum — PvP Arena <span class="tag">Free Test</span>
-</button>
-
-<!-- The brief. Numbers come from the arena's own /chikiseum/live/v1/health at open time and fall
-     back to these baked-in values, so the page can never quietly drift from the live rules. -->
-<div id="ckScrim" role="dialog" aria-modal="true" aria-labelledby="ckTitle" hidden>
-  <div id="ckPanel" tabindex="-1">
-    <button id="ckClose" type="button" aria-label="Close">✕</button>
-    <div id="ckHead">
-      <h2 id="ckTitle">THE CHIKISEUM</h2>
-      <p class="sub">A real-time duel between two chikimon on a sealed 24-metre floor. Play your
-        ability cards the moment their cooldown clears — there are no turns to wait for.</p>
-      <span id="ckLive"><span class="dot"></span><span id="ckLiveTxt">Checking the arena…</span></span>
-    </div>
-    <div id="ckBody">
-      <section>
-        <div class="ckH">The duel</div>
-        <div id="ckStats">
-          <div><b id="ckDur">3:00</b><span>match length</span></div>
-          <div><b id="ckOt">+1:30</b><span>overtime</span></div>
-          <div><b>1 v 1</b><span>one chikimon each</span></div>
-          <div><b id="ckRad">24 m</b><span>arena floor</span></div>
-        </div>
-      </section>
-
-      <section>
-        <div class="ckH">Ability cards <span style="text-transform:none;letter-spacing:0;font-weight:600;color:#6f86aa">seconds = cooldown</span></div>
-        <div id="ckCards"></div>
-      </section>
-
-      <section>
-        <div class="ckH">The floor</div>
-        <div id="ckMapWrap">
-          <svg id="ckMap" viewBox="-27 -27 54 54" role="img" aria-labelledby="ckMapT">
-            <title id="ckMapT">Top-down plan of the Chikiseum: a 24-metre circular floor with a
-              central crest, two starting marks, four cover blocks and two outer blocks.</title>
-            <defs><radialGradient id="ckFloor" cx="50%" cy="50%">
-              <stop offset="0%" stop-color="#16233c"/><stop offset="100%" stop-color="#080e1c"/>
-            </radialGradient></defs>
-            <circle cx="0" cy="0" r="24" fill="url(#ckFloor)" stroke="rgba(255,211,77,.42)" stroke-width=".5"/>
-            <circle cx="0" cy="0" r="2.6" fill="rgba(255,211,77,.14)" stroke="var(--gold)" stroke-width=".35"/>
-            <!-- cover bases, 2.2 m square, at the arena's recorded coordinates -->
-            <g stroke="rgba(255,255,255,.25)" stroke-width=".25">
-              <rect x="-14.1" y="6.9" width="2.2" height="2.2" fill="var(--ckA)"/>
-              <rect x="-14.1" y="-9.1" width="2.2" height="2.2" fill="var(--ckA)"/>
-              <rect x="11.9" y="6.9" width="2.2" height="2.2" fill="var(--ckB)"/>
-              <rect x="11.9" y="-9.1" width="2.2" height="2.2" fill="var(--ckB)"/>
-              <rect x="-22.2" y="7.5" width="2.4" height="2.4" fill="rgba(160,106,224,.5)"/>
-              <rect x="19.8" y="7.5" width="2.4" height="2.4" fill="rgba(63,208,232,.5)"/>
-            </g>
-            <!-- starting marks at the arena's own home_a/home_b: 5 m either side of the crest.
-                 r=1.8 keeps them clear of the 2.6 m crest ring without moving them off-plan. -->
-            <g text-anchor="middle">
-              <circle cx="-5" cy="0" r="1.8" fill="rgba(160,106,224,.2)" stroke="var(--ckA)" stroke-width=".5"/>
-              <text x="-5" y="1.15" fill="#d9baff">A</text>
-              <circle cx="5" cy="0" r="1.8" fill="rgba(63,208,232,.2)" stroke="var(--ckB)" stroke-width=".5"/>
-              <text x="5" y="1.15" fill="#b2eef7">B</text>
-            </g>
-          </svg>
-          <div id="ckMapKey">
-            <div><i style="background:var(--gold);opacity:.55"></i>Centre crest — standing on it regenerates energy faster.</div>
-            <div><i style="background:var(--ckA)"></i><b style="color:#d9baff">A</b> — purple side, 5&nbsp;m left of the crest.</div>
-            <div><i style="background:var(--ckB)"></i><b style="color:#b2eef7">B</b> — cyan side, 5&nbsp;m right.</div>
-            <div><i style="background:rgba(255,255,255,.3)"></i>Six blocks to break line of sight.</div>
-            <div style="color:#7f97bb;font-size:11px">Drawn to scale from the arena's published plan.</div>
-          </div>
-        </div>
-      </section>
-
-      <p id="ckNote"><b>This is a free test.</b> Entry costs nothing, there is no wager, no SOL and
-        no financial reward of any kind — the arena reports <code>currency: NONE</code>,
-        <code>entry_stake: 0</code> and <code>rewards: false</code>. Battle levels earned here are
-        separate and never touch your main-world levels. A verified public duel between two owners
-        is still outstanding, which is why it is labelled a test rather than a launch.</p>
-
-      <div id="ckGo">
-        <a id="ckEnter" href="realm/chikiseum-test-1eb4980816/?nocdn=1&amp;rev=official-v3">Enter the Chikiseum ⚔</a>
-        <p id="ckSize">Heads-up: the arena downloads about <b id="ckBytes">313&nbsp;MB</b> the first time
-          (roughly 174&nbsp;MB on a phone). A desktop browser on a good connection is the smoothest way in.</p>
-      </div>
-    </div>
-  </div>
-</div>
+</a>
 
 <video id="introVid" src="intro.mp4?v=meme5" playsinline preload="auto"></video>
 <div id="skipHint">Skip ▶</div>
@@ -274,95 +112,6 @@
     /* hint is pinned to the bottom-center of the screen via CSS (no per-token positioning) */
   }
   probe.onload=place; probe.src="homepage-hero.png?v=meme7"; addEventListener("resize",place); setTimeout(place,60);
-  window.__chikiStart=start;   /* the brief closes itself if the intro starts underneath it */
-})();
-
-/* ---------------- the Chikiseum brief ---------------- */
-(function(){
-  var openBtn=document.getElementById("arenaLink"),scrim=document.getElementById("ckScrim"),
-      panel=document.getElementById("ckPanel"),closeBtn=document.getElementById("ckClose"),
-      live=document.getElementById("ckLive"),liveTxt=document.getElementById("ckLiveTxt"),
-      cards=document.getElementById("ckCards"),lastFocus=null,loaded=false;
-  if(!openBtn||!scrim)return;
-
-  /* Baked-in fallback, matching the arena's published rules. If the health probe answers we
-     replace these with whatever the server actually says, so the page cannot drift. */
-  var FALLBACK={strike:.65,blast:1.2,quick:1.5,guard:3,charge:6,drain:1.6,nova:4,rend:1.1,
-                jolt:1.6,rally:7,wither:3,bulwark:5};
-
-  function mmss(s){var m=Math.floor(s/60);return m+":"+String(Math.round(s-m*60)).padStart(2,"0");}
-  function drawCards(map){
-    cards.textContent="";
-    Object.keys(map).forEach(function(name){
-      var d=document.createElement("div");d.className="ckCard";
-      var b=document.createElement("b");b.textContent=name;
-      var s=document.createElement("span");s.textContent=(+map[name]).toFixed(2).replace(/\.?0+$/,"")+"s";
-      d.appendChild(b);d.appendChild(s);cards.appendChild(d);
-    });
-  }
-  function setLive(state,msg){live.className=state;liveTxt.textContent=msg;}
-
-  function loadOnce(){
-    if(loaded)return; loaded=true;
-    drawCards(FALLBACK);
-    var ctl=("AbortController" in window)?new AbortController():null;
-    var t=setTimeout(function(){try{ctl&&ctl.abort();}catch(e){}},8000);
-    fetch("https://chiki-backend-singapore.onrender.com/chikiseum/live/v1/health",
-          ctl?{signal:ctl.signal}:{})
-      .then(function(r){return r.ok?r.json():Promise.reject(new Error(r.status));})
-      .then(function(j){
-        clearTimeout(t);
-        var rt=(j.arena&&j.arena.realtime_rules)||{};
-        if(rt.card_cooldowns_seconds)drawCards(rt.card_cooldowns_seconds);
-        if(rt.duration_seconds)document.getElementById("ckDur").textContent=mmss(rt.duration_seconds);
-        if(rt.overtime_seconds)document.getElementById("ckOt").textContent="+"+mmss(rt.overtime_seconds);
-        if(j.arena&&j.arena.floor_radius_m)document.getElementById("ckRad").textContent=j.arena.floor_radius_m+" m";
-        /* Only ever say "open" when the arena itself says it is ready AND says nothing is staked. */
-        var free=(j.currency==="NONE"||j.currency==null)&&!j.real_sol_enabled&&!j.rewards;
-        if(j.ready&&free)setLive("up","Arena open · free entry");
-        else if(j.ready)setLive("up","Arena open");
-        else setLive("down",j.reason?("Arena resting · "+String(j.reason).slice(0,60)):"Arena resting — try again shortly");
-      })
-      .catch(function(){
-        clearTimeout(t);
-        setLive("down","Couldn't reach the arena just now — it may be waking up");
-      });
-  }
-
-  function focusables(){
-    return Array.prototype.filter.call(
-      panel.querySelectorAll('a[href],button,[tabindex]:not([tabindex="-1"])'),
-      function(el){return !el.disabled&&el.offsetParent!==null;});
-  }
-  function open(){
-    lastFocus=document.activeElement;
-    scrim.hidden=false;openBtn.setAttribute("aria-expanded","true");
-    document.documentElement.style.overflow="hidden";
-    loadOnce();
-    /* focus the panel itself, not a control — focusing a button scrolls the dialog to it, and
-       the first real control is the Enter link at the very bottom, which would skip the brief. */
-    scrim.scrollTop=0; panel.focus();
-  }
-  function close(){
-    if(scrim.hidden)return;
-    scrim.hidden=true;openBtn.setAttribute("aria-expanded","false");
-    document.documentElement.style.overflow="";
-    if(lastFocus&&lastFocus.focus)lastFocus.focus();
-  }
-  openBtn.addEventListener("click",open);
-  closeBtn.addEventListener("click",close);
-  scrim.addEventListener("click",function(e){if(e.target===scrim)close();});
-  document.addEventListener("keydown",function(e){
-    if(scrim.hidden)return;
-    if(e.key==="Escape"){close();return;}
-    if(e.key!=="Tab")return;
-    var f=focusables();if(!f.length)return;
-    var first=f[0],last=f[f.length-1];
-    if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
-    else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
-  });
-  /* if the token gets pressed while the brief is open, the intro takes the screen — get out of its way */
-  var tb=document.getElementById("tokenBtn");if(tb)tb.addEventListener("click",close);
 })();
 </script>
 </body>
