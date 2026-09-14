@@ -154,7 +154,11 @@ html.chik-phone #tip { font-size: 10px; min-height: 12px; line-height: 12px; max
    bottom always stays visible */
 .lpanel {
 	position: absolute; left: 50%; top: 58px; transform: translateX(-50%) translateY(-8px); z-index: 11;
-	width: min(860px, 94vw); max-height: calc(100vh - 300px); overflow-y: auto;
+	/* vh/vw resolve against the UN-rotated viewport, but on a phone #boot lives inside a
+	   90deg-rotated wrapper, so a panel was sized for the wrong axis and clipped. Held in
+	   true landscape, calc(100vh - 300px) collapsed to about 60px of readable height.
+	   #boot is inset:0 on that frame, so percentages follow the frame the player sees. */
+	width: min(860px, 94%); max-height: calc(100% - 120px); overflow-y: auto;
 	background: rgba(8, 18, 34, .97); border: 3px solid #ffd34d; border-radius: 18px;
 	box-shadow: 0 24px 70px rgba(0, 0, 0, .7); padding: 22px 26px;
 	opacity: 0; pointer-events: none; transition: .22s;
@@ -201,6 +205,42 @@ html.chik-phone #tip { font-size: 10px; min-height: 12px; line-height: 12px; max
 	font-family: "ChikoriaBaloo", -apple-system, sans-serif; font-size: 13px; color: rgba(255, 255, 255, .65);
 	text-shadow: 0 1px 2px rgba(0, 0, 0, .8);
 }
+
+/* ---------- loading-screen fixes ---------- */
+/* .lpanel is width:min(860px,94vw) + 26px padding + 3px border with no box-sizing, so it
+   measured 425px inside a 390px viewport and pushed the whole document sideways on phones. */
+.lpanel, .lpanel * { box-sizing: border-box; }
+/* `hidden` takes a panel out of the tab order and the accessibility tree; opacity:0 does not,
+   so keyboard and screen-reader users walked into the links of all eight invisible panels. */
+.lpanel[hidden] { display: none; }
+/* body{touch-action:none} killed the horizontal drag on this overflowing strip, so the
+   right-hand tabs were unreachable by touch on a phone. */
+#ltabs { touch-action: pan-x; -webkit-overflow-scrolling: touch; }
+.lpanel { touch-action: pan-y; }
+.ltab:focus-visible, .lpanel .x:focus-visible, #rotskip:focus-visible, #sideflip:focus-visible {
+	outline: 2px solid #ffd34d; outline-offset: -3px; }
+/* the close affordance was an unlabelled span with a ~20x14px hit target */
+.lpanel .x { display: inline-flex; align-items: center; justify-content: center;
+	width: 34px; height: 34px; top: 8px; right: 10px; border-radius: 6px;
+	background: none; border: 0; font: inherit; }
+.lpanel .x:hover, .lpanel .x:focus-visible { background: rgba(255, 211, 77, .14); }
+/* the loader's own messages, kept OFF the rotating tip so neither erases the other */
+#status { font-family: "ChikoriaBaloo", "Arial Rounded MT Bold", -apple-system, sans-serif;
+	color: #ffd9a0; font-size: 13px; min-height: 17px; text-align: center; max-width: 86vw;
+	text-shadow: 0 2px 0 rgba(20, 12, 4, .85), 0 4px 10px rgba(0, 0, 0, .55); }
+html.chik-phone #status { font-size: 10px; min-height: 12px; line-height: 12px; max-width: 74vw;
+	white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#retry { display: none; margin-top: 10px; cursor: pointer; padding: 10px 20px;
+	font-family: "ChikoriaBaloo", -apple-system, sans-serif; font-weight: 800; font-size: 14px; color: #2a1a08;
+	background: linear-gradient(180deg, #ffe07a, #ffc93c 55%, #e09a10); border: 2px solid #7a5205;
+	border-radius: 8px; box-shadow: 0 4px 0 rgba(70, 44, 2, .55); }
+#retry:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(70, 44, 2, .55); }
+/* viewport-fit=cover was putting the phone loading column under the home indicator */
+html.chik-phone #boot { padding-bottom: calc(5px + env(safe-area-inset-bottom, 0px)); }
+@media (prefers-reduced-motion: reduce) {
+	#coin, #herohint, #rotate div { animation: none !important; }
+	.lpanel { transition: none; }
+}
 		</style>
 		<link rel="preload" as="image" href="hero.jpg">
 		<!-- warm DNS + the TLS ticket for the game backend while the pack downloads. The socket itself
@@ -219,10 +259,10 @@ html.chik-phone #tip { font-size: 10px; min-height: 12px; line-height: 12px; max
 		<!-- MOBILE: Chikoria plays in LANDSCAPE, but wallet in-app browsers (Phantom!) can't rotate.
 		     So on a portrait phone we ASK which way the player will turn the phone, then rotate the
 		     whole GAME 90° in CSS — the browser stays portrait, the world plays sideways. -->
-		<div id="rotate" style="position:fixed; inset:0; z-index:99999; display:none; flex-direction:column;
+		<div id="rotate" role="dialog" aria-modal="true" aria-label="Choose which way to turn your phone" style="position:fixed; inset:0; z-index:99999; display:none; flex-direction:column;
 			align-items:center; justify-content:center; gap:16px; text-align:center;
 			background:#0b1f4e url('loading.png') center/cover no-repeat; color:#ffe07a;
-			font-family:'Baloo 2','Segoe UI',sans-serif; padding:24px;">
+			font-family:'ChikoriaBaloo','Segoe UI',sans-serif; padding:24px;">
 			<div style="position:absolute; inset:0; background:rgba(6,14,30,.78);"></div>
 			<div style="position:relative; font-size:56px; animation:rotspin 2.4s ease-in-out infinite;">&#128241;</div>
 			<div style="position:relative; font-size:22px; font-weight:700; text-shadow:0 2px 6px #000;">Play sideways</div>
@@ -236,15 +276,15 @@ html.chik-phone #tip { font-size: 10px; min-height: 12px; line-height: 12px; max
 					background:linear-gradient(180deg,#ffd968,#e8a93c); border:2px solid #8a5c14; border-radius:14px;
 					padding:14px 18px; cursor:pointer; box-shadow:0 4px 0 #6b430c;">&#10227; Turn phone<br>RIGHT</button>
 			</div>
-			<div id="rotskip" style="position:relative; font-size:12px; color:#9fb4d8; text-decoration:underline; cursor:pointer;">my browser rotates by itself — I'll just flip my phone</div>
+			<button id="rotskip" type="button" style="position:relative; font-size:12px; color:#9fb4d8; text-decoration:underline; cursor:pointer; background:none; border:0; font-family:inherit; padding:0;">my browser rotates by itself — I'll just flip my phone</button>
 		</div>
 		<!-- tiny always-there switch to flip the chosen side mid-game (unrotated corner chip,
 		     tucked into the exact corner so it rides the top-bar fringe, never a button) -->
-		<div id="sideflip" style="position:fixed; right:calc(8px + env(safe-area-inset-right, 0px)); bottom:calc(16px + env(safe-area-inset-bottom, 0px));
+		<button id="sideflip" type="button" aria-label="Flip which way the screen is turned" style="position:fixed; right:calc(8px + env(safe-area-inset-right, 0px)); bottom:calc(16px + env(safe-area-inset-bottom, 0px));
 			z-index:99998; display:none; width:40px; height:40px;
 			border-radius:50%; background:rgba(10,22,44,.62); border:2px solid rgba(255,214,104,.65); color:#ffd968;
 			font-size:20px; line-height:37px; text-align:center; cursor:pointer; user-select:none;
-			box-shadow:0 2px 8px rgba(0,0,0,.5);">&#10561;</div>
+			box-shadow:0 2px 8px rgba(0,0,0,.5); font-family:inherit; padding:0;">&#10561;</button>
 		<style>@keyframes rotspin{0%,100%{transform:rotate(-18deg)}50%{transform:rotate(72deg)}}</style>
 		<script>
 		(function(){
@@ -487,7 +527,7 @@ html.chik-phone #tip { font-size: 10px; min-height: 12px; line-height: 12px; max
 					hint.style.cssText = 'position:fixed; right:calc(54px + env(safe-area-inset-right, 0px));' +
 						'bottom:calc(24px + env(safe-area-inset-bottom, 0px)); z-index:99998;' +
 						'background:rgba(10,22,44,.85); border:1px solid rgba(255,214,104,.6); color:#ffe07a;' +
-						'font:600 12px "Baloo 2","Segoe UI",sans-serif; padding:6px 10px; border-radius:10px;' +
+						'font:600 12px "ChikoriaBaloo","Segoe UI",sans-serif; padding:6px 10px; border-radius:10px;' +
 						'pointer-events:none; transition:opacity .6s;';
 					document.body.appendChild(hint);
 					setTimeout(function(){ hint.style.opacity = '0'; }, 5400);
@@ -546,10 +586,12 @@ html.chik-phone #tip { font-size: 10px; min-height: 12px; line-height: 12px; max
 		</script>
 		<div id="boot">
 			<!-- no caption: the key art carries the CHIKORIA logo — just the bar + loading details -->
-			<div id="barwrap"><div id="bar"></div></div>
+			<div id="barwrap" role="progressbar" aria-label="Loading Chikoria" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="bar"></div></div>
 			<div id="pct">0%</div>
 			<div id="tip"></div>
-			<div id="err"></div>
+			<div id="status" role="status" aria-live="polite"></div>
+			<div id="err" role="alert"></div>
+			<button id="retry" type="button">Try again</button>
 			<!-- info tabs (moved from the homepage): browse the game while the realm loads.
 			     Top of the screen; panels drop from under them — the loading bar stays clear. -->
 			<div id="ltabs">
@@ -564,7 +606,7 @@ html.chik-phone #tip { font-size: 10px; min-height: 12px; line-height: 12px; max
 			</div>
 
 			<div class="lpanel" id="lp-about">
-				<span class="x" data-close>&#10005;</span>
+				<span class="x" data-close role="button" tabindex="0" aria-label="Close">&#10005;</span>
 				<h2>Welcome to Chikoria — your Chiki is waiting</h2>
 				<p>A living 3D voxel world on Solana where your <b>$CHIKI</b> hold hatches a creature that walks
 				beside you. Explore a hand-built island, battle the corruption with real card duels, craft,
@@ -581,7 +623,7 @@ html.chik-phone #tip { font-size: 10px; min-height: 12px; line-height: 12px; max
 			</div>
 
 			<div class="lpanel" id="lp-rewards">
-				<span class="x" data-close>&#10005;</span>
+				<span class="x" data-close role="button" tabindex="0" aria-label="Close">&#10005;</span>
 				<h2>&#127942; Play the story. Win real $CHIKI.</h2>
 				<div class="lprize">
 					<b>THE GRAND PRIZE</b>
@@ -600,7 +642,7 @@ html.chik-phone #tip { font-size: 10px; min-height: 12px; line-height: 12px; max
 			</div>
 
 			<div class="lpanel" id="lp-chikis">
-				<span class="x" data-close>&#10005;</span>
+				<span class="x" data-close role="button" tabindex="0" aria-label="Close">&#10005;</span>
 				<h2>&#128062; The ChikiDex — 21 species. Which will choose you?</h2>
 				<p>Ten elemental lines, five ancient Legendaries, and the six-strong <b>Meme Dynasty</b>.
 				Your first egg hatches on a tap — press it on a hidden lucky number and a <b>LEGENDARY</b>
@@ -632,7 +674,7 @@ html.chik-phone #tip { font-size: 10px; min-height: 12px; line-height: 12px; max
 			</div>
 
 			<div class="lpanel" id="lp-play2">
-				<span class="x" data-close>&#10005;</span>
+				<span class="x" data-close role="button" tabindex="0" aria-label="Close">&#10005;</span>
 				<h2>&#127918; How to Play</h2>
 				<ul>
 					<li><b>Sign in with Phantom</b> — a free, gas-less message signature proves the wallet is yours (never a transaction; we never ask for private keys or seed phrases). Hold &ge;500k $CHIKI and tap your egg to hatch (a hidden lucky number wins a Legendary!).</li>
@@ -653,7 +695,7 @@ html.chik-phone #tip { font-size: 10px; min-height: 12px; line-height: 12px; max
 			</div>
 
 			<div class="lpanel" id="lp-roles">
-				<span class="x" data-close>&#10005;</span>
+				<span class="x" data-close role="button" tabindex="0" aria-label="Close">&#10005;</span>
 				<h2>&#9874; Choose your calling — every role earns</h2>
 				<p>Chikoria is a real economy: every resource is player-gathered, every listing is player-made,
 				and real <b>$CHIKI</b> flows to the ones who play their role well. Pick a calling — or mix them all.</p>
@@ -672,7 +714,7 @@ html.chik-phone #tip { font-size: 10px; min-height: 12px; line-height: 12px; max
 			</div>
 
 			<div class="lpanel" id="lp-regions">
-				<span class="x" data-close>&#10005;</span>
+				<span class="x" data-close role="button" tabindex="0" aria-label="Close">&#10005;</span>
 				<h2>&#128506; Everflame Isle — the Heart of Chikoria</h2>
 				<p>The island with the castle now bears its name on the charts: <b>Everflame Isle</b>, where
 				Chikiville's walls guard the last burning light.</p>
@@ -689,7 +731,7 @@ html.chik-phone #tip { font-size: 10px; min-height: 12px; line-height: 12px; max
 			</div>
 
 			<div class="lpanel" id="lp-token">
-				<span class="x" data-close>&#10005;</span>
+				<span class="x" data-close role="button" tabindex="0" aria-label="Close">&#10005;</span>
 				<h2>&#128142; $CHIKI Tokenomics</h2>
 				<div class="lgrid">
 					<div class="lcard"><b>Supply</b><br>1,000,000,000 $CHIKI on Solana — launched on pump.fun.</div>
@@ -701,7 +743,7 @@ html.chik-phone #tip { font-size: 10px; min-height: 12px; line-height: 12px; max
 			</div>
 
 			<div class="lpanel" id="lp-community">
-				<span class="x" data-close>&#10005;</span>
+				<span class="x" data-close role="button" tabindex="0" aria-label="Close">&#10005;</span>
 				<h2>&#128172; Join the Community</h2>
 				<p>Catch 'em! Train 'em! Bond forever! Thousands of trainers are already registered — the
 				leaderboard, the Cup brackets and the champion race all live in the community.</p>
@@ -779,22 +821,42 @@ html.chik-phone #tip { font-size: 10px; min-height: 12px; line-height: 12px; max
 			});
 			// --- loading-page info tabs (top bar): pure DOM, live before the engine JS parses ---
 			var tabs = [].slice.call(document.querySelectorAll('.ltab'));
+			function panelOf(t) { return document.getElementById('lp-' + t.dataset.tab); }
 			function closeTabs() {
-				tabs.forEach(function (t) { t.classList.remove('active'); });
-				[].slice.call(document.querySelectorAll('.lpanel.show')).forEach(function (p) { p.classList.remove('show'); });
+				tabs.forEach(function (t) { t.classList.remove('active'); t.setAttribute('aria-expanded', 'false'); });
+				[].slice.call(document.querySelectorAll('.lpanel')).forEach(function (p) {
+					p.classList.remove('show'); p.hidden = true;
+				});
 			}
-			tabs.forEach(function (t) {
+			function openTab(t) {
+				closeTabs();
+				var p = panelOf(t);
+				if (!p) { return; }
+				t.classList.add('active'); t.setAttribute('aria-expanded', 'true');
+				p.hidden = false;
+				requestAnimationFrame(function () { p.classList.add('show'); });
+			}
+			tabs.forEach(function (t, i) {
+				t.setAttribute('aria-expanded', 'false');
+				t.setAttribute('aria-controls', 'lp-' + t.dataset.tab);
 				t.addEventListener('click', function () {
-					var p = document.getElementById('lp-' + t.dataset.tab);
-					if (!p) { return; }
-					var was = p.classList.contains('show');
-					closeTabs();
-					if (!was) { t.classList.add('active'); p.classList.add('show'); }
+					var p = panelOf(t);
+					if (p && !p.hidden) { closeTabs(); } else { openTab(t); }
+				});
+				t.addEventListener('keydown', function (e) {
+					if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') { return; }
+					e.preventDefault();
+					tabs[(i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length].focus();
 				});
 			});
 			[].slice.call(document.querySelectorAll('.lpanel [data-close]')).forEach(function (x) {
 				x.addEventListener('click', closeTabs);
+				x.addEventListener('keydown', function (e) {
+					if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); closeTabs(); }
+				});
 			});
+			document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { closeTabs(); } });
+			closeTabs();   // start from the hidden state the CSS previously only faked
 		}());
 		</script>
 		<!-- vendored @solana/web3.js + spl-token (on-chain Trading Post buys); local so the CSP allows it -->
@@ -1151,6 +1213,21 @@ html.chik-phone #tip { font-size: 10px; min-height: 12px; line-height: 12px; max
 		<script>
 const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":305699268,"index.wasm":40092042},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
 const GODOT_THREADS_ENABLED = true;
+// If index.js did not arrive — dropped connection, blocked request, an extension — `Engine` is
+// undefined and `new Engine(...)` throws on the very next line, taking the whole boot script with
+// it: no bar, no tips, no error card, no handlers. The player just got the key art, forever.
+if (typeof Engine === 'undefined') {
+	(function () {
+		var e = document.getElementById('err'), r = document.getElementById('retry');
+		if (e) {
+			e.style.display = 'block';
+			e.textContent = "The realm's engine file did not load.\n\nThis is usually a dropped connection or a blocked request. Reloading normally fixes it.";
+		}
+		if (r) { r.style.display = 'inline-block'; r.onclick = function () { location.reload(); }; }
+		var h = document.getElementById('hero'); if (h && h.parentNode) { h.remove(); }
+	}());
+	throw new Error('Chikoria: engine script (index.js) failed to load');
+}
 const engine = new Engine(GODOT_CONFIG);
 
 (function () {
@@ -1238,21 +1315,50 @@ const engine = new Engine(GODOT_CONFIG);
 	];
 	let tipI = 0;
 	tip.textContent = TIPS[0];
-	setInterval(function () { tipI = (tipI + 1) % TIPS.length; tip.textContent = TIPS[tipI]; }, 4200);
+	// This used to own #tip outright, wiping every status and retry message within 4.2s, and it
+	// was never cleared — it kept firing at a node that #boot.remove() had already detached.
+	const tipTimer = setInterval(function () { tipI = (tipI + 1) % TIPS.length; tip.textContent = TIPS[tipI]; }, 4200);
+	window.addEventListener('pagehide', function () { clearInterval(tipTimer); });
 
+	const barwrap = document.getElementById('barwrap');
+	const statusLine = document.getElementById('status');
+	const retryBtn = document.getElementById('retry');
+	let lastBar = 0;
 	function setBar(f) {
-		const v = Math.max(0, Math.min(1, f));
+		const v = Number.isFinite(f) ? Math.max(0, Math.min(1, f)) : lastBar;
+		lastBar = v;
 		bar.style.width = (v * 100).toFixed(1) + '%';
 		pct.textContent = Math.round(v * 100) + '%';
+		// a screen reader previously had no way to know this page was doing anything at all
+		if (barwrap) { barwrap.setAttribute('aria-valuenow', String(Math.round(v * 100))); }
 	}
+	// The loader's own messages used to go to #tip, where the 4.2s carousel erased them.
+	function say(msg) { if (statusLine) { statusLine.textContent = msg; } }
+	let failed = false;
 	function fail(e) {
+		if (failed) { return; }
+		failed = true;
 		console.error(e);
 		err.style.display = 'block';
 		err.textContent = (e && e.message) ? e.message : String(e);
+		say('');
+		// Cached chunks survive a reload, so trying again is cheap and usually works. Without
+		// this the session simply ended on an exception string with nothing to press.
+		if (retryBtn) { retryBtn.style.display = 'inline-block'; retryBtn.onclick = function () { location.reload(); }; }
 		// the error card lives on the loading page — pull the hero off so it can be seen
 		dropHero();
 		if (cine.parentNode) { cine.remove(); }
 	}
+	// index.js's doInit binds `reject` and never calls it, and nothing chains a .catch onto the
+	// Godot() promise — so an engine abort (OOM, a bad wasm compile, a failed pthread spawn)
+	// leaves the awaited promise permanently pending. run().catch(fail) is never reached, the
+	// easing bootTick keeps creeping toward its 0.98 asymptote, and the player waits forever on
+	// a bar that never finishes and a screen that never says anything went wrong — the same
+	// symptom this file's own comments describe as the "82% freeze". Catch it where it surfaces.
+	window.addEventListener('unhandledrejection', function (ev) {
+		if (engineReady || introDone) { return; }   // gameplay-time rejections are not the loader's
+		fail((ev && ev.reason) || new Error('The realm could not finish building. Reload to try again, or close other tabs to free memory.'));
+	});
 
 	// GitHub's web uploader rejects files over 25 MB, so the big engine files ship as
 	// numbered part-chunks (index.pck.0…, index.wasm.0…). Stream a part list back into
@@ -1423,7 +1529,7 @@ const engine = new Engine(GODOT_CONFIG);
 					received -= local;   // un-count this attempt, or the bar overruns on a retry
 					parts.length = 0;
 					if (attempt >= 3) { throw new Error('Failed to load ' + names[i] + ' after 4 tries (' + ((e && e.message) || e) + ')'); }
-					tip.textContent = 'Connection hiccup — retrying part ' + (i + 1) + ' of ' + names.length + '…';
+					say('Connection hiccup — retrying part ' + (i + 1) + ' of ' + names.length + '…');
 					setBar(lo + (hi - lo) * (received / total));
 					await new Promise(function (ok) { setTimeout(ok, 700 * (attempt + 1)); });
 				}
@@ -1441,7 +1547,7 @@ const engine = new Engine(GODOT_CONFIG);
 		const pool = [];
 		for (let w = 0; w < Math.min(CONC, names.length); w++) { pool.push(worker()); }
 		await Promise.all(pool);   // one rejection fails the load, exactly as the sequential version did
-		if (served === names.length && names.length) { tip.textContent = 'Realm loaded from this device…'; }
+		if (served === names.length && names.length) { say('Realm loaded from this device…'); }
 		return buf;   // Blob parts, in order — new Blob(buf) references them without copying
 	}
 
@@ -1478,7 +1584,7 @@ const engine = new Engine(GODOT_CONFIG);
 		const w = vt && vt['index.wasm'];
 		let releaseWasm = null;
 		if (w && w.parts && w.parts.length) {
-			tip.textContent = 'Downloading the engine…';
+			say('Downloading the engine…');
 			const wasmChunks = await streamParts(w.parts, w.total, 0.0, 0.12, vt.v || '', chunkCache, false);
 			// holder (not a const capture) so the 40MB blob can be RELEASED once the engine
 			// has compiled it — WKWebView memory is the scarcest resource we have
@@ -1498,7 +1604,7 @@ const engine = new Engine(GODOT_CONFIG);
 		// 2. Reassemble the realm data pack. PHONES load the MOBILE-LITE pack (half the bytes,
 		// a quarter of the texture memory) — the difference between playing and the iOS memory
 		// ceiling. Missing lite manifest → graceful fallback to the HD pack.
-		tip.textContent = 'Building the realm…';
+		say('Building the realm…');
 		const oomN = (function () { try { return parseInt(sessionStorage.getItem('realm-oom') || '0', 10) || 0; } catch (e) { return 0; } })();
 		// A device that has ALREADY been memory-killed loads the lite pack whatever its UA says.
 		// This is the net under the devices the UA test cannot catch: an iPad reports a desktop-class
@@ -1512,7 +1618,7 @@ const engine = new Engine(GODOT_CONFIG);
 			try {
 				man = await fetchJSON('index.pck.lite.manifest.json', 4);   // 404 falls through instantly; network errors retry
 				usedLite = true;
-				tip.textContent = 'Building the pocket realm…';
+				say('Building the pocket realm…');
 			} catch (e) { man = null; }
 		}
 		if (!man) { man = await fetchJSON('index.pck.manifest.json', 4); }
@@ -1544,13 +1650,13 @@ const engine = new Engine(GODOT_CONFIG);
 		// motionless bar, on the exact site that already froze at 82% once before. Ease the bar
 		// asymptotically toward 98% instead; it can never claim 100% early because only the real
 		// resolve below sets 1.0.
-		tip.textContent = 'Compiling the engine…';
+		say('Compiling the engine…');
 		try { sessionStorage.setItem('realm-loading', '1'); } catch (e) {}   // see the OOM detector
 		var bootT0 = Date.now();
 		var bootTick = setInterval(function () {
 			var t = (Date.now() - bootT0) / 20000;            // ~20s to close most of the gap
 			setBar(0.82 + 0.16 * (1 - Math.exp(-t * 3)));     // 0.82 -> asymptote 0.98
-			if (t > 0.4) { tip.textContent = 'Building the realm…'; }
+			if (t > 0.4) { say('Building the realm…'); }
 		}, 250);
 		try {
 			await engine.startGame({
@@ -1628,7 +1734,7 @@ const engine = new Engine(GODOT_CONFIG);
 		// The isolation service worker usually fixes this after one reload.
 		if ('serviceWorker' in navigator && window.__ssGet('realm-sw-retry') !== '1' && !/[?&]swretry/.test(location.search)) {
 			window.__ssSet('realm-sw-retry', '1');
-			tip.textContent = 'Preparing secure context…';
+			say('Preparing secure context…');
 			// the hero sits over #boot, so surface the note on the hero's own hint too —
 			// otherwise the first-visit reload looks like a silent freeze
 			const hh = document.getElementById('herohint');
