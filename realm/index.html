@@ -335,8 +335,14 @@ html.chik-phone #boot { padding-bottom: calc(5px + env(safe-area-inset-bottom, 0
 			//
 			// ?nocdn falls back to same-origin, for testing or if the bucket ever misbehaves. The loader
 			// also falls back per-chunk on its own after two failed attempts (see chunkUrl/streamParts).
-			window.CHIK_CDN = /[?&]nocdn/.test(location.search) ? ''
-				: 'https://pub-20414795ec4e418396e813e5efd167e8.r2.dev';
+			// MEASURED 2026-09-14, before promoting this build: the bucket holds NEITHER build.
+			// pub-20414795ec4e418396e813e5efd167e8.r2.dev/a4b9b46510/index.pck.0.bin -> 404
+			// pub-20414795ec4e418396e813e5efd167e8.r2.dev/1eb4980816/index.pck.0.bin -> 404
+			// Pointing at it meant every one of the 13 chunks paid two failed round trips and the
+			// backoff below before falling back to same-origin — pure added latency on every fresh
+			// load, for bytes the bucket never had. Same-origin until the chunks are actually
+			// uploaded under their build-hash folder; restore the bucket URL here when they are.
+			window.CHIK_CDN = '';
 			// The user agent is unambiguous here: Phantom/Safari on iPhone always says
 			// iPhone; Android phone browsers always say Android+Mobile. Tablets and every
 			// desktop take the full desktop build. (?forcephone = dev testing)
@@ -1211,7 +1217,7 @@ html.chik-phone #boot { padding-bottom: calc(5px + env(safe-area-inset-bottom, 0
 		</script>
 		<script src="index.js"></script>
 		<script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":305699268,"index.wasm":40092042},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":313445440,"index.wasm":40092042},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
 const GODOT_THREADS_ENABLED = true;
 // If index.js did not arrive — dropped connection, blocked request, an extension — `Engine` is
 // undefined and `new Engine(...)` throws on the very next line, taking the whole boot script with

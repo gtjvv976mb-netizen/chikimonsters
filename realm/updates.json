@@ -1,5 +1,10 @@
 [
  {
+  "date": "2026-09-08",
+  "title": "Grimwick returns: his story and a smaller temple invitation",
+  "body": "Grimwick greets you again whenever you deliberately approach the Wicked Temple and press E, even if you have heard his story before. The original ten story beats remain intact. You can skip ahead, hear him again from the Grimwick button, or leave without entering a run.\n\nThe entry popup is now a compact violet-and-aged-gold wager, featuring Grimwick's original portrait and a smaller Chikimon selection card. Entry cost, run availability and victory loot stay readable without the oversized deployment panels. The story rail and entry controls adapt to phone safe areas and rotation. Creature art, combat and reward probabilities are unchanged."
+ },
+ {
   "date": "2026-09-06",
   "title": "Wicked Temple: a clearer mobile battlefield",
   "body": "The mobile deck now rests at the bottom right, tucked slightly into the edge to leave more room for the fight. Press a card to see its complete face enlarged on the right. A quick tap-release casts once; hold to inspect without spending energy, or drag away to cancel.\n\nThe movement guide appears briefly, then fades while its touch area stays active. Camera, exit and the sandbox reward preview are behind the ellipsis and hide automatically when you return to the fight. Compact type, safe-area spacing and stable deck controls keep the small screen clear.\n\nOriginal creature sprites and card faces are preserved. This release includes the currently approved 99 individually illustrated ability action/effect pairs; the remaining 303 abilities are not being presented as newly completed custom illustrations. Reward odds are unchanged."
