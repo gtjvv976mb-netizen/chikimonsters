@@ -251,6 +251,104 @@ html.chik-phone #boot { padding-bottom: calc(5px + env(safe-area-inset-bottom, 0
 		<link rel="dns-prefetch" href="https://chiki-backend-singapore.onrender.com">
 		<link id="-gd-engine-icon" rel="icon" type="image/png" href="index.icon.png" />
 <link rel="apple-touch-icon" href="index.apple-touch-icon.png"/>
+<script>
+	// STAY SIGNED IN — one Phantom approval per device per day, not one per launch.
+	//
+	// The game proves wallet ownership with a signed "Chikoria sign-in\nwallet:<pk>\nts:<ms>" message
+	// and keeps that signature only in memory, so every reload, relaunch or iOS eviction asked Phantom
+	// again (on the iOS app that is a full app switch). The backend accepts that signature for 24 h
+	// (verifyWalletSig), and Chain.gd already resumes a signed-in session from sessionStorage
+	// 'chikResume' {a,m,s,t} — the wallet-switch reload uses it. So this page keeps the last good
+	// signature per device and hands it to that same resume path on the next load, until 23 h after
+	// it was signed. Everything the save holds still comes from the server on /verify, so the player
+	// lands on the newest cloud copy from whichever device they used last.
+	//
+	// What is stored is the same bearer the page already sends on every request; the market token
+	// (never rotated) already lives in the save on this device. It cannot move funds. It is dropped
+	// on Disconnect, on a wallet change in Phantom, when the server rejects it, and at expiry.
+	(function () {
+		var KEY = 'chikSignin';
+		var MAX_AGE_MS = 23 * 3600 * 1000;          // the backend's window is 24 h; keep an hour of slack
+		var resumeSeeded = false;
+		function read() {
+			try {
+				var v = JSON.parse(localStorage.getItem(KEY) || 'null');
+				if (!v || !v.a || !v.m || !v.s) { return null; }
+				var ts = Number((String(v.m).match(/ts:(\d+)/) || [])[1] || 0);
+				if (!ts || Date.now() - ts > MAX_AGE_MS || String(v.m).indexOf('wallet:' + v.a) < 0) { clear(); return null; }
+				return v;
+			} catch (e) { return null; }
+		}
+		function clear() { try { localStorage.removeItem(KEY); } catch (e) {} }
+		function provider() { return (window.phantom && window.phantom.solana) || window.solana || null; }
+		// Drop the stored sign-in when the player disconnects or switches account in the wallet.
+		function hookProvider() {
+			var p = provider();
+			if (!p || p.__chikSigninHooked) { return; }
+			try {
+				p.__chikSigninHooked = true;
+				if (typeof p.disconnect === 'function') {
+					var orig = p.disconnect;
+					p.disconnect = function () { clear(); return orig.apply(p, arguments); };
+				}
+				if (typeof p.on === 'function') {
+					p.on('disconnect', clear);
+					p.on('accountChanged', function (pk) {
+						var v = read();
+						if (v && (!pk || String(pk) !== v.a)) { clear(); }
+					});
+				}
+			} catch (e) {}
+		}
+		// Capture: the game sets __chikiMsg and __chikiSig, then __chikiPk LAST when sign-in succeeds.
+		var pkValue = '';
+		try {
+			Object.defineProperty(window, '__chikiPk', {
+				configurable: true,
+				get: function () { return pkValue; },
+				set: function (v) {
+					pkValue = v;
+					var a = String(v || ''), m = String(window.__chikiMsg || ''), sg = String(window.__chikiSig || '');
+					if (a && m && sg && m.indexOf('wallet:' + a) >= 0) {
+						try { localStorage.setItem(KEY, JSON.stringify({ a: a, m: m, s: sg })); } catch (e) {}
+						hookProvider();
+					}
+				}
+			});
+		} catch (e) {}
+		// A resumed signature the server no longer accepts must not be retried on every launch.
+		var realFetch = window.fetch && window.fetch.bind(window);
+		if (realFetch) {
+			window.fetch = function (input, init) {
+				var url = (typeof input === 'string') ? input : ((input && input.url) || '');
+				var pr = realFetch(input, init);
+				if (resumeSeeded && /\/verify(\?|$)/.test(url.split('#')[0])) {
+					pr.then(function (res) {
+						if (res.status >= 400 && res.status < 500) { clear(); resumeSeeded = false; return; }
+						if (!res.ok) { return; }
+						res.clone().json().then(function (j) {
+							if (j && j.signedIn !== true) { clear(); }
+							resumeSeeded = false;
+						}).catch(function () {});
+					}).catch(function () {});
+				}
+				return pr;
+			};
+		}
+		// Called by run() right before the engine starts (Chain.gd honours chikResume for 240 s).
+		window.__chikSigninSeedResume = function () {
+			try {
+				hookProvider();
+				if (sessionStorage.getItem('chikResume')) { return; }   // a wallet-switch reload already set one
+				var v = read();
+				if (!v) { return; }
+				sessionStorage.setItem('chikResume', JSON.stringify({ a: v.a, m: v.m, s: v.s, t: Date.now() }));
+				resumeSeeded = true;
+			} catch (e) {}
+		};
+		window.addEventListener('load', hookProvider);
+	})();
+</script>
 <script src="coi-serviceworker.min.js"></script>
 	</head>
 	<body>
@@ -1611,13 +1709,31 @@ const engine = new Engine(GODOT_CONFIG);
 		// a quarter of the texture memory) — the difference between playing and the iOS memory
 		// ceiling. Missing lite manifest → graceful fallback to the HD pack.
 		say('Building the realm…');
-		const oomN = (function () { try { return parseInt(sessionStorage.getItem('realm-oom') || '0', 10) || 0; } catch (e) { return 0; } })();
+		const oomN = (function () {
+			try {
+				var n = parseInt(sessionStorage.getItem('realm-oom') || '0', 10) || 0;
+				// The native app: a jetsam kill takes the whole app (and its sessionStorage) with it, so the
+				// verdict is kept in localStorage for a day — otherwise every cold launch would retry the
+				// HD pack and die again on a phone that cannot hold it.
+				if (!n && window.CHIK_IOS_APP) {
+					var saved = (localStorage.getItem('realm-oom-app') || '').split(':');
+					if (saved.length === 2 && Date.now() - parseInt(saved[1], 10) < 86400000) { n = parseInt(saved[0], 10) || 0; }
+				}
+				return n;
+			} catch (e) { return 0; }
+		})();
 		// A device that has ALREADY been memory-killed loads the lite pack whatever its UA says.
 		// This is the net under the devices the UA test cannot catch: an iPad reports a desktop-class
 		// UA ("Macintosh"), and an iPhone with Safari's "Request Desktop Website" on does the same —
 		// both pull the 222MB HD pack today and hit the exact ceiling the lite pack exists to avoid.
 		// sessionStorage-scoped, so a fresh tab starts clean rather than being degraded forever.
-		const wantLite = !!window.CHIK_PHONE || oomN >= 1;
+		// THE NATIVE iOS APP IS THE HD BUILD. It sets window.CHIK_IOS_APP before this script runs
+		// (a WKUserScript at document start) and ships as a landscape-only shell on current phones,
+		// so it gets the desktop pack on purpose — the third variant beside desktop and mobile web.
+		// The OOM net above still applies to it: a device that was memory-killed drops to the lite
+		// pack on the next load rather than looping.
+		const isIOSApp = !!window.CHIK_IOS_APP;
+		const wantLite = oomN >= 1 || (!!window.CHIK_PHONE && !isIOSApp);
 		let man = null;
 		let usedLite = false;
 		if (wantLite) {
@@ -1642,7 +1758,7 @@ const engine = new Engine(GODOT_CONFIG);
 		// 3. Cap the canvas backing store on phones: UI/compositor cost scales with DPR^2 and
 		// 3x retina is indistinguishable from 2x at phone viewing distance. Must land BEFORE
 		// startGame — the engine samples devicePixelRatio when it sizes the canvas.
-		if (wantLite) {
+		if (wantLite || window.CHIK_PHONE) {
 			try {
 				var __realDPR = window.devicePixelRatio || 1;
 				Object.defineProperty(window, 'devicePixelRatio', { get: function () { return Math.min(__realDPR, 2); }, configurable: true });
@@ -1664,9 +1780,24 @@ const engine = new Engine(GODOT_CONFIG);
 			setBar(0.82 + 0.16 * (1 - Math.exp(-t * 3)));     // 0.82 -> asymptote 0.98
 			if (t > 0.4) { say('Building the realm…'); }
 		}, 250);
+		// THE PACK MUST BE MOUNTED UNDER A NAME GODOT RECOGNISES. Engine.startGame() preloads the
+		// pack at a path equal to its URL, so a blob: URL becomes a file called "blob:https://…/uuid"
+		// and --main-pack points at that. Godot's PCK reader rejects anything without the GDPC
+		// magic and its ZIP reader only engages for a path ending in .zip/.pcz — so a ZIP-format
+		// lite pack (manifest "format":"zip", "fs_name":"index.pcz") could never mount that way and
+		// every phone got "Couldn't load project data at path '/'". Do the three startGame steps
+		// by hand instead: init, preload the blob under the manifest's fs_name, then start with
+		// --main-pack <fs_name>. A GDPC pack keeps its old name, so desktop is unchanged.
+		const fsName = (man && man.fs_name) || 'index.pck';
 		try {
-			await engine.startGame({
-				'mainPack': packUrl,
+			// EVERY OPTION GOES IN BEFORE init(): the pthread pool is sized when the wasm module is
+			// instantiated (getModuleConfig copies emscriptenPoolSize into Module), so an override handed
+			// to start() afterwards is silently ignored and the engine keeps the export default of 8.
+			engine.config.update({
+				'args': ['--main-pack', fsName].concat(GODOT_CONFIG.args || []),
+				// Godot's own soft-keyboard elements only where they are needed (iPhone, iPad, the app);
+				// touch-capable desktops keep the canvas key handling and IME they have today.
+				'experimentalVK': !!(window.CHIK_PHONE || window.CHIK_TABLET || isIOSApp),
 				// The generated HTML config still carries Godot's export default of four workers.
 				// Override it before init() mounts project.godot, so phones actually receive the same
 				// two-worker budget asserted by the project and release gate.
@@ -1676,13 +1807,24 @@ const engine = new Engine(GODOT_CONFIG);
 				// mounted. Browser smoke proved 12 can still exhaust on a high-core device while 14
 				// reaches the first playable frame in ~12s. Scale 10..14 by reported cores (OOM retries
 				// use two fewer where possible); the lite pack's 130MB texture saving funds this headroom.
-				'emscriptenPoolSize': (!!window.CHIK_PHONE
+				// The iOS app runs the HD pack on phone silicon: the HD world build spawns more
+				// engine threads than the lite pack (the 14-worker phone cap logged "thread pool is
+				// exhausted" at world build on the iOS 27 simulator), so give it the desktop formula
+				// with a lower ceiling. A memory-killed device is back on the lite pack and the phone
+				// budget by then (wantLite), so this never stacks on top of an OOM retry.
+				'emscriptenPoolSize': ((!!window.CHIK_PHONE && !(isIOSApp && !usedLite))
 					? Math.min(Math.max(navigator.hardwareConcurrency || 4, 4) + (oomN >= 1 ? 6 : 8), 14)
-					: Math.min(Math.max(navigator.hardwareConcurrency || 8, 8) + 8, 24)),
+					: Math.min(Math.max(navigator.hardwareConcurrency || 8, 8) + 8, (isIOSApp ? 20 : 24))),
 				'onProgress': function (cur, tot) {
 					if (cur > 0 && tot > 0) { setBar(0.82 + 0.18 * (cur / tot)); }
 				},
 			});
+			if (window.__chikSigninSeedResume) { window.__chikSigninSeedResume(); }
+			await Promise.all([
+				engine.init(GODOT_CONFIG.executable || 'index'),
+				engine.preloadFile(packUrl, fsName),
+			]);
+			await engine.start();
 		} finally { clearInterval(bootTick); }
 		try { sessionStorage.removeItem('realm-loading'); } catch (e) {}
 		// the realm is built — free every staging copy NOW: the engine has the pck in its own
@@ -1723,6 +1865,7 @@ const engine = new Engine(GODOT_CONFIG);
 			if (window.CHIK_PHONE || window.CHIK_TABLET) {
 				const oomN = parseInt(sessionStorage.getItem('realm-oom') || '0', 10) + 1;
 				sessionStorage.setItem('realm-oom', String(oomN));
+				if (window.CHIK_IOS_APP) { try { localStorage.setItem('realm-oom-app', oomN + ':' + Date.now()); } catch (e) {} }
 				err.textContent = '⚠️ The realm restarted — this device ran low on memory. Loading the lighter pack this time. Closing other apps and tabs helps; opening a fresh tab starts clean.';
 				err.style.display = 'block';   // #err ships display:none — without this the warning never rendered
 				dropHero();                    // the hero (z12) covers #boot (z10); the player must SEE the warning
