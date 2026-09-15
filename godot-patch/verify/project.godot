@@ -1,0 +1,6 @@
+; Scratch project used only to compile and drive the patch scripts. Not part of the game.
+config_version=5
+
+[application]
+config/name="chikiseum-patch-verify"
+config/features=PackedStringArray("4.6", "GL Compatibility")
