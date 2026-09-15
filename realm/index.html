@@ -251,6 +251,104 @@ html.chik-phone #boot { padding-bottom: calc(5px + env(safe-area-inset-bottom, 0
 		<link rel="dns-prefetch" href="https://chiki-backend-singapore.onrender.com">
 		<link id="-gd-engine-icon" rel="icon" type="image/png" href="index.icon.png" />
 <link rel="apple-touch-icon" href="index.apple-touch-icon.png"/>
+<script>
+	// STAY SIGNED IN — one Phantom approval per device per day, not one per launch.
+	//
+	// The game proves wallet ownership with a signed "Chikoria sign-in\nwallet:<pk>\nts:<ms>" message
+	// and keeps that signature only in memory, so every reload, relaunch or iOS eviction asked Phantom
+	// again (on the iOS app that is a full app switch). The backend accepts that signature for 24 h
+	// (verifyWalletSig), and Chain.gd already resumes a signed-in session from sessionStorage
+	// 'chikResume' {a,m,s,t} — the wallet-switch reload uses it. So this page keeps the last good
+	// signature per device and hands it to that same resume path on the next load, until 23 h after
+	// it was signed. Everything the save holds still comes from the server on /verify, so the player
+	// lands on the newest cloud copy from whichever device they used last.
+	//
+	// What is stored is the same bearer the page already sends on every request; the market token
+	// (never rotated) already lives in the save on this device. It cannot move funds. It is dropped
+	// on Disconnect, on a wallet change in Phantom, when the server rejects it, and at expiry.
+	(function () {
+		var KEY = 'chikSignin';
+		var MAX_AGE_MS = 23 * 3600 * 1000;          // the backend's window is 24 h; keep an hour of slack
+		var resumeSeeded = false;
+		function read() {
+			try {
+				var v = JSON.parse(localStorage.getItem(KEY) || 'null');
+				if (!v || !v.a || !v.m || !v.s) { return null; }
+				var ts = Number((String(v.m).match(/ts:(\d+)/) || [])[1] || 0);
+				if (!ts || Date.now() - ts > MAX_AGE_MS || String(v.m).indexOf('wallet:' + v.a) < 0) { clear(); return null; }
+				return v;
+			} catch (e) { return null; }
+		}
+		function clear() { try { localStorage.removeItem(KEY); } catch (e) {} }
+		function provider() { return (window.phantom && window.phantom.solana) || window.solana || null; }
+		// Drop the stored sign-in when the player disconnects or switches account in the wallet.
+		function hookProvider() {
+			var p = provider();
+			if (!p || p.__chikSigninHooked) { return; }
+			try {
+				p.__chikSigninHooked = true;
+				if (typeof p.disconnect === 'function') {
+					var orig = p.disconnect;
+					p.disconnect = function () { clear(); return orig.apply(p, arguments); };
+				}
+				if (typeof p.on === 'function') {
+					p.on('disconnect', clear);
+					p.on('accountChanged', function (pk) {
+						var v = read();
+						if (v && (!pk || String(pk) !== v.a)) { clear(); }
+					});
+				}
+			} catch (e) {}
+		}
+		// Capture: the game sets __chikiMsg and __chikiSig, then __chikiPk LAST when sign-in succeeds.
+		var pkValue = '';
+		try {
+			Object.defineProperty(window, '__chikiPk', {
+				configurable: true,
+				get: function () { return pkValue; },
+				set: function (v) {
+					pkValue = v;
+					var a = String(v || ''), m = String(window.__chikiMsg || ''), sg = String(window.__chikiSig || '');
+					if (a && m && sg && m.indexOf('wallet:' + a) >= 0) {
+						try { localStorage.setItem(KEY, JSON.stringify({ a: a, m: m, s: sg })); } catch (e) {}
+						hookProvider();
+					}
+				}
+			});
+		} catch (e) {}
+		// A resumed signature the server no longer accepts must not be retried on every launch.
+		var realFetch = window.fetch && window.fetch.bind(window);
+		if (realFetch) {
+			window.fetch = function (input, init) {
+				var url = (typeof input === 'string') ? input : ((input && input.url) || '');
+				var pr = realFetch(input, init);
+				if (resumeSeeded && /\/verify(\?|$)/.test(url.split('#')[0])) {
+					pr.then(function (res) {
+						if (res.status >= 400 && res.status < 500) { clear(); resumeSeeded = false; return; }
+						if (!res.ok) { return; }
+						res.clone().json().then(function (j) {
+							if (j && j.signedIn !== true) { clear(); }
+							resumeSeeded = false;
+						}).catch(function () {});
+					}).catch(function () {});
+				}
+				return pr;
+			};
+		}
+		// Called by run() right before the engine starts (Chain.gd honours chikResume for 240 s).
+		window.__chikSigninSeedResume = function () {
+			try {
+				hookProvider();
+				if (sessionStorage.getItem('chikResume')) { return; }   // a wallet-switch reload already set one
+				var v = read();
+				if (!v) { return; }
+				sessionStorage.setItem('chikResume', JSON.stringify({ a: v.a, m: v.m, s: v.s, t: Date.now() }));
+				resumeSeeded = true;
+			} catch (e) {}
+		};
+		window.addEventListener('load', hookProvider);
+	})();
+</script>
 <script src="coi-serviceworker.min.js"></script>
 	</head>
 	<body>
@@ -1721,6 +1819,7 @@ const engine = new Engine(GODOT_CONFIG);
 					if (cur > 0 && tot > 0) { setBar(0.82 + 0.18 * (cur / tot)); }
 				},
 			});
+			if (window.__chikSigninSeedResume) { window.__chikSigninSeedResume(); }
 			await Promise.all([
 				engine.init(GODOT_CONFIG.executable || 'index'),
 				engine.preloadFile(packUrl, fsName),
