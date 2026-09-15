@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Chikiseum — Arena Test Client</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='26'%3E%E2%9A%94%EF%B8%8F%3C/text%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#0b1220; --panel:#121c30; --panel2:#18253d; --line:#24334e;
+    --ink:#eaf2ff; --dim:#93a6c4; --gold:#ffd34d; --good:#4ade80; --bad:#f87171; --ai:#a78bfa;
+    color-scheme: dark;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{min-height:100%;background:var(--bg);color:var(--ink);
+    font:15px/1.5 'Nunito',system-ui,-apple-system,Segoe UI,sans-serif}
+  body{padding:max(16px,env(safe-area-inset-top)) 16px max(16px,env(safe-area-inset-bottom))}
+  .wrap{max-width:960px;margin:0 auto}
+  h1{font-size:clamp(20px,4vw,28px);letter-spacing:.2px}
+  h2{font-size:16px;margin-bottom:10px;color:var(--gold)}
+  .sub{color:var(--dim);font-size:13px;margin-top:4px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;margin:14px 0}
+  button{font:inherit;font-weight:800;cursor:pointer;border:0;border-radius:10px;padding:11px 18px;
+    background:var(--gold);color:#2a1a08;transition:transform .1s,filter .15s}
+  button:hover:not(:disabled){filter:brightness(1.08)} button:active:not(:disabled){transform:scale(.97)}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  button.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+  button.ai{background:var(--ai);color:#1b1035}
+  input{font:inherit;background:var(--panel2);color:var(--ink);border:1px solid var(--line);
+    border-radius:10px;padding:10px 12px;width:120px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .between{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+  .pill{display:inline-block;font-size:12px;font-weight:800;padding:3px 10px;border-radius:999px;
+    background:var(--panel2);border:1px solid var(--line);color:var(--dim)}
+  .pill.on{color:var(--good);border-color:#2b5c3f} .pill.off{color:var(--bad);border-color:#5c2b2b}
+  .pill.ai{color:var(--ai);border-color:#4b3a7a}
+  .list{display:grid;gap:10px}
+  .item{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px}
+  .item.ai{border-color:#4b3a7a;background:linear-gradient(180deg,#1d1838,#18253d)}
+  .muted{color:var(--dim);font-size:13px}
+  .bar{height:9px;border-radius:99px;background:#0a1322;overflow:hidden;border:1px solid var(--line)}
+  .bar>i{display:block;height:100%;background:var(--good);transition:width .15s}
+  .bar.e>i{background:#60a5fa}
+  canvas{width:100%;max-width:100%;aspect-ratio:1;background:#0a1322;border:1px solid var(--line);border-radius:14px;touch-action:none}
+  .hand{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px;margin-top:12px}
+  .slot{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:9px;text-align:left;
+    color:var(--ink);font-weight:700;font-size:12.5px;position:relative;overflow:hidden}
+  .slot small{display:block;color:var(--dim);font-weight:600;font-size:11px;margin-top:3px}
+  .slot .cd{position:absolute;inset:0;background:rgba(6,12,24,.74);display:grid;place-items:center;
+    font-size:15px;color:var(--gold)}
+  .log{max-height:150px;overflow:auto;font-size:12.5px;color:var(--dim);
+    background:#0a1322;border:1px solid var(--line);border-radius:10px;padding:10px;margin-top:12px}
+  .log div{padding:1px 0} .log b{color:var(--ink)}
+  .err{background:#2a1520;border-color:#5c2b3a;color:#ffc9d4}
+  .ok{color:var(--good)} .bad{color:var(--bad)}
+  [hidden]{display:none!important}
+  a{color:var(--gold)}
+  table{width:100%;border-collapse:collapse;font-size:13px} td{padding:5px 0;border-bottom:1px solid var(--line)}
+  td:last-child{text-align:right;color:var(--dim)}
+  kbd{background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:1px 6px;font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="between">
+    <div>
+      <h1>Chikiseum — Arena Test Client</h1>
+      <div class="sub">A plain web client for the live arena. Practise against the AI, and test SOL wagers,
+      without the game build. <b>This is a test surface, not the game.</b></div>
+    </div>
+    <div id="srv" class="pill">checking…</div>
+  </div>
+
+  <!-- 1 — sign in -->
+  <section class="card" id="cSignin">
+    <h2>1 · Sign in</h2>
+    <div class="muted" style="margin-bottom:12px">Phantom signs one message proving you own the wallet.
+      It is not a transaction and moves nothing.</div>
+    <div class="row">
+      <button id="bConnect">Connect Phantom</button>
+      <span id="who" class="muted"></span>
+    </div>
+  </section>
+
+  <!-- 2 — fighter -->
+  <section class="card" id="cRoster" hidden>
+    <h2>2 · Choose your Chikimon</h2>
+    <div id="roster" class="list"></div>
+  </section>
+
+  <!-- 3 — lobby -->
+  <section class="card" id="cLobby" hidden>
+    <div class="between"><h2 style="margin:0">3 · Arena lobby</h2>
+      <button class="ghost" id="bRefresh">Refresh</button></div>
+    <div id="lobbyNote" class="muted" style="margin:8px 0 12px"></div>
+    <div id="lobby" class="list"></div>
+  </section>
+
+  <!-- 4 — battle -->
+  <section class="card" id="cBattle" hidden>
+    <div class="between">
+      <h2 style="margin:0" id="bTitle">Battle</h2>
+      <div class="row"><span id="clock" class="pill"></span><button class="ghost" id="bQuit">Leave</button></div>
+    </div>
+    <div class="row" style="margin:12px 0;gap:16px;align-items:stretch">
+      <div style="flex:1 1 200px">
+        <div class="between"><b id="meName">You</b><span class="muted" id="meHp"></span></div>
+        <div class="bar"><i id="meHpBar"></i></div>
+        <div class="bar e" style="margin-top:5px"><i id="meEnBar"></i></div>
+      </div>
+      <div style="flex:1 1 200px">
+        <div class="between"><b id="foeName">Opponent</b><span class="muted" id="foeHp"></span></div>
+        <div class="bar"><i id="foeHpBar"></i></div>
+        <div class="bar e" style="margin-top:5px"><i id="foeEnBar"></i></div>
+      </div>
+    </div>
+    <canvas id="arena" width="600" height="600"></canvas>
+    <div class="muted" style="margin-top:8px"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or drag the arena to move ·
+      <kbd>1</kbd>–<kbd>9</kbd> or click a card to cast</div>
+    <div class="hand" id="hand"></div>
+    <div class="log" id="log"></div>
+  </section>
+
+  <!-- 5 — wagers -->
+  <section class="card" id="cWager" hidden>
+    <div class="between"><h2 style="margin:0">SOL wagers</h2><span id="wState" class="pill"></span></div>
+    <div id="wNote" class="muted" style="margin:8px 0 12px"></div>
+    <div class="row" style="margin-bottom:12px">
+      <input id="wStake" type="number" step="0.001" min="0.001" value="0.001" aria-label="Stake in SOL">
+      <button id="bPost">Post challenge</button>
+      <button class="ghost" id="bWRefresh">Refresh</button>
+    </div>
+    <div id="wMine"></div>
+    <div id="wBoard" class="list"></div>
+  </section>
+
+  <div id="err" class="card err" hidden></div>
+  <p class="muted" style="text-align:center;margin:20px 0">
+    Backend <code id="apiName"></code> · build <span id="build">?</span>
+  </p>
+</div>
+
+<!-- Only the wager deposit needs this (building the memo-tagged transfer). Practice and the whole
+     battle work without it, so a CDN outage must not break the page: the fallback is tried, and if
+     both fail payStake() prints the manual transfer instructions instead. -->
+<!-- Pinned version AND subresource integrity: this page builds SOL transfers, so a CDN serving
+     altered bytes could redirect a stake. With SRI the browser refuses anything that is not this
+     exact file, and the page falls back to manual transfer instructions rather than running it.
+     Both hosts were verified to serve byte-identical files for this version. -->
+<script src="https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js"
+        integrity="sha384-xo1g+ODR6i1cxIVZeALc/apXFHeaJHO1j1whMO3dhtdBChWeaihnDs7UnXs9ch78"
+        crossorigin="anonymous"></script>
+<script>
+  if (!window.solanaWeb3) {
+    document.write('<script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.95.3/lib/index.iife.min.js" ' +
+      'integrity="sha384-xo1g+ODR6i1cxIVZeALc/apXFHeaJHO1j1whMO3dhtdBChWeaihnDs7UnXs9ch78" ' +
+      'crossorigin="anonymous"><\/script>');
+  }
+</script>
+<script>
+(function(){
+"use strict";
+const API = "https://chiki-backend-singapore.onrender.com";
+const P   = API + "/chikiseum/live/v1";
+const $   = id => document.getElementById(id);
+const fmt = n => (Math.round(n*1000)/1000).toFixed(3).replace(/\.?0+$/,"");
+
+// ---------------------------------------------------------------- state
+let auth = null;          // {wallet, mktToken, sessionId, sessionEpoch}
+let asset = null;         // chosen asset_id
+let matchId = null;       // live match
+let snap = null;          // last battle snapshot
+let poll = null, lastMove = 0, seen = 0;
+const keys = new Set();
+
+function showErr(msg){ $("err").hidden = false; $("err").textContent = msg; }
+function clearErr(){ $("err").hidden = true; }
+function log(html){ const d=document.createElement("div"); d.innerHTML=html; $("log").prepend(d); }
+
+// ---------------------------------------------------------------- transport
+async function api(path, body){
+  const r = await fetch(API + path, { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(body) });
+  const data = await r.json().catch(()=>({}));
+  if (!r.ok) throw Object.assign(new Error(data.error || ("HTTP " + r.status)), { code: data.code, status: r.status });
+  return data;
+}
+/** Every arena command carries the same four proven-identity fields. */
+function cmd(route, extra){
+  if (!auth) throw new Error("not signed in");
+  return api("/chikiseum/live/v1/" + route, Object.assign({
+    wallet: auth.wallet, mktToken: auth.mktToken, sessionId: auth.sessionId, sessionEpoch: auth.sessionEpoch
+  }, extra || {}));
+}
+const rid = () => (crypto.randomUUID ? crypto.randomUUID() : "r" + Date.now() + Math.random().toString(36).slice(2,10));
+
+// ---------------------------------------------------------------- health
+async function health(){
+  try{
+    const h = await (await fetch(P + "/health")).json();
+    const w = h.wagers || {};
+    $("srv").textContent = h.ready ? "arena ready" : ("arena " + (h.reason || "unavailable"));
+    $("srv").className = "pill " + (h.ready ? "on" : "off");
+    $("wState").textContent = w.enabled ? "wagers on" : "wagers off";
+    $("wState").className = "pill " + (w.enabled ? "on" : "off");
+    $("wNote").innerHTML = w.configured
+      ? `Stakes ${w.min_stake_sol}–${w.max_stake_sol} SOL, ${w.wallet_daily_sol} SOL per wallet per day. ` +
+        `Custody is <b>treasury-held</b>: your stake sits in the treasury until the match is decided. ` +
+        `Held right now: <b>${w.liability_sol} SOL</b>.`
+      : "Wagers are not configured on this backend.";
+    window.__wagers = w;
+    const b = await (await fetch(API + "/health")).json();
+    $("build").textContent = (b.build && b.build.short) || "?";
+    return h;
+  }catch(e){ $("srv").textContent = "backend unreachable"; $("srv").className = "pill off"; }
+}
+
+// ---------------------------------------------------------------- sign in
+$("bConnect").onclick = async () => {
+  clearErr();
+  const ph = window.phantom && window.phantom.solana;
+  if (!ph) return showErr("Phantom was not found. Install the Phantom extension (or open this page in Phantom's browser) and reload.");
+  try{
+    $("bConnect").disabled = true;
+    const { publicKey } = await ph.connect();
+    const wallet = publicKey.toString();
+    // The server needs a signature binding THIS wallet and a timestamp. Nothing else.
+    const msg = `Chikoria sign-in\nwallet:${wallet}\nts:${Date.now()}`;
+    const signed = await ph.signMessage(new TextEncoder().encode(msg), "utf8");
+    const sig = btoa(String.fromCharCode.apply(null, signed.signature));
+    const v = await api("/verify", { wallet, authMsg: msg, authSig: sig });
+    if (!v.signedIn) throw new Error("The server did not accept that signature.");
+    auth = { wallet, mktToken: v.mktToken, sessionId: v.sessionId, sessionEpoch: v.sessionEpoch || 0 };
+    $("who").innerHTML = `signed in as <b>${wallet.slice(0,4)}…${wallet.slice(-4)}</b>`;
+    $("bConnect").textContent = "Signed in";
+    await loadRoster();
+    $("cWager").hidden = false; refreshWagers();
+  }catch(e){ showErr(e.message || String(e)); $("bConnect").disabled = false; }
+};
+
+// ---------------------------------------------------------------- roster
+async function loadRoster(){
+  const r = await cmd("roster");
+  $("cRoster").hidden = false;
+  const el = $("roster"); el.innerHTML = "";
+  if (!r.fighters.length) return el.innerHTML = `<div class="muted">This wallet owns no Chikimon the arena can field.</div>`;
+  r.fighters.forEach(f => {
+    const d = document.createElement("div"); d.className = "item";
+    d.innerHTML = `<div class="between">
+        <div><b>${f.display_name}</b> <span class="pill">${f.rarity}</span>
+          <div class="muted">battle level ${f.level} · ${f.xp} XP${f.eligible ? "" : " · " + f.reason}</div></div>
+        <button ${f.eligible ? "" : "disabled"}>Select</button></div>`;
+    d.querySelector("button").onclick = async () => {
+      clearErr();
+      try{ await cmd("session", { asset_id: f.asset_id }); asset = f.asset_id;
+        [...el.querySelectorAll("button")].forEach(b => b.textContent = "Select");
+        d.querySelector("button").textContent = "Selected";
+        $("cLobby").hidden = false; refreshLobby();
+      }catch(e){ showErr(e.message); }
+    };
+    el.appendChild(d);
+  });
+}
+
+// ---------------------------------------------------------------- lobby
+$("bRefresh").onclick = () => refreshLobby();
+async function refreshLobby(){
+  clearErr();
+  let l; try{ l = await cmd("lobby"); }catch(e){ return showErr(e.message); }
+  if (l.match_id && !matchId) return enterBattle(l.match_id);
+  $("lobbyNote").innerHTML = l.rehearsal_available
+    ? `The <b>Training Dummy (AI)</b> mirrors your fighter exactly. Practice awards <b>no battle XP</b> — it cannot be farmed.`
+    : `Practice mode is switched off on this backend (CHIK_REHEARSAL=off).`;
+  const el = $("lobby"); el.innerHTML = "";
+  const rows = (l.trainers || []).slice().sort((a,b) => (b.rehearsal?1:0) - (a.rehearsal?1:0));
+  if (!rows.length) el.innerHTML = `<div class="muted">Nobody else is in the arena right now.</div>`;
+  rows.forEach(t => {
+    const d = document.createElement("div"); d.className = "item" + (t.rehearsal ? " ai" : "");
+    d.innerHTML = `<div class="between">
+      <div><b>${t.handle}</b> ${t.rehearsal ? '<span class="pill ai">AI · practice</span>' : ""}
+        <div class="muted">${t.fighter.display_name} · level ${t.fighter.level}${t.compatible ? "" : " · outside your matchmaking band"}</div></div>
+      <button class="${t.rehearsal ? "ai" : ""}" ${t.compatible ? "" : "disabled"}>${t.rehearsal ? "Practise" : "Challenge"}</button></div>`;
+    d.querySelector("button").onclick = async () => {
+      clearErr();
+      try{
+        const r = await cmd("challenge", { target: t.trainer_id });
+        if (r.match_id) enterBattle(r.match_id);            // the dummy starts instantly
+        else showErr("Challenge sent — they have 30 seconds to accept. Press Refresh.");
+      }catch(e){ showErr(e.message); }
+    };
+    el.appendChild(d);
+  });
+  (l.challenges || []).forEach(c => {
+    const d = document.createElement("div"); d.className = "item";
+    d.innerHTML = `<div class="between"><div><b>Challenge received</b></div><button>Accept</button></div>`;
+    d.querySelector("button").onclick = async () => {
+      try{ const r = await cmd("accept", { challenge_id: c.id }); enterBattle(r.match_id); }
+      catch(e){ showErr(e.message); }
+    };
+    el.appendChild(d);
+  });
+}
+
+// ---------------------------------------------------------------- battle
+async function enterBattle(id){
+  matchId = id; seen = 0; $("log").innerHTML = "";
+  $("cBattle").hidden = false; $("cBattle").scrollIntoView({ behavior:"smooth", block:"start" });
+  try{ await cmd("ready", { match_id: id }); }catch(e){ /* already ready, or not yet startable */ }
+  if (poll) clearInterval(poll);
+  poll = setInterval(tick, 180);
+  tick();
+}
+function leaveBattle(){
+  if (poll) clearInterval(poll); poll = null; matchId = null; snap = null;
+  $("cBattle").hidden = true; refreshLobby();
+}
+$("bQuit").onclick = async () => {
+  if (matchId) { try{ await cmd("cancel", { match_id: matchId }); }catch(e){} }
+  leaveBattle();
+};
+
+async function tick(){
+  if (!matchId) return;
+  try{ apply(await cmd("state", { match_id: matchId })); }
+  catch(e){ if (e.status === 403 || e.status === 404) leaveBattle(); }
+  sendMove();
+}
+
+function apply(s){
+  snap = s;
+  const me = s.players.find(p => p.side === s.you.side), foe = s.players.find(p => p.side !== s.you.side);
+  $("bTitle").textContent = s.status === "ready" ? "Waiting for both fighters…"
+    : s.status === "active" ? "Fighting" : ("Match " + s.status);
+  $("clock").textContent = s.status === "active"
+    ? Math.ceil(s.realtime.remaining) + "s" + (s.realtime.phase === "overtime" ? " · overtime" : "")
+    : s.status;
+  $("meName").textContent = me.handle; $("foeName").textContent = foe.handle;
+  $("meHp").textContent = Math.ceil(me.hp) + " / " + me.max_hp;
+  $("foeHp").textContent = Math.ceil(foe.hp) + " / " + foe.max_hp;
+  $("meHpBar").style.width = (100*me.hp/me.max_hp) + "%";
+  $("foeHpBar").style.width = (100*foe.hp/foe.max_hp) + "%";
+  $("meEnBar").style.width = (100*me.energy/6) + "%";
+  $("foeEnBar").style.width = (100*foe.energy/6) + "%";
+  drawArena(s, me, foe);
+  drawHand(s);
+  (s.events || []).forEach(ev => {
+    if (ev.seq <= seen) return; seen = ev.seq;
+    const who = ev.side === s.you.side ? "You" : foe.handle;
+    if (ev.type === "impact") log(`<b>${who}</b> hit for <b>${Math.round(ev.amount)}</b>`);
+    else if (ev.type === "cast") log(`<b>${who}</b> cast slot ${ev.slot}`);
+    else if (ev.type === "status_start") log(`<b>${who}</b> → ${ev.status}`);
+    else if (ev.type === "finish") log(`<b>Match over</b> — ${ev.reason}${ev.winner ? " · winner " + ev.winner : ""}`);
+  });
+  if (s.status !== "ready" && s.status !== "active"){
+    const won = s.winner === s.you.side;
+    $("bTitle").innerHTML = s.winner ? (won ? '<span class="ok">You won</span>' : '<span class="bad">You lost</span>') : "Draw";
+    if (s.battle_xp) log(`<b>Battle XP</b> +${s.battle_xp.gained_xp} (level ${s.battle_xp.level})`);
+    if (poll) { clearInterval(poll); poll = null; }
+    setTimeout(refreshWagers, 1200);
+  }
+}
+
+// top-down arena: a disc of floor_radius_m, two fighters, the emblem at the centre
+function drawArena(s, me, foe){
+  const c = $("arena"), g = c.getContext("2d"), W = c.width, R = W/2 - 10;
+  const rad = (s.arena && s.arena.floor_radius_m) || 24;
+  const px = p => [W/2 + (p.x/rad)*R, W/2 + (p.z/rad)*R];
+  g.clearRect(0,0,W,W);
+  g.fillStyle = "#0e1a2e"; g.beginPath(); g.arc(W/2,W/2,R,0,7); g.fill();
+  g.strokeStyle = "#24334e"; g.lineWidth = 2; g.stroke();
+  g.strokeStyle = "#1c2b45"; g.beginPath(); g.arc(W/2,W/2,R*0.28,0,7); g.stroke();   // emblem
+  [[foe,"#f87171"],[me,"#7dd3fc"]].forEach(([p,col]) => {
+    const [x,y] = px(p.position);
+    if (p.hp <= 0) { g.globalAlpha = .3; }
+    g.fillStyle = col; g.beginPath(); g.arc(x,y,13,0,7); g.fill();
+    g.globalAlpha = 1;
+    if (p.statuses && p.statuses.shield){ g.strokeStyle="#fbbf24"; g.lineWidth=3; g.beginPath(); g.arc(x,y,18,0,7); g.stroke(); }
+    g.fillStyle = "#cfe0f7"; g.font = "600 12px system-ui"; g.textAlign = "center";
+    g.fillText(p.side === s.you.side ? "you" : "foe", x, y - 20);
+  });
+}
+
+function drawHand(s){
+  const el = $("hand"); const hand = s.you.hand || [];
+  if (el.childElementCount !== hand.length) {
+    el.innerHTML = "";
+    hand.forEach(card => {
+      const b = document.createElement("button"); b.className = "slot"; b.dataset.slot = card.slot;
+      b.innerHTML = `${card.name}<small>${card.cost} energy · ${card.range_m}m</small><span class="cd" hidden></span>`;
+      b.onclick = () => castSlot(card.slot);
+      el.appendChild(b);
+    });
+  }
+  const gcd = Math.max(0, (s.you.global_cooldown_until || 0) - s.server_time);
+  hand.forEach((card, i) => {
+    const b = el.children[i]; if (!b) return;
+    const left = Math.max(gcd, (s.you.cooldown_remaining || {})[card.slot] || 0);
+    const me = s.players.find(p => p.side === s.you.side);
+    const cd = b.querySelector(".cd");
+    cd.hidden = !(left > 0.05); cd.textContent = left.toFixed(1) + "s";
+    b.disabled = s.status !== "active" || left > 0.05 || me.energy < card.cost;
+  });
+}
+
+async function castSlot(slot){
+  if (!matchId || !snap || snap.status !== "active") return;
+  try{ apply(await cmd("cast", { match_id: matchId, slot, request_id: rid() })); }
+  catch(e){ if (e.code !== "COOLDOWN" && e.code !== "ENERGY") showErr(e.message); }
+}
+
+// movement: server caps the cadence at 20/s, so send at most every 120ms
+let drag = null;
+async function sendMove(){
+  if (!matchId || !snap || snap.status !== "active") return;
+  let dx = 0, dz = 0;
+  if (drag) { dx = drag.x; dz = drag.y; }
+  else {
+    if (keys.has("a") || keys.has("arrowleft"))  dx -= 1;
+    if (keys.has("d") || keys.has("arrowright")) dx += 1;
+    if (keys.has("w") || keys.has("arrowup"))    dz -= 1;
+    if (keys.has("s") || keys.has("arrowdown"))  dz += 1;
+  }
+  if (!dx && !dz) return;
+  const now = Date.now(); if (now - lastMove < 120) return; lastMove = now;
+  const len = Math.hypot(dx,dz) || 1;
+  try{ await cmd("move", { match_id: matchId, dx: dx/len, dz: dz/len, request_id: rid() }); }catch(e){}
+}
+addEventListener("keydown", e => {
+  const k = e.key.toLowerCase();
+  if (/^[1-9]$/.test(k) && snap) { const card = (snap.you.hand||[])[+k-1]; if (card) { e.preventDefault(); castSlot(card.slot); } }
+  if (["w","a","s","d","arrowup","arrowdown","arrowleft","arrowright"].includes(k)) { keys.add(k); e.preventDefault(); }
+});
+addEventListener("keyup", e => keys.delete(e.key.toLowerCase()));
+(function(){
+  const c = $("arena");
+  const at = e => { const r = c.getBoundingClientRect(), t = e.touches ? e.touches[0] : e;
+    const x = (t.clientX - r.left)/r.width*2 - 1, y = (t.clientY - r.top)/r.height*2 - 1;
+    const L = Math.hypot(x,y) || 1; drag = { x: x/L, y: y/L }; };
+  c.addEventListener("pointerdown", e => { c.setPointerCapture(e.pointerId); at(e); });
+  c.addEventListener("pointermove", e => { if (drag) at(e); });
+  c.addEventListener("pointerup",   () => drag = null);
+  c.addEventListener("pointercancel", () => drag = null);
+})();
+
+// ---------------------------------------------------------------- wagers
+$("bWRefresh").onclick = () => refreshWagers();
+async function refreshWagers(){
+  if (!auth) return;
+  try{
+    const [board, mine] = [await cmd("wager_board"), await cmd("wager_mine")];
+    window.__treasury = board.deposit_to;
+    const el = $("wBoard"); el.innerHTML = "";
+    $("wMine").innerHTML = "";
+    const active = mine.active;
+    if (active) $("wMine").appendChild(renderMine(active));
+    (mine.pending || []).forEach(w => $("wMine").appendChild(renderMine(w, true)));
+    if (!board.board.length) el.innerHTML = `<div class="muted">No open challenges right now. Post one.</div>`;
+    board.board.forEach(w => {
+      const d = document.createElement("div"); d.className = "item";
+      d.innerHTML = `<div class="between"><div><b>${fmt(w.stake_sol)} SOL</b>
+        <div class="muted">${w.challenger.handle} · ${w.challenger.fighter.display_name} · expires in ${w.expires_in}s</div></div>
+        <button ${w.yours ? "disabled" : ""}>${w.yours ? "Yours" : "Accept"}</button></div>`;
+      d.querySelector("button").onclick = async () => {
+        clearErr();
+        try{ const r = await cmd("wager_accept", { wager_id: w.id }); afterWager(r.wager); }
+        catch(e){ showErr(e.message); }
+      };
+      el.appendChild(d);
+    });
+  }catch(e){ /* wagers may be unconfigured; health already said so */ }
+}
+function renderMine(w, pending){
+  const d = document.createElement("div"); d.className = "item"; d.style.marginBottom = "10px";
+  const legs = (w.legs||[]).map(l => `<tr><td>${l.reason} → ${l.to.slice(0,4)}…${l.to.slice(-4)}</td><td>${fmt(l.sol)} SOL · ${l.status}</td></tr>`).join("");
+  d.innerHTML = `<div class="between"><div><b>Your wager · ${fmt(w.stake_sol)} SOL</b>
+      <div class="muted">${w.status}${w.match_id ? " · match " + w.match_id.slice(0,8) : ""}</div></div>
+      <div class="row" id="act"></div></div>${legs ? `<table style="margin-top:8px">${legs}</table>` : ""}`;
+  const act = d.querySelector("#act");
+  if (w.you && w.you.deposit_required){
+    const b = document.createElement("button"); b.textContent = "Pay stake";
+    b.onclick = () => payStake(w); act.appendChild(b);
+  }
+  if (!pending && ["posted","open","accepting"].includes(w.status)){
+    const b = document.createElement("button"); b.className = "ghost"; b.textContent = "Withdraw";
+    b.onclick = async () => { try{ await cmd("wager_withdraw", { wager_id: w.id }); refreshWagers(); }catch(e){ showErr(e.message); } };
+    act.appendChild(b);
+  }
+  if (w.match_id && w.status === "matched"){
+    const b = document.createElement("button"); b.textContent = "Enter match";
+    b.onclick = () => enterBattle(w.match_id); act.appendChild(b);
+  }
+  return d;
+}
+$("bPost").onclick = async () => {
+  clearErr();
+  try{ const r = await cmd("wager_post", { stake_sol: Number($("wStake").value) }); afterWager(r.wager); }
+  catch(e){ showErr(e.message); }
+};
+function afterWager(w){ refreshWagers(); if (w && w.you && w.you.deposit_required) payStake(w); }
+
+/** Build the memo-tagged SOL transfer Phantom signs, then hand the signature to the server. */
+async function payStake(w){
+  clearErr();
+  const web3 = window.solanaWeb3;
+  if (!web3) return showErr("The Solana library did not load, so this page cannot build the deposit. Reload, or send it from your wallet manually: transfer exactly " +
+    fmt(w.stake_lamports/1e9) + " SOL to " + window.__treasury + " with the memo " + w.you.memo);
+  try{
+    const ph = window.phantom.solana;
+    const conn = new web3.Connection("https://api.mainnet-beta.solana.com", "confirmed");
+    const from = new web3.PublicKey(auth.wallet);
+    const tx = new web3.Transaction().add(
+      web3.SystemProgram.transfer({ fromPubkey: from, toPubkey: new web3.PublicKey(window.__treasury), lamports: w.stake_lamports }),
+      new web3.TransactionInstruction({ keys: [], programId: new web3.PublicKey("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr"),
+        data: new TextEncoder().encode(w.you.memo) })
+    );
+    tx.feePayer = from;
+    tx.recentBlockhash = (await conn.getLatestBlockhash("confirmed")).blockhash;
+    const { signature } = await ph.signAndSendTransaction(tx);
+    showErr("Deposit sent (" + signature.slice(0,12) + "…). Waiting for confirmation, then crediting…");
+    for (let i = 0; i < 20; i++){
+      await new Promise(r => setTimeout(r, 3000));
+      try{
+        const res = await cmd("wager_deposit", { wager_id: w.id, signature });
+        clearErr(); refreshWagers();
+        if (res.matched && res.match_id) { enterBattle(res.match_id); }
+        else if (res.refunding) showErr("Your opponent is no longer available — both stakes are being refunded.");
+        return;
+      }catch(e){ if (e.code !== "DEPOSIT_UNVERIFIED") { showErr(e.message); return; } }
+    }
+    showErr("The deposit has not appeared on-chain yet. Press Refresh in a moment — it will credit itself.");
+  }catch(e){ showErr(e.message || String(e)); }
+}
+
+// ---------------------------------------------------------------- go
+$("apiName").textContent = API.replace("https://","");
+health(); setInterval(health, 30000);
+})();
+</script>
+</body>
+</html>
