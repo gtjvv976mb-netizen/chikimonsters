@@ -89,7 +89,8 @@ merged here.
 
 ## Rewards: what the server actually does
 
-`/quest/claim` **does not transfer tokens.** `server.js` is explicit at the route:
+`/quest/claim` **does not transfer tokens.** The backend is explicit at the route (it lives in the
+backend repo, not here — see the section below):
 
 > `POST /quest/claim` — STATUS ONLY (payouts are an admin batch, never user-triggered).
 > No token transfer here.
@@ -97,9 +98,24 @@ merged here.
 Claim reports status; payouts are a manual admin-signed batch. Any page copy or release note
 saying Claim pays on-chain is wrong and should be corrected rather than repeated here.
 
-## Also in the repo, not linked from the site
+## Never put backend source in this repo
 
-`play.html` is **tracked in this repo and served** — `https://chikimonsters.com/play.html` returns
-200. It is not reachable from `index.html` or `realm/`, but it is public. It is not in `.gitignore`;
-`.gitignore` contains only `.DS_Store` and `*.dump`. Decide deliberately whether to keep publishing
-it rather than assuming it is already excluded.
+Everything tracked here is published at `chikimonsters.com/<path>` by Pages. There is no build step
+and no server-side filtering: a file in this repo is a file on the public web.
+
+This repo used to carry four Node modules at its root — `server.js`, `cup-live.js`,
+`cup-resolver.js` and `pvp-engine.js` — left over from when it doubled as the backend source tree.
+All four were served, `chikimonsters.com/server.js` returning 123,932 bytes of backend source. They
+were unreferenced (no shipped page loaded them, and they are Node ESM that a browser cannot run) and
+long stale — the published `server.js` was 1,893 lines against the live backend's 19,064. They
+contained no credentials, but they did publish the payout, Cup-resolution and PvP logic in full.
+They were removed; the live copies are in the backend repo and deploy to Render.
+
+If you need to read backend code, read it in the backend repo. Do not copy a module here "to have
+it handy" — that publishes it.
+
+## `play.html`
+
+Still tracked and served, deliberately. It is a redirect stub: a `<meta refresh>` plus
+`location.replace("/realm/")`, so every old link, bookmark and post lands in the realm instead of a
+dead page. The original game it replaced is in git history at `e64e939`. Keep it.
