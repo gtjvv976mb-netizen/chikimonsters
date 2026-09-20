@@ -69,6 +69,10 @@ and every one of the nine fails for the same reason — `VoxelTerrain`, `VoxelMe
 `VoxelColorPalette`, `VoxelBuffer`, `VoxelGeneratorScript` are not declared. **Not one failure is a
 decompiler artifact.** The recovered code is sound; the stock editor is what is missing something.
 
+Which the next section then confirms outright: against an editor that *does* carry the voxel
+module, the same project imports with **zero parse errors**. All 91. Treat "82 of 91" as a
+measurement of the wrong editor, not of the recovery.
+
 ## The engine is not stock Godot
 
 This is the part nobody had written down, and it gates everything else.
@@ -101,33 +105,114 @@ magic `\0asm`) and searching for class names:
 
 `realm/index.wasm` **is a custom Godot 4.6 build with the voxel module compiled in.**
 
-### Which means there is no download that can rebuild this game
+### The engine can be rebuilt — this was done, not assumed
 
-To re-export the web build you need a **web export template** built from that same custom engine.
-Checked on 2026-09-20:
+An earlier version of this section said no download could rebuild the game and left it there. That
+was half right and unhelpfully pessimistic. The full pipeline has now been run end to end.
 
-- Zylann publishes prebuilt custom Godot builds. Release **v1.6** is
-  `Godot 4.6.stable.custom_build` — the exact version. Its eleven assets are editor and template
-  builds for **Linux, macOS and Windows only**. There is no web/HTML5/wasm template among them.
-- The **GDExtension** edition (v1.6x, for official Godot 4.4.1+) ships binaries for Windows, Linux,
-  macOS, iOS and Android — **also no web**.
+**The editor does not need building.** Zylann ships prebuilt custom Godot builds, and release
+**v1.6** reports itself as:
 
-So the only route to a new pack is to compile Godot 4.6 + `godot_voxel` for the web yourself, with
-emscripten. Whoever produced build `1eb4980816` did exactly that, and that toolchain is the real
-dependency behind every "just change it in the pack" task below.
-
-```sh
-git clone --depth 1 --branch 4.6-stable https://github.com/godotengine/godot.git
-git clone --depth 1 https://github.com/Zylann/godot_voxel.git godot/modules/voxel
-# then, with the emsdk version Godot 4.6 pins:
-scons platform=web target=template_release threads=yes
+```
+4.6.stable.custom_build.89cea1439
 ```
 
-Two cautions before anyone starts. `godot_voxel`'s own `SCsub` still carries
-`# TODO Feature: check webassembly builds` — web is not a tested configuration upstream. And the
-pack's `[voxel] threads/count/ratio_over_max.web=0.0` and
-`[threading] worker_pool/max_threads.web=2` say whoever built it had already been through tuning
-that the defaults get wrong.
+`89cea1439` is *the same commit as stock 4.6-stable*. So it is the stock engine plus the voxel
+module — exactly what this project needs — and `godot.linuxbsd.editor.x86_64.zip` (68.5 MB) is a
+download, not a build.
+
+**Only the web export template has to be compiled**, because that is the one platform Zylann's
+release does not ship and the GDExtension edition has no binary for. On four cores:
+
+```sh
+git clone --depth 1 --branch 4.6-stable https://github.com/godotengine/godot.git godot-src
+git clone --depth 1 https://github.com/Zylann/godot_voxel.git godot-src/modules/voxel
+git clone --depth 1 https://github.com/emscripten-core/emsdk.git
+./emsdk/emsdk install latest && ./emsdk/emsdk activate latest
+source ./emsdk/emsdk_env.sh
+cd godot-src && scons platform=web target=template_release threads=yes -j4
+```
+
+| | |
+|---|---|
+| time | **12m 04s**, 4 cores |
+| emscripten | 6.0.9 (`4e42238`) — Godot 4.6 requires ≥ 4.0.0 |
+| `godot_voxel` | `master` at `c8c3411`; there is no `godot4.6` branch, and master built without a patch |
+| template | `bin/godot.web.template_release.wasm32.zip`, 10,121,978 bytes, sha256 `bc538e750bf517588b3c8f882b0f03ff21ac0cb57ee8a80dfc2176445765d86d` |
+| engine | `godot.web.template_release.wasm32.wasm`, 39,071,527 bytes (shipped: 40,092,042) |
+
+It is the right engine, checked the same way the shipped one was — by counting registered class
+names in the binary:
+
+| symbol | built here | shipped |
+|---|---|---|
+| `VoxelBuffer` | 20 | 21 |
+| `VoxelTerrain` | 6 | 7 |
+| `VoxelLodTerrain` | 6 | 6 |
+| `VoxelMesherCubes` | 5 | 5 |
+| `VoxelColorPalette` | 4 | 4 |
+| `VoxelGeneratorScript` | 3 | 3 |
+| `VoxelMesherTransvoxel` | 3 | 3 |
+| `MeshInstance3D` (stock, for scale) | 9 | 9 |
+
+The small differences are module drift between `master` and whatever commit built `1eb4980816`.
+The `# TODO Feature: check webassembly builds` in `godot_voxel`'s `SCsub` is still there; web is
+still not a tested configuration upstream; it still compiled first time.
+
+**With the voxel editor, the recovered project imports with zero parse errors.** All 91 scripts.
+The nine failures reported above are entirely an artefact of checking against the *stock* editor,
+and nothing is wrong with the recovered code at all.
+
+**And a full web export completes:**
+
+```sh
+godot --headless --path <project> --export-release "Web" out/index.html
+```
+
+`index.pck` 371,701,536 bytes, `index.wasm`, `index.js`, the audio worklets and the icons — a
+complete, mountable build. (No `export_presets.cfg` survives in a pack, so one has to be written;
+the Web preset needs `variant/thread_support=true` and `custom_template/release` pointing at the
+zip above.)
+
+### The real blocker is the card artwork, not the engine
+
+The export finishes, and the project's own export plugin refuses to bless it:
+
+```
+ERROR: CHIKISEUM_CARD_EXPORT_REJECTED: Approved original or mask bytes changed: adalor:0
+```
+
+`addons/chikiseum_export/export_plugin.gd` audits **402 Chikiseum cards** against a pinned
+manifest, comparing `FileAccess.get_sha256(original)` to an approved `source_sha256` for each. It
+fails on the first card.
+
+The reason is fundamental and cannot be engineered around: **a pack contains imported textures,
+not original artwork.** Recovery reconstructs source PNGs from the compressed `.ctex` files, and
+a reconstruction is not byte-identical to what the artist saved. The manifest itself survives
+perfectly — `card-presentation-v4/manifest.json` recovers with the exact pinned sha256
+`354b8bb8…` — which makes the mismatch unambiguous: the manifest is right and the art is not the
+approved art.
+
+What that costs, read from the code rather than guessed:
+
+- On rejection `_export_begin` **returns early**, so it never regenerates
+  `card-presentation-v4/export-bindings.json` and never re-adds the 402 masks.
+- The rebuilt pack still *contains* both, because `export_filter="all_resources"` sweeps up the
+  copies recovery left in the project — but that bindings document describes the **original**
+  imported textures.
+- `ChikiseumCardPresentation._source_proof()` checks exactly that:
+  `actual != binding.get("imported_sha256")` → it returns `{}`. Freshly re-imported textures
+  cannot match hashes taken before the re-import.
+- `ChikiseumLiveClient.valid_bindings()` gates live arena admission on `CATALOGUE_SHA256`,
+  `ART_SHA256` and `ART_VERSION` agreeing with the server.
+
+So a rebuilt pack is **not card-equivalent** to the shipped one, and the Chikiseum's art
+provenance chain is broken by the rebuild itself. Closing that needs the original card artwork —
+the real PNGs, from whoever has them — or a deliberate re-approval of a new manifest by whoever
+owns that process. Neither is recoverable from a pack.
+
+**This is the thing to solve before planning a pack rebuild.** The engine is a 12-minute compile;
+the artwork is a conversation with whoever holds the originals.
 
 ## What the source settled
 
@@ -251,9 +336,13 @@ Worth saying before anyone exports and ships the result. Exporting the recovered
 reproduce `1eb4980816`; it produces a **new** build that happens to contain the same game:
 
 - Assets are re-imported from the recovered originals with whatever import settings the recovered
-  `.import` files carry. Texture compression, mesh settings and audio can all come out different.
+  `.import` files carry. Texture compression, mesh settings and audio can all come out different —
+  and the measured difference is not small: `index.pck` came out 371,701,536 bytes against the
+  shipped 313,445,440.
 - The GDScript is decompiled, so it is equivalent rather than identical.
 - The engine would be your emscripten build, not whoever's built `1eb4980816`.
+- **The Chikiseum card audit fails**, and that one is not a QA risk but a known defect — see
+  "The real blocker is the card artwork" above.
 
 That is a QA job, not a drop-in replacement, and it should be played through before it reaches
 players. Keep the current chunks until the new ones have been.

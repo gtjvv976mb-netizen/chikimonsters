@@ -38,21 +38,38 @@ add routes for — the shipped build already is a server-hosted, stake-free matc
 
 What replaced it is narrower and harder. The remaining pack work is *cosmetic in nature and
 blocking in effect*: the marketplace and the Cup's SOL copy are GDScript drawing its own UI, which
-no loader can reach. And rebuilding the pack is not a matter of opening the editor:
+no loader can reach. The GDScript change for it is written and verified
+(`godot-patch/apply-ios-pack-patch.py`, eight edits, all parse-clean). What is not resolved is
+whether a rebuilt pack can be shipped at all.
 
-> `realm/index.wasm` is a **custom Godot 4.6 build with the `godot_voxel` C++ module compiled in**
-> — proven from the binary, which registers `VoxelBuffer`, `VoxelLodTerrain` and five other voxel
-> classes. No prebuilt **web** export template with that module exists anywhere: Zylann's v1.6
-> release (the matching `4.6.stable.custom_build`) ships Linux, macOS and Windows only, and the
-> GDExtension edition ships no web binary either.
+The engine turned out to be the easy half, and that has now been run end to end rather than
+estimated:
 
-So a new pack requires compiling Godot + the voxel module for the web with emscripten. Until
-someone does, the two honest options are:
+> `realm/index.wasm` is a **custom Godot 4.6 build with the `godot_voxel` module compiled in**.
+> The **editor** for it is a download — Zylann's v1.6 build reports `4.6.stable.custom_build.89cea1439`,
+> the same commit as stock 4.6-stable. Only the **web export template** has to be compiled, and it
+> compiles in **12 minutes** on four cores. With that editor the recovered project imports with
+> **zero parse errors**, and a full web export completes: a 371 MB `index.pck` plus engine and glue.
 
-1. **Submit with the shop visible and expect to argue it.** The app genuinely cannot transact; the
-   review notes (§4) can say so. It is a real 3.1.1 risk and may cost a rejection cycle.
-2. **Build the web export template, then cut the marketplace and the SOL copy from the pack.**
-   `RECOVERY.md` has the exact commands and the two known caveats.
+The blocker is the artwork. The project's own export plugin audits 402 Chikiseum cards against a
+pinned manifest and rejects the build at the first one:
+
+```
+ERROR: CHIKISEUM_CARD_EXPORT_REJECTED: Approved original or mask bytes changed: adalor:0
+```
+
+A pack contains imported textures, not original artwork, so recovery gives back reconstructions
+that are not byte-identical to what the artist saved. The manifest recovers perfectly, which makes
+the mismatch unambiguous. `RECOVERY.md` traces what it costs at runtime. **Get the original card
+PNGs from whoever has them before planning a rebuild** — that is the long pole, not the engine.
+
+So the two honest options are:
+
+1. **Submit with the shop visible and expect to argue it.** The app genuinely cannot transact —
+   and since this pass it cannot list, bid or sell either. The review notes (§4) can say so. It is
+   a real 3.1.1 risk and may cost a rejection cycle.
+2. **Find the original card art, then rebuild.** Everything else for a rebuild is ready and
+   verified: the editor, the template, the export, and the patch.
 
 ---
 
