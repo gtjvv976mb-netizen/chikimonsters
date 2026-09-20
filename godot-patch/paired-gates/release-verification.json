@@ -1,0 +1,281 @@
+{
+  "at": "2026-09-20T19:02:49.190738+00:00",
+  "bindings": {
+    "art_manifest_sha256": "c52bbc8c43bfd1a0aaa77e261259846ab20e2911627e58b0d041af322eb559ca",
+    "art_version": "02400b320307",
+    "card_mask_manifest_sha256": "354b8bb8508a888dd17e8edb4cb3deab098378a417b6e033f915a5650ae86a4b",
+    "catalogue_sha256": "8347a90aec5091ae174c6fef17389fa78114ec118efa7ab21cb008c7bd2cd79c",
+    "coi_worker_sha256": "6aae8eaa0d1502c6146635e6f66222bef25c9d6fe7557e621508c1bcb25ebaf4",
+    "navigation_plan_sha256": "4f37041b6c132b542284dd22c4d1b7445ccc3c3900c3ee6a6bdc58e21eea682b"
+  },
+  "browser_cross_origin_isolated_proven": false,
+  "browser_rendering_tested": false,
+  "compiled_source_proof": "controlled_export_provenance",
+  "compiled_tokens_are_source_byte_equivalent": false,
+  "http": {
+    "browser_tested": false,
+    "requested": false
+  },
+  "individual_card_sidecar_files": 804,
+  "packs": {
+    "hd": {
+      "archive_source_binding": null,
+      "bytes": 319351796,
+      "entries": 5484,
+      "format": "pck",
+      "path": "/private/tmp/wicked-gates-release.bmj1wW/build/dist/web/index.pck",
+      "provenance": {
+        "compiler": {
+          "command": [
+            "/Users/michaelkennethbrillantes/Downloads/Godot Voxel.app/Contents/MacOS/Godot",
+            "--headless",
+            "--log-file",
+            "/private/tmp/wicked-gates-release.bmj1wW/build/hd-export.log",
+            "--path",
+            "/private/tmp/wicked-gates-release.bmj1wW/build/game",
+            "--export-release",
+            "Web",
+            "/private/tmp/wicked-gates-release.bmj1wW/build/dist/web/index.html"
+          ],
+          "executable_sha256": "6c3fdc42c97e27bdc45c2c13f59c599755d16a3e03ea3cf993fe8612b6fbb921",
+          "version": "4.6.stable.custom_build.89cea1439"
+        },
+        "development_fixtures": 0,
+        "script_kinds": {
+          "compiled_tokens": 130,
+          "source_text": 0
+        },
+        "scripts": 130,
+        "source_equivalence_method": "controlled_export_provenance_not_bytecode_decompilation",
+        "source_files": 982,
+        "source_unchanged_during_export": true
+      },
+      "raw_intermediate_is_not_shipped": false,
+      "sha256": "40af5947938cb8257670ae4e0f5c250bc31bff9da8895ac965f8692fbe43d416",
+      "textures": {
+        "all_card_ctex_lossless_claimed": false,
+        "bound_imported_textures": 443,
+        "card_import_modes": {
+          "0": 162,
+          "1": 240
+        },
+        "cards": 402,
+        "export_bindings_sha256": "80662f27ad6d1db7ac7e5fac13757aeff31858d97e953b193dcb4a243cac181c",
+        "original_body_atlases": 41,
+        "raw_mask_bytes": 839504,
+        "raw_masks": 402,
+        "raw_original_duplication_required": false,
+        "source_artwork_edited": false,
+        "source_preserved_files": 805
+      }
+    },
+    "lite": {
+      "archive_source_binding": {
+        "all_decoded_resource_sha256_exact": true,
+        "archive_sha256": "744a6ab36acbadc7394384b58cfeb0c7e9af3868f7715efab4013e8e7e8d8f9c",
+        "resources": 5477,
+        "source_pck_bytes": 219624016,
+        "source_pck_sha256": "92342dbdec5790dc7c0e241add23706988ee80a2821202427fee92ad8f76614a"
+      },
+      "bytes": 176258845,
+      "entries": 5477,
+      "format": "zip",
+      "path": "/private/tmp/wicked-gates-release.bmj1wW/build/dist/web-lite/index.pcz",
+      "provenance": {
+        "compiler": {
+          "command": [
+            "/Users/michaelkennethbrillantes/Downloads/Godot Voxel.app/Contents/MacOS/Godot",
+            "--headless",
+            "--log-file",
+            "/var/folders/1h/dl8skph945d0bj1hpxq0dglr0000gp/T/chikoria-lite-engine-logs-mxrl_g9t/lite-export.log",
+            "--path",
+            "/var/folders/1h/dl8skph945d0bj1hpxq0dglr0000gp/T/chikoria-lite-q_g9uexs",
+            "--export-release",
+            "Web",
+            "/private/tmp/wicked-gates-release.bmj1wW/build/dist/web-lite-next/index.html"
+          ],
+          "executable_sha256": "6c3fdc42c97e27bdc45c2c13f59c599755d16a3e03ea3cf993fe8612b6fbb921",
+          "version": "4.6.stable.custom_build.89cea1439"
+        },
+        "development_fixtures": 0,
+        "script_kinds": {
+          "compiled_tokens": 130,
+          "source_text": 0
+        },
+        "scripts": 130,
+        "source_equivalence_method": "controlled_export_provenance_not_bytecode_decompilation",
+        "source_files": 982,
+        "source_unchanged_during_export": true
+      },
+      "raw_intermediate_is_not_shipped": true,
+      "sha256": "744a6ab36acbadc7394384b58cfeb0c7e9af3868f7715efab4013e8e7e8d8f9c",
+      "textures": {
+        "all_card_ctex_lossless_claimed": false,
+        "bound_imported_textures": 443,
+        "card_import_modes": {
+          "0": 162,
+          "1": 240
+        },
+        "cards": 402,
+        "export_bindings_sha256": "80662f27ad6d1db7ac7e5fac13757aeff31858d97e953b193dcb4a243cac181c",
+        "original_body_atlases": 41,
+        "raw_mask_bytes": 839504,
+        "raw_masks": 402,
+        "raw_original_duplication_required": false,
+        "source_artwork_edited": false,
+        "source_preserved_files": 805
+      }
+    }
+  },
+  "passed": true,
+  "provenance_receipts": [
+    {
+      "path": "/private/tmp/wicked-gates-release.bmj1wW/build/dist/web/export-provenance-1789930690980884000.json",
+      "sha256": "f393dcc4a1a3103509ce4374fceb97a4476db60a55fbe24d976fede4955ec3ba"
+    },
+    {
+      "path": "/private/tmp/wicked-gates-release.bmj1wW/build/dist/web-lite/export-provenance-1789930737661269000.json",
+      "sha256": "88ea5425b2a1620fa132181a704c0de581e93827e4192ee46c72fcabae20fac6"
+    }
+  ],
+  "public_authenticated_pvp_tested": false,
+  "reconstruction": {
+    "hd": {
+      "bytes": 319351796,
+      "chunks": [
+        {
+          "bytes": 25165824,
+          "path": "index.pck.0.bin",
+          "sha256": "1ce6314cec4eb45516b2b7328b625540eb8e2f345506b560c3183f751a8adb01"
+        },
+        {
+          "bytes": 25165824,
+          "path": "index.pck.1.bin",
+          "sha256": "d1a07dcc66a11bf5dea4aab960f50b77b19ce3057f33d6e18361cc0746c5ea1d"
+        },
+        {
+          "bytes": 25165824,
+          "path": "index.pck.2.bin",
+          "sha256": "91fa476bfcae8ffcdd2a80d5c68bc32064bbdafb039d8433afbfb62a7f39f187"
+        },
+        {
+          "bytes": 25165824,
+          "path": "index.pck.3.bin",
+          "sha256": "78cc6120d7475910ae04d137b77e09762a6723fe1156ecebec5855f12f1d15fc"
+        },
+        {
+          "bytes": 25165824,
+          "path": "index.pck.4.bin",
+          "sha256": "86fc46dba0a8f683b0147a2ec80a539c189fc9c9868484778415cb12788b3644"
+        },
+        {
+          "bytes": 25165824,
+          "path": "index.pck.5.bin",
+          "sha256": "de2790b1a86cc70681c86a34f8fdf50783982bf6304064d83955bcd7b69cc0f6"
+        },
+        {
+          "bytes": 25165824,
+          "path": "index.pck.6.bin",
+          "sha256": "ea14dab0a624146527001bc664e34f81d03f2a692e96514ac39181559ba5476d"
+        },
+        {
+          "bytes": 25165824,
+          "path": "index.pck.7.bin",
+          "sha256": "a04792a8feb8fed0616f0abb420e02add1a0f3a01840576c8df612e3cb5dd3d6"
+        },
+        {
+          "bytes": 25165824,
+          "path": "index.pck.8.bin",
+          "sha256": "5bb87c2ac103226f36032637c8c23981d91fce1451b8fb00d155af896f8bc8d2"
+        },
+        {
+          "bytes": 25165824,
+          "path": "index.pck.9.bin",
+          "sha256": "69774433dcfed45b361c6bae45dd5264c80f123a80c2fc94efb59a65e17ece10"
+        },
+        {
+          "bytes": 25165824,
+          "path": "index.pck.10.bin",
+          "sha256": "5a03910bb355cce7bad953366e84ee142518f1375f6927036c2785934e0ceb66"
+        },
+        {
+          "bytes": 25165824,
+          "path": "index.pck.11.bin",
+          "sha256": "b73dea5998d81421cba083f55863acddec4c4d290a77a5fbeaf21d51f2236502"
+        },
+        {
+          "bytes": 17361908,
+          "path": "index.pck.12.bin",
+          "sha256": "2b60f4232b026c23c5c9141f75893b901e4bf086026e61e2c35cd2351e5cf9c0"
+        }
+      ],
+      "sha256": "40af5947938cb8257670ae4e0f5c250bc31bff9da8895ac965f8692fbe43d416"
+    },
+    "hd_stamp": "51623df109",
+    "lite": {
+      "bytes": 176258845,
+      "chunks": [
+        {
+          "bytes": 25165824,
+          "path": "index.pck.lite.0.bin",
+          "sha256": "12e399ba5bb70214cbf04a97d6eaa53794908740ec492ac53c4081ba4953e6e6"
+        },
+        {
+          "bytes": 25165824,
+          "path": "index.pck.lite.1.bin",
+          "sha256": "bcbb27f7127d04cc0985b32fd0ebe39add7dfc9383d67d1fa3df52fb4e31db7d"
+        },
+        {
+          "bytes": 25165824,
+          "path": "index.pck.lite.2.bin",
+          "sha256": "647a3f38d2eddbe5420d99ebdba419765278ce43a1a5f6e266457efa57e8d05a"
+        },
+        {
+          "bytes": 25165824,
+          "path": "index.pck.lite.3.bin",
+          "sha256": "5b4587d6b035a060c320f8c7dee659092655e6357b3715c8c524ae02ea82ccce"
+        },
+        {
+          "bytes": 25165824,
+          "path": "index.pck.lite.4.bin",
+          "sha256": "8c89569ade3f1696c50a51411727d4de28880ea1dd30c125dc8787b179673855"
+        },
+        {
+          "bytes": 25165824,
+          "path": "index.pck.lite.5.bin",
+          "sha256": "2524f2c32de5efdaa1466853fd49a698af96a073d0f7b6c0dccc119a6cb8a3c5"
+        },
+        {
+          "bytes": 25165824,
+          "path": "index.pck.lite.6.bin",
+          "sha256": "bd9af58277217f65db71645e47ce82ad23f9d03d8eccb71e6f465e0d739fd675"
+        },
+        {
+          "bytes": 98077,
+          "path": "index.pck.lite.7.bin",
+          "sha256": "cc51a9dd1fde242c6caf44565a5292d93cc186d732830113b1afa364a2232aa1"
+        }
+      ],
+      "sha256": "744a6ab36acbadc7394384b58cfeb0c7e9af3868f7715efab4013e8e7e8d8f9c"
+    },
+    "lite_stamp": "a4422f379f",
+    "wasm": {
+      "bytes": 40092042,
+      "chunks": [
+        {
+          "bytes": 25165824,
+          "path": "index.wasm.0.bin",
+          "sha256": "5c9e2473a910f63b518e4e545b266f56094b7bec793cc2e87280b84955d5e79c"
+        },
+        {
+          "bytes": 14926218,
+          "path": "index.wasm.1.bin",
+          "sha256": "8f9d60e0b6da1b31286106ee48f210a96171756d8513e14cf1dffc789d94112b"
+        }
+      ],
+      "sha256": "49df352f9b64f7fc5913d6ff2b64c76011de5ea92023b8c3bee463cbca5fcbda"
+    }
+  },
+  "schema": "chikiseum.live-web-release-verification/v1",
+  "source_or_release_files_edited": false
+}
