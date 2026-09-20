@@ -186,12 +186,32 @@ ERROR: CHIKISEUM_CARD_EXPORT_REJECTED: Approved original or mask bytes changed: 
 manifest, comparing `FileAccess.get_sha256(original)` to an approved `source_sha256` for each. It
 fails on the first card.
 
-The reason is fundamental and cannot be engineered around: **a pack contains imported textures,
-not original artwork.** Recovery reconstructs source PNGs from the compressed `.ctex` files, and
-a reconstruction is not byte-identical to what the artist saved. The manifest itself survives
-perfectly — `card-presentation-v4/manifest.json` recovers with the exact pinned sha256
-`354b8bb8…` — which makes the mismatch unambiguous: the manifest is right and the art is not the
-approved art.
+The reason is fundamental for one half of it: **a pack contains imported textures, not original
+artwork.** So the question is which half, and the answer turns out to be narrow and precise.
+
+Auditing every file the manifest pins, **taken raw out of the pack** rather than through the
+decompiler:
+
+| | result |
+|---|---|
+| `card-presentation-v4/manifest.json` | **byte-identical** to the pinned `354b8bb8…` |
+| the 402 masks (`card-presentation-v4/masks/*.png`) | **402 byte-identical, 0 differ** — and they total 839,504 bytes, exactly the plugin's `RAW_MASK_BYTES` |
+| the 402 originals (`res://cards/10_0.jpg` … `50_9.jpg`) | **not in the pack at all.** Only their `.import` stubs are, all 402 of them |
+
+So nothing is *corrupted*. The masks and the manifest come back perfect. What is missing is
+exactly **402 original card JPEGs**, which were never in the pack to begin with — Godot ships the
+imported `.ctex`, not the artist's source.
+
+**A practical trap, since it produced the wrong answer first.** GDRE's `--recover` reconstructs
+source images from imported textures, and it does that for the masks too — overwriting raw PNGs
+that were already perfect with re-encodes that are not. Use `--extract` for anything whose exact
+bytes matter:
+
+```sh
+./gdre_tools.x86_64 --headless --extract=index.pck --output=extracted   # 5464 files, verbatim
+```
+
+`--recover` is right for getting a project that opens; `--extract` is right for getting bytes.
 
 What that costs, read from the code rather than guessed:
 
@@ -207,12 +227,17 @@ What that costs, read from the code rather than guessed:
   `ART_SHA256` and `ART_VERSION` agreeing with the server.
 
 So a rebuilt pack is **not card-equivalent** to the shipped one, and the Chikiseum's art
-provenance chain is broken by the rebuild itself. Closing that needs the original card artwork —
-the real PNGs, from whoever has them — or a deliberate re-approval of a new manifest by whoever
-owns that process. Neither is recoverable from a pack.
+provenance chain is broken by the rebuild itself.
 
-**This is the thing to solve before planning a pack rebuild.** The engine is a 12-minute compile;
-the artwork is a conversation with whoever holds the originals.
+**But the fix is a shopping list, not a redesign.** Get the 402 files at `res://cards/*.jpg` from
+whoever has the project — one folder of card art, and their `.import` stubs are already recovered
+so the expected import settings are known. Drop them in, re-import, and the plugin's audit passes:
+it then regenerates `export-bindings.json` with `imported_sha256` values that match the textures
+actually in the new pack, which is precisely what `_source_proof()` needs. The masks and manifest
+are already exact.
+
+**This is the thing to solve before planning a pack rebuild.** The engine is a 12-minute compile.
+The artwork is one folder, from one person, and everything else is ready.
 
 ## What the source settled
 

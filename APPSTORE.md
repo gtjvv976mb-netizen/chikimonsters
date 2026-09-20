@@ -58,18 +58,22 @@ pinned manifest and rejects the build at the first one:
 ERROR: CHIKISEUM_CARD_EXPORT_REJECTED: Approved original or mask bytes changed: adalor:0
 ```
 
-A pack contains imported textures, not original artwork, so recovery gives back reconstructions
-that are not byte-identical to what the artist saved. The manifest recovers perfectly, which makes
-the mismatch unambiguous. `RECOVERY.md` traces what it costs at runtime. **Get the original card
-PNGs from whoever has them before planning a rebuild** — that is the long pole, not the engine.
+A pack contains imported textures, not original artwork. Auditing every file the manifest pins,
+taken raw out of the pack: the manifest is byte-identical, all **402 masks are byte-identical**
+(839,504 bytes, exactly what the plugin expects) — and the **402 original card JPEGs
+(`res://cards/10_0.jpg` … `50_9.jpg`) were never in the pack at all**, only their `.import` stubs.
+
+So the gap is one folder of card art. `RECOVERY.md` traces what it costs at runtime and what to do
+with the files once you have them.
 
 So the two honest options are:
 
 1. **Submit with the shop visible and expect to argue it.** The app genuinely cannot transact —
    and since this pass it cannot list, bid or sell either. The review notes (§4) can say so. It is
    a real 3.1.1 risk and may cost a rejection cycle.
-2. **Find the original card art, then rebuild.** Everything else for a rebuild is ready and
-   verified: the editor, the template, the export, and the patch.
+2. **Get the 402 card JPEGs from whoever has the project, then rebuild.** Everything else is ready
+   and verified: the editor is a download, the template is a 12-minute compile, the export works,
+   and the patch is written and parse-clean.
 
 ---
 
