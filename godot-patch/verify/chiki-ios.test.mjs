@@ -167,12 +167,30 @@ console.log('\napp mode — the network guard');
 	check(await rejects('https://unpkg.com/@solana/web3.js'), 'a CDN that could ship a wallet lib is refused');
 	check(await rejects('https://api.chikimonsters.com/chikiseum/live/v1/wager_post'), 'wager_post is refused by name');
 	check(await rejects('https://api.chikimonsters.com/chikiseum/live/v1/wager_deposit'), 'wager_deposit is refused by name');
+
+	// CHAT. The game has world chat, party chat and whispers between strangers; the backend has a
+	// profanity filter but no report route and no block route, which is two of guideline 1.2's
+	// four. The Godot project is gone, so the missing two cannot be built — the app ships without
+	// chat instead. These are the real backend routes, read from server.js.
+	check(await rejects('https://api.chikimonsters.com/chat/send'), 'posting a chat message is refused');
+	check(await rejects('https://api.chikimonsters.com/chat'), 'reading world chat is refused');
+	check(await rejects('https://api.chikimonsters.com/chat/react'), '/chat/react is refused');
+	check(await rejects('https://api.chikimonsters.com/chat/pin'), '/chat/pin is refused');
+	check(await rejects('https://api.chikimonsters.com/chat/online'), '/chat/online is refused');
+	check(await rejects('https://api.chikimonsters.com/world/chat'), '/world/chat is refused');
+	check(await rejects('https://api.chikimonsters.com/cup/chat'), '/cup/chat is refused');
+
+	// …and NOT the world itself. Chat is plain HTTP while the WebSocket carries only /world/move,
+	// so taking chat away leaves movement, presence and the rest of the game working.
+	check(await resolves('https://api.chikimonsters.com/world/move'), 'player movement still works');
+	check(await resolves('https://api.chikimonsters.com/world/state'), 'the world still works');
+	check(await resolves('https://api.chikimonsters.com/chatter'), 'a route merely starting with "chat" is not caught');
 	check(await resolves('https://api.chikimonsters.com/chikiseum/live/v1/lobby'), 'the arena lobby is allowed');
 	check(await resolves('https://api.chikimonsters.com/chikiseum/live/v1/season_queue'), 'the season match is allowed');
 	check(await resolves('https://chiki-backend-singapore.onrender.com/verify'), 'the backend is allowed');
 	check(await resolves('index.pck.0.bin'), 'same-origin pack chunks are allowed');
 	check(await resolves('blob:https://chikimonsters.com/abc'), 'blob URLs are allowed');
-	check(win.CHIK_POLICY_BLOCKED.length === 5, 'every refusal is recorded for QA (got ' + win.CHIK_POLICY_BLOCKED.length + ')');
+	check(win.CHIK_POLICY_BLOCKED.length === 12, 'every refusal is recorded for QA (got ' + win.CHIK_POLICY_BLOCKED.length + ')');
 
 	let threw = false;
 	try { const x = new win.XMLHttpRequest(); x.open('POST', 'https://api.mainnet-beta.solana.com'); }

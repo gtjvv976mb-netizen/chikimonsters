@@ -143,6 +143,7 @@ future.
 | no marketplace purchase | `__chikiMeSign` is a refusal stub; `__chikiMeReady` reports no capability | no |
 | no chain traffic at all | `fetch` / `XHR` / `WebSocket` refuse every host but this origin and the backend | no |
 | no SOL wagers | `/chikiseum/live/v1/wager_*` refused by name | no |
+| **no chat, whispers or player messages** | every chat route refused by name — `/chat`, `/chat/send`, `/chat/react`, `/chat/pin`, `/chat/online`, `/world/chat`, `/cup/chat`. Chat is plain HTTP; the WebSocket carries only `/world/move`, so movement is untouched | no |
 | no navigation out of the realm | `window.open`, anchor clicks and form posts are guarded; **same-origin `/arena/` and `/link/` are refused too** | no |
 | no token gate, no payout promises | the `$CHIKI` and `REWARDS` tabs are removed; the WELCOME, HOW TO PLAY, ROLES and EVERFLAME ISLE copy is rewritten | no |
 | the in-game news feed does not advertise markets | `updates.json` is filtered at the fetch layer — 38 of 169 entries dropped | no |

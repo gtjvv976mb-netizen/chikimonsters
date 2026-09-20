@@ -8,15 +8,15 @@ Everything for App Store Connect that does not require a build. Copy the fields 
 
 ## Can this be submitted today? No — and here is exactly why
 
-Five things block submission. One of them — chat moderation — might be fixable in this repo; the
-rest are not.
+Four things block submission, and none of them can be fixed by writing more code in this repo.
+(A fifth — chat with no report or block mechanism — **was** a blocker and has been closed: the
+app now refuses every chat route. See §2.)
 
 | Blocker | Why it blocks | Who can clear it |
 |---|---|---|
 | **No build exists** | The Swift in `ios/` has never been compiled. Submission needs an archive uploaded from Xcode on a Mac. | You, with a Mac |
 | **The backend has no `/link/*` routes** | Pairing calls `/link/redeem`, which 404s. **A reviewer cannot get past the first screen.** | Backend work — see `IOS-APP.md` |
 | **No screenshots or preview video** | Both must be captured from the running app. They cannot be drawn, and faking them is a rejection *and* a guideline violation. | You, once a build runs |
-| **Chat has no moderation** | The game has world chat, party chat and whispers. Guideline 1.2 requires a filter, a report path, a block path and published contact. None appears to exist. | Investigate turning chat off in the app — §2 |
 | **The Godot project is gone** | Verified across every reachable repository — 1,778 files, zero `.gd`/`.tscn`/`project.godot`. So the pack cannot be rebuilt, the season match cannot ship, and the Trading Post gate is still **drawn** in the app even though it refuses. | See "The Godot problem" below |
 
 Two product decisions are also unmade and are yours: **the 500k $CHIKI gate** (`IOS-APP.md`) and **what account deletion does** on a wallet-backed account.
@@ -110,17 +110,17 @@ Apple replaced the old tiers in 2025 — **12+ and 17+ are gone; 13+, 16+ and 18
 | Contests | No | |
 | Unrestricted Web Access | **No** | The app cannot navigate outside `/realm/`; there is no in-app browser |
 | User-Generated Content | **Yes** | Chikimon nicknames, player handles, chat messages |
-| Messaging / Chat | **Yes** | World chat, party chat and private whispers all exist |
+| Messaging / Chat | **No** | The game has chat; **the app refuses every chat route** — see below |
 
-**Expected rating: NOT 9+.** Open chat between strangers puts this well above that — plan for 13+ at minimum, and read the next section before you answer anything, because the rating is the smaller problem.
+**Expected rating: 9+**, on the two "Infrequent/Mild" answers — but only because chat is blocked. Read the next section before answering either of the last two rows.
 
 ### Gambling — answer No, and know why
 
 The app has no wagers, no purchases and no real-money stake. The Wicked Temple's reward roll is randomised, but nothing is paid to enter and nothing of monetary value is risked, so it is not gambling and not a loot box. **The website's SOL wagers are not in this app and must not be described as if they were.**
 
-### The game has chat, and that is a blocker — not a checkbox
+### The game has chat — and the app now refuses it
 
-This was listed as unknown. It is not: the game's own release notes say so plainly.
+This was listed as unknown. It is not. The game's own release notes say so plainly:
 
 | Evidence | Source |
 |---|---|
@@ -134,33 +134,56 @@ This was listed as unknown. It is not: the game's own release notes say so plain
 So: **world chat, party chat and private whispers between strangers.** Plus user-set chikimon
 nicknames, which other players see.
 
-**Guideline 1.2 then requires all four of these**, and an app that has none of them is rejected:
+**Guideline 1.2 then requires all four of these** of any app carrying user-generated content:
 
 1. a method for filtering objectionable material
 2. a mechanism to report offensive content, **with timely responses**
 3. the ability to block abusive users
 4. published contact information
 
-**Searching all 169 release notes for `mute`, `block`, `report a player`, `moderat`, `profanity`
-or `filter` returns nothing.** Neither do those strings appear in the pack. That is strong
-evidence — not proof, since the pack is partly compressed — that **none of the four exists**.
+### Which of the four actually exist — read from the backend
 
-Settle it in ten minutes: open the game, click a player's name, and look for Report / Block /
-Mute. Then type something that should be filtered and see whether it is.
+An earlier draft of this file said none of the four existed, on the evidence that the release
+notes and the pack never mention them. **That was wrong**, and the backend repository settles it:
 
-**If they are missing, you have three options and only one of them is quick:**
+| 1.2 requirement | Status | Evidence in `server.js` |
+|---|---|---|
+| A filter for objectionable material | **exists** | `cleanText()` — a server-authoritative profanity mask over a 23-word list, leetspeak-normalised (`1→i`, `3→e`, `@→a`…), also stripping `<>` so chat and handles cannot inject HTML. Applied to messages, whispers and handles alike. |
+| A way to **report** offensive content | **absent** | The only `/report` routes are `/world/fish/report` and `/world/kill/report` — gameplay telemetry |
+| A way to **block** an abusive user | **absent** | No route, no table, nothing |
+| Published contact information | **exists now** | `support/` |
 
-1. **Turn chat off in the app.** Removes the 1.2 obligation and the UGC rating in one move, and
-   it is the only option that does not need the Godot project. Whether the loader can do it
-   depends on how chat is transported — the release notes say the realm "speaks WebSockets", and
-   the policy layer already guards `WebSocket`. If chat has its own connection or route it can be
-   refused; if it shares the movement socket it cannot, and this option dies. **Investigate this
-   first** — it is the difference between shipping and not.
-2. **Build the four mechanisms.** Correct, and needs the Godot project, which is gone.
-3. **Ship without chat by shipping without the pack.** Not a real option.
+Two of four. The filter is also a mask, not moderation: 23 English words, no phrases, no repeat
+offender handling, and nothing a determined person cannot write around.
 
-This is also not only a store problem. A 9+ game with unmoderated open chat between strangers and
-no way to block anyone is a genuine safety gap, whatever Apple says.
+### The decision: chat is switched off in the app
+
+Building report and block means changing the game, and the Godot project is gone. So the app
+ships without chat.
+
+**This is possible because of how chat is transported, which I checked rather than assumed:**
+
+```
+POST /chat/send   GET /chat      POST /chat/react   POST /chat/pin
+GET  /chat/online GET/POST /world/chat              GET/POST /cup/chat
+```
+
+All plain HTTP. The WebSocket carries **only `/world/move`** — `server.js` says so at the handler:
+*"ONE MOVE HANDLER, TWO TRANSPORTS … a WebSocket now carries the same contract."* So refusing the
+chat routes takes the chat away and leaves movement, presence and the rest of the world working.
+
+`realm/chiki-ios.js` refuses all of them, and `CHIK_FEATURES.chat` / `.whispers` are false so a
+future pack build can also stop drawing the chat box. Fifteen checks in
+`godot-patch/verify/chiki-ios.test.mjs` pin it, including that `/world/move` still works.
+
+**So the answers above stand as written:** UGC **yes** (handles and chikimon nicknames still
+exist elsewhere in the game), Chat **no** — because it genuinely is not reachable from the app.
+Say exactly that in the review notes, since a reviewer who finds a chat box after you answered
+"no" is the worst possible outcome.
+
+This was never only a store problem. A 9+ game with open chat between strangers, a 23-word filter
+and no way to block anyone is a real safety gap **on the website too** — the app is now the safer
+of the two surfaces, which is worth fixing at the source when the project is recoverable.
 
 ---
 
@@ -196,6 +219,13 @@ short code. We have created a test account for review:
 
 The code lasts 10 minutes. If it expires, press "New code" again.
 [ATTACH: a short screen recording of these three steps]
+
+THERE IS NO CHAT IN THIS APP
+
+The browser version of Chikoria has player chat. The app does not: every chat
+route is refused at the network layer, so no message can be sent or received
+and no chat content is displayed. This is why the age rating questionnaire
+answers "no" to messaging.
 
 ABOUT THE TECHNOLOGY
 
@@ -329,9 +359,9 @@ Nothing below can move ahead of the thing above it.
 - [ ] Apple Developer Program enrolment, if not already done
 - [ ] Create the Xcode project (`ios/README.md`) and get it running on a real iPhone
 - [ ] **Open `/realm/selftest.html` inside the app** — confirms the engine can run there at all
-- [ ] **Chat: check in-game for Report / Block / Mute and a word filter.** The game HAS world chat,
-      party chat and whispers — confirmed. If those four 1.2 mechanisms are missing, decide whether
-      chat can be turned off for the app before anything else proceeds
+- [x] Chat — blocked in the app (§2). Verify in TestFlight that no chat box can receive anything
+- [ ] Consider adding report and block **to the website**, where chat is still open and the filter
+      is 23 words long
 - [ ] Legal review of `privacy/index.html`
 - [ ] Decide on telemetry → then finalise the privacy answers
 - [ ] 4.2 hardening (§6) — at least the offline screen

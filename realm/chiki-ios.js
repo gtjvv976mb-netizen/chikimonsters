@@ -131,6 +131,15 @@
 			quests: true,
 			cloud_sync: true,
 
+			// Chat is OFF in the app, and it is the one flag here that is a child-safety decision
+			// rather than a money one. The game carries world chat, party chat and whispers between
+			// strangers; App Review guideline 1.2 wants a filter, a report path, a block path and
+			// published contact, and the backend has the filter but neither report nor block.
+			// §3 refuses the routes outright, so this flag only asks a future pack build to stop
+			// DRAWING the chat box — the messages cannot arrive either way.
+			chat: !locked,
+			whispers: !locked,
+
 			// everything that touches money. FALSE on the app, and unreachable besides.
 			//
 			// NOTE WHAT IS *NOT* TURNED OFF HERE: earning. The app awards the real assets — the
@@ -172,10 +181,30 @@
 		'api.chikimonsters.com',
 		'chiki-backend-singapore.onrender.com',
 	];
-	// The six routes named in godot-patch/README.md: wager_board, _mine, _post, _accept, _withdraw,
-	// _deposit. Suspended on the app — PvP here is the server-hosted season match, which costs
-	// nothing and pays fantasy fish, eggs and resources instead of SOL.
-	var DENY_PATH = /\/chikiseum\/live\/v1\/wager_/i;
+	// Two families are refused by name.
+	//
+	// 1. THE WAGER ROUTES — wager_board, _mine, _post, _accept, _withdraw, _deposit (named in
+	//    godot-patch/README.md). PvP here is the server-hosted season match, which costs nothing.
+	//
+	// 2. CHAT — and this one is a safety decision, not a crypto one.
+	//
+	//    The game has world chat, party chat and private whispers between strangers, plus
+	//    player-set handles. App Review guideline 1.2 requires four things of an app carrying
+	//    user-generated content: a filter, a way to REPORT, a way to BLOCK, and published contact
+	//    details. Reading the backend: the filter exists (a server-authoritative profanity mask)
+	//    and contact details now exist, but there is NO report route and NO block route — the only
+	//    /report endpoints are fishing and kill telemetry. Two of four.
+	//
+	//    Building the missing two means changing the game, and the Godot project is gone. So the
+	//    app ships without chat instead. That is possible only because of how chat is transported:
+	//    it is plain HTTP (POST /chat/send, GET /chat, /world/chat, /cup/chat), while the
+	//    WebSocket carries ONLY /world/move. Blocking these routes takes the chat away and leaves
+	//    player movement, presence and the rest of the world untouched.
+	//
+	//    `\/chat(\/|$)` catches every one of them — /chat, /chat/send, /chat/react, /chat/pin,
+	//    /chat/online, /world/chat and /cup/chat all either end in /chat or continue with /chat/.
+	//    It deliberately does not match /chatter or a /chat_tab_world.png asset.
+	var DENY_PATH = /\/chikiseum\/live\/v1\/wager_|\/chat(\/|$)/i;
 
 	/** The art CDN, if one is ever configured. It is set in the body, long after this file parses,
 	 *  so it is read lazily rather than captured — a captured '' would lock the CDN out for good. */
