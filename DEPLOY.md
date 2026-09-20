@@ -100,8 +100,13 @@ It names each missing hook. `IOS-APP.md` has what each one is and why.
 
 ## First-time / full deploy
 
-Upload the whole repo. Required for serving: `index.html`, `realm/`, `link/`, `ui/`, `chikidex/`,
-`audio/`, `models.js`, `intro.mp4`, `homepage-hero.png`, `.nojekyll`, `CNAME`.
+Upload the whole repo. Required for serving: `index.html`, `realm/`, `link/`, `privacy/`,
+`support/`, `ui/`, `chikidex/`, `audio/`, `models.js`, `intro.mp4`, `homepage-hero.png`,
+`.nojekyll`, `CNAME`.
+
+`privacy/` and `support/` exist because App Store Connect requires a privacy policy URL and a
+working support URL. **Both still carry placeholder contact addresses** — replace them with a
+monitored inbox before submitting, or the pages fail review on their own.
 
 `link/` is where a player pairs the iOS app to their account; the app sends them to
 `chikimonsters.com/link/` by name, so it has to be live before the app ships.

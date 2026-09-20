@@ -41,7 +41,7 @@ The app's headline PvP feature — the season match — needs four route names a
 | **Bundle ID** | `com.chikimonsters.Chikoria` | |
 | **SKU** | `chikoria-ios-001` | |
 | **Copyright** | `2026 Chikimonsters` | |
-| **Support URL** | `https://chikimonsters.com/support/` | **does not exist yet — build it** |
+| **Support URL** | `https://chikimonsters.com/support/` | written (`support/`); **replace the placeholder email with a monitored inbox** |
 | **Marketing URL** | `https://chikimonsters.com/` | |
 | **Privacy Policy URL** | `https://chikimonsters.com/privacy/` | drafted, needs legal review + a real contact address |
 
@@ -282,7 +282,8 @@ Nothing below can move ahead of the thing above it.
 - [ ] **Decide:** what account deletion does
 - [ ] Backend: `/link/new`, `/link/redeem`, `linkToken` on `/verify`, `/link/devices`, `/link/revoke`, `/link/delete_account`
 - [ ] Publish `link/` and `privacy/` (they are on the branch, not on `main`)
-- [ ] Build a real support page and a monitored contact address
+- [x] Support page — `support/` is written
+- [ ] Replace the placeholder addresses in `support/` and `privacy/` with a monitored inbox
 - [ ] Apple Developer Program enrolment, if not already done
 - [ ] Create the Xcode project (`ios/README.md`) and get it running on a real iPhone
 - [ ] **Open `/realm/selftest.html` inside the app** — confirms the engine can run there at all
