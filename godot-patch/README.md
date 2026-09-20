@@ -1,43 +1,45 @@
-# Getting AI practice, SOL wagers and the stake-free season match into the game
+# Patches for the Godot project — and what turned out not to need one
 
-The backend has the first two. The shipped game has neither, and one of the blockers is not
-obvious — so this folder is the exact work, written against the live API, ready to drop into
-the Godot project. The **season match** is the third, added for the iOS app: PvP against real
-players with nothing staked, where the server hosts the match and pays the winner in fantasy
-fish, eggs and resources. It needs backend routes that do not exist yet; the contract is in
-[`../IOS-APP.md`](../IOS-APP.md).
+> **Read [`RECOVERY.md`](RECOVERY.md) first.** This folder was written blind, against a game
+> nobody here could open. The project has since been recovered from the published pack, and
+> reading it overturned two of this folder's premises.
 
-**The Godot project is not in any repository I can reach.** The game ships as compiled `.gdc`
-bytecode. Everything here was written by reading that bytecode's string tables out of the live
-313 MB pack, so it matches the client's real conventions (`auth_fields`, `attach_live_client`,
-`command_failed`, `roster_received`, …).
+**The project is no longer missing.** `RECOVERY.md` has the reproduction: GDRE Tools against the
+published `index.pck` gives back `project.godot`, 128 `.gd` scripts and 11 `.tscn` scenes in about
+forty seconds. It imports in Godot 4.6 and 82 of 91 root scripts parse clean against the stock
+editor — every failure being the voxel module, not a decompiler artifact.
 
-### Re-checked independently, 2026-09-20
+**But it still cannot be re-exported.** `realm/index.wasm` is a custom Godot 4.6 build with the
+`godot_voxel` C++ module compiled in, and no prebuilt **web** export template carrying that module
+exists to download — not from Zylann's matching v1.6 release (Linux, macOS, Windows only), and not
+from the GDExtension edition (no web binary). A new pack means compiling the engine with
+emscripten. So the practical conclusion of the old text survives even though its reason was wrong:
+**nothing in this folder can reach players today.**
 
-That claim was inherited, so it was verified again from scratch rather than repeated. Every
-repository on the account was listed and its full file tree scanned:
+### What the recovered source changed
 
-| repository | files | `.gd` / `.tscn` / `.tres` / `project.godot` |
-|---|---|---|
-| `chikimonsters` (this one) | — | only `godot-patch/*.gd`, written by agents |
-| `chiki-monsters` | — | 0 — the retired Three.js build |
-| `Claude-Company` | 487 | 0 |
-| `Markets-and-Makers` | 415 | 0 |
-| `Claude-Company-Robinhood` | 395 | 0 |
-| `backend` | 190 | 0 |
-| `Project-Takeover` | 159 | 0 |
-| `Claude-Company-Solana` | 108 | 0 |
-| `claude-company-executor` | 24 | 0 |
+| this folder says | what the source says |
+|---|---|
+| SOL wagers need suspending for iOS | **There are no SOL wagers.** `ChikiseumLiveClient.live_contract()` rejects any response that is not `currency: "NONE"` with `real_sol_enabled: false`; practice is `TEST_CREDITS`. The only "wager" matches in 128 scripts are UI copy saying there is none. |
+| the season match replaces them | Nothing to replace. `ChikiseumSeasonClient.gd` / `ChikiseumSeasonPanel.gd` are a design record, not work to do, and the four `season_*` backend routes should **not** be built. |
+| four season routes must join the pack's eleven-route `fetch` allowlist | That guard only judges requests carrying an `X-Chikiseum-Live-Owner` header and passes everything else through. It is de-duplication and hardening for the live client, not a site-wide allowlist. |
+| the pack can be told to hide the Trading Post via `window.CHIK_FEATURES` | The pack reads **no** loader flag — searching all 128 scripts returns nothing for `CHIK_FEATURES`, `CHIK_NO_CRYPTO`, `CHIK_IOS_APP` or `CHIK_HD`. Only `CHIK_PHONE` / `CHIK_TABLET`, via `TempleMobileViewport.gd`. |
 
-**1,778 files, zero Godot project files.** Two private repositories — `Get-Stonked` and
-`pumpfun-whale-welcome-agent` — could not be read from this session; both are named for unrelated
-projects. `chiki-website-deploy.zip` inside `chiki-monsters` was opened and checked too: 18
-entries, none of them Godot.
+### What genuinely still needs a rebuilt pack
 
-**What follows from that.** Steps 3, 4, 6 and 7 of the integration order below all need a Godot
-export, and nothing on this account can produce one. Until the project is recovered or rebuilt,
-the app cannot ship the season match, cannot hide the Trading Post gate, and cannot add the four
-season routes to the pack's own allowlist. `../APPSTORE.md` states the two honest options.
+Not the season match — these:
+
+1. **The Trading Post and Magic Eden UI stop being drawn.** `GameHUD.gd` renders a full marketplace
+   with Phantom purchase copy; `open_market()` gates only on demo mode, and the shop is a world
+   location a player can walk to. Every button refuses, but the storefront is on screen, which is
+   what guideline 3.1.1 is about.
+2. **The Cup stops advertising real SOL.** `Chikiseum.gd` draws *"champions win real SOL"* in the
+   HOW TO PLAY tab unconditionally, plus *"Pool of 4 SOL…"* and *"Link your wallet first (the Cup
+   pays real SOL)"*.
+3. **Report and block in chat.** `Chat.gd` is 1,169 lines with no report, block, mute or filter;
+   the profanity mask is server-side. Moot while the app refuses every chat route, required the
+   moment chat is turned back on.
+
 
 **What is verified:** the original three scripts compile under real Godot 4.6.stable, and the
 wager client was driven end to end against a fake server — post, deposit, match, and a refusal —
@@ -59,7 +61,7 @@ The JavaScript half of the same revision — the iOS app's crypto lockdown and i
 sign-in — has harnesses that need no Godot and do pass here:
 
 ```sh
-node verify/chiki-ios.test.mjs        # the policy layer itself: 118 checks
+node verify/chiki-ios.test.mjs        # the policy layer itself: 150 checks
 node verify/loader-policy.test.mjs    # that realm/index.html still wires it up
 ```
 

@@ -4,8 +4,10 @@ A 3D voxel MMO set in Chikoria, tied to the **$CHIKI** Solana memecoin. Players 
 gather and craft across the island, clear the Wicked Temple and fight each other in the Chikiseum.
 
 This repo is the **static site**: pure files, no build step, published by GitHub Pages. The live
-game at `/realm/` is a **Godot 4.6 web export** whose project source is not in any repository we
-can reach — `godot-patch/README.md` explains what that means in practice. The original Three.js
+game at `/realm/` is a **Godot 4.6 web export** built from a custom engine — Godot 4.6 with the
+`godot_voxel` module compiled in. The project source is not in any repository, but it can be
+recovered from the published pack: `godot-patch/RECOVERY.md` has the reproduction, and why a
+rebuild still needs a web export template that nobody ships. The original Three.js
 build this repo started as is retired; `play.html` is now a redirect stub to `/realm/`, and the
 game itself is in git history at `e64e939`.
 

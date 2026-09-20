@@ -17,18 +17,42 @@ app now refuses every chat route. See §2.)
 | **No build exists** | The Swift in `ios/` has never been compiled. Submission needs an archive uploaded from Xcode on a Mac. | You, with a Mac |
 | **The backend has no `/link/*` routes** | Pairing calls `/link/redeem`, which 404s. **A reviewer cannot get past the first screen.** | Backend work — see `IOS-APP.md` |
 | **No screenshots or preview video** | Both must be captured from the running app. They cannot be drawn, and faking them is a rejection *and* a guideline violation. | You, once a build runs |
-| **The Godot project is gone** | Verified across every reachable repository — 1,778 files, zero `.gd`/`.tscn`/`project.godot`. So the pack cannot be rebuilt, the season match cannot ship, and the Trading Post gate is still **drawn** in the app even though it refuses. | See "The Godot problem" below |
+| **The app still shows a shop** | A player can walk to the Trading Post and open a marketplace with a `🪄 Magic Eden` tab and Phantom purchase copy; the Chikiseum's HOW TO PLAY tab says *"champions win real SOL"*. Every button refuses — but guideline 3.1.1 is about what an app **presents**, not only what it executes. | Rebuilding the pack — see below |
 
 Two product decisions are also unmade and are yours: **the 500k $CHIKI gate** (`IOS-APP.md`) and **what account deletion does** on a wallet-backed account.
 
-### The Godot problem, stated plainly
+### The Godot problem, restated — the project is no longer missing
 
-The app's headline PvP feature — the season match — needs four route names added to an allowlist that lives **inside the compiled game**. Without the project source that cannot be done. Two honest options:
+This section used to say the project was gone and that PvP therefore could not ship. Both halves
+were wrong, and `godot-patch/RECOVERY.md` has the evidence for what replaced them.
 
-1. **Ship v1.0 without PvP.** Cut the season-match promise from the app copy, set `pvp_mode` off, and submit a gathering/temple/campaign app. Smaller, true, and shippable.
-2. **Reconstruct or recover the project first.** Everything else waits.
+**The project was recovered** from the pack this repo publishes, using GDRE Tools, in about forty
+seconds. It imports in Godot 4.6 and 82 of 91 root scripts parse clean; the nine that fail all fail
+on the voxel module, and not one failure is a decompiler artifact.
 
-**Do not submit an app whose store listing promises PvP that the binary cannot reach.** That is both a rejection risk and a refund problem.
+**PvP needs no change at all.** `ChikiseumLiveClient.gd` does not merely avoid stakes, it rejects
+any server response that is not `currency: "NONE"` with `real_sol_enabled: false`. There is no
+wager route in the pack. The season-match allowlist work this section used to demand had nothing to
+add routes for — the shipped build already is a server-hosted, stake-free match. So option 1,
+"ship v1.0 without PvP", is off the table in the good way: **PvP can ship as is.**
+
+What replaced it is narrower and harder. The remaining pack work is *cosmetic in nature and
+blocking in effect*: the marketplace and the Cup's SOL copy are GDScript drawing its own UI, which
+no loader can reach. And rebuilding the pack is not a matter of opening the editor:
+
+> `realm/index.wasm` is a **custom Godot 4.6 build with the `godot_voxel` C++ module compiled in**
+> — proven from the binary, which registers `VoxelBuffer`, `VoxelLodTerrain` and five other voxel
+> classes. No prebuilt **web** export template with that module exists anywhere: Zylann's v1.6
+> release (the matching `4.6.stable.custom_build`) ships Linux, macOS and Windows only, and the
+> GDExtension edition ships no web binary either.
+
+So a new pack requires compiling Godot + the voxel module for the web with emscripten. Until
+someone does, the two honest options are:
+
+1. **Submit with the shop visible and expect to argue it.** The app genuinely cannot transact; the
+   review notes (§4) can say so. It is a real 3.1.1 risk and may cost a rejection cycle.
+2. **Build the web export template, then cut the marketplace and the SOL copy from the pack.**
+   `RECOVERY.md` has the exact commands and the two known caveats.
 
 ---
 
@@ -83,7 +107,14 @@ Twenty-one species across ten elemental lines, five ancient legendaries and the 
 Chikoria is free to play. There are no purchases in the app.
 ```
 
-> **If you ship without PvP, that text is already correct** — it makes no PvP claim. If PvP does ship, add a paragraph then, not before.
+> That text makes no PvP claim, so it is safe as it stands. **PvP can now ship** (the Chikiseum is
+> already stake-free — see "The Godot problem" above), so you may add a paragraph for it. Say
+> nothing about prizes beyond in-game items, and do not use the word "wager":
+>
+> ```
+> THE CHIKISEUM
+> Take a creature you own into real-time duels against other trainers. Move, cast and hold ground — there are no turns. The server runs the match; nothing is staked and nothing is wagered.
+> ```
 
 ### Keywords (100 chars, comma separated, no spaces after commas)
 
@@ -158,8 +189,10 @@ offender handling, and nothing a determined person cannot write around.
 
 ### The decision: chat is switched off in the app
 
-Building report and block means changing the game, and the Godot project is gone. So the app
-ships without chat.
+Building report and block means changing the game, which means rebuilding the pack, which needs a
+custom Godot web export template that does not exist (`godot-patch/RECOVERY.md`). So the app ships
+without chat. `Chat.gd` is 1,169 lines with no report, block, mute or filter of any kind — the
+profanity mask is server-side — so this is a genuine absence, not a gap in what we looked at.
 
 **This is possible because of how chat is transported, which I checked rather than assumed:**
 
@@ -349,7 +382,7 @@ None of these are optional if a first submission gets rejected under 4.2 — the
 
 Nothing below can move ahead of the thing above it.
 
-- [ ] **Decide:** ship v1.0 without PvP, or recover the Godot project first
+- [ ] **Decide:** submit with the marketplace UI visible and argue it, or build the web export template and cut it from the pack
 - [ ] **Decide:** does an app player need the 500k $CHIKI hold
 - [ ] **Decide:** what account deletion does
 - [ ] Backend: `/link/new`, `/link/redeem`, `linkToken` on `/verify`, `/link/devices`, `/link/revoke`, `/link/delete_account`

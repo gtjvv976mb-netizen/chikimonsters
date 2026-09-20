@@ -24,7 +24,7 @@ Earning here, selling there. One account, one inventory, two different surfaces.
 |---|---|---|
 | Gathering, crafting, cooking, fishing | **yes** | the core loop, unchanged |
 | Wicked Temple | **yes** | five sanctums, the Treasure Vault roll, unchanged |
-| Chikiseum PvP vs real players | **yes** | via the **season match** — see below |
+| Chikiseum PvP vs real players | **yes** | the shipped Chikiseum, unchanged — it is already stake-free |
 | AI practice | **yes** | no wallet, no chain, no risk |
 | Hatching, eggs, the ChikiDex | **yes** | syncs both ways with the website |
 | Campaign / quests | **yes** | the $CHIKI chapter payout is claimed on the website |
@@ -32,7 +32,7 @@ Earning here, selling there. One account, one inventory, two different surfaces.
 | Wallet connect, signatures | no | there is no provider on the device |
 | Trading Post ($CHIKI player market) | no | website |
 | Magic Eden marketplace | no | website |
-| SOL wagers on PvP | no | replaced by the season match |
+| SOL wagers on PvP | no | there were never any — the live client rejects any response that is not `currency: "NONE"` |
 | Buying $CHIKI | no | no purchase surface of any kind |
 | The 500k token gate | client says no | **undecided server-side** — see the open decision under App Store review |
 
@@ -101,34 +101,59 @@ a backend having a bad day must not unlink the player.
 
 ---
 
-## Chikiseum PvP without a stake: the season match
+## Chikiseum PvP without a stake — already true in the shipped build
 
-Wagers are suspended in the app. The fight is kept and the money is dropped:
+**This section used to describe a "season match" that had to be built. It does not have to be
+built.** Recovering the Godot project (`godot-patch/RECOVERY.md`) showed the shipped Chikiseum is
+already a server-hosted, stake-free match, and that no wager system exists in the pack to suspend.
 
-| | website | iOS app |
-|---|---|---|
-| enter | post or accept a SOL wager | press **Find a match** |
-| stake | 0.001–0.05 SOL, treasury-held | nothing |
-| pairing | another player accepts your wager | the server queues and pairs you |
-| the fight | identical | identical |
-| prize | the pot, in SOL | fantasy fish, eggs, resources — the real assets, on the account |
-| what stops farming | a per-wallet daily SOL cap | a daily rewarded-match count |
+`ChikiseumLiveClient.gd` does not merely avoid stakes — it **refuses a server that offers one**:
 
-The roll is the server's and is decided when the match is decided, exactly as the Wicked Temple's
-wheel already works — pressing **Collect** reveals it, it does not roll it. Claiming twice, late,
-or from another device returns the same items.
+```gdscript
+static func live_contract(data: Dictionary) -> bool:
+	return data.get("mode") == "live" and data.get("currency") == "NONE" \
+		and data.get("real_sol_enabled") == false and data.get("inventory_verified") == true
+```
 
-Client: `godot-patch/ChikiseumSeasonClient.gd` + `ChikiseumSeasonPanel.gd`.
-Web reference implementation: `arena/index.html` (add `?nocrypto=1` to see the app's surface).
+Every response is checked against it, and a response that fails is discarded with an error rather
+than played. Practice mode is `currency: "TEST_CREDITS"`, capped at 1000. Searching all 128 scripts
+for "wager" returns **UI copy only** — *"No wagering"*, *"no real SOL"*, *"Online duels have no
+wagering."* There is no wager route, no stake field on a live request, and no SOL anywhere in the
+arena.
+
+So what the app needs from PvP is what the game already does:
+
+| | what ships today |
+|---|---|
+| enter | the Chikiseum admits a verified **owned** Chikimon; challenge a player or queue |
+| stake | none — the client rejects any response that says otherwise |
+| pairing | the server queues, pairs and runs the match |
+| prize | in-game, on the account |
+| currency | `"NONE"`, server-asserted and client-verified |
+
+The one requirement this puts on the app is **authentication**, not payment. `_auth_fields()` needs
+`signed_in == true` plus a non-empty `wallet`, `mktToken`, `sessionId` and `sessionEpoch` — all of
+which come from the server's `/verify` response (`signed_in = bool(j.get("signedIn", false))`), not
+from a wallet extension. That is exactly what Realm Link supplies, which is why PvP works in the
+app with no provider present. See the `/verify` contract below.
+
+`godot-patch/ChikiseumSeasonClient.gd` and `ChikiseumSeasonPanel.gd` remain in the tree as a record
+of the design, but **nothing needs them** and they should not be dropped into the project.
 
 ---
 
 ## What is enforced where
 
-This matters more than it looks, because **the Godot project is not in any repository we can
-reach** (see `godot-patch/README.md`). The pack ships as compiled bytecode. We cannot delete the
-Trading Post button today — so the guarantee is not "the button is hidden", it is "the button
-cannot do anything".
+This matters more than it looks, because the pack ships as compiled bytecode and **no rebuilt pack
+is available**. The project itself has since been recovered (`godot-patch/RECOVERY.md`), but
+re-exporting it needs a custom Godot web export template that does not exist as a download, so
+nothing inside the pack can be changed today. We cannot delete the Trading Post button — so the
+guarantee is not "the button is hidden", it is "the button cannot do anything".
+
+Be clear-eyed about the limit of that: **it is a guarantee about capability, not about what is on
+screen.** A player can still walk to the Trading Post and open a marketplace with a `🪄 Magic Eden`
+tab. `APPSTORE.md` treats that as a submission blocker, because guideline 3.1.1 is about what an
+app presents.
 
 Every crypto capability the game has is a JavaScript function `realm/index.html` defines and the
 engine calls through `JavaScriptBridge`. The loader is the only gate that capability passes
@@ -141,17 +166,25 @@ future.
 | no transaction can be built | `solana-web3.js` is never loaded in the app | no |
 | no Trading Post purchase | `__chikiBuy` is a refusal stub; the real one is never defined | no |
 | no marketplace purchase | `__chikiMeSign` is a refusal stub; `__chikiMeReady` reports no capability | no |
-| no chain traffic at all | `fetch` / `XHR` / `WebSocket` refuse every host but this origin and the backend | no |
-| no SOL wagers | `/chikiseum/live/v1/wager_*` refused by name | no |
+| no chain traffic at all | `fetch` / `XHR` / `WebSocket` / `EventSource` / **`navigator.sendBeacon`** refuse every host but this origin and the backend | no |
+| no SOL wagers | nothing to refuse — the pack has no wager route, and the live client rejects any response that is not `currency: "NONE"` (the by-name refusal is kept as a belt-and-braces measure) | no |
+| **nothing tells the player where to get a wallet** | `__chikiPkErr` is owned by the loader, so `Chain.gd`'s *"Phantom not found — get it free at phantom.app"* is replaced before the pack can show it | no |
 | **no chat, whispers or player messages** | every chat route refused by name — `/chat`, `/chat/send`, `/chat/react`, `/chat/pin`, `/chat/online`, `/world/chat`, `/cup/chat`. Chat is plain HTTP; the WebSocket carries only `/world/move`, so movement is untouched | no |
 | no navigation out of the realm | `window.open`, anchor clicks and form posts are guarded; **same-origin `/arena/` and `/link/` are refused too** | no |
 | no token gate, no payout promises | the `$CHIKI` and `REWARDS` tabs are removed; the WELCOME, HOW TO PLAY, ROLES and EVERFLAME ISLE copy is rewritten | no |
 | the in-game news feed does not advertise markets | `updates.json` is filtered at the fetch layer — 38 of 169 entries dropped | no |
-| **the Trading Post gate is not drawn at all** | the pack reads `window.CHIK_FEATURES` | **yes** |
+| **the Trading Post and Magic Eden UI are not drawn at all** | the pack itself must stop drawing them | **yes** |
+| **the Cup stops advertising real SOL** | static labels in `Chikiseum.gd` — *"champions win real SOL"*, *"Pool of 4 SOL"* — drawn regardless of server data | **yes** |
 
-The last row is the only outstanding piece, and it is a feature gate, nothing more — see
-`godot-patch/README.md` §5 for the four lines of GDScript. Until it ships the app is safe but not
-tidy: a player can walk up to a Trading Post that then tells them trading is on the website.
+The last two rows are the outstanding pieces, and they are worse than "not tidy". The pack does
+**not** read `window.CHIK_FEATURES` — confirmed by searching all 128 scripts, which return nothing
+for `CHIK_FEATURES`, `CHIK_NO_CRYPTO`, `CHIK_IOS_APP` or `CHIK_HD`. The only window flag the pack
+reads is `CHIK_PHONE` / `CHIK_TABLET`. So the flags in §2 of `chiki-ios.js` are advisory exactly as
+that file says, and making the pack act on them is a rebuild.
+
+Which is the hard part: `realm/index.wasm` is a **custom Godot 4.6 build with the `godot_voxel`
+module compiled in**, and no prebuilt web export template with that module exists to download.
+`godot-patch/RECOVERY.md` has the proof and the build recipe.
 
 The refusal stubs matter as much as the removals. The pack polls `__chikiBuyDone` /
 `__chikiMeDone` after a purchase, so an *absent* function leaves a "purchasing…" modal up
@@ -305,7 +338,7 @@ session is admitted for a wallet under the threshold. Both answers need work:
   code and a pairing-screen message.
 - If it does not: the app is a free, App-Store-distributed entrance to a token-gated economy whose
   rewards are real assets. Needs per-account earning caps, a cap on linked devices per wallet, and a
-  cap on wallets per device. Only the season match has a cap today.
+  cap on wallets per device. No such cap exists today.
 
 Decide this before writing the review notes, because one of the five bullets above depends on it.
 
@@ -373,61 +406,28 @@ Either satisfies the guideline (the *request* must be possible in-app; the delet
 confirmed elsewhere) without letting a stolen phone erase an account. What is not acceptable is the
 app having no path at all, which is where it stands today.
 
-### The season match
+### The season match — not needed, and not to be built
 
-All four are POST, JSON, under `/chikiseum/live/v1/`, carrying the same four auth fields as every
-other arena command, and require an admitted fighter (`session` first).
+This section used to specify four backend routes (`season_board`, `season_queue`, `season_state`,
+`season_claim`). **Do not build them.** They were designed to replace a SOL wager system that,
+as the recovered source shows, does not exist: the shipped Chikiseum is already a server-hosted
+match that the client refuses to play unless the server asserts `currency: "NONE"` and
+`real_sol_enabled: false`. See the PvP section above and `godot-patch/RECOVERY.md`.
 
-**`season_board`**
+The full route spec is in this file's git history if a genuinely separate ranked season is ever
+wanted as its own feature. It is not a prerequisite for the app.
 
-```jsonc
-{
-  "season": { "id": "s3", "name": "Season 3", "ends_in": 183600, "enabled": true },
-  "you":    { "rank": 41, "rating": 1180, "wins": 12, "losses": 7, "streak": 3,
-              "matches_today": 4, "daily_cap": 20 },
-  "rewards": {
-    "win":  [ { "kind": "fantasy_fish", "id": "aurelfin", "label": "Aurelfin", "weight": 0.55 },
-              { "kind": "egg", "id": "normal_egg", "label": "Chikimon Egg", "weight": 0.2 } ],
-    "loss": [ { "kind": "resource", "id": "berry", "label": "Berry", "qty": 3 } ],
-    "streak_bonus": [ … ]
-  },
-  "leaderboard": [ { "rank": 1, "handle": "Ken", "wins": 88 } ]
-}
+What the app *does* need from the backend for PvP is nothing new at all — only that `/verify`
+answers a link-token request the way it answers a signed one, because that is what `Chain.gd`
+turns into an authenticated session:
+
+```gdscript
+signed_in = bool(j.get("signedIn", false))
 ```
 
-`weight` is optional; the client prints an odd only when the server sent one, and never
-reconstructs one. `kind` is open — an unknown kind still renders by its `label`.
-
-**`season_queue`** — `{action: "join" | "leave"}`
-
-```jsonc
-{ "queued": true,  "status": "queued", "position": 3, "eta_s": 25 }
-{ "queued": false, "status": "paired", "match_id": "m77" }   // pairing can be immediate
-```
-
-**`season_state`** — poll while queued or fighting
-
-```jsonc
-{ "queued": false, "status": "decided", "reward_pending": true,
-  "reward_match_id": "m77", "you": { "wins": 13, "losses": 7, "streak": 4 } }
-```
-
-`status` ∈ `idle | queued | paired | ready | active | decided | left`.
-
-**`season_claim`** — `{match_id}`
-
-```jsonc
-{ "rewards": [ { "kind": "fantasy_fish", "id": "aurelfin", "label": "Aurelfin", "qty": 2 } ],
-  "odds": { "fantasy_fish": "55%", "egg": "20%" },
-  "you": { "rank": 38, "wins": 13, "losses": 7, "streak": 4 } }
-```
-
-Idempotent: the roll happened when the match was decided. Credit the items to the account the
-same way the Wicked Temple's vault does — this is the same inventory, not a parallel one.
-
-Refusal codes the client already phrases for players: `SEASON_DISABLED`, `SEASON_CLOSED`,
-`NOT_ADMITTED`, `ALREADY_QUEUED`, `NOT_QUEUED`, `ACCOUNT_BUSY`, `DAILY_CAP`, `INCOMPATIBLE`,
-`ALREADY_CLAIMED`, `MATCH_UNDECIDED`, `RATE_LIMIT`, `UNAVAILABLE`.
+and `ChikiseumLiveClient._auth_fields()` then requires a non-empty `wallet`, `mktToken`,
+`sessionId` and an integer `sessionEpoch` — all four from that same response. Get `/verify` right
+and the Chikiseum works in the app with no wallet provider present.
 
 ### One rule across all of it
 
@@ -444,12 +444,15 @@ The order is load-bearing in both directions, and nothing else in the repo state
 website half early and live players get a pairing page against a 404. Ship the binary before the
 pack and the app advertises PvP it cannot reach.
 
-**The app's Chikiseum is unreachable on the pack that is live today**, and not only because the
-backend routes are missing. The compiled client installs *its own* `window.fetch` guard with a
-hardcoded eleven-route allowlist (`godot-patch/README.md` §1). `season_board`, `season_queue`,
-`season_state` and `season_claim` are not in it, so a correct backend is still refused **by the game
-itself**. That takes a Godot export to fix, and promoting an export overwrites `realm/index.html`
-and needs the whole policy wiring re-applied.
+**The app's Chikiseum works on the pack that is live today.** This paragraph used to say the
+opposite — that the compiled client's own eleven-route `fetch` allowlist would refuse the season
+routes, so PvP needed a Godot export. Reading the recovered source corrected both halves: there
+are no season routes to allow, and that guard is not a site-wide allowlist anyway. It judges only
+requests carrying an `X-Chikiseum-Live-Owner` header and passes everything else through — it is
+request de-duplication and hardening for the live client, not a gate on the app.
+
+What PvP does depend on is `/verify` returning a usable session for a link token, which is the same
+dependency pairing already has.
 
 So, in order:
 
@@ -474,9 +477,9 @@ from the app copy and turn `pvp_mode` off, rather than shipping a Chikiseum that
 | `realm/chiki-ios.js` | the whole policy: mode, `CHIK_FEATURES`, the network/wallet/bridge lockdown, Realm Link |
 | `realm/index.html` | loads it **first**, and gates `solana-web3.js`, `__chikiBuy`, the Magic Eden bridge and the Phantom stay-signed-in bridge behind `CHIK_NO_CRYPTO`; rewrites the loading-screen copy |
 | `link/index.html` | the website page where a player mints a pairing code and manages linked devices |
-| `arena/index.html` | the test client; now drives the season routes, and `?nocrypto=1` shows the app's surface |
-| `godot-patch/ChikiseumSeason*.gd` | the season client and panel, ready to drop into the Godot project |
-| `godot-patch/verify/chiki-ios.test.mjs` | 118 checks over the policy layer — `node` only, no Godot |
+| `arena/index.html` | the test client; `?nocrypto=1` shows the app's surface |
+| `godot-patch/RECOVERY.md` | how the Godot project was recovered from the published pack, and why the pack cannot be rebuilt without a custom engine |
+| `godot-patch/verify/chiki-ios.test.mjs` | 150 checks over the policy layer — `node` only, no Godot |
 | `godot-patch/verify/loader-policy.test.mjs` | tripwire: fails if `realm/index.html` loses the wiring |
 | `godot-patch/verify/verify.gd` | drives both arena clients against a fake server — needs Godot |
 
