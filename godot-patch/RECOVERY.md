@@ -196,6 +196,43 @@ The first two are App Review problems, not cosmetic ones: guideline 3.1.1 is abo
 *presents* as a way to transact, not only about what it can execute. The policy layer has made
 buying impossible; it cannot make the shop invisible.
 
+### The change itself is written and verified — `apply-ios-pack-patch.py`
+
+The first two rows are done, as far as they can be done without a template:
+
+```sh
+python3 godot-patch/apply-ios-pack-patch.py <recovered-project> --check   # dry run
+python3 godot-patch/apply-ios-pack-patch.py <recovered-project>
+godot --headless --path <recovered-project> --import                     # not optional
+```
+
+It is a patcher rather than a diff on purpose: the tree it edits is recovered game source that
+must not be committed here, so this repo carries the instruction, not the code. Five changes, all
+gated on the loader's published policy and therefore no-ops on the website:
+
+1. `ChikFeat.gd` — a small reader for `window.CHIK_FEATURES`, which is the `CHIK_FEATURES` row of
+   the table above, and the thing the other changes are built on.
+2. `GameHUD.open_market()` refuses when `trading_post` is off. That one function is the *only* way
+   into the marketplace — `Player.gd` is its sole caller — so gating it takes the Magic Eden tab
+   and every Phantom purchase string with it.
+3. The Chikiseum drops its **Chikoria Cup** tab, opens on My Deck instead, and stops claiming
+   "champions win real SOL" in HOW TO BATTLE.
+
+PvP is untouched: the duels are already stake-free.
+
+**Verified, not assumed.** Applied to the recovered project and parse-checked against stock Godot
+4.6: `ChikFeat.gd`, `GameHUD.gd` and `Chikiseum.gd` all parse clean. The script is idempotent, and
+refuses to write anything if an anchor does not match exactly once — it was written against build
+`1eb4980816` and should not be trusted to guess at a different one.
+
+One gotcha, because its symptom is misleading: **re-import before checking.** `ChikFeat.gd`
+declares a `class_name`, and a global class is only registered when Godot rescans the filesystem.
+Skip the rescan and both patched scripts fail with `Identifier "ChikFeat" not declared in the
+current scope`, which reads like a broken patch and is not one.
+
+Chat's report and block are deliberately not in the script. They are a feature, not a few lines,
+and they are moot while the app refuses every chat route.
+
 ## What this means for the pack
 
 `realm/index.pck.*.bin` is served publicly at `chikimonsters.com/realm/`. Anyone can do what this

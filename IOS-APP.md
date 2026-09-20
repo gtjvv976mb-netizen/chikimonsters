@@ -186,6 +186,11 @@ Which is the hard part: `realm/index.wasm` is a **custom Godot 4.6 build with th
 module compiled in**, and no prebuilt web export template with that module exists to download.
 `godot-patch/RECOVERY.md` has the proof and the build recipe.
 
+The GDScript change those two rows need is already written and verified —
+`godot-patch/apply-ios-pack-patch.py`, applied to the recovered project and parse-checked against
+stock Godot 4.6. It adds the `CHIK_FEATURES` reader, makes `open_market()` refuse, and drops the
+Cup tab. It is waiting on nothing but a web export template.
+
 The refusal stubs matter as much as the removals. The pack polls `__chikiBuyDone` /
 `__chikiMeDone` after a purchase, so an *absent* function leaves a "purchasing…" modal up
 forever — the one failure a player cannot get out of. The stubs answer immediately, in the exact
