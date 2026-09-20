@@ -615,6 +615,55 @@ console.log('\nweb mode — sign-in errors are left alone on the website');
 		'the site still tells a desktop player where to get a wallet');
 }
 
+console.log('\napp mode — the app cannot SELL, which is not the same as cannot pay');
+{
+	const { win, realFetch } = boot({ app: {} });
+	const rejects = (u) => win.fetch(u).then(() => false, () => true);
+	const resolves = (u) => win.fetch(u).then(() => true, () => false);
+
+	// Market.gd authenticates every Trading Post write with {wallet, mktToken} and NO signature,
+	// and the app has a valid mktToken from Realm Link. So refusing to sign a transaction was
+	// never enough — listing an item is not a transaction.
+	check(await rejects('https://api.chikimonsters.com/market/op'), 'every Trading Post write is refused');
+	check(await rejects('https://api.chikimonsters.com/market/buy-onchain'), 'buying on chain is refused');
+	check(await rejects('https://api.chikimonsters.com/market/order-pay'), 'paying an order is refused');
+	check(await rejects('https://api.chikimonsters.com/nft/market/list'), 'listing on Magic Eden is refused');
+	check(await rejects('https://api.chikimonsters.com/nft/market/delist'), 'delisting is refused');
+	check(await rejects('https://api.chikimonsters.com/nft/market/buy'), 'buying on Magic Eden is refused');
+	check(await rejects('https://api.chikimonsters.com/nft/market/confirm'), 'confirming one is refused');
+
+	// The Cup pays a real SOL prize pool. An app that can enter it is not one whose Contests
+	// answer is "No".
+	check(await rejects('https://api.chikimonsters.com/cup/register'), 'entering the Cup is refused');
+	check(await rejects('https://api.chikimonsters.com/cup/ready'), 'readying up for it is refused');
+
+	// Reads stay open on purpose. /nft/market/mine is how the client learns an asset is escrowed;
+	// blocking it would show an escrowed chikimon as available, which is worse than a visible shop.
+	check(await resolves('https://api.chikimonsters.com/nft/market/listings'), 'browsing listings still works');
+	check(await resolves('https://api.chikimonsters.com/nft/market/mine'), 'and so does reading what is escrowed');
+	check(await resolves('https://api.chikimonsters.com/nft/market/stats'), 'and market stats');
+	check(await resolves('https://api.chikimonsters.com/market/list'), 'and the listing book');
+
+	// Earning is the whole point: what the player wins in the app is really theirs, minted to the
+	// same account. Minting is not selling and must not be caught by any of the above.
+	check(await resolves('https://api.chikimonsters.com/assets/nft/mint'), 'minting what you earned still works');
+	check(await resolves('https://api.chikimonsters.com/assets/nft/mint/confirm'), 'and confirming the mint');
+	check(await resolves('https://api.chikimonsters.com/assets/egg/hatch'), 'hatching still works');
+	check(await resolves('https://api.chikimonsters.com/quest/claim'), 'claiming a quest still works');
+	check(await resolves('https://api.chikimonsters.com/world/node/claim'), 'and gathering a node');
+	void realFetch;
+}
+
+console.log('\nweb mode — the website keeps its whole market');
+{
+	const { win } = boot();
+	const resolves = (u) => win.fetch(u).then(() => true, () => false);
+	check(await resolves('https://api.chikimonsters.com/market/op'), 'the site can still list and sell');
+	check(await resolves('https://api.chikimonsters.com/nft/market/buy'), 'and buy on Magic Eden');
+	check(await resolves('https://api.chikimonsters.com/cup/register'), 'and enter the Cup');
+	check(await resolves('https://api.chikimonsters.com/world/dm'), 'and whisper');
+}
+
 console.log('\nno link yet — the game is not told to resume');
 {
 	const { win, sessionStore } = boot({ app: {} });

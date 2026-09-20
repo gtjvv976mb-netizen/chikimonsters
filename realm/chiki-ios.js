@@ -223,7 +223,48 @@
 	//    `\/chat(\/|$)` is kept broader than the pack needs so that a /chat or /chat/send on any
 	//    other surface is caught too. It deliberately does not match /chatter or a
 	//    /chat_tab_world.png asset, and `\/world\/dm(\/|$)` will not match /world/dmg either.
-	var DENY_PATH = /\/chikiseum\/live\/v1\/wager_|\/chat(\/|$)|\/world\/dm(\/|$)/i;
+	//
+	// 3. SELLING — which this file used to leave wide open, on a false assumption.
+	//
+	//    The claim was: "the app carries no code that can build, sign or send a transaction", so
+	//    trading is dead. True, and not enough. **Listing an item for sale is not a transaction.**
+	//    `Market.gd` posts every Trading Post write to one route, `/market/op`, and its whole
+	//    authentication is:
+	//
+	//        func _auth(d: Dictionary) -> Dictionary:
+	//            d["wallet"] = _wallet()
+	//            d["mktToken"] = _mkt_token()
+	//            return d
+	//
+	//    No signature. The app has a perfectly good `mktToken` — Realm Link's `/verify` returns
+	//    one — so a player in the app could put items up for sale, post buy orders, bid in
+	//    auctions and deliver against orders. "Selling and trading only happen on the website" was
+	//    not true of the ops that need no wallet.
+	//
+	//    The ops behind that one route: list, cancel, order_post, order_deliver, order_decline,
+	//    order_cancel, auction_post, auction_bid, auction_cancel.
+	//
+	//    READS ARE DELIBERATELY LEFT ALONE. Browsing prices moves no value, and `/nft/market/mine`
+	//    is how the client learns an asset is escrowed on Magic Eden — block that and the game
+	//    would show an escrowed chikimon as available, which is a worse bug than a visible shop.
+	//
+	// 4. THE CHIKORIA CUP — a tournament with a real SOL prize pool ("Pool of 4 SOL split across
+	//    top placements"). Entry is free, which makes it a prize contest rather than a purchase,
+	//    and an app that can enter one is not an app whose Contests answer is "No". The pack patch
+	//    in godot-patch/ removes the Cup tab; this refuses its two routes as well.
+	//
+	// This is a client, and a client can be bypassed. **The server is what makes "the app cannot
+	// sell" true** — a link-token session must be refused by every route that moves value. That
+	// requirement is in IOS-APP.md and is still owed.
+	var DENY_PATH = new RegExp([
+		'\\/chikiseum\\/live\\/v1\\/wager_',          // belt-and-braces: no such route exists
+		'\\/chat(\\/|$)',                             // any /chat surface
+		'\\/world\\/dm(\\/|$)',                       // whispers and party chat
+		'\\/market\\/op(\\/|$)',                      // every Trading Post write
+		'\\/market\\/(buy-onchain|order-pay)(\\/|$)', // paying for one
+		'\\/nft\\/market\\/(list|delist|buy|confirm)(\\/|$)',  // Magic Eden writes
+		'\\/cup\\/(register|ready)(\\/|$)',           // entering the real-SOL Cup
+	].join('|'), 'i');
 
 	/** The art CDN, if one is ever configured. It is set in the body, long after this file parses,
 	 *  so it is read lazily rather than captured — a captured '' would lock the CDN out for good. */

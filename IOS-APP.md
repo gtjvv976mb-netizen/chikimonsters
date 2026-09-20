@@ -166,6 +166,9 @@ future.
 | no transaction can be built | `solana-web3.js` is never loaded in the app | no |
 | no Trading Post purchase | `__chikiBuy` is a refusal stub; the real one is never defined | no |
 | no marketplace purchase | `__chikiMeSign` is a refusal stub; `__chikiMeReady` reports no capability | no |
+| **no selling, listing, bidding or order-filling** | `/market/op` — the single route behind every Trading Post write — plus the Magic Eden writes, refused by name. **A listing is not a transaction**: `Market.gd` authenticates it with `{wallet, mktToken}` and no signature, and the app has a valid `mktToken`, so the refusal stubs never covered this | no |
+| no entering the Chikoria Cup | `/cup/register` and `/cup/ready` refused — the Cup pays a real SOL prize pool, and entry is free, which makes it a prize contest | no |
+| reads are deliberately left open | browsing prices moves no value, and `/nft/market/mine` is how the client learns an asset is escrowed — blocking it would show an escrowed chikimon as available | no |
 | no chain traffic at all | `fetch` / `XHR` / `WebSocket` / `EventSource` / **`navigator.sendBeacon`** refuse every host but this origin and the backend | no |
 | no SOL wagers | nothing to refuse — the pack has no wager route, and the live client rejects any response that is not `currency: "NONE"` (the by-name refusal is kept as a belt-and-braces measure) | no |
 | **nothing tells the player where to get a wallet** | `__chikiPkErr` is owned by the loader, so `Chain.gd`'s *"Phantom not found — get it free at phantom.app"* is replaced before the pack can show it | no |
@@ -484,7 +487,7 @@ from the app copy and turn `pvp_mode` off, rather than shipping a Chikiseum that
 | `link/index.html` | the website page where a player mints a pairing code and manages linked devices |
 | `arena/index.html` | the test client; `?nocrypto=1` shows the app's surface |
 | `godot-patch/RECOVERY.md` | how the Godot project was recovered from the published pack, and why the pack cannot be rebuilt without a custom engine |
-| `godot-patch/verify/chiki-ios.test.mjs` | 153 checks over the policy layer — `node` only, no Godot |
+| `godot-patch/verify/chiki-ios.test.mjs` | 175 checks over the policy layer — `node` only, no Godot |
 | `godot-patch/verify/loader-policy.test.mjs` | tripwire: fails if `realm/index.html` loses the wiring |
 | `godot-patch/verify/verify.gd` | drives both arena clients against a fake server — needs Godot |
 
