@@ -183,6 +183,54 @@ NOTICE_OLD = '''		_wallet_notice(v, "One secure step", "Approve a sign-in messag
 NOTICE_NEW = '''		if ChikFeat.on("crypto"):
 			_wallet_notice(v, "One secure step", "Approve a sign-in message in Phantom. This proves the wallet is yours and restores your cloud save.", Color("a98bff"), "res://ico_connect.png")'''
 
+# ----------------------------------------------------------------------------- the chat box
+#
+# The app already refuses every chat route, so the box is inert — but an inert chat box is still a
+# chat box on screen: a player can type into it and watch nothing happen, and a reviewer answering
+# "does this app have user-generated content?" is looking at what is drawn, not at a network guard.
+#
+# Chat.gd carries FIVE channels, and only three of them are user-generated:
+#
+#     world, whisper, party   players talking to players   ← removed
+#     news, system            announcements, read-only     ← kept
+#
+# `_input.editable = (c != "news" and c != "system")` in the pack's own `_switch()` is what says so.
+# So the panel stays, keeps the news feed the loader already filters, and loses the three channels
+# and the text box. Removing the whole CanvasLayer would take the news feed with it.
+CHAT_TABS_OLD = '''	(_tabbtns["party"] as Button).visible = false'''
+
+CHAT_TABS_NEW = '''	(_tabbtns["party"] as Button).visible = false
+	if not ChikFeat.on("chat"):
+		for _gone in ["world", "whisper", "party"]:
+			if _tabbtns.has(_gone):
+				(_tabbtns[_gone] as Button).visible = false'''
+
+# The text box itself. It stays in the tree rather than being left unparented, because the pack
+# calls _input.grab_focus() elsewhere and Godot errors when that reaches a node outside the tree.
+# Hidden and non-editable is enough, and `editable` is what the focus path already checks.
+CHAT_INPUT_OLD = '''	col.add_child(_input)'''
+
+CHAT_INPUT_NEW = '''	col.add_child(_input)
+	if not ChikFeat.on("chat"):
+		_input.visible = false
+		_input.editable = false'''
+
+# ...and the collapse toggle, which would otherwise show it again on the next open.
+CHAT_TOGGLE_OLD = '''	_input.visible = not _collapsed'''
+
+CHAT_TOGGLE_NEW = '''	_input.visible = (not _collapsed) and ChikFeat.on("chat")'''
+
+# `_active` starts on "world", which is now hidden, so the panel would open on a dead tab. Done in
+# _ready() rather than inside _build_ui() because _switch() touches widgets that _build_ui() has
+# not created yet at the point the input is added.
+CHAT_READY_OLD = '''	_build_ui()
+	_panel.visible = false'''
+
+CHAT_READY_NEW = '''	_build_ui()
+	if not ChikFeat.on("chat"):
+		_switch("news")
+	_panel.visible = false'''
+
 EDITS = [
 	("GameHUD.gd", MARKET_OLD, MARKET_NEW, "the Trading Post refuses when trading is off"),
 	("Chikiseum.gd", TABS_OLD, TABS_NEW, "the Chikoria Cup tab is not built"),
@@ -191,6 +239,10 @@ EDITS = [
 	("Onboarding.gd", GATE_HOLD_OLD, GATE_HOLD_NEW, 'the 500k token gate stops naming a token'),
 	("Onboarding.gd", NOTICE_OLD, NOTICE_NEW, 'the wallet gate stops naming Phantom'),
 	("Onboarding.gd", GATE_OLD, GATE_NEW, 'the "Get Phantom" button is not drawn'),
+	("Chat.gd", CHAT_TABS_OLD, CHAT_TABS_NEW, "world, whisper and party tabs are not built"),
+	("Chat.gd", CHAT_INPUT_OLD, CHAT_INPUT_NEW, "the chat text box is hidden and not editable"),
+	("Chat.gd", CHAT_TOGGLE_OLD, CHAT_TOGGLE_NEW, "collapsing and reopening does not bring it back"),
+	("Chat.gd", CHAT_READY_OLD, CHAT_READY_NEW, "the panel opens on News instead of a dead tab"),
 ]
 
 
