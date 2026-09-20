@@ -41,6 +41,13 @@
   .bar{height:9px;border-radius:99px;background:#0a1322;overflow:hidden;border:1px solid var(--line)}
   .bar>i{display:block;height:100%;background:var(--good);transition:width .15s}
   .bar.e>i{background:#60a5fa}
+  .trait{position:relative;color:#d8c49c;font-size:11.5px;margin-top:4px}
+  .trait summary{cursor:pointer;list-style:none;width:fit-content;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .trait summary::-webkit-details-marker{display:none}
+  .trait summary:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+  .trait .trait-detail{position:absolute;z-index:4;top:100%;left:0;min-width:190px;max-width:min(290px,82vw);
+    padding:8px 10px;border-radius:9px;background:#192640;border:1px solid #796747;box-shadow:0 9px 22px #050b18}
+  .slot.favored{border-color:#af9256;box-shadow:inset 0 0 0 1px #af925633}
   canvas{width:100%;max-width:100%;aspect-ratio:1;background:#0a1322;border:1px solid var(--line);border-radius:14px;touch-action:none}
   .hand{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px;margin-top:12px}
   .slot{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:9px;text-align:left;
@@ -108,11 +115,13 @@
         <div class="between"><b id="meName">You</b><span class="muted" id="meHp"></span></div>
         <div class="bar"><i id="meHpBar"></i></div>
         <div class="bar e" style="margin-top:5px"><i id="meEnBar"></i></div>
+        <div id="meTrait"></div>
       </div>
       <div style="flex:1 1 200px">
         <div class="between"><b id="foeName">Opponent</b><span class="muted" id="foeHp"></span></div>
         <div class="bar"><i id="foeHpBar"></i></div>
         <div class="bar e" style="margin-top:5px"><i id="foeEnBar"></i></div>
+        <div id="foeTrait"></div>
       </div>
     </div>
     <canvas id="arena" width="600" height="600"></canvas>
@@ -165,6 +174,37 @@ const API = "https://chiki-backend-singapore.onrender.com";
 const P   = API + "/chikiseum/live/v1";
 const $   = id => document.getElementById(id);
 const fmt = n => (Math.round(n*1000)/1000).toFixed(3).replace(/\.?0+$/,"");
+// Server metadata (creature names, handles, wager legs) is display text, never HTML.
+const esc = value => String(value ?? "").replace(/[&<>"']/g, ch =>
+  ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+
+// Display-only trait cues. The arena server remains the sole source of combat values.
+const traitEffect = {surge:"+0.25 energy",recover:"recover up to 4 HP",sunder:"drain 0.25 foe energy",fury:"+7% hit damage"};
+const selfCast = new Set(["guard","bulwark","charge","rally"]);
+function traitSummary(f){
+  const t = f && f.trait;
+  if (!t || typeof t !== "object") return "";
+  return String(t.name || "Trait") + " · " + String(t.signature_arch || "card") +
+    " → " + (traitEffect[t.signature_effect] || "favored bonus");
+}
+function traitDetail(f){
+  const t = f && f.trait;
+  if (!t || typeof t !== "object") return "";
+  const pct = k => Number.isFinite(t[k]) ? Math.round(t[k] * 100) + "%" : "—";
+  return "Stride " + pct("stride") + " · Focus " + pct("focus") + " · Ward " + pct("ward") +
+    " · Reach " + pct("reach") + ". Favored ability triggers " +
+    (selfCast.has(t.signature_arch) ? "on cast" : "on a confirmed hit") +
+    ". Above 100% is an advantage; below 100% is the tradeoff.";
+}
+function setTrait(host, f){
+  const line = traitSummary(f); host.replaceChildren();
+  if (!line) return;
+  const details = document.createElement("details"); details.className = "trait";
+  const summary = document.createElement("summary"); summary.textContent = "✦ " + line;
+  const note = document.createElement("div"); note.className = "trait-detail";
+  note.setAttribute("role", "note"); note.textContent = traitDetail(f);
+  details.append(summary, note); host.append(details);
+}
 
 // ---------------------------------------------------------------- state
 let auth = null;          // {wallet, mktToken, sessionId, sessionEpoch}
@@ -177,6 +217,7 @@ const keys = new Set();
 function showErr(msg){ $("err").hidden = false; $("err").textContent = msg; }
 function clearErr(){ $("err").hidden = true; }
 function log(html){ const d=document.createElement("div"); d.innerHTML=html; $("log").prepend(d); }
+function logPlain(message){ const d=document.createElement("div"); d.textContent=message; $("log").prepend(d); }
 
 // ---------------------------------------------------------------- transport
 async function api(path, body){
@@ -204,9 +245,9 @@ async function health(){
     $("wState").textContent = w.enabled ? "wagers on" : "wagers off";
     $("wState").className = "pill " + (w.enabled ? "on" : "off");
     $("wNote").innerHTML = w.configured
-      ? `Stakes ${w.min_stake_sol}–${w.max_stake_sol} SOL, ${w.wallet_daily_sol} SOL per wallet per day. ` +
+      ? `Stakes ${esc(w.min_stake_sol)}–${esc(w.max_stake_sol)} SOL, ${esc(w.wallet_daily_sol)} SOL per wallet per day. ` +
         `Custody is <b>treasury-held</b>: your stake sits in the treasury until the match is decided. ` +
-        `Held right now: <b>${w.liability_sol} SOL</b>.`
+        `Held right now: <b>${esc(w.liability_sol)} SOL</b>.`
       : "Wagers are not configured on this backend.";
     window.__wagers = w;
     const b = await (await fetch(API + "/health")).json();
@@ -231,7 +272,7 @@ $("bConnect").onclick = async () => {
     const v = await api("/verify", { wallet, authMsg: msg, authSig: sig });
     if (!v.signedIn) throw new Error("The server did not accept that signature.");
     auth = { wallet, mktToken: v.mktToken, sessionId: v.sessionId, sessionEpoch: v.sessionEpoch || 0 };
-    $("who").innerHTML = `signed in as <b>${wallet.slice(0,4)}…${wallet.slice(-4)}</b>`;
+    $("who").innerHTML = `signed in as <b>${esc(wallet.slice(0,4))}…${esc(wallet.slice(-4))}</b>`;
     $("bConnect").textContent = "Signed in";
     await loadRoster();
     $("cWager").hidden = false; refreshWagers();
@@ -247,12 +288,15 @@ async function loadRoster(){
   r.fighters.forEach(f => {
     const d = document.createElement("div"); d.className = "item";
     d.innerHTML = `<div class="between">
-        <div><b>${f.display_name}</b> <span class="pill">${f.rarity}</span>
-          <div class="muted">battle level ${f.level} · ${f.xp} XP${f.eligible ? "" : " · " + f.reason}</div></div>
+        <div><b>${esc(f.display_name)}</b> <span class="pill">${esc(f.rarity)}</span>
+          <div class="muted">battle level ${esc(f.level)} · ${esc(f.xp)} XP${f.eligible ? "" : " · " + esc(f.reason)}</div></div>
         <button ${f.eligible ? "" : "disabled"}>Select</button></div>`;
+    const traitHost = document.createElement("div");
+    setTrait(traitHost, f); d.querySelector(".between > div").append(traitHost);
     d.querySelector("button").onclick = async () => {
       clearErr();
-      try{ await cmd("session", { asset_id: f.asset_id }); asset = f.asset_id;
+      try{ const admitted = await cmd("session", { asset_id: f.asset_id }); asset = f.asset_id;
+        setTrait(traitHost, admitted.fighter || f);
         [...el.querySelectorAll("button")].forEach(b => b.textContent = "Select");
         d.querySelector("button").textContent = "Selected";
         $("cLobby").hidden = false; refreshLobby();
@@ -277,9 +321,11 @@ async function refreshLobby(){
   rows.forEach(t => {
     const d = document.createElement("div"); d.className = "item" + (t.rehearsal ? " ai" : "");
     d.innerHTML = `<div class="between">
-      <div><b>${t.handle}</b> ${t.rehearsal ? '<span class="pill ai">AI · practice</span>' : ""}
-        <div class="muted">${t.fighter.display_name} · level ${t.fighter.level}${t.compatible ? "" : " · outside your matchmaking band"}</div></div>
+      <div><b>${esc(t.handle)}</b> ${t.rehearsal ? '<span class="pill ai">AI · practice</span>' : ""}
+        <div class="muted">${esc(t.fighter.display_name)} · level ${esc(t.fighter.level)}${t.compatible ? "" : " · outside your matchmaking band"}</div></div>
       <button class="${t.rehearsal ? "ai" : ""}" ${t.compatible ? "" : "disabled"}>${t.rehearsal ? "Practise" : "Challenge"}</button></div>`;
+    const traitHost = document.createElement("div");
+    setTrait(traitHost, t.fighter); d.querySelector(".between > div").append(traitHost);
     d.querySelector("button").onclick = async () => {
       clearErr();
       try{
@@ -335,6 +381,11 @@ function apply(s){
     ? Math.ceil(s.realtime.remaining) + "s" + (s.realtime.phase === "overtime" ? " · overtime" : "")
     : s.status;
   $("meName").textContent = me.handle; $("foeName").textContent = foe.handle;
+  // Keep expanded tap-to-inspect trait details open across the 180 ms state polls.
+  for (const [id, fighter] of [["meTrait",me],["foeTrait",foe]]) {
+    const host = $(id), current = host.querySelector("summary");
+    if (!current || current.textContent !== "✦ " + traitSummary(fighter)) setTrait(host, fighter);
+  }
   $("meHp").textContent = Math.ceil(me.hp) + " / " + me.max_hp;
   $("foeHp").textContent = Math.ceil(foe.hp) + " / " + foe.max_hp;
   $("meHpBar").style.width = (100*me.hp/me.max_hp) + "%";
@@ -346,15 +397,17 @@ function apply(s){
   (s.events || []).forEach(ev => {
     if (ev.seq <= seen) return; seen = ev.seq;
     const who = ev.side === s.you.side ? "You" : foe.handle;
-    if (ev.type === "impact") log(`<b>${who}</b> hit for <b>${Math.round(ev.amount)}</b>`);
-    else if (ev.type === "cast") log(`<b>${who}</b> cast slot ${ev.slot}`);
-    else if (ev.type === "status_start") log(`<b>${who}</b> → ${ev.status}`);
-    else if (ev.type === "finish") log(`<b>Match over</b> — ${ev.reason}${ev.winner ? " · winner " + ev.winner : ""}`);
+    if (ev.type === "impact") log(`<b>${esc(who)}</b> hit for <b>${esc(Math.round(ev.amount))}</b>`);
+    else if (ev.type === "cast") log(`<b>${esc(who)}</b> cast slot ${esc(ev.slot)}`);
+    else if (ev.type === "status_start") log(`<b>${esc(who)}</b> → ${esc(ev.status)}`);
+    else if (ev.type === "finish") log(`<b>Match over</b> — ${esc(ev.reason)}${ev.winner ? " · winner " + esc(ev.winner) : ""}`);
+    if (ev.signature_triggered) logPlain(who + " triggered " + String(ev.signature_name || "a trait") +
+      ": " + (traitEffect[ev.signature_effect] || "favored bonus"));
   });
   if (s.status !== "ready" && s.status !== "active"){
     const won = s.winner === s.you.side;
     $("bTitle").innerHTML = s.winner ? (won ? '<span class="ok">You won</span>' : '<span class="bad">You lost</span>') : "Draw";
-    if (s.battle_xp) log(`<b>Battle XP</b> +${s.battle_xp.gained_xp} (level ${s.battle_xp.level})`);
+    if (s.battle_xp) log(`<b>Battle XP</b> +${esc(s.battle_xp.gained_xp)} (level ${esc(s.battle_xp.level)})`);
     if (poll) { clearInterval(poll); poll = null; }
     setTimeout(refreshWagers, 1200);
   }
@@ -382,11 +435,14 @@ function drawArena(s, me, foe){
 
 function drawHand(s){
   const el = $("hand"); const hand = s.you.hand || [];
-  if (el.childElementCount !== hand.length) {
+  // A new duel can have the same number of cards but a different Chikimon.
+  if (el.childElementCount !== hand.length ||
+      hand.some((card, i) => el.children[i]?.dataset.cardKey !== card.key)) {
     el.innerHTML = "";
     hand.forEach(card => {
       const b = document.createElement("button"); b.className = "slot"; b.dataset.slot = card.slot;
-      b.innerHTML = `${card.name}<small>${card.cost} energy · ${card.range_m}m</small><span class="cd" hidden></span>`;
+      b.dataset.cardKey = card.key;
+      b.innerHTML = `${esc(card.name)}<small>${esc(card.cost)} energy · ${esc(card.range_m)}m</small><span class="cd" hidden></span>`;
       b.onclick = () => castSlot(card.slot);
       el.appendChild(b);
     });
@@ -394,8 +450,11 @@ function drawHand(s){
   const gcd = Math.max(0, (s.you.global_cooldown_until || 0) - s.server_time);
   hand.forEach((card, i) => {
     const b = el.children[i]; if (!b) return;
-    const left = Math.max(gcd, (s.you.cooldown_remaining || {})[card.slot] || 0);
     const me = s.players.find(p => p.side === s.you.side);
+    const favored = card.arch === me.trait?.signature_arch;
+    b.classList.toggle("favored", favored);
+    b.title = favored ? traitSummary(me) + " · " + traitDetail(me) : "";
+    const left = Math.max(gcd, (s.you.cooldown_remaining || {})[card.slot] || 0);
     const cd = b.querySelector(".cd");
     cd.hidden = !(left > 0.05); cd.textContent = left.toFixed(1) + "s";
     b.disabled = s.status !== "active" || left > 0.05 || me.energy < card.cost;
@@ -458,7 +517,7 @@ async function refreshWagers(){
     board.board.forEach(w => {
       const d = document.createElement("div"); d.className = "item";
       d.innerHTML = `<div class="between"><div><b>${fmt(w.stake_sol)} SOL</b>
-        <div class="muted">${w.challenger.handle} · ${w.challenger.fighter.display_name} · expires in ${w.expires_in}s</div></div>
+        <div class="muted">${esc(w.challenger.handle)} · ${esc(w.challenger.fighter.display_name)} · expires in ${esc(w.expires_in)}s</div></div>
         <button ${w.yours ? "disabled" : ""}>${w.yours ? "Yours" : "Accept"}</button></div>`;
       d.querySelector("button").onclick = async () => {
         clearErr();
@@ -471,9 +530,9 @@ async function refreshWagers(){
 }
 function renderMine(w, pending){
   const d = document.createElement("div"); d.className = "item"; d.style.marginBottom = "10px";
-  const legs = (w.legs||[]).map(l => `<tr><td>${l.reason} → ${l.to.slice(0,4)}…${l.to.slice(-4)}</td><td>${fmt(l.sol)} SOL · ${l.status}</td></tr>`).join("");
+  const legs = (w.legs||[]).map(l => `<tr><td>${esc(l.reason)} → ${esc(l.to.slice(0,4))}…${esc(l.to.slice(-4))}</td><td>${esc(fmt(l.sol))} SOL · ${esc(l.status)}</td></tr>`).join("");
   d.innerHTML = `<div class="between"><div><b>Your wager · ${fmt(w.stake_sol)} SOL</b>
-      <div class="muted">${w.status}${w.match_id ? " · match " + w.match_id.slice(0,8) : ""}</div></div>
+      <div class="muted">${esc(w.status)}${w.match_id ? " · match " + esc(w.match_id.slice(0,8)) : ""}</div></div>
       <div class="row" id="act"></div></div>${legs ? `<table style="margin-top:8px">${legs}</table>` : ""}`;
   const act = d.querySelector("#act");
   if (w.you && w.you.deposit_required){

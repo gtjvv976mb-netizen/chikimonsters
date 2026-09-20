@@ -1,0 +1,50 @@
+{
+  "schema": "chikimon.traits-frontend-source-to-export/v1",
+  "base_frontend_commit": "4e1939e0bba86f377937819d40d3bd82dd9c5652",
+  "mode": "reproducible-build-provenance",
+  "godot_version": "4.6.stable.custom_build.89cea1439",
+  "godot_executable_sha256": "6c3fdc42c97e27bdc45c2c13f59c599755d16a3e03ea3cf993fe8612b6fbb921",
+  "source_unchanged_during_hd_and_mobile_exports": true,
+  "previous_release_chunks_matched_local_source": 22,
+  "sidecar_manifest_sha256": "c52bbc8c43bfd1a0aaa77e261259846ab20e2911627e58b0d041af322eb559ca",
+  "sidecar_locomotion_sheets_added": 41,
+  "sidecar_locomotion_sheets_sha256_match_manifest": true,
+  "source_sha256": {
+    "ChikimonSpeciesTraits.gd": "159bd263173271a2f29c91bbd97e78db05df04a0fde2f5dbd3f8384f45ccc1bd",
+    "Temple3D.gd": "beedc7e8407fffcd9e135287e41835d9792ddda15a093a749bdb2b17126adb85",
+    "TempleHorde3D.gd": "8a20babaee012a15272dea0ec030481bdcf3e8db8b45f72d03400a7043ad95a4",
+    "RebornDeployment.gd": "0e22f0ccb73c49289abe98f37570af78b92dabaa415361ba8ca330c699fe7dcc",
+    "ChikiseumArena.gd": "02aedab3dc5958f1b088b0becd31d00dcb0aa0911037063796b787b127d22e97",
+    "chikiseum-species-traits.json": "c157491f1a1db08f3afcb25d4a8b5fe318a7f7bc32b41c2353df8c9bf3f31c62"
+  },
+  "compiled_script_sha256_identical_hd_mobile": {
+    "ChikimonSpeciesTraits.gd": "1ea98ddc33a8847fb42c08dce46bf826a106c6981d754e6d5c8f580e249b4d95",
+    "Temple3D.gd": "e42a2b04251ed4fdd9d125fc170a01fc952fc29b7c1993ecb1566c4ab254cb5f",
+    "TempleHorde3D.gd": "ab44e3dba12de4e703b7677e576caf6c39183dbdc9dcff918ad043b499eb94f0",
+    "RebornDeployment.gd": "808be3afd39efe7f8491b55fe4c8ff55285f50599807c5208baf2266919eeca7",
+    "ChikiseumArena.gd": "2af101b6a2616c897769e0b134db9c3cea3a3a118c26e67d4bbfdd85cb1a0972"
+  },
+  "hd": {
+    "path": "realm/index.pck.[0-12].bin",
+    "chunks": 13,
+    "bytes": 313515376,
+    "sha256": "0e38ad694734f45394766f4191fd39005f96d8923fbacaf5c35b9e278ccc8884",
+    "build": "c55458af1f"
+  },
+  "mobile": {
+    "path": "realm/index.pck.lite.[0-6].bin",
+    "chunks": 7,
+    "format": "zip",
+    "fs_name": "index.pcz",
+    "bytes": 174518659,
+    "sha256": "d6eb65000e795a2786b624bb0fd6d8b394c39726d1a9b86f1d5040b7a42a181a",
+    "build": "28d40a0a69",
+    "below_170_mib_cap": true
+  },
+  "wasm_unchanged_sha256": "49df352f9b64f7fc5913d6ff2b64c76011de5ea92023b8c3bee463cbca5fcbda",
+  "official_realm_loader_preserved": true,
+  "official_arena_practice_and_wager_ui_preserved": true,
+  "browser_tested": false,
+  "public_pvp_tested": false,
+  "publication_verified_by_this_receipt": false
+}
