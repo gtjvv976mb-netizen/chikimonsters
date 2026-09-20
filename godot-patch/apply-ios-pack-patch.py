@@ -12,18 +12,24 @@ This script is that change. It is deliberately a patcher rather than a diff: the
 is recovered game source and must not be committed to this repository (`RECOVERY.md` explains
 why), so what lives here is the *instruction*, not the code.
 
-What it does, all three gated on the loader's published policy and therefore no-ops on the
+Eight changes, every one gated on the loader's published policy and therefore a no-op on the
 website:
 
-  1. adds `ChikFeat.gd`, a five-line reader for `window.CHIK_FEATURES`
+  1. adds `ChikFeat.gd`, a small reader for `window.CHIK_FEATURES`
   2. `GameHUD.open_market()` refuses when `trading_post` is off — that one function is the only
      way into the marketplace (`Player.gd` is its sole caller, at the Trading Post's world
      location), so gating it removes the Magic Eden tab and every Phantom purchase string with it
-  3. the Chikiseum drops its **Chikoria Cup** tab when `crypto` is off, and stops claiming
-     "champions win real SOL" in HOW TO BATTLE — the Cup pays a real SOL prize pool and is the
-     Chikiseum's default tab, so it is the first thing a reviewer would see
+  3. the Chikiseum drops its **Chikoria Cup** tab when `crypto` is off, opens on My Deck instead,
+     and stops claiming "champions win real SOL" in HOW TO BATTLE — the Cup pays a real SOL prize
+     pool and was the default tab, so it is the first thing a reviewer would have seen
+  4. the wallet gate stops naming Phantom and stops drawing its "Get Phantom ↗" button
+  5. the token gate stops telling the player to "Hold 500,000 $CHIKI to enter"
 
 It does NOT touch PvP. The Chikiseum's duels are already stake-free and stay exactly as they are.
+
+It does not change any GATE'S BEHAVIOUR either — only what the gate says. Whether an app player
+needs the 500k hold is an open product decision and the server's to enforce; this makes the refusal
+readable without naming a token, an amount, or somewhere to go and get one.
 
 Idempotent: running it twice is a no-op. `--check` reports what would change and writes nothing.
 
@@ -38,8 +44,26 @@ rescan and the two patched scripts fail with `Identifier "ChikFeat" not declared
 scope` — which reads like a bug in this patch and is not one.
 """
 
+import re
 import sys
 from pathlib import Path
+
+
+def _anchor(text: str) -> "re.Pattern[str]":
+	"""An anchor that ignores trailing whitespace at the end of each line.
+
+	Decompiled GDScript keeps a trailing space after some argument commas, and that space does not
+	survive every editor, diff or copy-paste on the way here. Matching on it exactly means the
+	script fails against a project that is, for its purposes, identical. Everything else — the
+	indentation, which is tabs, and the text itself — still has to match exactly.
+	"""
+	return re.compile(r"[ \t]*\n".join(re.escape(line.rstrip()) for line in text.split("\n")) + r"[ \t]*")
+
+
+def _find(text: str, old: str):
+	"""Return the single match for `old`, or None if it is absent or ambiguous."""
+	found = list(_anchor(old).finditer(text))
+	return found[0] if len(found) == 1 else None
 
 CHIKFEAT = '''class_name ChikFeat
 ## The feature policy the page publishes as window.CHIK_FEATURES.
@@ -129,6 +153,30 @@ GATE_NEW = '''		if not ChikFeat.on("crypto"):
 			getp.custom_minimum_size = Vector2(150, 30)
 		else:'''
 
+# The token gate. When the account holds less than 500,000 $CHIKI and no waiver applies, the app
+# tells the player: "Hold 500,000 $CHIKI to enter." That is an instruction to go and acquire half a
+# million units of a crypto token in order to play an App Store app, which is a 3.1.1 problem on its
+# own and reads as a purchase requirement besides.
+#
+# This changes the WORDS ONLY. Whether an app player needs the hold at all is a product decision
+# that is still open (IOS-APP.md), and it is the server's to enforce either way — so the gate still
+# closes exactly when it closed before. It just stops naming a token and an amount, and stops
+# offering a "check balance again" button whose only remedy is buying some.
+GATE_HOLD_OLD = '''			_wallet_notice(v, "More $CHIKI required",
+				"Hold 500,000 $CHIKI to enter. Your wallet is connected safely. Played during an Open Gates event? Your progress and cloud save are kept safe — hold 500,000 $CHIKI and sign in again to continue right where you left off.",
+				UISkin.RED)
+			_wallet_primary(v, "Check balance again", _recheck_wallet, true, "res://ico_wallet.png")'''
+
+GATE_HOLD_NEW = '''			if ChikFeat.on("crypto"):
+				_wallet_notice(v, "More $CHIKI required",
+					"Hold 500,000 $CHIKI to enter. Your wallet is connected safely. Played during an Open Gates event? Your progress and cloud save are kept safe — hold 500,000 $CHIKI and sign in again to continue right where you left off.",
+					UISkin.RED)
+				_wallet_primary(v, "Check balance again", _recheck_wallet, true, "res://ico_wallet.png")
+			else:
+				_wallet_notice(v, "This account cannot enter yet",
+					"Your progress and cloud save are safe. Nothing is lost — open Chikoria on the web with this account to see what it needs.",
+					UISkin.RED)'''
+
 # The notice above that block names Phantom too, so it cannot stand on its own in the app.
 NOTICE_OLD = '''		_wallet_notice(v, "One secure step", "Approve a sign-in message in Phantom. This proves the wallet is yours and restores your cloud save.", Color("a98bff"), "res://ico_connect.png")'''
 
@@ -140,6 +188,7 @@ EDITS = [
 	("Chikiseum.gd", TABS_OLD, TABS_NEW, "the Chikoria Cup tab is not built"),
 	("Chikiseum.gd", OPEN_OLD, OPEN_NEW, "the Chikiseum opens on My Deck, not the Cup"),
 	("Chikiseum.gd", HOW_OLD, HOW_NEW, '"champions win real SOL" is not drawn'),
+	("Onboarding.gd", GATE_HOLD_OLD, GATE_HOLD_NEW, 'the 500k token gate stops naming a token'),
 	("Onboarding.gd", NOTICE_OLD, NOTICE_NEW, 'the wallet gate stops naming Phantom'),
 	("Onboarding.gd", GATE_OLD, GATE_NEW, 'the "Get Phantom" button is not drawn'),
 ]
@@ -171,12 +220,13 @@ def main() -> int:
 			failed.append(f"{name}: missing")
 			continue
 		text = path.read_text(encoding="utf-8")
-		if new in text:
+		if _find(text, new):
 			done.append(f"{name}: {label} (already applied)")
-		elif text.count(old) == 1:
+		elif _find(text, old):
 			planned.append((name, (old, new), label))
 		else:
-			failed.append(f"{name}: {label} — anchor found {text.count(old)}x, expected 1")
+			n = len(list(_anchor(old).finditer(text)))
+			failed.append(f"{name}: {label} — anchor found {n}x, expected 1")
 
 	for line in done:
 		print(f"  --  {line}")
@@ -198,9 +248,14 @@ def main() -> int:
 		path = root / name
 		if edit is None:
 			path.write_text(CHIKFEAT, encoding="utf-8")
-		else:
-			old, new = edit
-			path.write_text(path.read_text(encoding="utf-8").replace(old, new, 1), encoding="utf-8")
+			continue
+		old, new = edit
+		text = path.read_text(encoding="utf-8")
+		hit = _find(text, old)
+		if hit is None:
+			print(f"  !!  {name}: anchor moved while patching — nothing further written")
+			return 1
+		path.write_text(text[:hit.start()] + new + text[hit.end():], encoding="utf-8")
 
 	if not planned:
 		print("\nNothing to do — already patched.")

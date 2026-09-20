@@ -223,6 +223,14 @@ gated on the loader's published policy and therefore no-ops on the website:
    `/verify` fails. The button already goes nowhere (`OS.shell_open` compiles to `window.open`,
    which §3b guards, verified in `realm/index.js`: `window.open(GodotRuntime.parseString(p_uri))`),
    so this is about what is on screen, not what it does.
+5. The token gate stops saying **"Hold 500,000 $CHIKI to enter."** — an instruction to go and
+   acquire half a million units of a crypto token in order to play an App Store app — and drops
+   the "Check balance again" button whose only remedy is buying some.
+
+   **Words only.** Whether an app player needs the hold at all is an open product decision
+   (`IOS-APP.md`) and the server's to enforce either way, so the gate still closes exactly when it
+   closed before. It just refuses readably instead of naming a token, an amount and a reason to go
+   shopping.
 
 PvP is untouched: the duels are already stake-free.
 
