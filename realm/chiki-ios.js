@@ -66,7 +66,9 @@
 			hatching: true,
 			wicked_temple: true,
 			chikiseum_pvp: true,
-			chikoria_cup: true,
+			// The Cup's prize is a SOL pool, so it is a money surface however it is framed. On the
+			// app it stays shut — the season match is the tournament-shaped thing here.
+			chikoria_cup: !locked,
 			quests: true,
 			cloud_sync: true,
 
@@ -163,7 +165,9 @@
 			}
 			// §6 — wallet-less sign-in rides on the request the game already makes.
 			var rewritten = rewriteVerify(url, input, init);
-			if (rewritten) { return realFetch(rewritten[0], rewritten[1]); }
+			if (rewritten) { return watchVerify(realFetch(rewritten[0], rewritten[1])); }
+			// §3c — the in-game news feed is filtered on its way in.
+			if (isNewsFeed(url)) { return filterNews(realFetch(input, init)); }
 			return realFetch(input, init);
 		};
 	}
@@ -187,6 +191,18 @@
 				var text = bodyText(body);
 				var swapped = text ? swapAuth(text) : null;
 				if (swapped) {
+					// Same rejection watch as the fetch path — a dead token must not dead-end the app
+					// just because the pack happened to use XHR for this call.
+					try {
+						this.addEventListener('load', function () {
+							if (this.status >= 400 && this.status < 500) { return linkRejected('rejected'); }
+							if (this.status !== 200) { return; }
+							try {
+								var j = JSON.parse(this.responseText || '{}');
+								if (j && j.signedIn !== true) { linkRejected(String(j.code || 'rejected')); }
+							} catch (e) {}
+						});
+					} catch (e) {}
 					return xsend.call(this, (typeof body === 'string') ? swapped : new TextEncoder().encode(swapped));
 				}
 			}
@@ -213,6 +229,150 @@
 			window.WebSocket = GuardWS;
 		}
 	} catch (e) {}
+
+	// EventSource. The comment above used to claim this was covered when it was not — a guard with a
+	// hole in it is worse than no guard, because it is trusted.
+	try {
+		var RealES = window.EventSource;
+		if (RealES) {
+			var GuardES = function (url, cfg) {
+				var no = verdict(url);
+				if (no) {
+					refuse(url, no);
+					throw new Error('This is not available in the Chikoria app.');
+				}
+				return cfg === undefined ? new RealES(url) : new RealES(url, cfg);
+			};
+			GuardES.prototype = RealES.prototype;
+			['CONNECTING', 'OPEN', 'CLOSED'].forEach(function (k, i) { GuardES[k] = i; });
+			window.EventSource = GuardES;
+		}
+	} catch (e) {}
+
+	// ------------------------------------------------------------------ §3b the navigation guard
+	//
+	// THE HOLE THE REST OF §3 DOES NOT COVER. Everything above guards requests for DATA. None of it
+	// guards NAVIGATION, and the engine hands the pack a navigation primitive directly: realm/index.js
+	// defines _godot_js_os_shell_open(uri) as a bare window.open(uri, "_blank"), proxied back to the
+	// main thread from pthreads. So GDScript's OS.shell_open() leaves the app without touching fetch.
+	//
+	// That matters twice over. Off-origin it is the marketplace/wallet deep link the whole policy
+	// exists to prevent. ON-ORIGIN it is worse than it looks: location.host is an allowed host, and
+	// /arena/ (the full SOL wager client) and /link/ (a Phantom sign-in) sit on that very origin and
+	// load no policy layer at all. So "same origin" is NOT safe here — only the realm is.
+	//
+	// location.href assignment cannot be intercepted from script. The native WKNavigationDelegate is
+	// the real backstop for that, and IOS-APP.md now requires it; this layer closes everything a page
+	// CAN close, so the two together leave nothing.
+	var REALM_ROOT = location.pathname.replace(/[^/]*$/, '');     // '/realm/' in production
+	// The community links the loading screen legitimately offers. They are handed to the shell to
+	// open in Safari rather than navigated to in-app — an in-app browser is its own review risk.
+	var EXTERNAL_OK = /^https:\/\/([a-z0-9-]+\.)?(x\.com|twitter\.com|discord\.gg|discord\.com)\//i;
+
+	/** 'ok' to allow in place, 'external' to hand to the shell, 'refuse' to block. */
+	function navVerdict(rawUrl) {
+		var url = String(rawUrl || '');
+		if (!url || url.charAt(0) === '#' || /^javascript:/i.test(url)) { return 'ok'; }
+		var u;
+		try { u = new URL(url, location.href); } catch (e) { return 'refuse'; }
+		if (u.protocol === 'blob:' || u.protocol === 'data:' || u.protocol === 'about:') { return 'ok'; }
+		if (u.protocol !== 'http:' && u.protocol !== 'https:') { return 'refuse'; }  // phantom:, solflare:, itms://
+		if (u.host === location.host) {
+			return u.pathname.indexOf(REALM_ROOT) === 0 ? 'ok' : 'refuse';
+		}
+		return EXTERNAL_OK.test(u.href) ? 'external' : 'refuse';
+	}
+
+	/** Hand a legitimate outside link to the native shell, which opens it in Safari. */
+	function openExternally(url) {
+		try {
+			var h = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.chikiLink;
+			if (h) { h.postMessage({ kind: 'external-link', url: String(url) }); return true; }
+		} catch (e) {}
+		return false;
+	}
+
+	try {
+		var realOpen = window.open ? window.open.bind(window) : null;
+		window.open = function (url) {
+			var v = navVerdict(url);
+			if (v === 'ok') { return realOpen ? realOpen.apply(null, arguments) : null; }
+			if (v === 'external') { openExternally(url); return null; }
+			refuse(url, 'navigate');
+			return null;      // null, not a throw: OS.shell_open ignores the result either way
+		};
+	} catch (e) {}
+
+	// Anchor clicks and form posts, caught in the CAPTURE phase so the page's own handlers never see
+	// a navigation this policy would refuse.
+	try {
+		document.addEventListener('click', function (ev) {
+			var el = ev.target;
+			while (el && el !== document && el.nodeName !== 'A') { el = el.parentNode; }
+			if (!el || el.nodeName !== 'A') { return; }
+			var href = el.getAttribute('href') || '';
+			var v = navVerdict(href);
+			if (v === 'ok') { return; }
+			ev.preventDefault();
+			ev.stopPropagation();
+			if (v === 'external') { openExternally(el.href); return; }
+			refuse(href, 'navigate');
+		}, true);
+		document.addEventListener('submit', function (ev) {
+			var action = (ev.target && ev.target.getAttribute('action')) || location.href;
+			if (navVerdict(action) !== 'ok') {
+				ev.preventDefault();
+				ev.stopPropagation();
+				refuse(action, 'navigate');
+			}
+		}, true);
+	} catch (e) {}
+
+	// ------------------------------------------------------------------ §3c the news feed
+	//
+	// realm/updates.json is the in-game News panel: 169 entries of release notes, written for the
+	// website. Fifteen of them sell the Trading Post, five name Magic Eden, seven name Phantom and
+	// three quote the 500k gate. The pack renders it and the pack cannot be edited here — but the
+	// pack has to FETCH it, and that request comes through this guard. So the feed is filtered on
+	// the way in: an entry that advertises a surface the app refuses is dropped before the game
+	// ever sees it.
+	//
+	// Dropping, not rewriting. These are historical release notes; editing what a past release said
+	// would be a lie, whereas not showing an entry about a feature this client does not have is just
+	// the right feed for the platform.
+	var NEWS_BANNED = /trading post|magic eden|phantom|\$CHIKI|500,000|500k|SOL |wager|solscan|on-chain|marketplace/i;
+
+	function isNewsFeed(url) {
+		// The pack fetches it relatively ("updates.json"), so a leading slash must not be required.
+		return /(^|\/)updates\.json(\?|$)/.test(String(url || '').split('#')[0]);
+	}
+
+	/** Re-serve the feed with the money entries removed, preserving its shape whatever that is. */
+	function filterNews(promise) {
+		return promise.then(function (res) {
+			if (!res.ok) { return res; }
+			return res.clone().json().then(function (feed) {
+				var kept = 0, dropped = 0;
+				function keep(entry) {
+					if (!entry || typeof entry !== 'object') { return true; }
+					var text = String(entry.title || '') + ' ' + String(entry.body || '');
+					if (NEWS_BANNED.test(text)) { dropped++; return false; }
+					kept++;
+					return true;
+				}
+				var out;
+				if (Array.isArray(feed)) { out = feed.filter(keep); }
+				else if (feed && Array.isArray(feed.updates)) { out = Object.assign({}, feed, { updates: feed.updates.filter(keep) }); }
+				else if (feed && Array.isArray(feed.entries)) { out = Object.assign({}, feed, { entries: feed.entries.filter(keep) }); }
+				else { return res; }                       // a shape we do not know: pass it through untouched
+				if (dropped) { console.log('[chiki-ios] news: kept ' + kept + ', dropped ' + dropped + ' money entries'); }
+				return new Response(JSON.stringify(out), {
+					status: 200,
+					headers: { 'Content-Type': 'application/json' },
+				});
+			}).catch(function () { return res; });         // not JSON, or unreadable: leave it alone
+		});
+	}
 
 	// ------------------------------------------------------------------ §4 no wallet, ever
 	//
@@ -244,8 +404,12 @@
 	// (Busy/Done/Sig/Err/Code/Rejected/Path/Ready) — both documented in realm/index.html.
 	// Worth being precise with the player: what they earn in the app IS the real asset, credited to
 	// the same account, on-chain where the asset is on-chain. The app simply has no way to sell or
-	// trade it. So this is a "that happens on the website", not a "your prizes are not real".
-	var NOPE = 'Selling and trading happen on chikimonsters.com. Everything you earn here is already yours.';
+	// trade it — so the message must not suggest their prizes are fake.
+	//
+	// IT MUST ALSO NOT NAME A DESTINATION. Pointing the player at an outside purchasing mechanism is
+	// what App Review guideline 3.1.1 restricts, and the earlier wording ("Selling and trading happen
+	// on chikimonsters.com") did exactly that. State the fact, offer no outside route.
+	var NOPE = 'Selling and trading are not available in the app. Everything you earn here is yours to keep.';
 
 	window.__chikiBuyDone = ''; window.__chikiBuySig = ''; window.__chikiBuyErr = '';
 	window.__chikiBuy = function () {
@@ -294,47 +458,125 @@
 	// MULTIPLE ACCOUNTS. A player may link several wallets and switch between them in the app —
 	// "all accounts of all wallets", one device. Each keeps its own token; switching reloads, which
 	// is the path the wallet-switch reload already takes on the web.
-	var ACCOUNTS_KEY = 'chikLinkAccounts';   // [{wallet, token, label, linkedAt}]
+	//
+	// WHO OWNS THE CREDENTIAL. The first version of this file wrote the tokens to localStorage and
+	// claimed the pack could not read them. That was wrong twice over: localStorage is readable by
+	// anything in this JS context, JavaScriptBridge.eval included, and a WKWebView data purge — the
+	// exact event the Keychain exists to survive — takes it away. So ownership is inverted:
+	//
+	//   * In the app (the shell sets CHIK_IOS_APP.keychain === true) the tokens live ONLY in the
+	//     closure below and in the shell's Keychain. Nothing is written to localStorage, and every
+	//     mutation is pushed to the shell to persist. A reload starts empty and is re-seeded by the
+	//     shell's injection, which is the same path a cold launch takes.
+	//   * Without a shell to hold them (a browser running ?nocrypto=1, or an older shell that does
+	//     not set the flag) localStorage is the fallback, because the alternative is a link that
+	//     does not survive a reload at all.
+	//
+	// Be honest about the limit: this reduces exposure, it does not create isolation. Any script in
+	// this realm — the pack included — can hook CHIK_LINK or read a closure's output. The property
+	// that actually protects the player is server-side and stated in IOS-APP.md: a link token
+	// authorises PLAY and is refused by every route that moves value.
+	var ACCOUNTS_KEY = 'chikLinkAccounts';   // [{wallet, token, label, linkedAt}] — fallback store only
 	var ACTIVE_KEY = 'chikLinkActive';       // wallet
+	var DEVICE_KEY = 'chikDeviceId';
 	var SENTINEL = 'CHIKI-LINK-V1';          // never a real base64 ed25519 signature (those are 88 chars)
 
+	// True when a native shell is holding the credential for us.
+	var shellHolds = !!(window.CHIK_IOS_APP && window.CHIK_IOS_APP.keychain === true);
+
+	var memAccounts = null;                  // the in-memory store; authoritative when shellHolds
+	var memActive = '';
+	var memDeviceId = '';
+
 	function loadAccounts() {
+		if (shellHolds) { return memAccounts || (memAccounts = []); }
 		try {
 			var v = JSON.parse(localStorage.getItem(ACCOUNTS_KEY) || '[]');
 			return Array.isArray(v) ? v.filter(function (a) { return a && a.wallet && a.token; }) : [];
 		} catch (e) { return []; }
 	}
 	function saveAccounts(list) {
+		if (shellHolds) { memAccounts = list; persistToShell(); return; }
 		try { localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(list)); } catch (e) {}
+	}
+	function setActive(wallet) {
+		if (shellHolds) { memActive = wallet; persistToShell(); return; }
+		try { localStorage.setItem(ACTIVE_KEY, wallet); } catch (e) {}
+	}
+	function getActive() {
+		if (shellHolds) { return memActive; }
+		try { return localStorage.getItem(ACTIVE_KEY) || ''; } catch (e) { return ''; }
 	}
 	function activeAccount() {
 		var list = loadAccounts();
 		if (!list.length) { return null; }
-		var want = '';
-		try { want = localStorage.getItem(ACTIVE_KEY) || ''; } catch (e) {}
+		var want = getActive();
 		for (var i = 0; i < list.length; i++) { if (list[i].wallet === want) { return list[i]; } }
 		return list[0];
 	}
 
-	// The shell may hand the token in from the Keychain, which outlives a WebView data purge.
-	// Take it, store it, and REMOVE it from the injected object so the pack can never read it.
+	// THE KEYCHAIN HANDOFF. IOS-APP.md used to tell the shell to "persist the token to the Keychain"
+	// while giving it no way to obtain one — announce() carried only the wallet. This is that missing
+	// half: every change to the credential set is pushed to the shell as one complete record, so the
+	// shell can write it and hand the identical thing back at next launch.
+	//
+	// device_id goes in the record deliberately. It is generated here and used to bind the token
+	// server-side, so if a data purge regenerated it the restored token would arrive bound to an id
+	// the server has never seen — the restore would fail for the one event it exists to survive.
+	function persistToShell() {
+		try {
+			var h = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.chikiLink;
+			if (!h) { return; }
+			h.postMessage({
+				kind: 'persist',
+				deviceId: deviceId(),
+				active: memActive,
+				accounts: (memAccounts || []).map(function (a) {
+					return { wallet: a.wallet, token: a.token, label: a.label || '', linkedAt: a.linkedAt || 0 };
+				}),
+			});
+		} catch (e) {}
+	}
+
+	// The shell hands the credential set in from the Keychain at document start. Take it, hold it in
+	// the closure, and REMOVE it from the injected object so the pack cannot simply read the global.
 	try {
 		var seed = window.CHIK_IOS_APP;
-		if (seed && seed.linkToken && seed.wallet) {
-			adopt(String(seed.wallet), String(seed.linkToken), seed.label ? String(seed.label) : '');
-			try { delete seed.linkToken; } catch (e) { seed.linkToken = ''; }
+		if (seed) {
+			if (seed.deviceId) { memDeviceId = String(seed.deviceId); }
+			if (Array.isArray(seed.accounts) && seed.accounts.length) {
+				memAccounts = seed.accounts
+					.filter(function (a) { return a && a.wallet && a.token; })
+					.map(function (a) {
+						return { wallet: String(a.wallet), token: String(a.token), label: String(a.label || ''), linkedAt: a.linkedAt || 0 };
+					});
+				memActive = String(seed.active || (memAccounts[0] && memAccounts[0].wallet) || '');
+			} else if (seed.linkToken && seed.wallet) {
+				// The single-account shape the first draft of the spec described. Still accepted.
+				memAccounts = [{ wallet: String(seed.wallet), token: String(seed.linkToken), label: String(seed.label || ''), linkedAt: 0 }];
+				memActive = String(seed.wallet);
+			}
+			try { delete seed.linkToken; delete seed.accounts; } catch (e) { seed.linkToken = ''; seed.accounts = null; }
+			// A shell that injects a credential but does NOT claim custody (no keychain flag) still
+			// has to be honoured, or its restore is silently dropped: loadAccounts() would read the
+			// empty localStorage and the player would be asked to pair again. Write it through.
+			if (!shellHolds && memAccounts && memAccounts.length) {
+				saveAccounts(memAccounts);
+				setActive(memActive || memAccounts[0].wallet);
+				if (memDeviceId) { try { localStorage.setItem(DEVICE_KEY, memDeviceId); } catch (e) {} }
+			}
 		}
 	} catch (e) {}
 
 	function adopt(wallet, token, label) {
 		var list = loadAccounts().filter(function (a) { return a.wallet !== wallet; });
 		list.unshift({ wallet: wallet, token: token, label: label || '', linkedAt: Date.now() });
-		saveAccounts(list);
-		try { localStorage.setItem(ACTIVE_KEY, wallet); } catch (e) {}
+		if (shellHolds) { memAccounts = list; memActive = wallet; persistToShell(); }
+		else { saveAccounts(list); setActive(wallet); }
 		return list;
 	}
 
-	/** The token for whichever account is active, kept in this closure and nowhere reachable. */
+	/** The token for whichever account is active. */
 	function activeToken() {
 		var a = activeAccount();
 		return a ? a.token : '';
@@ -342,6 +584,21 @@
 	function activeWallet() {
 		var a = activeAccount();
 		return a ? a.wallet : '';
+	}
+
+	/** Forget one account (or all) from whichever store is authoritative. */
+	function dropAccount(wallet) {
+		var gone = loadAccounts().filter(function (a) { return a.wallet === wallet; })[0] || null;
+		var left = loadAccounts().filter(function (a) { return a.wallet !== wallet; });
+		if (shellHolds) {
+			memAccounts = left;
+			if (memActive === wallet) { memActive = (left[0] && left[0].wallet) || ''; }
+			persistToShell();
+		} else {
+			saveAccounts(left);
+			if (getActive() === wallet) { setActive((left[0] && left[0].wallet) || ''); }
+		}
+		return gone;
 	}
 
 	/** Rewrite a /verify body that carries our sentinel into a link-token sign-in. */
@@ -358,6 +615,40 @@
 		body.device_id = deviceId();
 		body.client = 'ios-app';
 		try { return JSON.stringify(body); } catch (e) { return null; }
+	}
+
+	// WHEN THE SERVER SAYS NO. A link token can be revoked from the website, expire, or belong to an
+	// account the server no longer admits. Before this, the answer to all three was a dead screen:
+	// the game's sign-in simply failed, the bad token stayed on the device, and the next launch
+	// failed the same way forever — an app a player cannot get out of without deleting it.
+	//
+	// So a /verify carrying OUR token is watched. A 4xx, or a 200 that does not say signedIn, means
+	// this credential is finished: drop it, tell the shell so it can clear the Keychain and put up
+	// the pairing screen, and leave the device in the honest "not linked" state a fresh install has.
+	function watchVerify(promise) {
+		try {
+			promise.then(function (res) {
+				var dead = res.status >= 400 && res.status < 500;
+				if (dead) { return linkRejected('rejected'); }
+				if (!res.ok) { return; }                       // 5xx: the server is unwell, not the token
+				res.clone().json().then(function (j) {
+					if (j && j.signedIn !== true) { linkRejected(String(j && j.code || 'rejected')); }
+				}).catch(function () {});
+			}).catch(function () { /* offline: not the token's fault, keep it */ });
+		} catch (e) {}
+		return promise;
+	}
+
+	var rejectedOnce = false;
+	function linkRejected(reason) {
+		if (rejectedOnce) { return; }
+		rejectedOnce = true;
+		var w = activeWallet();
+		dropAccount(w);
+		try { sessionStorage.removeItem('chikResume'); } catch (e) {}
+		refuse('/verify (' + reason + ')', 'link-rejected');
+		// The shell owns the screen here — it has a pairing view and the web layer does not.
+		announce('link-rejected', { wallet: w, reason: reason });
 	}
 
 	/** Godot's web HTTPRequest hands fetch a Uint8Array, not a string, so read both. */
@@ -387,18 +678,24 @@
 		return [input, next];
 	}
 
-	/** A stable per-install id, so the server can name and revoke this device. Not a fingerprint. */
+	/** A stable per-install id, so the server can name and revoke this device. Not a fingerprint.
+	 *
+	 *  IT MUST OUTLIVE A WEBVIEW DATA PURGE. The token is bound to it server-side, so an id that
+	 *  regenerated when localStorage was cleared would make the Keychain restore fail for exactly
+	 *  the event the Keychain exists to survive. Order: the shell's injected id wins, then the
+	 *  fallback store, then a fresh one — and a fresh one is pushed straight back to the shell. */
 	function deviceId() {
-		var k = 'chikDeviceId';
+		if (memDeviceId) { return memDeviceId; }
 		try {
-			var v = localStorage.getItem(k);
+			var v = localStorage.getItem(DEVICE_KEY);
 			if (!v) {
 				v = (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
 					: 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
-				localStorage.setItem(k, v);
+				if (!shellHolds) { localStorage.setItem(DEVICE_KEY, v); }
 			}
+			memDeviceId = v;
 			return v;
-		} catch (e) { return 'd-ephemeral'; }
+		} catch (e) { return memDeviceId || 'd-ephemeral'; }
 	}
 
 	// Seed the resume Chain.gd already honours. Called by run() immediately before the engine starts,
@@ -416,10 +713,54 @@
 		} catch (e) {}
 	};
 
+	// ------------------------------------------------------------------ §6b shell version + pause
+	//
+	// A reviewed binary and a web layer that changes under it need two levers, because the App Store
+	// update cycle is days and a bad deploy is hours:
+	//
+	//   1. THE PAGE CAN REFUSE A SHELL THAT IS TOO OLD. The shell injects its version; if the web
+	//      layer has moved past what that build can drive (a new CHIK_LINK call, a changed persist
+	//      record), it says so instead of failing in some subtler way. MIN_SHELL is raised here, in
+	//      the same commit as the change that requires it.
+	//   2. THE APP CAN BE PAUSED WITHOUT A RELEASE. CHIK_FEATURES is a local literal, so nothing
+	//      server-side could ever turn the app off. applyRemoteConfig() lets the /verify envelope (or
+	//      any allowed-host config the shell fetches) carry {paused, message, min_shell} and have it
+	//      take effect on the next launch.
+	//
+	// Both only report. The shell owns the screen — it is the half with a view that is not the game.
+	var MIN_SHELL = '1.0.0';
+
+	function versionLess(a, b) {
+		var x = String(a || '0').split('.').map(Number), y = String(b || '0').split('.').map(Number);
+		for (var i = 0; i < 3; i++) {
+			var p = x[i] || 0, q = y[i] || 0;
+			if (p !== q) { return p < q; }
+		}
+		return false;
+	}
+
+	function checkShellVersion() {
+		var v = window.CHIK_IOS_APP && window.CHIK_IOS_APP.version;
+		if (!v) { return; }                       // an older shell that injects no version: nothing to compare
+		if (versionLess(v, MIN_SHELL)) {
+			announce('stale-shell', { version: String(v), minimum: MIN_SHELL });
+		}
+	}
+
+	/** Let the server pause the app or raise the floor. Safe to call with anything. */
+	window.CHIK_LINK_CONFIG = function (cfg) {
+		if (!cfg || typeof cfg !== 'object') { return; }
+		if (cfg.min_shell) { MIN_SHELL = String(cfg.min_shell); checkShellVersion(); }
+		if (cfg.paused === true) {
+			announce('paused', { message: String(cfg.message || 'Chikoria is down for maintenance. Try again shortly.') });
+		}
+	};
+
 	// ------------------------------------------------------------------ §7 what the shell calls
 	//
-	// The Swift side drives pairing through this object. Every function is safe to call at any time
-	// and none of them expose a token: status() reports the wallet, never the credential.
+	// The Swift side drives pairing through this object. status() reports the wallet and never the
+	// credential; the credential reaches the shell only through the 'persist' record in §6, which is
+	// the shell's own Keychain write.
 	function announce(kind, detail) {
 		var payload = Object.assign({ kind: kind }, detail || {});
 		try { document.dispatchEvent(new CustomEvent('chiki-link', { detail: payload })); } catch (e) {}
@@ -486,10 +827,8 @@
 			var w = String(wallet || '');
 			var found = loadAccounts().some(function (a) { return a.wallet === w; });
 			if (!found) { return false; }
-			try {
-				localStorage.setItem(ACTIVE_KEY, w);
-				sessionStorage.removeItem('chikResume');
-			} catch (e) {}
+			setActive(w);
+			try { sessionStorage.removeItem('chikResume'); } catch (e) {}
 			announce('switched', { wallet: w });
 			location.reload();
 			return true;
@@ -498,8 +837,7 @@
 		/** Drop one account from this device, telling the server so the token stops working. */
 		forget: function (wallet) {
 			var w = String(wallet || activeWallet());
-			var gone = loadAccounts().filter(function (a) { return a.wallet === w; })[0];
-			saveAccounts(loadAccounts().filter(function (a) { return a.wallet !== w; }));
+			var gone = dropAccount(w);
 			try { sessionStorage.removeItem('chikResume'); } catch (e) {}
 			announce('unlinked', { wallet: w });
 			if (!gone) { return Promise.resolve(); }
@@ -514,7 +852,9 @@
 		forgetAll: function () {
 			var all = loadAccounts();
 			saveAccounts([]);
-			try { localStorage.removeItem(ACTIVE_KEY); sessionStorage.removeItem('chikResume'); } catch (e) {}
+			setActive('');
+			if (!shellHolds) { try { localStorage.removeItem(ACTIVE_KEY); } catch (e) {} }
+			try { sessionStorage.removeItem('chikResume'); } catch (e) {}
 			announce('unlinked', {});
 			return Promise.all(all.map(function (a) {
 				return realFetch(apiBase() + '/link/revoke', {
@@ -525,7 +865,8 @@
 			}));
 		},
 
-		/** For the shell to hand in a Keychain-held token on launch. */
+		/** For the shell to hand in a Keychain-held credential after document start. The injection in
+		 *  §6 is the fast path; this is for a shell whose Keychain read finished too late for it. */
 		setToken: function (wallet, token, label) {
 			if (!wallet || !token) { return false; }
 			adopt(String(wallet), String(token), String(label || ''));
@@ -533,10 +874,19 @@
 			return true;
 		},
 
+		/** The device id the shell must store alongside the token — the token is bound to it. */
+		deviceId: function () { return deviceId(); },
+
 		features: function () { return window.CHIK_FEATURES; },
 	};
 
 	// Tell the shell where we stand as soon as the page is up, so it can decide between showing the
 	// pairing screen and getting out of the way.
-	announce('ready', { linked: !!activeAccount(), wallet: activeWallet() });
+	checkShellVersion();
+	announce('ready', {
+		linked: !!activeAccount(),
+		wallet: activeWallet(),
+		deviceId: deviceId(),
+		custody: shellHolds ? 'shell' : 'web',   // where the credential lives, so the shell can tell
+	});
 }());

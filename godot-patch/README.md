@@ -33,7 +33,7 @@ The JavaScript half of the same revision — the iOS app's crypto lockdown and i
 sign-in — has harnesses that need no Godot and do pass here:
 
 ```sh
-node verify/chiki-ios.test.mjs        # the policy layer itself: 74 checks
+node verify/chiki-ios.test.mjs        # the policy layer itself: 118 checks
 node verify/loader-policy.test.mjs    # that realm/index.html still wires it up
 ```
 

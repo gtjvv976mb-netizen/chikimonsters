@@ -29,12 +29,16 @@ var _timer := 0.0
 var _status := ""
 var _reward_match := ""
 
-@onready var _standing_label: Label = null
-@onready var _season_label: Label = null
-@onready var _prize_box: VBoxContainer = null
-@onready var _status_label: Label = null
-@onready var _queue_button: Button = null
-@onready var _claim_button: Button = null
+# NOT @onready. These are assigned by _build_ui(), which setup() calls — and setup() may well run
+# before this Control is added to the tree. @onready assigns at tree-entry, so it would overwrite
+# every reference with null AFTER _build_ui() had filled them, and the panel would silently render
+# nothing. (The wager panel carries the same pattern; it has the same hazard.)
+var _standing_label: Label = null
+var _season_label: Label = null
+var _prize_box: VBoxContainer = null
+var _status_label: Label = null
+var _queue_button: Button = null
+var _claim_button: Button = null
 
 
 func setup(season_client: ChikiseumSeasonClient) -> void:

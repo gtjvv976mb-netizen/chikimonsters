@@ -44,6 +44,9 @@ signal failed(code: String, message: String)
 
 const ROUTES := ["season_board", "season_queue", "season_state", "season_claim"]
 
+## Statuses that mean the match is over. A terminal status with no reward owed releases the panel.
+const TERMINAL := ["decided", "left", "idle", "cancelled", "forfeit"]
+
 ## Reward kinds the server may send. Kept as a list rather than an enum so a new one added
 ## server-side still renders (as its own label) instead of vanishing from the ceremony.
 const KNOWN_KINDS := ["fantasy_fish", "egg", "resource", "coins", "xp", "cosmetic"]
@@ -54,6 +57,8 @@ var prizes := {}                     ## {win: [...], loss: [...], streak_bonus: 
 var match_id := ""                   ## the hosted match, while there is one
 var in_queue := false
 var busy := false
+
+var _last_match := ""                ## the match just finished, so a late reward can still name it
 
 var _command: Callable
 
@@ -125,7 +130,9 @@ func leave_queue() -> Dictionary:
 ## decided — this only reveals and banks it, so pressing it late, twice or from another device
 ## returns the same items rather than rolling again.
 func claim(for_match_id: String = "") -> Dictionary:
-	var id := for_match_id if for_match_id != "" else match_id
+	var id := for_match_id
+	if id == "":
+		id = match_id if match_id != "" else _last_match
 	if id == "":
 		failed.emit("NOTHING_TO_CLAIM", "There is no finished match to collect.")
 		return {}
@@ -136,6 +143,7 @@ func claim(for_match_id: String = "") -> Dictionary:
 	var odds: Dictionary = response.get("odds", {}) if typeof(response.get("odds")) == TYPE_DICTIONARY else {}
 	if response.has("you") and typeof(response["you"]) == TYPE_DICTIONARY:
 		standing = response["you"]
+	_last_match = id
 	match_id = ""
 	rewarded.emit(rewards, odds)
 	return response
@@ -247,10 +255,21 @@ func _absorb(response: Dictionary) -> void:
 
 	if response.get("reward_pending", false) == true:
 		# The match that owns the reward, even once the fight is over and match_id was cleared.
-		var owed := String(response.get("reward_match_id", new_match if new_match != "" else match_id))
+		var owed := String(response.get("reward_match_id", ""))
+		if owed == "":
+			owed = new_match if new_match != "" else (match_id if match_id != "" else _last_match)
 		if owed != "":
 			match_id = owed
 			reward_ready.emit(owed)
+	elif status in TERMINAL and match_id != "":
+		# A FINISHED MATCH THAT OWES NOTHING MUST RELEASE THE PANEL. Without this, match_id stayed
+		# set for the rest of the session: ChikiseumSeasonPanel._sync_buttons() computes
+		# `fighting = client.match_id != "" and _reward_match == ""`, so one loss that paid no prize
+		# left "Find a match" disabled until the game was restarted. Remember the id first — a later
+		# poll may still announce a reward for it.
+		_last_match = match_id
+		match_id = ""
+		in_queue = false
 
 
 ## The server's messages are already written for players; these only soften the few codes whose

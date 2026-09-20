@@ -921,6 +921,20 @@ html.chik-phone #boot { padding-bottom: calc(5px + env(safe-area-inset-bottom, 0
 						}
 					}
 				}
+				/** Replace a <p> in a panel by a phrase it contains; null removes it. */
+				function para(panelId, marker, html) {
+					var panel = document.getElementById(panelId);
+					if (!panel) { return; }
+					var ps = panel.querySelectorAll('p');
+					for (var i = 0; i < ps.length; i++) {
+						if ((ps[i].textContent || '').indexOf(marker) >= 0) {
+							if (html === null) {
+								if (ps[i].parentNode) { ps[i].parentNode.removeChild(ps[i]); }
+							} else { ps[i].innerHTML = html; }
+							return;
+						}
+					}
+				}
 				/** Replace a list item by a phrase it contains; null removes it. */
 				function bullet(panelId, marker, html) {
 					var panel = document.getElementById(panelId);
@@ -943,8 +957,7 @@ html.chik-phone #boot { padding-bottom: calc(5px + env(safe-area-inset-bottom, 0
 					lead.innerHTML = 'A living 3D voxel world. Explore a hand-built island, battle the corruption '
 						+ 'with real card duels, craft, fish, ride and raise a team that walks beside you. '
 						+ 'This is your <b>Chikoria account</b>: everything you own on chikimonsters.com is here, '
-						+ 'and everything you gather, hatch and win here is really yours &mdash; waiting on the '
-						+ 'website, where selling and trading live.';
+						+ 'and everything you gather, hatch and win here is really yours.';
 				}
 				card('lp-about', 'Hold to Play',
 					'<b>&#128035; Your team travels with you</b><br>Every chikimon, egg, fish and resource on your '
@@ -954,8 +967,7 @@ html.chik-phone #boot { padding-bottom: calc(5px + env(safe-area-inset-bottom, 0
 					+ 'Chikiseum PvP against real players.');
 				card('lp-about', 'A Real Economy',
 					'<b>&#9935; A Real Economy</b><br>14 resources, 130 recipes, 10-level tools, 8 fish + 4 sea '
-					+ 'legends, 6 mounts &mdash; gathered, crafted and cooked by hand. Earn them here; '
-					+ 'sell and trade them on the website.');
+					+ 'legends, 6 mounts &mdash; gathered, crafted and cooked by hand, and yours to keep.');
 				card('lp-about', 'Paid Storyline',
 					'<b>&#127942; The Campaign</b><br>ACT I &middot; MASTER OF CHIKORIA &mdash; 21 chapters of story, '
 					+ 'bosses and islands to clear with your team.');
@@ -975,7 +987,33 @@ html.chik-phone #boot { padding-bottom: calc(5px + env(safe-area-inset-bottom, 0
 					+ 'turn, V auto) &middot; spar trainers with G &middot; and face real players in the Chikiseum, '
 					+ 'where the server hosts every match and pays the winner in fantasy fish, eggs and resources.');
 
-				// 4. The coin is still the button; it is no longer "the $CHIKI token".
+				// 4. ROLES — the heaviest money panel in the whole screen, and the one the first pass
+				// missed entirely. It sells the Trading Post, 75% on-chain sale splits, Solscan
+				// receipts and a SOL prize, and one whole card (Merchant) IS the marketplace.
+				para('lp-roles', 'real economy',
+					'Chikoria is a real economy: every resource is player-gathered and every tool, potion and '
+					+ 'meal is player-made. Pick a calling &mdash; or mix them all.');
+				card('lp-roles', 'Gatherer',
+					'<b>&#127795; Gatherer</b><br>Press E at trees, bushes, hives, shells and flowers. Craft the '
+					+ 'axe &rarr; drill ladder (10 levels each) to harvest far faster, and keep your satchel deep '
+					+ 'enough to supply a whole team.');
+				card('lp-roles', 'Battler',
+					'<b>&#9876; Battler</b><br>Card duels vs corruptimons, friendly spars with any trainer (G), '
+					+ 'and season matches against real players in the Chikiseum. Win streaks multiply your '
+					+ 'rewards &mdash; protect them with a Streak Sigil.');
+				card('lp-roles', 'Merchant', null);          // the Merchant IS the marketplace
+				card('lp-roles', 'Collector',
+					'<b>&#128142; Collector</b><br>21 chikimon, 10 avatar cases, the capped Meme Dynasty, 6 mounts, '
+					+ '12 fish. The dex pop-ups track live counts &mdash; completion is the longest game in Chikoria.');
+				para('lp-roles', 'The island pays attention',
+					'The roles feed each other. The island pays attention.');
+
+				// 5. EVERFLAME ISLE — one landmark the app cannot use.
+				card('lp-regions', 'Chikiville',
+					'<b>&#127984; Chikiville &amp; the Castle</b><br>The walled city &mdash; shops, the Hospital, '
+					+ 'the Craft Shop and the Everflame.');
+
+				// 6. The coin is still the button; it is no longer "the $CHIKI token".
 				var hint = document.getElementById('herohint');
 				if (hint && (hint.textContent || '').indexOf('$CHIKI') >= 0) {
 					hint.innerHTML = '&#128070; Press the coin to play';

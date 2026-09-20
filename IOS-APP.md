@@ -33,7 +33,8 @@ Earning here, selling there. One account, one inventory, two different surfaces.
 | Trading Post ($CHIKI player market) | no | website |
 | Magic Eden marketplace | no | website |
 | SOL wagers on PvP | no | replaced by the season match |
-| Buying $CHIKI, the 500k token gate | no | the app is not gated on holding a token |
+| Buying $CHIKI | no | no purchase surface of any kind |
+| The 500k token gate | client says no | **undecided server-side** — see the open decision under App Store review |
 
 ---
 
@@ -70,10 +71,33 @@ wallet-switch already takes.
 1. seeds that resume with the wallet and a **sentinel** in the signature slot (`CHIKI-LINK-V1`),
 2. intercepts the `/verify` request on its way out and swaps the sentinel for the link token.
 
-The pack is untouched and never sees the token — it is held in a closure in the loader, not in
-`sessionStorage`, not on `window`, and `CHIK_LINK.status()` does not report it. A request that
-carries a real signature is left completely alone, and the token is only ever attached to
-`/verify` on an allowed origin.
+The pack is untouched. A request carrying a real signature is left completely alone, and the token
+is only ever attached to `/verify` on an allowed origin.
+
+### Who holds the credential
+
+The first version of this wrote the tokens to `localStorage` and claimed the pack could not read
+them. **That was wrong twice over**: `localStorage` is readable by anything in this JS context,
+`JavaScriptBridge.eval` included, and a WKWebView data purge — the exact event the Keychain exists
+to survive — takes it away. Ownership is now inverted:
+
+- **In the app**, when the shell sets `CHIK_IOS_APP.keychain === true`, tokens live **only** in a
+  closure and in the shell's Keychain. Nothing is written to `localStorage`. Every change is pushed
+  to the shell as a `persist` message for it to write.
+- **Without a shell** (a browser on `?nocrypto=1`, or a shell that does not set the flag)
+  `localStorage` is the fallback, because the alternative is a link that does not survive a reload.
+
+Be honest about the limit: this reduces exposure, it does not create isolation. Any script in this
+realm — the pack included — can hook `CHIK_LINK`. **The property that actually protects the player
+is server-side**: a link token authorises play and must be refused by every route that moves value.
+
+### What a rejected token does
+
+A token can be revoked, expire, or belong to an account the server stops admitting. Previously all
+three produced a dead screen that survived every relaunch. Now a `/verify` carrying our token is
+watched: a 4xx, or a 200 without `signedIn`, drops the credential, clears the resume, tells the
+shell (`link-rejected`) and leaves the device in the honest "not linked" state. A **5xx does not** —
+a backend having a bad day must not unlink the player.
 
 ---
 
@@ -119,7 +143,9 @@ future.
 | no marketplace purchase | `__chikiMeSign` is a refusal stub; `__chikiMeReady` reports no capability | no |
 | no chain traffic at all | `fetch` / `XHR` / `WebSocket` refuse every host but this origin and the backend | no |
 | no SOL wagers | `/chikiseum/live/v1/wager_*` refused by name | no |
-| no token gate, no payout promises | the `$CHIKI` and `REWARDS` tabs are removed; the sign-in, Trading Post and campaign copy are rewritten | no |
+| no navigation out of the realm | `window.open`, anchor clicks and form posts are guarded; **same-origin `/arena/` and `/link/` are refused too** | no |
+| no token gate, no payout promises | the `$CHIKI` and `REWARDS` tabs are removed; the WELCOME, HOW TO PLAY, ROLES and EVERFLAME ISLE copy is rewritten | no |
+| the in-game news feed does not advertise markets | `updates.json` is filtered at the fetch layer — 38 of 169 entries dropped | no |
 | **the Trading Post gate is not drawn at all** | the pack reads `window.CHIK_FEATURES` | **yes** |
 
 The last row is the only outstanding piece, and it is a feature gate, nothing more — see
@@ -146,37 +172,64 @@ poll shape the pack already reads, with a code (`no_wallet`) the pack already br
 
 The shell is a `WKWebView` pointed at `https://chikimonsters.com/realm/`. It is not in this repo.
 
-**1. Inject the flag at document start.** A `WKUserScript` with
-`injectionTime: .atDocumentStart`, `forMainFrameOnly: true`:
+**1. Inject everything at document start.** A `WKUserScript` with
+`injectionTime: .atDocumentStart`, `forMainFrameOnly: true`. `chiki-ios.js` reads this object as it
+parses, so it must be complete before the first script runs:
 
-```swift
-window.CHIK_IOS_APP = { deviceName: "iPhone", version: "1.0.0" };
+```js
+window.CHIK_IOS_APP = {
+  deviceName: "iPhone",
+  version:    "1.0.0",     // compared against MIN_SHELL; too old → a "stale-shell" message
+  keychain:   true,        // "I hold the credential" — turns OFF all localStorage writes
+  deviceId:   "…",         // from the Keychain. MUST be stable: the token is bound to it
+  active:     "…",         // which wallet to play
+  accounts:   [ { wallet: "…", token: "…", label: "…", linkedAt: 0 } ]
+};
 ```
 
-If the Keychain holds a link, hand it in on the same object — `chiki-ios.js` adopts it and then
-**deletes it from the object**, so the pack can never read it:
+`chiki-ios.js` takes the credentials and then **deletes `accounts` and `linkToken` from the
+object**, so the pack cannot simply read the global. Setting `keychain: true` without supplying
+`deviceId` is a bug: a regenerated id makes the server reject a token it issued.
 
-```swift
-window.CHIK_IOS_APP = { deviceName: "…", wallet: "…", linkToken: "…" };
-```
-
-**2. Drive pairing through `window.CHIK_LINK`.** Every function is safe to call at any time and
-none of them expose a token.
+**2. Drive pairing through `window.CHIK_LINK`.**
 
 | call | returns |
 |---|---|
-| `CHIK_LINK.status()` | `{linked, wallet, deviceId, accounts:[{wallet,label,linkedAt}]}` |
+| `CHIK_LINK.status()` | `{linked, wallet, deviceId, accounts:[{wallet,label,linkedAt}]}` — never a token |
 | `CHIK_LINK.redeem(code)` | Promise → `{wallet}`; rejects with a message worth showing |
 | `CHIK_LINK.use(wallet)` | switch account (reloads); `false` if not linked |
 | `CHIK_LINK.forget(wallet)` / `forgetAll()` | unlink here and revoke server-side |
-| `CHIK_LINK.setToken(wallet, token, label)` | restore from the Keychain |
+| `CHIK_LINK.setToken(wallet, token, label)` | late restore, if the Keychain read missed injection |
+| `CHIK_LINK.deviceId()` | the id the token is bound to — store it beside the token |
 | `CHIK_LINK.features()` | the `CHIK_FEATURES` policy object |
+| `CHIK_LINK_CONFIG({paused, message, min_shell})` | server-driven pause / minimum-version bump |
 
-**3. Listen for link events.** The page posts to `webkit.messageHandlers.chikiLink` (and fires a
-`chiki-link` DOM event) with `{kind: "ready"|"linked"|"switched"|"unlinked", wallet}`. On
-`ready` with `linked: false`, show the pairing screen; on `linked`, persist the token to the
-**Keychain** — a WKWebView data purge takes `localStorage` with it, and the Keychain is what
-makes the link survive.
+**3. Handle every message.** The page posts to `webkit.messageHandlers.chikiLink` (and fires a
+`chiki-link` DOM event). **`persist` is the one the shell must not ignore** — it is the only way
+the shell ever obtains a token, and the earlier spec told the shell to store one without providing
+it.
+
+| `kind` | payload | what the shell does |
+|---|---|---|
+| `ready` | `{linked, wallet, deviceId, custody}` | `linked: false` → show the pairing screen |
+| `persist` | `{deviceId, active, accounts:[{wallet,token,label,linkedAt}]}` | **write to the Keychain** (replace wholesale; an empty `accounts` means erase) |
+| `linked` | `{wallet}` | dismiss pairing, show the game |
+| `switched` | `{wallet}` | the page is reloading with another account |
+| `unlinked` | `{wallet?}` | back to pairing |
+| `link-rejected` | `{wallet, reason}` | the token is dead: clear the Keychain, show pairing with a reason |
+| `stale-shell` | `{version, minimum}` | block with "update the app" |
+| `paused` | `{message}` | show maintenance |
+| `external-link` | `{url}` | open in Safari (`UIApplication.shared.open`) — never in-app |
+
+**3b. Refuse navigation out of the realm.** The web layer wraps `window.open`, anchor clicks and
+form posts, but `location.href` assignment cannot be intercepted from script — and the engine hands
+the pack a navigation primitive directly (`realm/index.js` defines `_godot_js_os_shell_open` as a
+bare `window.open`). So the shell is the backstop:
+
+- `WKNavigationDelegate.decidePolicyFor`: `.cancel` any top-level navigation whose URL is not under
+  `https://chikimonsters.com/realm/`. **Same-origin is not sufficient** — `/arena/` is the full SOL
+  wager client and `/link/` carries a Phantom sign-in, and neither loads the policy layer.
+- `WKUIDelegate.createWebViewWith`: return `nil`, so no popup can open a window.
 
 **4. Configure the WebView for the realm.** It needs a secure context and cross-origin isolation
 (SharedArrayBuffer/threads). It is landscape-only on phones and runs the HD pack — the existing
@@ -188,16 +241,59 @@ of which already special-case the app and should not be changed.
 opening an exchange. The web policy is thorough, but it cannot police what the native side does
 on its own.
 
-### App Store review notes
+### App Store review
 
-- The app is not a wallet and contains no wallet. It never asks for a key, a seed phrase or a
-  signature, and cannot construct a transaction.
-- Nothing is bought, sold or traded in the app, and there is no external purchase flow. The
-  assets a player earns are earned by playing.
-- Nothing is gated on holding a cryptocurrency. The 500k $CHIKI gate is a website rule; the app
-  is not gated on it.
-- PvP has no stake and no prize pool. Matches are hosted by the server and pay in-game items.
-- Account pairing is a code the player types, not a purchase and not a sign-in with a wallet.
+The crypto question is the one this design answers well. It is **not** the one most likely to
+reject the app. Three areas, in order of real risk:
+
+**1. Guideline 4.2, minimum functionality.** A binary whose whole function is to display a website
+is the textbook rejection, and as specified the shell is exactly that. This is decided before the
+shell is built, not at submission. The native scope below is the minimum that makes the app a real
+app rather than a wrapper: pairing, account management and deletion, settings and support, the
+download/loading experience, offline and failure states, and the navigation policy. Build them
+natively; do not put them in the web layer.
+
+**2. Guideline 3.1.1, steering.** The app earns real assets and the player sells them elsewhere, so
+copy that names where is a steering risk. The refusal string has been changed from *"Selling and
+trading happen on chikimonsters.com"* to **"Selling and trading are not available in the app.
+Everything you earn here is yours to keep."** — it states the fact and offers no outside route. The
+loading-screen copy was changed the same way. Anti-steering rules have moved (notably in the US
+since 2025), so **check the current text of 3.1.1 and 3.1.3 before submitting** rather than trusting
+this paragraph.
+
+**3. Guideline 3.1.5(b) / 3.1.1, crypto and NFTs.** The app is not a wallet and contains no wallet.
+It never asks for a key, a seed phrase or a signature, and carries no code that can construct a
+transaction. Nothing is bought, sold, traded or staked. PvP has no stake and no prize pool. Pairing
+is a code the player types, not a wallet sign-in. Nothing in the app is gated on holding a
+cryptocurrency — **but see the open decision below, because that claim is currently not verified
+server-side.**
+
+Also required, and not yet built anywhere:
+
+- **Account deletion (5.1.1(v)).** `forget()` and `forgetAll()` only unlink a *device*. An app with
+  account creation must offer account deletion in-app. Decide what that means here — the account is
+  a wallet on a server the app cannot authenticate to as its owner — and build it.
+- **Privacy manifest** (`PrivacyInfo.xcprivacy`) and the App Privacy answers. These have to describe
+  whatever telemetry ends up existing, so decide telemetry first.
+- **Age rating**, given the memecoin association and randomized reward rolls.
+- **Export compliance** (`ITSAppUsesNonExemptEncryption`).
+
+#### An open product decision that blocks the review notes
+
+**Does an app player need to hold 500k $CHIKI?** The website gate is entry-level
+(`realm/index.html`: "500,000 $CHIKI to enter the realm"). The app switches the gate off on the
+*client* and the review note above asserts the app is not gated — but the gate is enforced
+**server-side against the wallet**, and none of the link routes below say whether a link-token
+session is admitted for a wallet under the threshold. Both answers need work:
+
+- If the server still gates: every new player and every App Review tester dead-ends at the door,
+  with no copy explaining why (the panel that explained it is removed on the app). Needs a refusal
+  code and a pairing-screen message.
+- If it does not: the app is a free, App-Store-distributed entrance to a token-gated economy whose
+  rewards are real assets. Needs per-account earning caps, a cap on linked devices per wallet, and a
+  cap on wallets per device. Only the season match has a cap today.
+
+Decide this before writing the review notes, because one of the five bullets above depends on it.
 
 ---
 
@@ -307,6 +403,35 @@ client; the server is what makes "the app cannot sell" true rather than merely t
 
 ---
 
+## Release order — read this before shipping anything
+
+The order is load-bearing in both directions, and nothing else in the repo states it. Publish the
+website half early and live players get a pairing page against a 404. Ship the binary before the
+pack and the app advertises PvP it cannot reach.
+
+**The app's Chikiseum is unreachable on the pack that is live today**, and not only because the
+backend routes are missing. The compiled client installs *its own* `window.fetch` guard with a
+hardcoded eleven-route allowlist (`godot-patch/README.md` §1). `season_board`, `season_queue`,
+`season_state` and `season_claim` are not in it, so a correct backend is still refused **by the game
+itself**. That takes a Godot export to fix, and promoting an export overwrites `realm/index.html`
+and needs the whole policy wiring re-applied.
+
+So, in order:
+
+1. **Decide the 500k gate question** above. It changes the backend and the pairing copy.
+2. **Backend**: the link routes, then the season routes. `/link/` and `/arena/` both exercise them.
+3. **Publish `link/`** only once `/link/new` answers. Until then it correctly says the backend does
+   not offer Realm Link yet, which is honest but not something to put in front of players.
+4. **One Godot export** carrying, together: the four season route names added to the pack's own
+   allowlist (step 1 of `godot-patch/README.md`, not step 4), the `CHIK_FEATURES` read, the season
+   panel, and the AI practice lobby.
+5. **Re-apply the loader policy** to the overwritten `realm/index.html` and get both harnesses green
+   — `node godot-patch/verify/loader-policy.test.mjs` fails until they are.
+6. **Build the shell**, TestFlight it on a real device, then submit.
+
+**If the pack is not ready when the binary is**, do not ship the promise: cut the season-match line
+from the app copy and turn `pvp_mode` off, rather than shipping a Chikiseum that is a dead room.
+
 ## Files in this repo
 
 | file | what it does |
@@ -316,7 +441,7 @@ client; the server is what makes "the app cannot sell" true rather than merely t
 | `link/index.html` | the website page where a player mints a pairing code and manages linked devices |
 | `arena/index.html` | the test client; now drives the season routes, and `?nocrypto=1` shows the app's surface |
 | `godot-patch/ChikiseumSeason*.gd` | the season client and panel, ready to drop into the Godot project |
-| `godot-patch/verify/chiki-ios.test.mjs` | 74 checks over the policy layer — `node` only, no Godot |
+| `godot-patch/verify/chiki-ios.test.mjs` | 118 checks over the policy layer — `node` only, no Godot |
 | `godot-patch/verify/loader-policy.test.mjs` | tripwire: fails if `realm/index.html` loses the wiring |
 | `godot-patch/verify/verify.gd` | drives both arena clients against a fake server — needs Godot |
 

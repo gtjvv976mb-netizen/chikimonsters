@@ -74,6 +74,20 @@ func transport(route: String, body: Dictionary) -> Dictionary:
 	return {"error": "unknown route", "code": "NOT_FOUND"}
 
 
+## A third transport: a match that is OVER and owes nothing. This is the case that used to strand
+## the panel — match_id stayed set, _sync_buttons() computed fighting = true, and "Find a match" was
+## dead for the rest of the session after the first loss that paid no prize.
+func terminal_transport(route: String, _body: Dictionary) -> Dictionary:
+	calls.append(route)
+	match route:
+		"season_state":
+			return {"queued": false, "status": "decided", "reward_pending": false,
+				"you": {"wins": 13, "losses": 8, "streak": 0}}
+		"season_queue":
+			return {"queued": false, "status": "paired", "match_id": "m99"}
+	return {"error": "unknown route", "code": "NOT_FOUND"}
+
+
 ## A second transport, for the refusals the season client must surface rather than swallow.
 func refusing_transport(route: String, _body: Dictionary) -> Dictionary:
 	calls.append(route)
@@ -185,6 +199,20 @@ func _init() -> void:
 	check(got["rewards"].size() == 1, "the prize is a real item, not a balance")
 	check(String(got["rewards"][0].get("kind", "")) == "fantasy_fish", "and it is a fantasy fish")
 	check(s.match_id == "", "claiming clears the owed match so it cannot be claimed twice")
+
+	print("\n== a finished match releases the panel ==")
+	var s3 = S.new()
+	get_root().add_child(s3)
+	s3.bind_transport(Callable(self, "terminal_transport"))
+	await s3.join_queue()
+	check(s3.match_id == "m99", "a match is held while it is live")
+	await s3.poll()
+	check(s3.match_id == "", "a decided match that owes nothing CLEARS match_id")
+	check(not s3.in_queue, "and leaves the queue")
+	check(int(s3.standing.get("losses", 0)) == 8, "the standing still updates from that poll")
+	# The panel's gate is `client.match_id != "" and _reward_match == ""`, so this is what unsticks it.
+	await s3.join_queue()
+	check(s3.match_id == "m99", "so the player can queue again straight away")
 
 	print("\n== season refusals reach the player ==")
 	var s2 = S.new()
