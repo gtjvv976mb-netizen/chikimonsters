@@ -89,6 +89,13 @@
 			ja: 'チコリアはメンテナンス中です。しばらくしてからお試しください。',
 			zh: 'Chikoria 正在维护中，请稍后再试。',
 		},
+		// Replaces whatever the pack says when wallet sign-in finds no provider. Like noTrade, it
+		// states the fact and names no outside destination — see §4.
+		noWallet: {
+			en: 'Wallet sign-in is not part of the app. You are already playing on your own account.',
+			ja: 'アプリではウォレット接続は使用しません。すでにご自身のアカウントでプレイ中です。',
+			zh: '应用内不使用钱包登录。你当前已在自己的账号中游玩。',
+		},
 	};
 
 	function T(key) {
@@ -337,6 +344,33 @@
 		}
 	} catch (e) {}
 
+	// navigator.sendBeacon. Found by reading the pack's own source rather than by guessing: Chain.gd
+	// registers a `pagehide` / `visibilitychange` flush that does
+	//
+	//     if (!(navigator.sendBeacon && navigator.sendBeacon(window.__chikFlushUrl, b))) {
+	//       fetch(window.__chikFlushUrl, {method:'POST', body:b, keepalive:true}).catch(...)
+	//     }
+	//
+	// The fetch fallback was guarded from the start; the beacon was not. In the shipped build the
+	// body is only ever filled once a wallet is linked (Chain.gd returns early while `wallet()` is
+	// empty), which cannot happen in the app — so this is a closed door, not a leak that was running.
+	// It is guarded anyway, because §3 is documented as covering egress and a guard that is trusted
+	// while having a hole in it is the dangerous kind.
+	//
+	// sendBeacon must not throw: it is called from a pagehide handler, where an exception would take
+	// the rest of the teardown with it. It reports refusal the way the real API reports failure —
+	// by returning false — which is a value its one caller already handles.
+	try {
+		if (navigator && typeof navigator.sendBeacon === 'function') {
+			var realBeacon = navigator.sendBeacon.bind(navigator);
+			navigator.sendBeacon = function (url, data) {
+				var no = verdict(url);
+				if (no) { refuse(url, no); return false; }
+				return data === undefined ? realBeacon(url) : realBeacon(url, data);
+			};
+		}
+	} catch (e) { /* read-only navigator: nothing in the app fills the beacon body anyway */ }
+
 	// ------------------------------------------------------------------ §3b the navigation guard
 	//
 	// THE HOLE THE REST OF §3 DOES NOT COVER. Everything above guards requests for DATA. None of it
@@ -538,6 +572,40 @@
 			});
 		} catch (e) { /* already non-configurable: nothing we can do, and nothing calls it anyway */ }
 	});
+
+	// ...which has a consequence the pack's own source spells out. Chain.gd does not use any bridge
+	// realm/index.html provides — it injects its own sign-in JS through JavaScriptBridge:
+	//
+	//     var p = (window.phantom && window.phantom.solana) || window.solana;
+	//     if (!p) { window.__chikiPkErr = 'Phantom not found — get it free at phantom.app'; return; }
+	//
+	// The block above is what makes `p` undefined, so in the app that branch is not an edge case:
+	// it is the ONLY outcome, every time a player presses sign in. The pack then surfaces
+	// __chikiPkErr to the player verbatim (Chain.gd: `signin_error = perr.left(180)`), and a toast
+	// reading "get it free at phantom.app" is precisely the steering guideline 3.1.1 restricts —
+	// shipped by us, in our own UI, pointing at an outside way to transact.
+	//
+	// The string cannot be edited without rebuilding the pack. It does not have to be: the pack
+	// reads the error back out of `window`, so owning the property is enough. Every failure is
+	// replaced, not just this one, because in the app there is no sign-in failure that is worth
+	// explaining to a player — there is no sign-in. Empty stays empty: the pack clears these to ''
+	// before each attempt and treats a non-empty value as "the flow finished, and it failed".
+	//
+	// Safe to define here: realm/index.html's stay-signed-in block, which is what otherwise owns
+	// __chikiPk, returns at its first line when CHIK_NO_CRYPTO is set.
+	try {
+		var pkErr = '';
+		Object.defineProperty(window, '__chikiPkErr', {
+			configurable: false,
+			enumerable: true,
+			get: function () { return pkErr; },
+			set: function (v) {
+				var raw = (v === null || v === undefined) ? '' : String(v);
+				if (raw) { refuse('__chikiPkErr: ' + raw.slice(0, 120), 'wallet'); }
+				pkErr = raw ? T('noWallet') : '';
+			},
+		});
+	} catch (e) { /* nothing else defines it; if this fails the app shows the pack's own wording */ }
 
 	// ------------------------------------------------------------------ §5 the trading bridges refuse
 	//

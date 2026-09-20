@@ -80,6 +80,12 @@ function boot({ app = null, search = '', store = {}, responder = null, handler =
 		CustomEvent: class { constructor(t, o) { this.type = t; Object.assign(this, o); } },
 		WebSocket: class { constructor(u) { this.url = u; } },
 		EventSource: class { constructor(u) { this.url = u; } },
+		// `language` matches what the policy fell back to before this stub existed, so the language
+		// tests are unaffected; no `connection` key, so metered detection is unaffected too.
+		navigator: {
+			language: 'en-US',
+			sendBeacon: (url, data) => { calls.push({ beacon: url, data }); return true; },
+		},
 		open: (url) => { calls.push({ opened: url }); return { closed: false }; },
 		webkit: { messageHandlers: { chikiLink: { postMessage: (m) => { toShell.push(m); } } } },
 		XMLHttpRequest: class {
@@ -539,6 +545,66 @@ console.log('\napp mode — a Keychain token handed in by the shell');
 	const { win } = boot({ app: { wallet: 'WalletK', linkToken: 'tok-K', deviceName: 'iPhone 17' } });
 	check(win.CHIK_LINK.status().wallet === 'WalletK', 'the shell can restore a link after a data purge');
 	check(!win.CHIK_IOS_APP.linkToken, 'the token is stripped off the injected object so the pack cannot read it');
+}
+
+console.log('\napp mode — navigator.sendBeacon obeys the same policy as fetch');
+{
+	const { win, calls } = boot({ app: {} });
+	check(win.navigator.sendBeacon('https://chikimonsters.com/profile', 'x') === true,
+		'a beacon to the game backend still goes out');
+	check(calls.some((c) => c.beacon === 'https://chikimonsters.com/profile'), 'and reaches the real API');
+
+	check(win.navigator.sendBeacon('https://telemetry.example.com/t', 'x') === false,
+		'an off-origin beacon is refused');
+	check(!calls.some((c) => c.beacon === 'https://telemetry.example.com/t'),
+		'and never reaches the real API');
+
+	let threw = false;
+	try { win.navigator.sendBeacon('https://telemetry.example.com/t', 'x'); } catch (e) { threw = true; }
+	check(!threw, 'refusal returns false rather than throwing, because pagehide handlers cannot throw');
+}
+
+console.log('\nweb mode — the beacon guard is not installed on the website');
+{
+	const { win, calls } = boot();
+	check(win.navigator.sendBeacon('https://telemetry.example.com/t', 'x') === true,
+		'the site keeps its own analytics');
+	check(calls.some((c) => c.beacon === 'https://telemetry.example.com/t'), 'untouched');
+}
+
+console.log("\napp mode — the pack's \"get it free at phantom.app\" never reaches a player (3.1.1)");
+{
+	const { win } = boot({ app: {} });
+	// Exactly what Chain.gd's injected sign-in JS does when no provider is present.
+	win.__chikiPkErr = '';
+	check(win.__chikiPkErr === '', 'the pack clearing the slot leaves it empty, so no stale error shows');
+
+	win.__chikiPkErr = 'Phantom not found — get it free at phantom.app';
+	check(!/phantom\.app/i.test(win.__chikiPkErr), 'the outside destination is gone');
+	check(!/phantom/i.test(win.__chikiPkErr), 'so is the wallet brand');
+	check(win.__chikiPkErr !== '', 'but it stays non-empty, so the pack still ends the flow');
+	check(/not part of the app/i.test(win.__chikiPkErr), 'and says what is actually true');
+
+	win.__chikiPkErr = 'Sign-in cancelled';
+	check(/not part of the app/i.test(win.__chikiPkErr), 'every other sign-in failure reads the same way');
+}
+
+console.log('\napp mode — the sanitised refusal is localised');
+{
+	for (const [locale, needle] of [['ja-JP', 'ウォレット'], ['zh-CN', '钱包']]) {
+		const { win } = boot({ app: { locale } });
+		win.__chikiPkErr = 'Phantom not found — get it free at phantom.app';
+		check(win.__chikiPkErr.indexOf(needle) >= 0, locale + ' gets its own wording');
+		check(!/phantom\.app/i.test(win.__chikiPkErr), locale + ' names no outside destination either');
+	}
+}
+
+console.log('\nweb mode — sign-in errors are left alone on the website');
+{
+	const { win } = boot();
+	win.__chikiPkErr = 'Phantom not found — get it free at phantom.app';
+	check(/phantom\.app/i.test(win.__chikiPkErr),
+		'the site still tells a desktop player where to get a wallet');
 }
 
 console.log('\nno link yet — the game is not told to resume');
