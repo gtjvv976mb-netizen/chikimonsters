@@ -202,7 +202,11 @@ object**, so the pack cannot simply read the global. Setting `keychain: true` wi
 | `CHIK_LINK.setToken(wallet, token, label)` | late restore, if the Keychain read missed injection |
 | `CHIK_LINK.deviceId()` | the id the token is bound to — store it beside the token |
 | `CHIK_LINK.features()` | the `CHIK_FEATURES` policy object |
-| `CHIK_LINK_CONFIG({paused, message, min_shell})` | server-driven pause / minimum-version bump |
+
+**A separate global, not a member of `CHIK_LINK`:** `window.CHIK_LINK_CONFIG({paused, message,
+min_shell})`. It only *reports* — it announces `paused` / `stale-shell` and fetches nothing. So the
+kill switch does not exist until the **shell** fetches a config document from an allowed host and
+calls this itself. Budget for that; do not assume `/verify` drives it.
 
 **3. Handle every message.** The page posts to `webkit.messageHandlers.chikiLink` (and fires a
 `chiki-link` DOM event). **`persist` is the one the shell must not ignore** — it is the only way
@@ -337,6 +341,27 @@ The response shape must not change — the compiled game reads it and cannot be 
 
 **`POST /link/revoke`** — kill one device's token. Accepted **either** wallet-authenticated (the
 website's "Revoke" button) **or** with the token itself (the app signing itself out).
+
+**`POST /link/delete_account`** — the App Store requires an in-app account-deletion path
+(5.1.1(v)), and the app calls this. It is the hardest route here, because a Chikoria account *is* a
+wallet and the app deliberately cannot prove ownership of one.
+
+```jsonc
+// →  {wallet, device_id, client: "ios-app"}     // authorised by the device's link token
+// ←  {accepted: true, completes_at?: "…"}
+```
+
+A link token authorises play, so it must **not** be enough to destroy an account on its own. Pick
+one and write it down:
+
+- **Confirm out of band** — accept the request, email or in-game-notify the account, and require a
+  confirmation from the website (where the wallet is) before anything is deleted; or
+- **Delay and allow cancellation** — accept, schedule deletion some days out, and cancel it if the
+  wallet signs in on the website meanwhile.
+
+Either satisfies the guideline (the *request* must be possible in-app; the deletion itself may be
+confirmed elsewhere) without letting a stolen phone erase an account. What is not acceptable is the
+app having no path at all, which is where it stands today.
 
 ### The season match
 

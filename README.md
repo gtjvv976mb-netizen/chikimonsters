@@ -58,3 +58,13 @@ node godot-patch/verify/loader-policy.test.mjs  # that realm/index.html still wi
 > This README used to end by saying wallets, $CHIKI balances and SOL payouts were simulated. That
 > has not been true of `/realm/`, which runs against the live backend; the line is dropped rather
 > than left to mislead.
+
+## The native shell
+
+`ios/` holds the complete Swift source for the iOS app and a step-by-step build guide. There is no
+`.xcodeproj` — it is machine-generated and would be stale within a week; `ios/README.md` walks
+through creating one and adding these four files.
+
+The shell is not in this repo's deploy path: nothing under `ios/` is needed to serve
+chikimonsters.com. It lives here so the web policy and the native policy stay in one place, because
+each is load-bearing for the other.

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  The keys this app actually needs. In a modern Xcode project most Info.plist values are generated
+  from build settings, so you can either paste these into an explicit Info.plist and point
+  INFOPLIST_FILE at it, or set the matching INFOPLIST_KEY_* build settings. Either works; do not do
+  both for the same key.
+
+  WHAT IS DELIBERATELY ABSENT:
+
+  * NSAppTransportSecurity — nothing. Every host this app talks to is https with a modern TLS
+    configuration, so no exception is needed, and adding one invites a review question you would
+    then have to answer.
+
+  * WKAppBoundDomains — nothing, and this is a decision, not an oversight. See ios/README.md
+    "App-bound domains". The short version: adding this key WITHOUT also setting
+    limitsNavigationsToAppBoundDomains = true silently disables WKUserScript injection and message
+    handlers, which would make chiki-ios.js stand down and ship the app with the wallet bridges
+    live — the exact outcome the policy layer exists to prevent, failing silently. Adopt both or
+    neither. The navigation policy in ShellModel covers the same ground explicitly.
+
+  * UIBackgroundModes — nothing. The game does not run in the background.
+-->
+<plist version="1.0">
+<dict>
+	<key>CFBundleDisplayName</key>
+	<string>Chikoria</string>
+
+	<key>UILaunchScreen</key>
+	<dict>
+		<key>UIColorName</key>
+		<string>LaunchBackground</string>
+	</dict>
+
+	<!-- The realm plays LANDSCAPE. The loader has a rotation shim for portrait-locked wallet
+	     browsers on the web, but a native app can simply be landscape and skip it entirely. -->
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+
+	<!-- The game draws to the edges; the status bar would sit over the HUD. -->
+	<key>UIStatusBarHidden</key>
+	<true/>
+	<key>UIViewControllerBasedStatusBarAppearance</key>
+	<false/>
+	<key>UIRequiresFullScreen</key>
+	<true/>
+
+	<!-- No custom encryption; this is the answer that avoids a per-upload questionnaire. -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+</dict>
+</plist>
