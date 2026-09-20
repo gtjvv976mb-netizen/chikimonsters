@@ -129,7 +129,12 @@ fine for judging memory, thermals or frame rate.
 **A real device** — plug it in, select it, press Run. First time: on the phone, Settings → General
 → VPN & Device Management → trust your developer certificate.
 
-**Safari Web Inspector** — the only way to see inside the realm:
+**The five-second check** — open `https://chikimonsters.com/realm/selftest.html`, in Safari on the
+iPhone **and** inside the app. It prints whether cross-origin isolation is live and whether shared
+memory actually allocates, in words, with a Copy button. No Web Inspector needed. If Safari passes
+and the app fails, the problem is this shell's `WKWebView` configuration, not the headers.
+
+**Safari Web Inspector** — for everything past that:
 
 1. On the phone: Settings → Apps → Safari → Advanced → **Web Inspector** on.
 2. On the Mac: Safari → Settings → Advanced → **Show features for web developers**.
@@ -151,6 +156,8 @@ crossOriginIsolated      // MUST be true, or the engine cannot start its threads
 
 **Do this on day one, before building anything else.** Two checks, five minutes, and both are
 load-bearing:
+
+Open `/realm/selftest.html` in the app. It answers both in plain words. Or, in the console:
 
 ```js
 crossOriginIsolated      // expect: true

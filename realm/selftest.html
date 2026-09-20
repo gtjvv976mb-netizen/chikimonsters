@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Chikoria — can this device run the realm?</title>
+<!--
+  WHY THIS PAGE EXISTS
+
+  The realm needs SharedArrayBuffer, which needs cross-origin isolation, which the site gets from
+  COOP/COEP headers that Cloudflare adds in front of GitHub Pages. That is an off-repo dependency
+  nobody owns in writing, and whether it survives inside an iOS WKWebView is the single assumption
+  the whole app rests on. Nobody has demonstrated it either way.
+
+  Answering that used to mean: build the shell, attach Safari Web Inspector, type a word. This page
+  answers it by being opened.
+
+  IT MUST LIVE UNDER /realm/. The Cloudflare header rule is path-scoped — /realm/* has COOP/COEP
+  and /link/ does not — so a copy of this page anywhere else would report a false negative and send
+  someone off to fix a problem that is not there. It is also inside the app's navigation allowlist
+  for the same reason.
+
+  Run it in three places and compare:
+    1. A desktop browser        — proves the headers are right.
+    2. Mobile Safari on iPhone  — proves WebKit on iOS honours them.
+    3. Inside the Chikoria app  — the one that actually decides. WKWebView is not Safari.
+  If 2 passes and 3 fails, the problem is the WKWebView configuration, not the headers.
+-->
+<style>
+  :root{ --bg:#0b1220; --panel:#121c30; --line:#24334e; --ink:#eaf2ff; --dim:#93a6c4;
+         --gold:#ffd34d; --good:#4ade80; --bad:#f87171; color-scheme: dark; }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{min-height:100%;background:var(--bg);color:var(--ink);
+    font:16px/1.5 'Nunito',system-ui,-apple-system,Segoe UI,sans-serif}
+  body{padding:max(18px,env(safe-area-inset-top)) 16px max(24px,env(safe-area-inset-bottom))}
+  .wrap{max-width:640px;margin:0 auto}
+  h1{font-size:21px;margin-bottom:4px}
+  .sub{color:var(--dim);font-size:13px;margin-bottom:18px}
+  .verdict{border-radius:16px;padding:20px;text-align:center;margin:16px 0;border:2px solid}
+  .verdict b{display:block;font-size:clamp(22px,7vw,32px);line-height:1.15;margin-bottom:6px}
+  .verdict span{font-size:14px;opacity:.85}
+  .pass{background:#0f2a1c;border-color:#2b5c3f;color:#d8ffe9}
+  .fail{background:#2a1520;border-color:#5c2b3a;color:#ffc9d4}
+  table{width:100%;border-collapse:collapse;margin-top:8px;font-size:14px}
+  td{padding:9px 2px;border-bottom:1px solid var(--line);vertical-align:top}
+  td:last-child{text-align:right;font-weight:800;white-space:nowrap;padding-left:10px}
+  .y{color:var(--good)} .n{color:var(--bad)} .i{color:var(--dim);font-weight:600}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin:14px 0}
+  h2{font-size:14px;color:var(--gold);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+  .muted{color:var(--dim);font-size:13px}
+  code{background:#0a1322;border:1px solid var(--line);border-radius:5px;padding:1px 5px;font-size:12.5px;
+       word-break:break-all}
+  button{font:inherit;font-weight:800;cursor:pointer;border:0;border-radius:10px;padding:12px 18px;
+    background:var(--gold);color:#2a1a08;width:100%;margin-top:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Can this device run the realm?</h1>
+  <div class="sub">A 5-second check. Open it in Safari <b>and</b> inside the Chikoria app — the
+  answers can differ, and only the app's answer decides.</div>
+
+  <div id="verdict" class="verdict fail"><b>Checking…</b><span>one moment</span></div>
+
+  <div class="card">
+    <h2>What has to be true</h2>
+    <table id="results"></table>
+  </div>
+
+  <div class="card">
+    <h2>Where am I running</h2>
+    <table id="env"></table>
+  </div>
+
+  <div class="card">
+    <h2>Copy this to whoever asked</h2>
+    <div class="muted">Everything above, as one block of text.</div>
+    <button id="copy">Copy results</button>
+    <div class="muted" id="copied" style="margin-top:8px"></div>
+  </div>
+
+  <p class="muted" style="text-align:center;margin:18px 0">
+    <a href="/realm/" style="color:var(--gold)">Back to the realm</a>
+  </p>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var rows = [];
+
+  function add(label, ok, detail, critical) {
+    rows.push({ label: label, ok: ok, detail: detail, critical: critical !== false });
+  }
+
+  // ---- the three that decide whether the engine can start at all -------------------------------
+
+  // 1. Cross-origin isolation. Without it SharedArrayBuffer is withheld and Godot's threads cannot
+  //    start, whatever else is true.
+  var isolated = (typeof crossOriginIsolated !== "undefined") && crossOriginIsolated === true;
+  add("Cross-origin isolated", isolated, isolated ? "yes" : "NO — this is the one that matters");
+
+  // 2. SharedArrayBuffer. Existing is not the same as working: some engines expose the constructor
+  //    and then refuse to allocate, so actually make one.
+  var sabOk = false, sabWhy = "not available";
+  try {
+    if (typeof SharedArrayBuffer === "function") {
+      sabOk = new SharedArrayBuffer(8).byteLength === 8;
+      sabWhy = sabOk ? "allocates" : "exists but will not allocate";
+    }
+  } catch (e) { sabWhy = String(e.message || e).slice(0, 60); }
+  add("SharedArrayBuffer", sabOk, sabWhy);
+
+  // 3. A SHARED WebAssembly.Memory is what the engine actually builds. This is the closest thing to
+  //    the real boot that can be done in a few milliseconds.
+  var wasmOk = false, wasmWhy = "no WebAssembly";
+  try {
+    if (typeof WebAssembly === "object") {
+      var mem = new WebAssembly.Memory({ initial: 1, maximum: 2, shared: true });
+      wasmOk = mem.buffer instanceof SharedArrayBuffer;
+      wasmWhy = wasmOk ? "shared memory works" : "memory created but not shared";
+    }
+  } catch (e) { wasmWhy = String(e.message || e).slice(0, 60); }
+  add("WebAssembly shared memory", wasmOk, wasmWhy);
+
+  // ---- things that are useful to know but do not block the boot --------------------------------
+
+  var workers = typeof Worker === "function";
+  add("Web Workers", workers, workers ? "yes" : "no", false);
+
+  var atomics = typeof Atomics === "object";
+  add("Atomics", atomics, atomics ? "yes" : "no", false);
+
+  var swSupported = "serviceWorker" in navigator;
+  add("Service worker API", swSupported, swSupported
+    ? (navigator.serviceWorker.controller ? "registered and controlling" : "available, none active")
+    : "absent (fine — the headers are real, so none is needed)", false);
+
+  var storage = false;
+  try { localStorage.setItem("__chik_t", "1"); localStorage.removeItem("__chik_t"); storage = true; } catch (e) {}
+  add("Local storage", storage, storage ? "writable" : "blocked (private mode?)", false);
+
+  // ---- render ----------------------------------------------------------------------------------
+
+  var table = document.getElementById("results");
+  rows.forEach(function (r) {
+    var tr = document.createElement("tr");
+    var mark = r.ok ? '<span class="y">PASS</span>' : (r.critical ? '<span class="n">FAIL</span>' : '<span class="i">—</span>');
+    tr.innerHTML = "<td>" + r.label + "<div class='muted'>" + r.detail + "</div></td><td>" + mark + "</td>";
+    table.appendChild(tr);
+  });
+
+  var critical = rows.filter(function (r) { return r.critical; });
+  var passed = critical.every(function (r) { return r.ok; });
+
+  var v = document.getElementById("verdict");
+  v.className = "verdict " + (passed ? "pass" : "fail");
+  v.innerHTML = passed
+    ? "<b>The realm can run here</b><span>Cross-origin isolation is live and shared memory works.</span>"
+    : "<b>The realm cannot run here</b><span>" + (isolated
+        ? "Isolation is on but shared memory is refused — report the table below."
+        : "This page is not cross-origin isolated. If it passes in Safari but fails in the app, "
+          + "the WKWebView configuration is at fault, not the headers.") + "</span>";
+
+  // ---- environment ------------------------------------------------------------------------------
+
+  var app = window.CHIK_IOS_APP;
+  var env = [
+    ["Running inside the app", app ? "yes" : "no — plain browser"],
+    ["Policy layer active", (typeof window.CHIK_NO_CRYPTO === "boolean")
+      ? (window.CHIK_NO_CRYPTO ? "yes, locked down" : "loaded, web mode") : "NOT LOADED"],
+    ["Crypto disabled", window.CHIK_FEATURES ? String(window.CHIK_FEATURES.crypto === false) : "unknown"],
+    ["Metered connection", typeof window.CHIK_METERED === "boolean" ? String(window.CHIK_METERED) : "unknown"],
+    ["Shell version", app && app.version ? app.version : "—"],
+    ["Page", location.href],
+    ["Browser", navigator.userAgent],
+  ];
+  var envTable = document.getElementById("env");
+  env.forEach(function (pair) {
+    var tr = document.createElement("tr");
+    tr.innerHTML = "<td>" + pair[0] + "</td><td style='font-weight:600;color:var(--dim);white-space:normal'>"
+      + String(pair[1]).replace(/</g, "&lt;") + "</td>";
+    envTable.appendChild(tr);
+  });
+
+  // ---- copy -------------------------------------------------------------------------------------
+
+  document.getElementById("copy").onclick = function () {
+    var text = "Chikoria device check — " + (passed ? "PASS" : "FAIL") + "\n\n"
+      + rows.map(function (r) { return (r.ok ? "[pass] " : (r.critical ? "[FAIL] " : "[ -- ] ")) + r.label + ": " + r.detail; }).join("\n")
+      + "\n\n" + env.map(function (p) { return p[0] + ": " + p[1]; }).join("\n");
+    var done = function (msg) { document.getElementById("copied").textContent = msg; };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { done("Copied."); },
+        function () { done("Could not copy — select the text above instead."); });
+    } else { done("Clipboard unavailable — select the text above instead."); }
+  };
+}());
+</script>
+</body>
+</html>

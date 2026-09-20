@@ -14,7 +14,7 @@ live. Confirm with `curl -I https://chikimonsters.com/` — the response carries
 `x-github-request-id`, `via: 1.1 varnish` and `x-served-by: cache-iad-…`. Cloudflare fronts it, but
 the origin is Pages.
 
-The third is **not served from this repo at all**, so editing it here changes nothing for players.
+The last is **not served from this repo at all**, so editing it here changes nothing for players.
 It is a Cloudflare Workers deployment (`deploy/chikiseum-1eb4980816/release.json` on the
 `codex/chikiseum-canary-1eb4980816` branch records `"hosting": "Cloudflare Workers Direct Static
 Assets"` and `"observed_deployment": "d68b7d7b"`). That branch is a frozen, receipt-verified record
@@ -39,7 +39,7 @@ python3 -c "import json;print(json.load(open('realm/index.pck.manifest.json'))['
 python3 -c "import json;print(json.load(open('realm/index.pck.lite.manifest.json'))['v'])"
 ```
 
-### Upload the whole `realm/` folder — all 41 top-level files, plus `realm/reborn-art/`
+### Upload the whole `realm/` folder — all 42 top-level files, plus `realm/reborn-art/`
 
 Do not upload a subset. A partial upload does not fail loudly: the loader assembles whatever
 chunks it gets and mounts a pack that is quietly wrong.
@@ -56,6 +56,7 @@ The version-stamped files that **must** go up together, and all of them:
 | loading screen | `loading.png`, `loading_font.ttf`, `hero.jpg`, `coin.png` | 4 |
 | icons + media | `index.png`, `index.icon.png`, `index.apple-touch-icon.png`, `after_loading.mp4` | 4 |
 | content | `updates.json` | 1 |
+| device check | `selftest.html` | 1 |
 | art tree | `realm/reborn-art/` (a whole directory) | — |
 
 Verify before you publish:
@@ -64,13 +65,18 @@ Verify before you publish:
 ls realm/index.pck.[0-9]*.bin      | wc -l   # 13
 ls realm/index.pck.lite.[0-9]*.bin | wc -l   # 7
 ls realm/index.wasm.[0-9]*.bin     | wc -l   # 2
-ls -p realm/ | grep -v /           | wc -l   # 41 files, + reborn-art/
+ls -p realm/ | grep -v /           | wc -l   # 42 files, + reborn-art/
 ```
 
 > These counts were wrong in this document until `chiki-ios.js` was added: it claimed 8 lite
 > chunks against a 7-chunk pack, and 42 top-level files against a folder holding 40 files plus
-> `reborn-art/`. It is 41 files now because this change adds one. Count them, don't trust the
-> table either.
+> `reborn-art/`. It is 42 now because this work added `chiki-ios.js` and `selftest.html`. Count
+> them, don't trust the table either.
+
+**`selftest.html` must stay under `/realm/`.** It reports whether this device can run the engine,
+and the Cloudflare COOP/COEP rule that decides that is **path-scoped to `/realm/*`** — a copy
+anywhere else reports a false failure. It is also inside the app's navigation allowlist for the
+same reason.
 
 **`chiki-ios.js` is not optional.** It is the first script `index.html` loads, and it is the only
 thing that takes the wallet, the marketplace and off-origin requests away from the native iOS
@@ -100,9 +106,41 @@ Upload the whole repo. Required for serving: `index.html`, `realm/`, `link/`, `u
 `link/` is where a player pairs the iOS app to their account; the app sends them to
 `chikimonsters.com/link/` by name, so it has to be live before the app ships.
 
-**In GitHub → Settings → Pages, turn on "Enforce HTTPS."** The realm needs a secure context
-(SharedArrayBuffer/threads via the cross-origin-isolation service worker); an `http://` hit can't
-register the service worker.
+**In GitHub → Settings → Pages, turn on "Enforce HTTPS."** The realm needs a secure context.
+
+## Cross-origin isolation: the dependency nobody had written down
+
+The realm runs Godot with threads, which needs `SharedArrayBuffer`, which is withheld unless the
+page is **cross-origin isolated**. This document used to say that isolation came from
+`coi-serviceworker.min.js`, because GitHub Pages cannot send headers. **That is not what happens in
+production.** Checked live on 2026-09-20:
+
+```sh
+curl -sS -I https://chikimonsters.com/realm/ | grep -i cross-origin
+# cross-origin-embedder-policy: require-corp
+# cross-origin-opener-policy: same-origin
+
+curl -sS -I https://chikimonsters.com/link/  | grep -i cross-origin
+# (nothing)
+```
+
+**Cloudflare adds those headers in front of Pages, and the rule is scoped to `/realm/*`.** So
+`window.crossOriginIsolated` is already true when the page parses, and the service worker returns
+immediately at its own first line without ever registering. The shim is a fallback, not the
+mechanism.
+
+Three consequences worth keeping in mind:
+
+1. **It is an off-repo dependency.** Nothing in this repository configures it, and if someone
+   narrows that Cloudflare rule or moves the realm to a different path, the game stops booting —
+   while continuing to work for anyone with the old page cached, which makes it a confusing outage.
+   Whoever administers the Cloudflare zone should know this rule is load-bearing.
+2. **The fallback may not work on iOS.** Service workers in a `WKWebView` are undocumented and
+   Apple's own support has said they are unsupported there. If the headers ever go away, the
+   website degrades to the shim and the iOS app may simply stop working.
+3. **Test it, don't assume it.** `realm/selftest.html` reports the answer on whatever device opens
+   it. Run it in Safari and inside the app — they are different engines' configurations and can
+   disagree.
 
 ## Pages, and why the arena is not here
 
