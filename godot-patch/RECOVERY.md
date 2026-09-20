@@ -217,11 +217,18 @@ gated on the loader's published policy and therefore no-ops on the website:
    and every Phantom purchase string with it.
 3. The Chikiseum drops its **Chikoria Cup** tab, opens on My Deck instead, and stops claiming
    "champions win real SOL" in HOW TO BATTLE.
+4. The wallet gate in `Onboarding._show_gate()` stops naming Phantom and stops drawing its
+   **"Get Phantom ↗"** button, which points at `phantom.app`. That screen should be unreachable in
+   the app — Realm Link signs the player in first — but it *is* reached when a link is rejected or
+   `/verify` fails. The button already goes nowhere (`OS.shell_open` compiles to `window.open`,
+   which §3b guards, verified in `realm/index.js`: `window.open(GodotRuntime.parseString(p_uri))`),
+   so this is about what is on screen, not what it does.
 
 PvP is untouched: the duels are already stake-free.
 
 **Verified, not assumed.** Applied to the recovered project and parse-checked against stock Godot
-4.6: `ChikFeat.gd`, `GameHUD.gd` and `Chikiseum.gd` all parse clean. The script is idempotent, and
+4.6: `ChikFeat.gd`, `GameHUD.gd`, `Chikiseum.gd` and `Onboarding.gd` all parse clean, and a full
+sweep of the patched tree gives the same 9 voxel failures as before and no new ones. The script is idempotent, and
 refuses to write anything if an anchor does not match exactly once — it was written against build
 `1eb4980816` and should not be trusted to guess at a different one.
 
@@ -229,6 +236,19 @@ One gotcha, because its symptom is misleading: **re-import before checking.** `C
 declares a `class_name`, and a global class is only registered when Godot rescans the filesystem.
 Skip the rescan and both patched scripts fail with `Identifier "ChikFeat" not declared in the
 current scope`, which reads like a broken patch and is not one.
+
+### A rebuilt pack is a new build, not a patched one
+
+Worth saying before anyone exports and ships the result. Exporting the recovered project does not
+reproduce `1eb4980816`; it produces a **new** build that happens to contain the same game:
+
+- Assets are re-imported from the recovered originals with whatever import settings the recovered
+  `.import` files carry. Texture compression, mesh settings and audio can all come out different.
+- The GDScript is decompiled, so it is equivalent rather than identical.
+- The engine would be your emscripten build, not whoever's built `1eb4980816`.
+
+That is a QA job, not a drop-in replacement, and it should be played through before it reaches
+players. Keep the current chunks until the new ones have been.
 
 Chat's report and block are deliberately not in the script. They are a feature, not a few lines,
 and they are moot while the app refuses every chat route.

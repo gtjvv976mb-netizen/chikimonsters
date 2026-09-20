@@ -105,11 +105,43 @@ HOW_OLD = '''	_lbl(rew, "\U0001F3DF The Chikiseum hosts only the CHIKORIA CUP �
 HOW_NEW = '''	if ChikFeat.on("crypto"):
 		_lbl(rew, "\U0001F3DF The Chikiseum hosts only the CHIKORIA CUP — champions win real SOL.", 12, GOLD)'''
 
+# The wallet gate in Onboarding._show_gate(). In the app this screen should not be reachable at all
+# — Realm Link signs the player in before it matters — but it IS reachable when a link is rejected
+# or /verify fails, and what it draws then is a "Get Phantom  →" button pointing at phantom.app.
+# The navigation guard in chiki-ios.js stops that button from going anywhere (OS.shell_open compiles
+# to window.open, which is guarded), so this is about what is on screen, not what it does.
+#
+# The `else` branch is no good as a fallback either: it sends the player to the browser version,
+# which is an outside destination for a problem the app can state plainly instead.
+GATE_OLD = '''		if OS.has_feature("web"):
+			_wallet_primary(v, "Waiting for Phantom…" if signing else "Sign in with Phantom", _phantom_connect, not signing, "res://ico_connect.png")
+			_wallet_security_strip(v)
+			var getp: = _btn(v, "Get Phantom  ↗", func(): OS.shell_open("https://phantom.app/"), true)
+			getp.custom_minimum_size = Vector2(150, 30)
+		else:'''
+
+GATE_NEW = '''		if not ChikFeat.on("crypto"):
+			_wallet_notice(v, "This device is not linked", "Link it to your Chikoria account to play. You can do that from the app's pairing screen.", UISkin.RED)
+		elif OS.has_feature("web"):
+			_wallet_primary(v, "Waiting for Phantom…" if signing else "Sign in with Phantom", _phantom_connect, not signing, "res://ico_connect.png")
+			_wallet_security_strip(v)
+			var getp: = _btn(v, "Get Phantom  ↗", func(): OS.shell_open("https://phantom.app/"), true)
+			getp.custom_minimum_size = Vector2(150, 30)
+		else:'''
+
+# The notice above that block names Phantom too, so it cannot stand on its own in the app.
+NOTICE_OLD = '''		_wallet_notice(v, "One secure step", "Approve a sign-in message in Phantom. This proves the wallet is yours and restores your cloud save.", Color("a98bff"), "res://ico_connect.png")'''
+
+NOTICE_NEW = '''		if ChikFeat.on("crypto"):
+			_wallet_notice(v, "One secure step", "Approve a sign-in message in Phantom. This proves the wallet is yours and restores your cloud save.", Color("a98bff"), "res://ico_connect.png")'''
+
 EDITS = [
 	("GameHUD.gd", MARKET_OLD, MARKET_NEW, "the Trading Post refuses when trading is off"),
 	("Chikiseum.gd", TABS_OLD, TABS_NEW, "the Chikoria Cup tab is not built"),
 	("Chikiseum.gd", OPEN_OLD, OPEN_NEW, "the Chikiseum opens on My Deck, not the Cup"),
 	("Chikiseum.gd", HOW_OLD, HOW_NEW, '"champions win real SOL" is not drawn'),
+	("Onboarding.gd", NOTICE_OLD, NOTICE_NEW, 'the wallet gate stops naming Phantom'),
+	("Onboarding.gd", GATE_OLD, GATE_NEW, 'the "Get Phantom" button is not drawn'),
 ]
 
 
@@ -177,7 +209,7 @@ def main() -> int:
 	print(f"\nApplied {len(planned)} change(s). Re-import FIRST, or the new class_name will not")
 	print("be registered and the patched scripts will not parse:")
 	print(f"  godot --headless --path {root} --import")
-	for f in ("ChikFeat.gd", "GameHUD.gd", "Chikiseum.gd"):
+	for f in ("ChikFeat.gd", "GameHUD.gd", "Chikiseum.gd", "Onboarding.gd"):
 		print(f"  godot --headless --path {root} --check-only --script res://{f}")
 	return 0
 
