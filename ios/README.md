@@ -228,6 +228,11 @@ Read the **App Store review** section of [`../IOS-APP.md`](../IOS-APP.md) — it
 grounds this app is most likely to be rejected on (4.2 minimum functionality and 3.1.1 steering),
 which matter more here than the crypto question everyone expects.
 
+**[`../APPSTORE.md`](../APPSTORE.md) is the submission kit** — listing metadata, age rating
+answers, App Privacy answers, review notes, the screenshot and preview-video brief with exact
+specs and a shot list, and the order everything has to happen in. It also states plainly why the
+app cannot be submitted today.
+
 Still to build before a submission is realistic:
 
 - [ ] The backend routes (`../IOS-APP.md`, "Backend work this needs")

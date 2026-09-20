@@ -55,6 +55,8 @@ node godot-patch/verify/chiki-ios.test.mjs      # the app's crypto lockdown + ac
 node godot-patch/verify/loader-policy.test.mjs  # that realm/index.html still wires it up
 ```
 
+`APPSTORE.md` is the App Store submission kit, and `ios/README.md` builds the shell.
+
 > This README used to end by saying wallets, $CHIKI balances and SOL payouts were simulated. That
 > has not been true of `/realm/`, which runs against the live backend; the line is dropped rather
 > than left to mislead.

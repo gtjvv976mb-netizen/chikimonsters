@@ -1,0 +1,311 @@
+# App Store submission kit
+
+Everything for App Store Connect that does not require a build. Copy the fields straight in.
+
+**Read the next section before anything else.** This kit is complete; the app is not.
+
+---
+
+## Can this be submitted today? No — and here is exactly why
+
+Four things block submission, and none of them can be fixed by writing more code in this repo.
+
+| Blocker | Why it blocks | Who can clear it |
+|---|---|---|
+| **No build exists** | The Swift in `ios/` has never been compiled. Submission needs an archive uploaded from Xcode on a Mac. | You, with a Mac |
+| **The backend has no `/link/*` routes** | Pairing calls `/link/redeem`, which 404s. **A reviewer cannot get past the first screen.** | Backend work — see `IOS-APP.md` |
+| **No screenshots or preview video** | Both must be captured from the running app. They cannot be drawn, and faking them is a rejection *and* a guideline violation. | You, once a build runs |
+| **The Godot project is gone** | Verified across every reachable repository — 1,778 files, zero `.gd`/`.tscn`/`project.godot`. So the pack cannot be rebuilt, the season match cannot ship, and the Trading Post gate is still **drawn** in the app even though it refuses. | See "The Godot problem" below |
+
+Two product decisions are also unmade and are yours: **the 500k $CHIKI gate** (`IOS-APP.md`) and **what account deletion does** on a wallet-backed account.
+
+### The Godot problem, stated plainly
+
+The app's headline PvP feature — the season match — needs four route names added to an allowlist that lives **inside the compiled game**. Without the project source that cannot be done. Two honest options:
+
+1. **Ship v1.0 without PvP.** Cut the season-match promise from the app copy, set `pvp_mode` off, and submit a gathering/temple/campaign app. Smaller, true, and shippable.
+2. **Reconstruct or recover the project first.** Everything else waits.
+
+**Do not submit an app whose store listing promises PvP that the binary cannot reach.** That is both a rejection risk and a refund problem.
+
+---
+
+## 1. App information
+
+| Field | Value | Limit |
+|---|---|---|
+| **App name** | `Chikoria` | 30 |
+| **Subtitle** | `Gather, hatch, and battle` | 30 |
+| **Primary category** | Games → Role Playing | |
+| **Secondary category** | Games → Adventure | |
+| **Bundle ID** | `com.chikimonsters.Chikoria` | |
+| **SKU** | `chikoria-ios-001` | |
+| **Copyright** | `2026 Chikimonsters` | |
+| **Support URL** | `https://chikimonsters.com/support/` | **does not exist yet — build it** |
+| **Marketing URL** | `https://chikimonsters.com/` | |
+| **Privacy Policy URL** | `https://chikimonsters.com/privacy/` | drafted, needs legal review + a real contact address |
+
+### Promotional text (170 chars, editable without review)
+
+```
+Your Chikoria account, in your pocket. Gather across the island, clear the Wicked Temple, and raise a team that grows with you.
+```
+
+### Description (4000 chars)
+
+**Written to lead with what is native**, because guideline 4.2 rejects apps that read as a repackaged website. See §6 — this is not decoration, it is the defence.
+
+```
+Chikoria is a living voxel world you can carry with you.
+
+Explore a hand-built island, gather and craft, fish the coasts, clear the Wicked Temple, and raise a team of creatures that grows with how you play.
+
+ONE ACCOUNT, TWO PLACES
+Pair the app once and it plays the Chikoria account you already have. Every creature, egg, fish and resource is there, and everything you gather here is waiting next time you play on the web. No passwords to remember — pairing is a code you type once, and this device stays signed in.
+
+BUILT FOR THE PHONE
+· Pair and manage your account without ever leaving the app
+· Switch between accounts, see every linked device, and unlink any of them
+· Knows when you are on mobile data and downloads the lighter world instead
+· Keeps playing where you left off, and tells you plainly when something is wrong instead of showing you a blank screen
+
+A REAL WORLD TO WORK
+14 resources, 130 recipes, ten levels of tools, eight fish and four sea legends, six mounts. Everything is gathered, crafted and cooked by hand.
+
+THE WICKED TEMPLE
+Take one creature into five escalating sanctums against the corrupted horde. Your deck is the creature's own ability cards. Clear all five and the vault opens.
+
+A TEAM THAT KNOWS YOU
+Twenty-one species across ten elemental lines, five ancient legendaries and the Meme Dynasty. Every creature levels to 50, learns up to twelve ability cards, and grows a personality shaped by how you treat it.
+
+Chikoria is free to play. There are no purchases in the app.
+```
+
+> **If you ship without PvP, that text is already correct** — it makes no PvP claim. If PvP does ship, add a paragraph then, not before.
+
+### Keywords (100 chars, comma separated, no spaces after commas)
+
+```
+voxel,creature,monster,collect,rpg,adventure,craft,gather,fishing,island,pets,breeding,team,explore
+```
+
+---
+
+## 2. Age rating
+
+Apple replaced the old tiers in 2025 — **12+ and 17+ are gone; 13+, 16+ and 18+ are new**, and the expanded questionnaire is mandatory. Answer it in App Store Connect; these are the answers that match the app as built.
+
+| Question | Answer | Why |
+|---|---|---|
+| Cartoon or Fantasy Violence | **Infrequent/Mild** | Creature battles, no blood, no injury depiction |
+| Realistic Violence | None | |
+| Sexual Content / Nudity | None | |
+| Profanity or Crude Humor | None | |
+| Alcohol, Tobacco, or Drug Use | None | |
+| Horror/Fear Themes | **Infrequent/Mild** | Grimwick and the "corruptimons" are mildly menacing |
+| Medical/Treatment Information | None | |
+| Gambling | **No** | See the note below — this matters |
+| Contests | No | |
+| Unrestricted Web Access | **No** | The app cannot navigate outside `/realm/`; there is no in-app browser |
+| User-Generated Content | **UNKNOWN — you must determine this** | See below |
+| Messaging / Chat | **UNKNOWN — you must determine this** | See below |
+
+**Expected rating: 9+**, on the two "Infrequent/Mild" answers.
+
+### Gambling — answer No, and know why
+
+The app has no wagers, no purchases and no real-money stake. The Wicked Temple's reward roll is randomised, but nothing is paid to enter and nothing of monetary value is risked, so it is not gambling and not a loot box. **The website's SOL wagers are not in this app and must not be described as if they were.**
+
+### The two you cannot answer from this repo
+
+The compiled pack may contain **player chat** and **self-chosen player handles**. Both change the age rating, and chat additionally triggers guideline 1.2, which requires a content filter, a report mechanism, a block mechanism, and published contact details. Nobody can read the pack's source, so **find out before you answer** — launch the game and look. Answering "no" to chat that exists is the kind of mistake that gets an app pulled rather than rejected.
+
+---
+
+## 3. App Privacy ("nutrition label")
+
+These must agree with `ios/Chikoria/PrivacyInfo.xcprivacy`, which declares no collected data and no tracking.
+
+| Question | Answer |
+|---|---|
+| Does this app collect data? | **No** |
+| Does this app use data for tracking? | **No** |
+| Third-party SDKs | **None** — the app links no analytics, ads or attribution framework |
+
+**This answer is only true because the app has no telemetry.** The moment anything is added — crash reporting included — both this and the manifest must change. The audit flagged that the app currently has *no* field signal at all; adding it is a reasonable decision, but it is a privacy-declaration decision too, so make it before submitting rather than after.
+
+The wallet address is the player's own account identifier, created by them on the website and held by the game server. It is not gathered by this app. If your legal review disagrees, declare it as an identifier linked to the user — over-declaring costs nothing and mis-declaring is what gets apps pulled.
+
+---
+
+## 4. App Review notes
+
+Paste into the "Notes" field. A reviewer who cannot sign in rejects the app, so the test account matters more than everything else here.
+
+```
+HOW TO SIGN IN (please read — the app cannot be tested without this)
+
+Chikoria accounts are created on our website, and the app pairs to one with a
+short code. We have created a test account for review:
+
+  1. On a computer, open https://chikimonsters.com/link/
+  2. The test account is already signed in there. Press "New code".
+  3. Type that code into the app's pairing screen.
+
+The code lasts 10 minutes. If it expires, press "New code" again.
+[ATTACH: a short screen recording of these three steps]
+
+ABOUT THE TECHNOLOGY
+
+Chikoria is tied to a blockchain-based game economy on the website. The app is
+deliberately NOT part of that:
+
+· The app contains no wallet. It cannot create, sign or send a transaction,
+  and it never asks for a key or a recovery phrase.
+· Nothing can be bought, sold, traded or staked in the app. There is no
+  purchase flow of any kind, and no external purchase is offered or linked.
+· Nothing in the app is gated on holding any cryptocurrency.
+· The app communicates only with chikimonsters.com and our own game server.
+  It cannot reach a blockchain node, an exchange or a marketplace — this is
+  enforced in the app, not merely intended.
+
+Players earn in-game items by playing. Those items belong to their account. The
+app provides no way to sell or exchange them.
+
+WHAT IS NATIVE
+
+Account pairing, account switching, device management, account deletion,
+settings and support details are all native screens. The app also handles
+offline and connection-failure states natively — in Airplane Mode you will see
+a native screen, not a browser error.
+
+FIRST LAUNCH
+
+The game world downloads on first launch (about 175 MB on cellular, more on
+Wi-Fi) and is cached. Please allow it to finish; on a slow connection this can
+take a few minutes. A progress indicator is shown throughout.
+```
+
+### Export compliance
+
+`ITSAppUsesNonExemptEncryption` is set to `false` in `Info.plist`, so the per-upload questionnaire is skipped. Correct: the app uses only HTTPS via the system, and implements no encryption of its own.
+
+---
+
+## 5. Screenshots and the preview video
+
+**Neither can be produced without a running build.** What follows is the complete brief so that capturing them is an hour, not a day.
+
+### Sizes you actually need
+
+Apple scales down, so two sets cover everything:
+
+| | Portrait | Landscape | Required |
+|---|---|---|---|
+| **iPhone 6.9"** (16/17/18 Pro Max) | 1320 × 2868 | **2868 × 1320** | yes — or 6.5" instead |
+| **iPad 13"** (Pro M4/M5, Air M2+) | 2064 × 2752 | **2752 × 2064** | yes, if the app ships for iPad |
+
+1–10 per size. JPEG or PNG. **No alpha channel** — a transparent PNG is rejected at upload.
+
+**Capture in LANDSCAPE.** The realm is landscape-only on phones, and the `Info.plist` in this repo restricts the app to landscape. Portrait screenshots would misrepresent it.
+
+> If you do not want to maintain iPad assets, remove iPad from Supported Destinations in Xcode and the iPad set is not required. Given the HD-pack memory finding is untested on iPad, shipping iPhone-only for v1.0 is defensible.
+
+### The shot list — six, in this order
+
+The first two are what most people ever see, so they carry the argument.
+
+1. **The world.** Your creature in the overworld, island and castle visible. Caption: *"A hand-built island to explore"*
+2. **The Wicked Temple mid-fight.** Cards visible in the HUD. Caption: *"Five sanctums. One creature. Your deck."*
+3. **Gathering or crafting.** The satchel or craft shop open. Caption: *"14 resources. 130 recipes. All by hand."*
+4. **The ChikiDex.** Several creatures collected. Caption: *"21 species to raise to level 50"*
+5. **The native pairing screen.** Caption: *"Pair once. Your account travels with you."*
+6. **The native account screen.** Linked devices visible. Caption: *"Your devices, your control"*
+
+Shots 5 and 6 are not filler — they are the visual evidence for guideline 4.2 that this is an app and not a website. Do not drop them for a prettier sixth gameplay shot.
+
+### How to capture
+
+```
+Simulator → iPhone 16 Pro Max → run the app → ⌘S
+```
+Simulator screenshots are already the exact pixel dimensions and have no alpha. For the gameplay shots use a **real device** (Xcode → Window → Devices and Simulators → Take Screenshot) — the simulator renders the world differently and can miss the memory limits entirely.
+
+### App preview video
+
+- **15–30 seconds**, ≤ 500 MB, H.264 `.mp4`/`.mov` or ProRes 422 HQ
+- **1920 × 886** landscape for iPhone; **1600 × 1200** for iPad
+- Up to 3 per device class
+- Audio optional — stereo AAC ≥ 256 kbps if included
+
+**Capture from a real device**, not the simulator: QuickTime → File → New Movie Recording → select the iPhone. Then trim in iMovie.
+
+A 25-second cut that works:
+
+| Time | Shot |
+|---|---|
+| 0–4s | Walking through the island, camera following |
+| 4–10s | Gathering, then the satchel filling |
+| 10–18s | Wicked Temple: a card cast, an enemy going down |
+| 18–22s | A hatch, or the vault reward reveal |
+| 22–25s | Title card: Chikoria |
+
+**Show only what is in the app.** No website footage, no wallet, no trading, no token. A preview containing the Trading Post would contradict the review notes above and undo the whole argument.
+
+---
+
+## 6. Guideline 4.2 — the rejection this app is most exposed to
+
+A `WKWebView` pointed at a website is the textbook 4.2 rejection, and that is structurally what this shell is.
+
+**The test reviewers actually run is Airplane Mode.** Turn the network off and open the app. A blank web view or a browser error is what flags it as a repackaged website.
+
+What the app does today: a native screen saying *"Chikoria needs a connection to load the realm"* with a Try Again button. **That is necessary but thin** — it is an error, not usefulness.
+
+Worth adding before submission, in rough order of value per hour:
+
+1. **Make the offline screen useful.** Show the linked account, which creatures are on the team, when they last played — cached natively at last launch. That turns an error into a screen with content.
+2. **Settings as a real native screen.** Graphics/world detail, language, sound — native controls, not a web panel.
+3. **Push notifications** for a finished match or a hatched egg. The single most recognised "this is a real app" signal, and honest here because there is genuinely something to notify about.
+4. **A widget** showing the team. Cheap, and very visibly not-a-website.
+
+None of these are optional if a first submission gets rejected under 4.2 — they are simply what the second attempt has to contain, so doing one or two first is cheaper.
+
+---
+
+## 7. Order of operations
+
+Nothing below can move ahead of the thing above it.
+
+- [ ] **Decide:** ship v1.0 without PvP, or recover the Godot project first
+- [ ] **Decide:** does an app player need the 500k $CHIKI hold
+- [ ] **Decide:** what account deletion does
+- [ ] Backend: `/link/new`, `/link/redeem`, `linkToken` on `/verify`, `/link/devices`, `/link/revoke`, `/link/delete_account`
+- [ ] Publish `link/` and `privacy/` (they are on the branch, not on `main`)
+- [ ] Build a real support page and a monitored contact address
+- [ ] Apple Developer Program enrolment, if not already done
+- [ ] Create the Xcode project (`ios/README.md`) and get it running on a real iPhone
+- [ ] **Open `/realm/selftest.html` inside the app** — confirms the engine can run there at all
+- [ ] Find out whether the pack has chat or player-chosen handles → age rating, and guideline 1.2
+- [ ] Legal review of `privacy/index.html`
+- [ ] Decide on telemetry → then finalise the privacy answers
+- [ ] 4.2 hardening (§6) — at least the offline screen
+- [ ] Create the test account and record the pairing walkthrough for the review notes
+- [ ] Capture screenshots and the preview video
+- [ ] TestFlight on at least two real iPhones, including the oldest you intend to support
+- [ ] Fill in everything above in App Store Connect
+- [ ] Submit
+
+---
+
+## Sources
+
+Apple's own pages, checked 2026-09-20:
+
+- [Screenshot specifications](https://developer.apple.com/help/app-store-connect/reference/screenshot-specifications/)
+- [App preview specifications](https://developer.apple.com/help/app-store-connect/reference/app-preview-specifications/)
+- [Updated age ratings in App Store Connect](https://developer.apple.com/news/?id=ks775ehf)
+- [Age rating upcoming requirements](https://developer.apple.com/news/upcoming-requirements/?id=07242025a)
+- [App Store Review Guidelines](https://developer.apple.com/app-store/review/guidelines/) — re-read 3.1.1, 3.1.5(b), 4.2 and 5.1.1(v) before submitting; they change
+
+Verify anything version-dependent yourself. This file will go stale.

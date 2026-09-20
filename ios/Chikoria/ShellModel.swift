@@ -35,6 +35,34 @@ final class ShellModel: NSObject, ObservableObject {
     @Published private(set) var progress: Int = 0
     @Published private(set) var progressNote: String = ""
 
+    /// What the app can still say when there is no network.
+    ///
+    /// THIS IS THE GUIDELINE 4.2 SURFACE. Reviewers test for a repackaged website by turning on
+    /// Airplane Mode: a blank web view or a browser error is the thing that gets flagged. A native
+    /// error screen clears that bar only barely — it is an error, not usefulness. So the shell
+    /// remembers a little, natively, and the offline screen has something real on it.
+    ///
+    /// Everything here is written by the shell from events it already receives. None of it asks
+    /// the compiled game for anything, because the game cannot be modified.
+    struct LastKnown: Codable {
+        var wallet: String = ""
+        var lastPlayed: Date?
+        var worldDownloaded = false     // the pack finished at least once, so it is in the cache
+
+        static let key = "chikLastKnown"
+
+        static func load() -> LastKnown {
+            guard let data = UserDefaults.standard.data(forKey: key),
+                  let v = try? JSONDecoder().decode(LastKnown.self, from: data) else { return LastKnown() }
+            return v
+        }
+        func save() {
+            if let data = try? JSONEncoder().encode(self) { UserDefaults.standard.set(data, forKey: Self.key) }
+        }
+    }
+
+    @Published private(set) var lastKnown = LastKnown.load()
+
     /// Whether the phone is on a connection the player pays for by the megabyte.
     ///
     /// ONLY THE NATIVE SIDE CAN ANSWER THIS. WebKit implements no Network Information API, so
@@ -504,7 +532,16 @@ extension ShellModel: WKNavigationDelegate {
 
     nonisolated func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         Task { @MainActor in
-            if case .booting = self.phase, self.record.isLinked { self.phase = .playing }
+            if case .booting = self.phase, self.record.isLinked {
+                self.phase = .playing
+                // Remember enough that an offline launch has something true to show.
+                var known = self.lastKnown
+                known.wallet = self.activeWallet
+                known.lastPlayed = Date()
+                known.worldDownloaded = known.worldDownloaded || self.progress >= 99
+                known.save()
+                self.lastKnown = known
+            }
         }
     }
 

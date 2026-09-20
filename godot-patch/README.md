@@ -7,11 +7,37 @@ players with nothing staked, where the server hosts the match and pays the winne
 fish, eggs and resources. It needs backend routes that do not exist yet; the contract is in
 [`../IOS-APP.md`](../IOS-APP.md).
 
-**The Godot project is not in any repository I can reach.** Eleven repos, nine branches,
-zero `.gd` / `.tscn` / `project.godot`. The game ships as compiled `.gdc` bytecode. Everything
-here was written by reading that bytecode's string tables out of the live 313 MB pack, so it
-matches the client's real conventions (`auth_fields`, `attach_live_client`, `command_failed`,
-`roster_received`, …).
+**The Godot project is not in any repository I can reach.** The game ships as compiled `.gdc`
+bytecode. Everything here was written by reading that bytecode's string tables out of the live
+313 MB pack, so it matches the client's real conventions (`auth_fields`, `attach_live_client`,
+`command_failed`, `roster_received`, …).
+
+### Re-checked independently, 2026-09-20
+
+That claim was inherited, so it was verified again from scratch rather than repeated. Every
+repository on the account was listed and its full file tree scanned:
+
+| repository | files | `.gd` / `.tscn` / `.tres` / `project.godot` |
+|---|---|---|
+| `chikimonsters` (this one) | — | only `godot-patch/*.gd`, written by agents |
+| `chiki-monsters` | — | 0 — the retired Three.js build |
+| `Claude-Company` | 487 | 0 |
+| `Markets-and-Makers` | 415 | 0 |
+| `Claude-Company-Robinhood` | 395 | 0 |
+| `backend` | 190 | 0 |
+| `Project-Takeover` | 159 | 0 |
+| `Claude-Company-Solana` | 108 | 0 |
+| `claude-company-executor` | 24 | 0 |
+
+**1,778 files, zero Godot project files.** Two private repositories — `Get-Stonked` and
+`pumpfun-whale-welcome-agent` — could not be read from this session; both are named for unrelated
+projects. `chiki-website-deploy.zip` inside `chiki-monsters` was opened and checked too: 18
+entries, none of them Godot.
+
+**What follows from that.** Steps 3, 4, 6 and 7 of the integration order below all need a Godot
+export, and nothing on this account can produce one. Until the project is recovered or rebuilt,
+the app cannot ship the season match, cannot hide the Trading Post gate, and cannot add the four
+season routes to the pack's own allowlist. `../APPSTORE.md` states the two honest options.
 
 **What is verified:** the original three scripts compile under real Godot 4.6.stable, and the
 wager client was driven end to end against a fake server — post, deposit, match, and a refusal —

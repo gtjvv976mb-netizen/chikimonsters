@@ -49,8 +49,7 @@ struct RootView: View {
             case .playing:
                 EmptyView()
             case .failed(let message):
-                MessageScreen(title: "Can’t reach Chikoria", message: message,
-                              action: ("Try again", { model.retry() }))
+                OfflineScreen(model: model, message: message)
             case .paused(let message):
                 MessageScreen(title: "Back shortly", message: message,
                               action: ("Try again", { model.retry() }))
@@ -290,6 +289,105 @@ struct AccountView: View {
 
     private func short(_ s: String) -> String {
         s.count > 12 ? "\(s.prefix(4))…\(s.suffix(4))" : s
+    }
+}
+
+// MARK: - Offline
+
+/// What the app shows when it cannot reach the network.
+///
+/// THIS SCREEN IS THE GUIDELINE 4.2 TEST. Reviewers check for a repackaged website by turning on
+/// Airplane Mode; a blank web view or a browser error is what gets an app flagged. So this is
+/// native, and it carries real remembered state rather than only an apology — who is signed in,
+/// when they last played, and whether the world is already downloaded and waiting.
+///
+/// It is honest about the limit: the game itself needs the server to sign in, so this does not
+/// pretend the world can be entered offline.
+struct OfflineScreen: View {
+    @ObservedObject var model: ShellModel
+    let message: String
+
+    private var lastPlayedText: String? {
+        guard let d = model.lastKnown.lastPlayed else { return nil }
+        let f = RelativeDateTimeFormatter()
+        f.unitsStyle = .full
+        return f.localizedString(for: d, relativeTo: Date())
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Spacer()
+
+            Image(systemName: "wifi.slash")
+                .font(.system(size: 34))
+                .foregroundStyle(Ink.gold)
+                .padding(.bottom, 14)
+
+            Text("You’re offline")
+                .font(.system(size: 26, weight: .heavy))
+                .foregroundStyle(Ink.text)
+            Text(message)
+                .foregroundStyle(Ink.dim)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 30)
+                .padding(.top, 6)
+
+            // The remembered part. Nothing here needs the network.
+            VStack(alignment: .leading, spacing: 12) {
+                if !model.lastKnown.wallet.isEmpty {
+                    Row(icon: "person.crop.circle", title: "Signed in",
+                        detail: short(model.lastKnown.wallet))
+                }
+                if let lastPlayedText {
+                    Row(icon: "clock", title: "Last played", detail: lastPlayedText)
+                }
+                Row(icon: model.lastKnown.worldDownloaded ? "checkmark.circle" : "arrow.down.circle",
+                    title: "The world",
+                    detail: model.lastKnown.worldDownloaded
+                        ? "Downloaded and ready on this iPhone"
+                        : "Not downloaded yet — needs a connection once")
+            }
+            .padding(16)
+            .frame(maxWidth: 420)
+            .background(Ink.panel, in: RoundedRectangle(cornerRadius: 14))
+            .overlay(RoundedRectangle(cornerRadius: 14).stroke(Ink.line))
+            .padding(.top, 22)
+            .padding(.horizontal, 24)
+
+            Button { model.retry() } label: {
+                Text("Try again").fontWeight(.heavy).padding(.horizontal, 30).padding(.vertical, 13)
+            }
+            .background(Ink.gold, in: RoundedRectangle(cornerRadius: 12))
+            .foregroundStyle(.black)
+            .padding(.top, 20)
+
+            Text("Chikoria needs a connection to sign in to your account.")
+                .font(.footnote)
+                .foregroundStyle(Ink.dim)
+                .padding(.top, 12)
+
+            Spacer()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Ink.bg)
+    }
+
+    private func short(_ s: String) -> String {
+        s.count > 12 ? "\(s.prefix(4))…\(s.suffix(4))" : s
+    }
+
+    private struct Row: View {
+        let icon: String, title: String, detail: String
+        var body: some View {
+            HStack(spacing: 12) {
+                Image(systemName: icon).foregroundStyle(Ink.gold).frame(width: 22)
+                Text(title).foregroundStyle(Ink.dim)
+                Spacer(minLength: 8)
+                Text(detail).foregroundStyle(Ink.text).fontWeight(.semibold)
+                    .multilineTextAlignment(.trailing)
+            }
+            .font(.callout)
+        }
     }
 }
 
