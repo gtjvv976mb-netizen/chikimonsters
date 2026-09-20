@@ -17,7 +17,7 @@ app now refuses every chat route. See §2.)
 | **No build exists** | The Swift in `ios/` has never been compiled. Submission needs an archive uploaded from Xcode on a Mac. | You, with a Mac |
 | **The backend has no `/link/*` routes** | Pairing calls `/link/redeem`, which 404s. **A reviewer cannot get past the first screen.** | Backend work — see `IOS-APP.md` |
 | **No screenshots or preview video** | Both must be captured from the running app. They cannot be drawn, and faking them is a rejection *and* a guideline violation. | You, once a build runs |
-| **The app still shows a shop** | A player can walk to the Trading Post and open a marketplace with a `🪄 Magic Eden` tab and Phantom purchase copy; the Chikiseum's HOW TO PLAY tab says *"champions win real SOL"*. Every button refuses — but guideline 3.1.1 is about what an app **presents**, not only what it executes. | Rebuilding the pack — see below |
+| **The app still shows a shop** | Until the pack is rebuilt: a player can walk to the Trading Post and open a marketplace with a `🪄 Magic Eden` tab, the welcome screen's main button is *Connect Phantom Wallet*, and the Chikiseum says *"champions win real SOL"*. Every button refuses — but 3.1.1 is about what an app **presents**. | **Ready to clear:** rebuild the pack with `godot-patch/apply-ios-pack-patch.py` — see below |
 
 Two product decisions are also unmade and are yours: **the 500k $CHIKI gate** (`IOS-APP.md`) and **what account deletion does** on a wallet-backed account.
 
@@ -27,8 +27,7 @@ This section used to say the project was gone and that PvP therefore could not s
 were wrong, and `godot-patch/RECOVERY.md` has the evidence for what replaced them.
 
 **The project was recovered** from the pack this repo publishes, using GDRE Tools, in about forty
-seconds. It imports in Godot 4.6 and 82 of 91 root scripts parse clean; the nine that fail all fail
-on the voxel module, and not one failure is a decompiler artifact.
+seconds, and with the matching editor it imports with **zero parse errors** across all 91 scripts.
 
 **PvP needs no change at all.** `ChikiseumLiveClient.gd` does not merely avoid stakes, it rejects
 any server response that is not `currency: "NONE"` with `real_sol_enabled: false`. There is no
@@ -36,11 +35,10 @@ wager route in the pack. The season-match allowlist work this section used to de
 add routes for — the shipped build already is a server-hosted, stake-free match. So option 1,
 "ship v1.0 without PvP", is off the table in the good way: **PvP can ship as is.**
 
-What replaced it is narrower and harder. The remaining pack work is *cosmetic in nature and
-blocking in effect*: the marketplace and the Cup's SOL copy are GDScript drawing its own UI, which
-no loader can reach. The GDScript change for it is written and verified
-(`godot-patch/apply-ios-pack-patch.py`, eight edits, all parse-clean). What is not resolved is
-whether a rebuilt pack can be shipped at all.
+What replaced it is narrower: the marketplace, the Cup's SOL copy, the welcome screen's wallet
+button and the chat box are GDScript drawing its own UI, which no loader can reach. The change for
+all of it is written, applied and verified — `godot-patch/apply-ios-pack-patch.py`, **19 edits**,
+parse-clean, and confirmed on screen in a running build.
 
 The engine turned out to be the easy half, and that has now been run end to end rather than
 estimated:
@@ -51,29 +49,39 @@ estimated:
 > compiles in **12 minutes** on four cores. With that editor the recovered project imports with
 > **zero parse errors**, and a full web export completes: a 371 MB `index.pck` plus engine and glue.
 
-The blocker is the artwork. The project's own export plugin audits 402 Chikiseum cards against a
-pinned manifest and rejects the build at the first one:
+One thing does still fail, and it is worth understanding rather than fearing. The project's own
+export plugin audits 402 Chikiseum cards against a pinned manifest and rejects the build at the
+first one:
 
 ```
 ERROR: CHIKISEUM_CARD_EXPORT_REJECTED: Approved original or mask bytes changed: adalor:0
 ```
 
-A pack contains imported textures, not original artwork. Auditing every file the manifest pins,
-taken raw out of the pack: the manifest is byte-identical, all **402 masks are byte-identical**
-(839,504 bytes, exactly what the plugin expects) — and the **402 original card JPEGs
-(`res://cards/10_0.jpg` … `50_9.jpg`) were never in the pack at all**, only their `.import` stubs.
+That audit is a **provenance gate, not a functional one**, and the difference was settled by
+running the rebuilt pack rather than reasoning about it. `ChikiseumCardPresentation._prepare()`
+does not fail on an unverifiable binding — it degrades, and says so in the field name:
+`reason = "source_binding_changed_original_preserved"`. The original card art is displayed; only
+the mask-based cleaning pass is skipped.
 
-So the gap is one folder of card art. `RECOVERY.md` traces what it costs at runtime and what to do
-with the files once you have them.
+Served cross-origin-isolated and opened in Chromium, the rebuilt pack boots, the world renders,
+the offline Action Lab opens, and **Adalor — the species the audit rejects by name — renders
+correctly with all twelve of its ability cards**. PvP is untouched either way:
+`ChikiseumLiveClient.valid_bindings()` compares the server's response to client constants, and a
+rebuild changes neither side.
 
-So the two honest options are:
+What is missing is exactly **402 original card JPEGs** (`res://cards/10_0.jpg` … `50_9.jpg`),
+which were never in a pack — Godot ships imported textures, not source art. The manifest and all
+402 masks recover byte-identical. Get those files when you can; they restore exact provenance and
+make the plugin bless the build again. **They are not a prerequisite for shipping one.**
 
-1. **Submit with the shop visible and expect to argue it.** The app genuinely cannot transact —
-   and since this pass it cannot list, bid or sell either. The review notes (§4) can say so. It is
-   a real 3.1.1 risk and may cost a rejection cycle.
-2. **Get the 402 card JPEGs from whoever has the project, then rebuild.** Everything else is ready
-   and verified: the editor is a download, the template is a 12-minute compile, the export works,
-   and the patch is written and parse-clean.
+So the recommended path is now just:
+
+1. **Rebuild the pack with the patch and ship it.** The editor is a download, the template is a
+   12-minute compile, the export works, and the patch is 19 changes, parse-clean and verified on
+   screen. `RECOVERY.md` has every command.
+2. If you would rather not rebuild yet, you *can* submit as is and argue it — the app genuinely
+   cannot transact, and since this pass it cannot list, bid or sell either. But the shop is on
+   screen, and that is a real 3.1.1 risk that may cost a rejection cycle.
 
 ---
 

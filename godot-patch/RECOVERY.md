@@ -174,7 +174,7 @@ complete, mountable build. (No `export_presets.cfg` survives in a pack, so one h
 the Web preset needs `variant/thread_support=true` and `custom_template/release` pointing at the
 zip above.)
 
-### The real blocker is the card artwork, not the engine
+### The card audit fails — and it is a provenance gate, not a functional one
 
 The export finishes, and the project's own export plugin refuses to bless it:
 
@@ -186,11 +186,8 @@ ERROR: CHIKISEUM_CARD_EXPORT_REJECTED: Approved original or mask bytes changed: 
 manifest, comparing `FileAccess.get_sha256(original)` to an approved `source_sha256` for each. It
 fails on the first card.
 
-The reason is fundamental for one half of it: **a pack contains imported textures, not original
-artwork.** So the question is which half, and the answer turns out to be narrow and precise.
-
 Auditing every file the manifest pins, **taken raw out of the pack** rather than through the
-decompiler:
+decompiler, says exactly what is missing:
 
 | | result |
 |---|---|
@@ -198,9 +195,9 @@ decompiler:
 | the 402 masks (`card-presentation-v4/masks/*.png`) | **402 byte-identical, 0 differ** — and they total 839,504 bytes, exactly the plugin's `RAW_MASK_BYTES` |
 | the 402 originals (`res://cards/10_0.jpg` … `50_9.jpg`) | **not in the pack at all.** Only their `.import` stubs are, all 402 of them |
 
-So nothing is *corrupted*. The masks and the manifest come back perfect. What is missing is
-exactly **402 original card JPEGs**, which were never in the pack to begin with — Godot ships the
-imported `.ctex`, not the artist's source.
+Nothing is corrupted. The masks and the manifest come back perfect. What is missing is exactly
+**402 original card JPEGs**, which were never in a pack to begin with — Godot ships the imported
+`.ctex`, not the artist's source.
 
 **A practical trap, since it produced the wrong answer first.** GDRE's `--recover` reconstructs
 source images from imported textures, and it does that for the masks too — overwriting raw PNGs
@@ -213,31 +210,40 @@ bytes matter:
 
 `--recover` is right for getting a project that opens; `--extract` is right for getting bytes.
 
-What that costs, read from the code rather than guessed:
+#### What the failure actually costs: less than it sounds
 
-- On rejection `_export_begin` **returns early**, so it never regenerates
-  `card-presentation-v4/export-bindings.json` and never re-adds the 402 masks.
-- The rebuilt pack still *contains* both, because `export_filter="all_resources"` sweeps up the
-  copies recovery left in the project — but that bindings document describes the **original**
-  imported textures.
-- `ChikiseumCardPresentation._source_proof()` checks exactly that:
-  `actual != binding.get("imported_sha256")` → it returns `{}`. Freshly re-imported textures
-  cannot match hashes taken before the re-import.
-- `ChikiseumLiveClient.valid_bindings()` gates live arena admission on `CATALOGUE_SHA256`,
-  `ART_SHA256` and `ART_VERSION` agreeing with the server.
+An earlier draft of this file called the artwork "the real blocker" and said a rebuild was gated
+on getting those 402 files. **That was wrong, and booting the rebuilt pack is what showed it.**
 
-So a rebuilt pack is **not card-equivalent** to the shipped one, and the Chikiseum's art
-provenance chain is broken by the rebuild itself.
+Read what the runtime does with a binding it cannot verify. `ChikiseumCardPresentation._prepare()`
+does not fail — it degrades, deliberately, and says so in the field name:
 
-**But the fix is a shopping list, not a redesign.** Get the 402 files at `res://cards/*.jpg` from
-whoever has the project — one folder of card art, and their `.import` stubs are already recovered
-so the expected import settings are known. Drop them in, re-import, and the plugin's audit passes:
-it then regenerates `export-bindings.json` with `imported_sha256` values that match the textures
-actually in the new pack, which is precisely what `_source_proof()` needs. The masks and manifest
-are already exact.
+```gdscript
+receipt.reason = "source_binding_changed_original_preserved"
+```
 
-**This is the thing to solve before planning a pack rebuild.** The engine is a 12-minute compile.
-The artwork is one folder, from one person, and everything else is ready.
+The original card texture is **preserved and displayed**; what is skipped is the mask-based
+cleaning applied on top of it. Every branch in that function ends in `…original_preserved`. It was
+written to survive exactly this.
+
+Confirmed by running it. The rebuilt pack was served cross-origin-isolated and opened in Chromium:
+the engine starts, the world renders, the offline Action Lab opens, and **Adalor — the species the
+audit rejects by name — renders correctly with all twelve of its ability cards**.
+
+And PvP is untouched. `ChikiseumLiveClient.valid_bindings()` compares the *server's* response to
+client constants (`CATALOGUE_SHA256`, `ART_SHA256`, `ART_VERSION`, `Nav.binding()`). A rebuild
+changes neither side of that comparison.
+
+So, precisely:
+
+- **Verified:** the rebuilt pack boots and plays, including the rejected species.
+- **From the code:** a failed binding keeps the original art and skips the cleaning pass — a
+  cosmetic difference in Chikiseum card exteriors.
+- **Not verified:** a side-by-side of one card exterior with and without that cleaning. If the
+  difference matters to you, look at that before shipping.
+
+**Get the 402 JPEGs when you can** — they restore exact provenance and make the plugin bless the
+build again. They are not a prerequisite for shipping one.
 
 ## What the source settled
 
