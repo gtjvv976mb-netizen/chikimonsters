@@ -424,7 +424,25 @@ None of these are optional if a first submission gets rejected under 4.2 — the
 
 Nothing below can move ahead of the thing above it.
 
-- [ ] **Decide:** submit with the marketplace UI visible and argue it, or build the web export template and cut it from the pack
+- [ ] **Rebuild the pack** — this is what takes the shop, the wallet button and the chat box off
+      the screen, and every piece of it is ready and verified (`godot-patch/RECOVERY.md`):
+      ```sh
+      # 1. recover the project from the pack this repo publishes   (~40s)
+      cat realm/index.pck.[0-9].bin realm/index.pck.1[0-2].bin > index.pck
+      ./gdre_tools.x86_64 --headless --recover=index.pck --output=recovered
+
+      # 2. apply the 19 iOS changes                                 (instant)
+      python3 godot-patch/apply-ios-pack-patch.py recovered
+
+      # 3. import + export with Zylann's v1.6 editor and a web template you built (~12 min once)
+      godot --headless --path recovered --import
+      godot --headless --path recovered --export-release "Web" out/index.html
+
+      # 4. chunk it the way realm/ serves, and verify the round trip
+      python3 godot-patch/chunk-pack.py out realm/
+      node godot-patch/verify/loader-policy.test.mjs
+      ```
+      Expect `CHIKISEUM_CARD_EXPORT_REJECTED` at step 3 — it is a provenance gate, not a failure.
 - [ ] **Decide:** does an app player need the 500k $CHIKI hold
 - [ ] **Decide:** what account deletion does
 - [ ] Backend: `/link/new`, `/link/redeem`, `linkToken` on `/verify`, `/link/devices`, `/link/revoke`, `/link/delete_account`

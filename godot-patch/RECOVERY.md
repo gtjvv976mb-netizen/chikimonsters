@@ -378,6 +378,29 @@ reproduce `1eb4980816`; it produces a **new** build that happens to contain the 
 That is a QA job, not a drop-in replacement, and it should be played through before it reaches
 players. Keep the current chunks until the new ones have been.
 
+### Getting the result back into `realm/`
+
+`godot-patch/chunk-pack.py` turns an export into the 24 MiB pieces `realm/index.html` streams:
+
+```sh
+python3 godot-patch/chunk-pack.py out realm/          # desktop pack + engine
+python3 godot-patch/chunk-pack.py out-lite realm/ --lite   # the pack phones and the app get
+```
+
+It writes the chunks and the manifest together, then reassembles them and compares the sha256
+against the export before reporting success — because the failure mode `DEPLOY.md` warns about is
+silent: *"the loader assembles whatever chunks it gets and mounts a pack that is quietly wrong."*
+
+Checked against production: run over the live `index.pck` and `index.wasm`, it reproduces all
+**15 chunks byte-identically** and lands on 13 + 2, exactly the layout already published.
+
+The build stamp `v` is the first ten hex of the pack's sha256, so the same pack always stamps the
+same and a different pack can never reuse a stamp a browser has cached.
+
+**For the iOS app, `--lite` is usually the one that matters** — `realm/index.html` picks the lite
+pack on a phone. And read the Pages section of `DEPLOY.md` before committing: a fresh ~370 MB per
+release is what grew `.git` to 45 GB and stopped Pages publishing.
+
 Chat's report and block are deliberately not in the script. They are a feature, not a few lines,
 and they are moot while the app refuses every chat route.
 
