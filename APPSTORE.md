@@ -8,13 +8,15 @@ Everything for App Store Connect that does not require a build. Copy the fields 
 
 ## Can this be submitted today? No — and here is exactly why
 
-Four things block submission, and none of them can be fixed by writing more code in this repo.
+Five things block submission. One of them — chat moderation — might be fixable in this repo; the
+rest are not.
 
 | Blocker | Why it blocks | Who can clear it |
 |---|---|---|
 | **No build exists** | The Swift in `ios/` has never been compiled. Submission needs an archive uploaded from Xcode on a Mac. | You, with a Mac |
 | **The backend has no `/link/*` routes** | Pairing calls `/link/redeem`, which 404s. **A reviewer cannot get past the first screen.** | Backend work — see `IOS-APP.md` |
 | **No screenshots or preview video** | Both must be captured from the running app. They cannot be drawn, and faking them is a rejection *and* a guideline violation. | You, once a build runs |
+| **Chat has no moderation** | The game has world chat, party chat and whispers. Guideline 1.2 requires a filter, a report path, a block path and published contact. None appears to exist. | Investigate turning chat off in the app — §2 |
 | **The Godot project is gone** | Verified across every reachable repository — 1,778 files, zero `.gd`/`.tscn`/`project.godot`. So the pack cannot be rebuilt, the season match cannot ship, and the Trading Post gate is still **drawn** in the app even though it refuses. | See "The Godot problem" below |
 
 Two product decisions are also unmade and are yours: **the 500k $CHIKI gate** (`IOS-APP.md`) and **what account deletion does** on a wallet-backed account.
@@ -107,18 +109,58 @@ Apple replaced the old tiers in 2025 — **12+ and 17+ are gone; 13+, 16+ and 18
 | Gambling | **No** | See the note below — this matters |
 | Contests | No | |
 | Unrestricted Web Access | **No** | The app cannot navigate outside `/realm/`; there is no in-app browser |
-| User-Generated Content | **UNKNOWN — you must determine this** | See below |
-| Messaging / Chat | **UNKNOWN — you must determine this** | See below |
+| User-Generated Content | **Yes** | Chikimon nicknames, player handles, chat messages |
+| Messaging / Chat | **Yes** | World chat, party chat and private whispers all exist |
 
-**Expected rating: 9+**, on the two "Infrequent/Mild" answers.
+**Expected rating: NOT 9+.** Open chat between strangers puts this well above that — plan for 13+ at minimum, and read the next section before you answer anything, because the rating is the smaller problem.
 
 ### Gambling — answer No, and know why
 
 The app has no wagers, no purchases and no real-money stake. The Wicked Temple's reward roll is randomised, but nothing is paid to enter and nothing of monetary value is risked, so it is not gambling and not a loot box. **The website's SOL wagers are not in this app and must not be described as if they were.**
 
-### The two you cannot answer from this repo
+### The game has chat, and that is a blocker — not a checkbox
 
-The compiled pack may contain **player chat** and **self-chosen player handles**. Both change the age rating, and chat additionally triggers guideline 1.2, which requires a content filter, a report mechanism, a block mechanism, and published contact details. Nobody can read the pack's source, so **find out before you answer** — launch the game and look. Answering "no" to chat that exists is the kind of mistake that gets an app pulled rather than rejected.
+This was listed as unknown. It is not: the game's own release notes say so plainly.
+
+| Evidence | Source |
+|---|---|
+| *"Your wallet address is public — it's on the roster, **in world chat** and on the market board"* | `realm/updates.json` |
+| *"parties of four **with their own chat**"* | `realm/updates.json` |
+| *"**whispers** were audited end to end: clicking a name, whispering, replying and the self-echo all verified working"* | `realm/updates.json` |
+| *"💬 **The chatbox** lets go of you"* — a whole release about it | `realm/updates.json` |
+| *"The **System tab in Chat** keeps a timestamped log"* | `realm/index.html` |
+| `chat` ×41, `Chat` ×6 in the shipped pack | `index.pck.*.bin` |
+
+So: **world chat, party chat and private whispers between strangers.** Plus user-set chikimon
+nicknames, which other players see.
+
+**Guideline 1.2 then requires all four of these**, and an app that has none of them is rejected:
+
+1. a method for filtering objectionable material
+2. a mechanism to report offensive content, **with timely responses**
+3. the ability to block abusive users
+4. published contact information
+
+**Searching all 169 release notes for `mute`, `block`, `report a player`, `moderat`, `profanity`
+or `filter` returns nothing.** Neither do those strings appear in the pack. That is strong
+evidence — not proof, since the pack is partly compressed — that **none of the four exists**.
+
+Settle it in ten minutes: open the game, click a player's name, and look for Report / Block /
+Mute. Then type something that should be filtered and see whether it is.
+
+**If they are missing, you have three options and only one of them is quick:**
+
+1. **Turn chat off in the app.** Removes the 1.2 obligation and the UGC rating in one move, and
+   it is the only option that does not need the Godot project. Whether the loader can do it
+   depends on how chat is transported — the release notes say the realm "speaks WebSockets", and
+   the policy layer already guards `WebSocket`. If chat has its own connection or route it can be
+   refused; if it shares the movement socket it cannot, and this option dies. **Investigate this
+   first** — it is the difference between shipping and not.
+2. **Build the four mechanisms.** Correct, and needs the Godot project, which is gone.
+3. **Ship without chat by shipping without the pack.** Not a real option.
+
+This is also not only a store problem. A 9+ game with unmoderated open chat between strangers and
+no way to block anyone is a genuine safety gap, whatever Apple says.
 
 ---
 
@@ -287,7 +329,9 @@ Nothing below can move ahead of the thing above it.
 - [ ] Apple Developer Program enrolment, if not already done
 - [ ] Create the Xcode project (`ios/README.md`) and get it running on a real iPhone
 - [ ] **Open `/realm/selftest.html` inside the app** — confirms the engine can run there at all
-- [ ] Find out whether the pack has chat or player-chosen handles → age rating, and guideline 1.2
+- [ ] **Chat: check in-game for Report / Block / Mute and a word filter.** The game HAS world chat,
+      party chat and whispers — confirmed. If those four 1.2 mechanisms are missing, decide whether
+      chat can be turned off for the app before anything else proceeds
 - [ ] Legal review of `privacy/index.html`
 - [ ] Decide on telemetry → then finalise the privacy answers
 - [ ] 4.2 hardening (§6) — at least the offline screen
