@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Realm Link — Chikoria on iPhone</title>
+<meta name="description" content="Pair the Chikoria app to your account. Your chikimon, eggs, fish and resources come with you.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='26'%3E%F0%9F%94%97%3C/text%3E%3C/svg%3E">
+<style>
+  /* Same visual language as /arena/ — the two sibling utility pages should look like one site. */
+  :root{
+    --bg:#0b1220; --panel:#121c30; --panel2:#18253d; --line:#24334e;
+    --ink:#eaf2ff; --dim:#93a6c4; --gold:#ffd34d; --good:#4ade80; --bad:#f87171; --ai:#a78bfa;
+    color-scheme: dark;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{min-height:100%;background:var(--bg);color:var(--ink);
+    font:15px/1.5 'Nunito',system-ui,-apple-system,Segoe UI,sans-serif}
+  body{padding:max(16px,env(safe-area-inset-top)) 16px max(16px,env(safe-area-inset-bottom))}
+  .wrap{max-width:720px;margin:0 auto}
+  h1{font-size:clamp(20px,4vw,28px);letter-spacing:.2px}
+  h2{font-size:16px;margin-bottom:10px;color:var(--gold)}
+  .sub{color:var(--dim);font-size:13px;margin-top:4px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;margin:14px 0}
+  button{font:inherit;font-weight:800;cursor:pointer;border:0;border-radius:10px;padding:11px 18px;
+    background:var(--gold);color:#2a1a08;transition:transform .1s,filter .15s}
+  button:hover:not(:disabled){filter:brightness(1.08)} button:active:not(:disabled){transform:scale(.97)}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  button.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+  button.danger{background:transparent;color:var(--bad);border:1px solid #5c2b2b}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .between{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+  .pill{display:inline-block;font-size:12px;font-weight:800;padding:3px 10px;border-radius:999px;
+    background:var(--panel2);border:1px solid var(--line);color:var(--dim)}
+  .pill.on{color:var(--good);border-color:#2b5c3f} .pill.off{color:var(--bad);border-color:#5c2b2b}
+  .list{display:grid;gap:10px}
+  .item{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px}
+  .muted{color:var(--dim);font-size:13px}
+  .err{background:#2a1520;border-color:#5c2b3a;color:#ffc9d4}
+  .ok{color:var(--good)} .bad{color:var(--bad)}
+  [hidden]{display:none!important}
+  a{color:var(--gold)}
+  ol{margin:0 0 0 20px} ol li{margin:6px 0}
+  /* The code itself is the whole point of the page: big, spaced, and readable across a room. */
+  .code{font:800 clamp(30px,10vw,54px)/1.15 ui-monospace,SFMono-Regular,Menlo,monospace;
+    letter-spacing:clamp(4px,2.4vw,14px);color:var(--gold);text-align:center;
+    background:#0a1322;border:1px solid var(--line);border-radius:14px;
+    padding:18px 10px 18px clamp(4px,2.4vw,18px);margin:4px 0 10px;user-select:all;word-break:break-all}
+  .clock{text-align:center;color:var(--dim);font-size:13px;margin-bottom:12px}
+  .clock b{color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="between">
+    <div>
+      <h1>&#128279; Realm Link</h1>
+      <div class="sub">Pair the Chikoria app on your iPhone to this account. Everything you own comes with you,
+      and everything you gather there is here when you get back.</div>
+    </div>
+    <div id="srv" class="pill">checking…</div>
+  </div>
+
+  <!-- 1 — prove the wallet -->
+  <section class="card" id="cSignin">
+    <h2>1 &middot; Sign in with your wallet</h2>
+    <div class="muted" style="margin-bottom:12px">Phantom signs one message proving the account is yours.
+      It is not a transaction and moves nothing. <b>The app never sees your wallet</b> — that is the point of
+      this page.</div>
+    <div class="row">
+      <button id="bConnect">Connect Phantom</button>
+      <span id="who" class="muted"></span>
+    </div>
+  </section>
+
+  <!-- 2 — the code -->
+  <section class="card" id="cCode" hidden>
+    <div class="between" style="margin-bottom:12px"><h2 style="margin:0">2 &middot; Type this into the app</h2>
+      <button class="ghost" id="bNew">New code</button></div>
+    <div class="code" id="code">&middot;&middot;&middot;&middot;&middot;&middot;&middot;&middot;</div>
+    <div class="clock" id="clock"></div>
+    <ol class="muted">
+      <li>Open <b>Chikoria</b> on your iPhone.</li>
+      <li>Tap <b>Link my account</b>.</li>
+      <li>Type the code above. It is good for one device, once.</li>
+    </ol>
+    <p class="muted" style="margin-top:12px">The app gets a key that plays your account and nothing else:
+      it cannot sign, spend, trade or move anything on-chain. Revoke it below at any time.</p>
+  </section>
+
+  <!-- 3 — what is linked -->
+  <section class="card" id="cDevices" hidden>
+    <div class="between" style="margin-bottom:12px"><h2 style="margin:0">Your linked devices</h2>
+      <button class="ghost" id="bRefresh">Refresh</button></div>
+    <div id="devices" class="list"></div>
+  </section>
+
+  <div id="err" class="card err" hidden></div>
+
+  <p class="muted" style="text-align:center;margin:20px 0">
+    <a href="/realm/">Play in this browser</a> &middot; <a href="/">chikimonsters.com</a>
+  </p>
+</div>
+
+<script>
+(function(){
+"use strict";
+const API = "https://api.chikimonsters.com";
+const $   = id => document.getElementById(id);
+
+let auth = null;            // {wallet, mktToken, sessionId, sessionEpoch, authMsg, authSig}
+let expiresAt = 0;
+let ticker = null;
+
+function showErr(msg){ $("err").hidden = false; $("err").textContent = msg; }
+function clearErr(){ $("err").hidden = true; }
+const shortW = w => w.slice(0,4) + "…" + w.slice(-4);
+
+async function api(path, body){
+  const r = await fetch(API + path, {
+    method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(body)
+  });
+  const data = await r.json().catch(()=>({}));
+  if (!r.ok) throw Object.assign(new Error(data.error || ("HTTP " + r.status)), { code: data.code, status: r.status });
+  return data;
+}
+
+// ---------------------------------------------------------------- health
+async function health(){
+  try{
+    const h = await (await fetch(API + "/health")).json();
+    $("srv").textContent = "server ready";
+    $("srv").className = "pill on";
+    return h;
+  }catch(e){
+    $("srv").textContent = "server unreachable";
+    $("srv").className = "pill off";
+  }
+}
+
+// ---------------------------------------------------------------- sign in
+$("bConnect").onclick = async () => {
+  clearErr();
+  const ph = (window.phantom && window.phantom.solana) || window.solana;
+  if (!ph) return showErr("Phantom was not found. Install the Phantom extension, or open this page in Phantom's browser, and reload.");
+  try{
+    $("bConnect").disabled = true;
+    const { publicKey } = await ph.connect();
+    const wallet = publicKey.toString();
+    // Exactly the message the realm and the arena client sign — one shape, one backend check.
+    const authMsg = `Chikoria sign-in\nwallet:${wallet}\nts:${Date.now()}`;
+    const signed = await ph.signMessage(new TextEncoder().encode(authMsg), "utf8");
+    const authSig = btoa(String.fromCharCode.apply(null, signed.signature));
+    const v = await api("/verify", { wallet, authMsg, authSig });
+    if (!v.signedIn) throw new Error("The server did not accept that signature.");
+    auth = { wallet, mktToken: v.mktToken, sessionId: v.sessionId, sessionEpoch: v.sessionEpoch || 0, authMsg, authSig };
+    $("who").innerHTML = `signed in as <b>${shortW(wallet)}</b>`;
+    $("bConnect").textContent = "Signed in";
+    $("cCode").hidden = false;
+    $("cDevices").hidden = false;
+    await Promise.all([newCode(), loadDevices()]);
+  }catch(e){ showErr(e.message || String(e)); $("bConnect").disabled = false; }
+};
+
+// ---------------------------------------------------------------- the code
+$("bNew").onclick = () => newCode();
+
+async function newCode(){
+  clearErr();
+  if (!auth) return;
+  $("bNew").disabled = true;
+  try{
+    const r = await api("/link/new", {
+      wallet: auth.wallet, authMsg: auth.authMsg, authSig: auth.authSig,
+      mktToken: auth.mktToken, sessionId: auth.sessionId, sessionEpoch: auth.sessionEpoch
+    });
+    if (!r.code) throw new Error("The server did not return a code.");
+    // Grouped in fours so it can be read aloud and typed without losing your place.
+    $("code").textContent = String(r.code).replace(/(.{4})(?=.)/g, "$1 ");
+    expiresAt = r.expires_at ? Date.parse(r.expires_at) : Date.now() + (r.expires_in || 600) * 1000;
+    startClock();
+  }catch(e){
+    $("code").textContent = "——";
+    showErr(e.status === 404
+      ? "This backend does not offer Realm Link yet (POST /link/new is not there). See IOS-APP.md."
+      : (e.message || String(e)));
+  }finally{ $("bNew").disabled = false; }
+}
+
+function startClock(){
+  if (ticker) clearInterval(ticker);
+  const paint = () => {
+    const left = Math.max(0, Math.round((expiresAt - Date.now()) / 1000));
+    if (left <= 0){
+      $("clock").innerHTML = `<b class="bad">This code has expired.</b> Press “New code”.`;
+      clearInterval(ticker); ticker = null;
+      return;
+    }
+    const m = Math.floor(left / 60), s = String(left % 60).padStart(2, "0");
+    $("clock").innerHTML = `Expires in <b>${m}:${s}</b> · single use`;
+  };
+  paint();
+  ticker = setInterval(paint, 1000);
+}
+
+// ---------------------------------------------------------------- linked devices
+$("bRefresh").onclick = () => loadDevices();
+
+async function loadDevices(){
+  if (!auth) return;
+  const el = $("devices");
+  try{
+    const r = await api("/link/devices", {
+      wallet: auth.wallet, mktToken: auth.mktToken, sessionId: auth.sessionId, sessionEpoch: auth.sessionEpoch
+    });
+    const rows = r.devices || [];
+    el.innerHTML = "";
+    if (!rows.length){
+      el.innerHTML = `<div class="muted">No device is linked to this account yet.</div>`;
+      return;
+    }
+    rows.forEach(d => {
+      const div = document.createElement("div");
+      div.className = "item";
+      const seen = d.last_seen ? new Date(d.last_seen).toLocaleString() : "not yet";
+      div.innerHTML = `<div class="between">
+        <div><b>${esc(d.device_name || "iPhone")}</b>
+          <div class="muted">linked ${d.linked_at ? new Date(d.linked_at).toLocaleDateString() : "—"} · last played ${esc(seen)}</div></div>
+        <button class="danger">Revoke</button></div>`;
+      div.querySelector("button").onclick = async () => {
+        clearErr();
+        if (!confirm("Unlink this device?\n\nIt will stop playing your account immediately. You can link it again with a new code.")) return;
+        try{
+          await api("/link/revoke", {
+            wallet: auth.wallet, device_id: d.device_id,
+            mktToken: auth.mktToken, sessionId: auth.sessionId, sessionEpoch: auth.sessionEpoch
+          });
+          loadDevices();
+        }catch(e){ showErr(e.message); }
+      };
+      el.appendChild(div);
+    });
+  }catch(e){
+    // A backend without the routes yet must not leave the page looking broken.
+    el.innerHTML = `<div class="muted">This backend does not list linked devices yet.</div>`;
+  }
+}
+
+/** The device name is player-supplied and goes into innerHTML — escape it. */
+function esc(s){
+  return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+}
+
+// ---------------------------------------------------------------- go
+health(); setInterval(health, 30000);
+})();
+</script>
+</body>
+</html>

@@ -6,6 +6,12 @@
 		<title>Chikoria Realm</title>
 		<link rel="icon" type="image/png" href="coin.png">
 		<link rel="apple-touch-icon" href="coin.png">
+		<!-- FIRST SCRIPT IN THE DOCUMENT, DELIBERATELY. chiki-ios.js decides whether this page is
+		     the website or the gameplay-only iOS app, and in the app it takes the wallet, the
+		     marketplace and every off-origin request away before any other line has parsed. Its
+		     guards are only as good as their position, so nothing goes above it — and the blocks
+		     further down branch on the window.CHIK_NO_CRYPTO it sets. See godot-patch/verify/. -->
+		<script src="chiki-ios.js"></script>
 		<script>
 		// the engine stamps document.title with the internal project name on boot —
 		// pin the public name (the $CHIKI coin favicon is the "token image" beside it)
@@ -267,6 +273,10 @@ html.chik-phone #boot { padding-bottom: calc(5px + env(safe-area-inset-bottom, 0
 	// (never rotated) already lives in the save on this device. It cannot move funds. It is dropped
 	// on Disconnect, on a wallet change in Phantom, when the server rejects it, and at expiry.
 	(function () {
+		// THE APP HAS NO WALLET TO STAY SIGNED IN TO. On iOS the account arrives by Realm Link and
+		// chiki-ios.js owns __chikSigninSeedResume instead — so this whole bridge, and every Phantom
+		// hook in it, stands down. Bail before KEY is even read.
+		if (window.CHIK_NO_CRYPTO) { return; }
 		var KEY = 'chikSignin';
 		var MAX_AGE_MS = 23 * 3600 * 1000;          // the backend's window is 24 h; keep an hour of slack
 		var resumeSeeded = false;
@@ -391,7 +401,11 @@ html.chik-phone #boot { padding-bottom: calc(5px + env(safe-area-inset-bottom, 0
 			// progress returns at the next wallet sign-in. Repairs saves contaminated by the
 			// pre-slot wallet-inheritance bug. Confirm-gated so a shared link can't nuke data.
 			if (/[?&]wipelocal/.test(location.search)) {
-				if (confirm("Reset ALL local Chikoria data on this device?\n\nCloud-saved progress comes back when you sign in with your wallet.")) {
+				// The app has no wallet to sign back in with — it comes back on the Realm Link the
+				// device already holds, so say that instead of sending the player to find Phantom.
+				if (confirm("Reset ALL local Chikoria data on this device?\n\nCloud-saved progress comes back "
+					+ (window.CHIK_NO_CRYPTO ? "the moment the app reconnects to your linked account."
+						: "when you sign in with your wallet."))) {
 					(async function(){
 						try {
 							var names = [];
@@ -871,6 +885,106 @@ html.chik-phone #boot { padding-bottom: calc(5px + env(safe-area-inset-bottom, 0
 		</div>
 
 		<script>
+		// THE LOADING SCREEN TELLS THE TRUTH ON EACH PLATFORM.
+		//
+		// The panels above are the website's: they sell a token gate, a Trading Post, on-chain
+		// payouts and a SOL prize. None of that exists in the iOS app — the app is gathering, the
+		// Wicked Temple and Chikiseum PvP on the player's real account — so leaving the copy as it
+		// is would have the app advertise things it refuses to do. Two tabs are removed outright and
+		// the remaining promises are rewritten.
+		//
+		// Placed here, after every panel and the hero have parsed, so there is no listener and no
+		// flash of the web copy. Each edit is guarded: a panel that has been reworded upstream is
+		// skipped rather than half-rewritten, and a failure here must never block the loading screen.
+		(function () {
+			if (!window.CHIK_NO_CRYPTO) { return; }
+			try {
+				// 1. Tabs that are entirely about money.
+				['rewards', 'token'].forEach(function (t) {
+					var tab = document.querySelector('.ltab[data-tab="' + t + '"]');
+					var panel = document.getElementById('lp-' + t);
+					if (tab && tab.parentNode) { tab.parentNode.removeChild(tab); }
+					if (panel && panel.parentNode) { panel.parentNode.removeChild(panel); }
+				});
+
+				/** Replace a card by the text of its leading <b>, leaving the rest of the grid alone. */
+				function card(panelId, marker, html) {
+					var panel = document.getElementById(panelId);
+					if (!panel) { return; }
+					var cards = panel.querySelectorAll('.lcard');
+					for (var i = 0; i < cards.length; i++) {
+						if ((cards[i].textContent || '').indexOf(marker) >= 0) {
+							if (html === null) {
+								if (cards[i].parentNode) { cards[i].parentNode.removeChild(cards[i]); }
+							} else { cards[i].innerHTML = html; }
+							return;
+						}
+					}
+				}
+				/** Replace a list item by a phrase it contains; null removes it. */
+				function bullet(panelId, marker, html) {
+					var panel = document.getElementById(panelId);
+					if (!panel) { return; }
+					var items = panel.querySelectorAll('li');
+					for (var i = 0; i < items.length; i++) {
+						if ((items[i].textContent || '').indexOf(marker) >= 0) {
+							if (html === null) {
+								if (items[i].parentNode) { items[i].parentNode.removeChild(items[i]); }
+							} else { items[i].innerHTML = html; }
+							return;
+						}
+					}
+				}
+
+				// 2. WELCOME — the app's pitch is the world, not the token.
+				var about = document.getElementById('lp-about');
+				var lead = about && about.querySelector('p');
+				if (lead && (lead.textContent || '').indexOf('$CHIKI') >= 0) {
+					lead.innerHTML = 'A living 3D voxel world. Explore a hand-built island, battle the corruption '
+						+ 'with real card duels, craft, fish, ride and raise a team that walks beside you. '
+						+ 'This is your <b>Chikoria account</b>: everything you own on chikimonsters.com is here, '
+						+ 'and everything you gather, hatch and win here is really yours &mdash; waiting on the '
+						+ 'website, where selling and trading live.';
+				}
+				card('lp-about', 'Hold to Play',
+					'<b>&#128035; Your team travels with you</b><br>Every chikimon, egg, fish and resource on your '
+					+ 'account is here the moment you link the app &mdash; and stays in step both ways.');
+				card('lp-about', 'Real Battles',
+					'<b>&#9876; Real Battles</b><br>Ability-card duels vs corruptimons, the Wicked Temple, and '
+					+ 'Chikiseum PvP against real players.');
+				card('lp-about', 'A Real Economy',
+					'<b>&#9935; A Real Economy</b><br>14 resources, 130 recipes, 10-level tools, 8 fish + 4 sea '
+					+ 'legends, 6 mounts &mdash; gathered, crafted and cooked by hand. Earn them here; '
+					+ 'sell and trade them on the website.');
+				card('lp-about', 'Paid Storyline',
+					'<b>&#127942; The Campaign</b><br>ACT I &middot; MASTER OF CHIKORIA &mdash; 21 chapters of story, '
+					+ 'bosses and islands to clear with your team.');
+
+				// 3. HOW TO PLAY — the sign-in and the market bullets are simply not true here.
+				bullet('lp-play2', 'Sign in with Phantom',
+					'<b>Link once, play anywhere</b> &mdash; pair this app to your Chikoria account from the website '
+					+ 'and it stays signed in. No wallet, no signatures, nothing to approve. Your eggs, team and '
+					+ 'satchel are the same ones the website shows, and what you win here lands on the same '
+					+ 'account.');
+				bullet('lp-play2', 'Trade with players', null);
+				bullet('lp-play2', 'Follow the campaign',
+					'<b>Follow the campaign</b> &mdash; ACT I &middot; MASTER OF CHIKORIA, 21 chapters across the '
+					+ 'islands of Chikoria (63 in all).');
+				bullet('lp-play2', 'enter the Chikoria Cup at the Chikiseum',
+					'<b>Battle</b> corruptimons with your chikimon’s ability cards (1&ndash;4 to play, R ends the '
+					+ 'turn, V auto) &middot; spar trainers with G &middot; and face real players in the Chikiseum, '
+					+ 'where the server hosts every match and pays the winner in fantasy fish, eggs and resources.');
+
+				// 4. The coin is still the button; it is no longer "the $CHIKI token".
+				var hint = document.getElementById('herohint');
+				if (hint && (hint.textContent || '').indexOf('$CHIKI') >= 0) {
+					hint.innerHTML = '&#128070; Press the coin to play';
+				}
+			} catch (e) { /* copy is not worth a broken loading screen */ }
+		}());
+		</script>
+
+		<script>
 		// EARLY hero controller — runs at parse time, BEFORE the multi-hundred-KB engine JS
 		// below, so the title is correctly framed and the coin is live from the first paint.
 		// (The engine script is parser-blocking; without this the coin would sit unstyled and
@@ -963,8 +1077,21 @@ html.chik-phone #boot { padding-bottom: calc(5px + env(safe-area-inset-bottom, 0
 			closeTabs();   // start from the hidden state the CSS previously only faked
 		}());
 		</script>
-		<!-- vendored @solana/web3.js + spl-token (on-chain Trading Post buys); local so the CSP allows it -->
-		<script src="solana-web3.js"></script>
+		<!-- vendored @solana/web3.js + spl-token (on-chain Trading Post buys); local so the CSP allows it.
+		     THE iOS APP DOES NOT LOAD IT. Not a disabled button over a live library: the app must not
+		     carry the ability to build a transaction at all, so the tag is written only for the web.
+
+		     document.write, and not a dynamically appended script element, ON PURPOSE. Written during
+		     parse it stays PARSER-BLOCKING, exactly as the static tag it replaces was, so the library
+		     is loaded before the page is interactive. An appended tag is async: __chikiMeReady() reads
+		     window.SolanaWeb3 to report whether a Buy button can work, so a player pressing Buy in
+		     that window would get an honest "no library" and be degraded to the Magic Eden deep link
+		     — a web regression for a problem the app does not have. Chrome's document.write
+		     intervention does not apply here: it only blocks CROSS-ORIGIN scripts on slow
+		     connections, and this one is same-origin. -->
+		<script>
+		if (!window.CHIK_NO_CRYPTO) { document.write('<scr' + 'ipt src="solana-web3.js"><\/scr' + 'ipt>'); }
+		</script>
 		<script>
 		// __chikiBuy: the buyer signs ONE real $CHIKI transaction that splits the price three ways —
 		// sellerShare to the seller, teamShare to the team wallet, burnShare BURNED (supply drops).
@@ -972,6 +1099,12 @@ html.chik-phone #boot { padding-bottom: calc(5px + env(safe-area-inset-bottom, 0
 		// $CHIKI is a Token-2022 mint, so we detect the mint's OWNING token program at runtime and build
 		// every instruction against it (legacy vs 2022). Split is done in base units, with the burn leg
 		// taking the remainder so seller+team+burn === the full price exactly (nothing lost or created).
+		//
+		// NOT DEFINED IN THE iOS APP. chiki-ios.js has already installed a refusal stub under this name
+		// that releases the pack's poller with an explanation; defining the real one here would
+		// overwrite it and hand the app back the capability. Guarded, not deleted — this is the
+		// website's Trading Post and it is unchanged there.
+		if (!window.CHIK_NO_CRYPTO) {
 		window.__chikiBuy = async function (seller, team, mint, priceWhole, decimals, rpc, sSeller, sTeam, sBurn) {
 			window.__chikiBuyDone = ''; window.__chikiBuySig = ''; window.__chikiBuyErr = '';
 			try {
@@ -1014,6 +1147,7 @@ html.chik-phone #boot { padding-bottom: calc(5px + env(safe-area-inset-bottom, 0
 			}
 			window.__chikiBuyDone = '1';   // set LAST — the Godot poller treats this as "flow finished"
 		};
+		}   // if (!window.CHIK_NO_CRYPTO)
 		</script>
 		<script>
 		// ---- CHIKI-ME-BRIDGE BEGIN ----
@@ -1043,6 +1177,11 @@ html.chik-phone #boot { padding-bottom: calc(5px + env(safe-area-inset-bottom, 0
 		// a connected true/false. Nothing here reads or keeps anything it does not need to sign one tx.
 		(function () {
 			'use strict';
+
+			// THE APP CANNOT SIGN ANYTHING. chiki-ios.js has already installed refusal stubs under
+			// __chikiMeSign / __chikiMeReady that answer in this exact poll shape; returning here
+			// leaves them standing instead of replacing them with a working signer.
+			if (window.CHIK_NO_CRYPTO) { return; }
 
 			var B58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 

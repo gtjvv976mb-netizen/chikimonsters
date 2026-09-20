@@ -66,8 +66,9 @@
   <div class="between">
     <div>
       <h1>Chikiseum — Arena Test Client</h1>
-      <div class="sub">A plain web client for the live arena. Practise against the AI, and test SOL wagers,
-      without the game build. <b>This is a test surface, not the game.</b></div>
+      <div class="sub">A plain web client for the live arena. Practise against the AI, test the stake-free
+      <b>season match</b> and test SOL wagers, without the game build. <b>This is a test surface, not the
+      game.</b> Add <code>?nocrypto=1</code> to see exactly what the iOS app sees.</div>
     </div>
     <div id="srv" class="pill">checking…</div>
   </div>
@@ -122,7 +123,22 @@
     <div class="log" id="log"></div>
   </section>
 
-  <!-- 5 — wagers -->
+  <!-- 5 — season match: PvP with nothing staked. This is the iOS app's ONLY PvP mode, so it is
+       also the surface the app's behaviour is tested against here. -->
+  <section class="card" id="cSeason" hidden>
+    <div class="between"><h2 style="margin:0">Season match</h2><span id="sState" class="pill"></span></div>
+    <div id="sNote" class="muted" style="margin:8px 0 12px"></div>
+    <div class="row" style="margin-bottom:12px">
+      <button id="bQueue">Find a match</button>
+      <button id="bClaim" hidden>Collect prize</button>
+      <button class="ghost" id="bSRefresh">Refresh</button>
+    </div>
+    <div id="sStanding" class="muted" style="margin-bottom:10px"></div>
+    <div id="sPrizes" class="list"></div>
+  </section>
+
+  <!-- 6 — wagers. WEBSITE ONLY: the app is refused every one of these routes before the request
+       leaves the device (realm/chiki-ios.js §3), so this section is hidden in no-crypto mode. -->
   <section class="card" id="cWager" hidden>
     <div class="between"><h2 style="margin:0">SOL wagers</h2><span id="wState" class="pill"></span></div>
     <div id="wNote" class="muted" style="margin:8px 0 12px"></div>
@@ -164,6 +180,9 @@
 const API = "https://chiki-backend-singapore.onrender.com";
 const P   = API + "/chikiseum/live/v1";
 const $   = id => document.getElementById(id);
+// ?nocrypto=1 shows exactly what the iOS app sees: the season match and nothing that stakes SOL.
+// The app enforces this for real at the network layer (realm/chiki-ios.js); here it is a view.
+const NO_CRYPTO = /[?&]nocrypto=1(&|$)/.test(location.search);
 const fmt = n => (Math.round(n*1000)/1000).toFixed(3).replace(/\.?0+$/,"");
 
 // ---------------------------------------------------------------- state
@@ -234,7 +253,8 @@ $("bConnect").onclick = async () => {
     $("who").innerHTML = `signed in as <b>${wallet.slice(0,4)}…${wallet.slice(-4)}</b>`;
     $("bConnect").textContent = "Signed in";
     await loadRoster();
-    $("cWager").hidden = false; refreshWagers();
+    $("cSeason").hidden = false; refreshSeason();
+    if (!NO_CRYPTO) { $("cWager").hidden = false; refreshWagers(); }
   }catch(e){ showErr(e.message || String(e)); $("bConnect").disabled = false; }
 };
 
@@ -356,7 +376,9 @@ function apply(s){
     $("bTitle").innerHTML = s.winner ? (won ? '<span class="ok">You won</span>' : '<span class="bad">You lost</span>') : "Draw";
     if (s.battle_xp) log(`<b>Battle XP</b> +${s.battle_xp.gained_xp} (level ${s.battle_xp.level})`);
     if (poll) { clearInterval(poll); poll = null; }
-    setTimeout(refreshWagers, 1200);
+    // A decided match may owe a prize on either mode — ask both, after the server has settled.
+    setTimeout(refreshSeason, 1200);
+    if (!NO_CRYPTO) setTimeout(refreshWagers, 1200);
   }
 }
 
@@ -529,6 +551,117 @@ async function payStake(w){
     }
     showErr("The deposit has not appeared on-chain yet. Press Refresh in a moment — it will credit itself.");
   }catch(e){ showErr(e.message || String(e)); }
+}
+
+// ---------------------------------------------------------------- season match
+// PvP with NOTHING STAKED. The server pairs you, hosts the match itself and rolls the prize
+// server-side — the same fantasy fish, eggs and resources the Wicked Temple's vault awards, and
+// the same real assets, credited to the same account. Nothing here connects, signs or spends, so
+// every line of it runs unchanged inside the iOS app, where the wager routes above are refused.
+let seasonPoll = null, rewardMatch = "";
+
+$("bSRefresh").onclick = () => refreshSeason();
+
+$("bQueue").onclick = async () => {
+  clearErr();
+  $("bQueue").disabled = true;
+  try{
+    const queued = $("bQueue").dataset.queued === "1";
+    const r = await cmd("season_queue", { action: queued ? "leave" : "join" });
+    applySeason(r);
+    if (r.match_id) enterBattle(r.match_id);
+  }catch(e){ showErr(e.message); }
+  finally{ $("bQueue").disabled = false; }
+};
+
+$("bClaim").onclick = async () => {
+  clearErr();
+  if (!rewardMatch) return;
+  $("bClaim").disabled = true;
+  try{
+    const r = await cmd("season_claim", { match_id: rewardMatch });
+    const items = r.rewards || [];
+    log(items.length
+      ? `<b>Prize</b> — ${items.map(rewardText).join(", ")} · on your account`
+      : `<b>Prize</b> — nothing this time`);
+    rewardMatch = "";
+    $("bClaim").hidden = true;
+    applySeason(r);
+    refreshSeason();
+  }catch(e){ showErr(e.message); }
+  finally{ $("bClaim").disabled = false; }
+};
+
+const rewardText = r => (r.label || r.id || "Reward") + ((r.qty || 1) > 1 ? ` ×${r.qty}` : "");
+
+async function refreshSeason(){
+  if (!auth) return;
+  try{
+    const board = await cmd("season_board");
+    const s = board.season || {}, you = board.you || {};
+    $("sState").textContent = s.enabled === false ? "season closed" : (s.name || "season");
+    $("sState").className = "pill " + (s.enabled === false ? "off" : "on");
+    $("sNote").innerHTML = `Free to enter — <b>no stake, no signature, no wallet</b>. The arena hosts the `
+      + `match and pays the winner in fantasy fish, eggs and resources, credited to your account. `
+      + `Selling and trading stay on the website.`;
+    const bits = [];
+    if (you.rank) bits.push(`rank <b>${you.rank}</b>`);
+    bits.push(`<b>${you.wins || 0}</b>–<b>${you.losses || 0}</b>`);
+    if (you.streak > 1) bits.push(`${you.streak} in a row`);
+    // The cap is the server's and can change without a client release, so it is read back.
+    if (you.daily_cap) bits.push(`${you.matches_today || 0}/${you.daily_cap} rewarded today`);
+    $("sStanding").innerHTML = bits.join(" · ");
+    renderPrizes(board.rewards || {});
+    applySeason(await cmd("season_state"));
+  }catch(e){ /* the season may be unconfigured on this backend */
+    $("sState").textContent = "season unavailable";
+    $("sState").className = "pill off";
+    $("sNote").textContent = "This backend does not offer season matches yet (season_board is not there). See IOS-APP.md.";
+  }
+}
+
+function renderPrizes(rewards){
+  const el = $("sPrizes"); el.innerHTML = "";
+  const title = { win:"Win", loss:"Play", streak_bonus:"On a streak" };
+  ["win","loss","streak_bonus"].forEach(bucket => {
+    const rows = rewards[bucket] || [];
+    if (!rows.length) return;
+    const d = document.createElement("div"); d.className = "item";
+    // Odds are printed only when the server sent a weight — never reconstructed here.
+    d.innerHTML = `<b>${title[bucket]}</b><table>` + rows.map(r =>
+      `<tr><td>${rewardText(r)}</td><td>${r.weight != null ? (r.weight*100).toFixed(1).replace(/\.0$/,"") + "%" : ""}</td></tr>`
+    ).join("") + `</table>`;
+    el.appendChild(d);
+  });
+}
+
+/** Take a queue/state/claim response and show where the player stands. One shape from all three. */
+function applySeason(s){
+  if (!s) return;
+  const queued = s.queued === true || s.status === "queued";
+  $("bQueue").dataset.queued = queued ? "1" : "0";
+  $("bQueue").textContent = queued ? "Leave queue" : "Find a match";
+  if (s.you) {
+    const you = s.you;
+    $("sStanding").innerHTML = [`<b>${you.wins || 0}</b>–<b>${you.losses || 0}</b>`,
+      you.streak > 1 ? `${you.streak} in a row` : ""].filter(Boolean).join(" · ");
+  }
+  if (s.reward_pending) {
+    rewardMatch = s.reward_match_id || s.match_id || matchId || "";
+    $("bClaim").hidden = !rewardMatch;
+  }
+  // Poll only while the player is actually waiting on the server.
+  if (queued && !seasonPoll) {
+    seasonPoll = setInterval(async () => {
+      try{
+        const st = await cmd("season_state");
+        applySeason(st);
+        if (st.match_id) { clearInterval(seasonPoll); seasonPoll = null; enterBattle(st.match_id); }
+      }catch(e){ clearInterval(seasonPoll); seasonPoll = null; }
+    }, 2500);
+  } else if (!queued && seasonPoll) {
+    clearInterval(seasonPoll); seasonPoll = null;
+  }
 }
 
 // ---------------------------------------------------------------- go
