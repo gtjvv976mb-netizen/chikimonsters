@@ -40,7 +40,7 @@ must hold 500k $CHIKI. See `../IOS-APP.md`.
 | **Apple Developer Program** | $99/year. Enrol at [developer.apple.com/programs](https://developer.apple.com/programs/). An individual enrolment can be approved in a day; an organisation needs a D-U-N-S number and takes longer. You can build and run on your own device without it — you need it for TestFlight and the App Store. |
 | **A Mac** | There is no supported way to build an iOS app without one. |
 | **Xcode** | Free from the Mac App Store. Check [developer.apple.com/news](https://developer.apple.com/news/) before your first upload — App Store Connect periodically requires a minimum Xcode version. |
-| **An iPhone** | Non-negotiable for this app. The simulator runs on your Mac's RAM and cores, which is precisely the environment that *cannot* reproduce the memory pressure of a 313 MB pack plus a 40 MB wasm module on a phone. |
+| **An iPhone** | Non-negotiable for this app, and already proven so: the simulator runs on your Mac's RAM and cores, and a real iPhone turned out **not** to survive the 313 MB HD pack that the app originally forced. The simulator would have told you it was fine. |
 
 ---
 
@@ -149,6 +149,32 @@ CHIK_LINK.status()       // linked wallet, device id, accounts — never a token
 CHIK_POLICY_BLOCKED      // everything the guard has refused this session
 crossOriginIsolated      // MUST be true, or the engine cannot start its threads
 ```
+
+---
+
+## 5b. Which pack does this phone get?
+
+The app used to take the 313 MB HD pack unconditionally, on the reasoning that a dedicated app has
+more headroom than a browser tab. **That was tested on a real iPhone and it is false** — forcing HD
+in Safari (Request Desktop Website serves the same pack under a slightly harsher budget than the
+app's) ran the device out of memory.
+
+So a phone now gets the 174 MB lite pack unless the shell says otherwise:
+
+```swift
+// ShellModel.deviceCanHoldHDPack
+ProcessInfo.processInfo.physicalMemory >= 6 * 1024 * 1024 * 1024
+```
+
+**That 6 GB threshold is a starting point, not a measurement.** Peak boot holds the reassembled
+pack blob, the engine's own copy and the compiled wasm at once, so the ceiling sits well above the
+353 MB of downloads — and `physicalMemory` is total RAM, not what iOS will let one web content
+process have. Raise or lower it from device testing, and prefer lite when unsure: a player on the
+lighter world is playing, and a player on a pack their phone cannot hold is watching it die at 90%.
+
+You can repeat the test on any phone without building anything: Safari → **aA → Request Desktop
+Website** → reload `chikimonsters.com/realm/`. Use a fresh tab each time, because one memory kill
+makes the loader force lite for the next 24 hours.
 
 ---
 

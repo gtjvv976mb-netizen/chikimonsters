@@ -113,6 +113,25 @@ console.log('\nthe loading screen does not advertise what the app refuses to do'
 		'no money-bearing loading panel is left unhandled' + (unhandled.length ? ' (found: ' + unhandled.join(', ') + ')' : ''));
 }
 
+console.log('\nthe app does not take a pack its phone cannot hold');
+{
+	// Measured on a real iPhone: the 313MB HD pack runs the device out of memory. The loader used
+	// to exempt the app from the lite pack with `!!window.CHIK_PHONE && !isIOSApp`. A re-export
+	// would restore that silently, and the symptom — a crash on a player's FIRST launch — is one
+	// the OOM net then hides by dropping to lite on the retry. So it is pinned here.
+	// Comment lines are excluded: the loader deliberately QUOTES the old expression while
+	// explaining why it changed, and matching that would fail on a correct file.
+	const codeLines = html.split('\n').filter((l) => !/^\s*(\/\/|\*|<!--)/.test(l));
+	check(!codeLines.some((l) => /!!window\.CHIK_PHONE\s*&&\s*!isIOSApp/.test(l)),
+		'the app is NOT exempted from the lite pack any more');
+	check(hasLoose(html, 'const hdAllowed = !!window.CHIK_HD;'),
+		'HD is opt-in via a native flag');
+	check(hasLoose(html, 'const wantLite = oomN >= 1 || metered || (!!window.CHIK_PHONE && !hdAllowed);'),
+		'and a phone gets the lite pack unless the shell grants otherwise');
+	check(/window\.CHIK_HD = !!\(window\.CHIK_IOS_APP && window\.CHIK_IOS_APP\.hd === true\);/.test(policy),
+		'the flag requires a literal true — a truthy string must not opt a 4GB phone in');
+}
+
 console.log('\nthe policy layer still carries every guard');
 {
 	check(/window\.open\s*=\s*function/.test(policy), 'window.open is wrapped (the engine hands it to the pack)');

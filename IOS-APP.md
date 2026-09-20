@@ -162,9 +162,9 @@ poll shape the pack already reads, with a code (`no_wallet`) the pack already br
 `realm/chiki-ios.js` decides at parse time:
 
 - `window.CHIK_IOS_APP` — injected by the shell's `WKUserScript` at document start. Already used
-  by the loader to pick the HD pack, so nothing new is needed on the native side.
+  by the loader for its phone special-cases, so nothing new is needed on the native side.
 - `?nocrypto=1` — reviews the same policy in an ordinary browser. It deliberately does **not**
-  set `CHIK_IOS_APP`, because that flag also selects the HD pack and would memory-kill a phone.
+  set `CHIK_IOS_APP`, because that flag also drives the loader's phone special-cases.
 
 ---
 
@@ -185,6 +185,10 @@ window.CHIK_IOS_APP = {
   metered:    false,       // NWPathMonitor isExpensive/isConstrained. The page CANNOT see this:
                            // WebKit implements no Network Information API, so navigator.connection
                            // is undefined on iOS. A true here takes the 174MB pack, not the 313MB one
+  hd:         false,       // may this device take the 313MB HD pack? MEASURED ON A REAL iPhone:
+                           // it runs out of memory. Default false; grant it only from
+                           // ProcessInfo.physicalMemory — there is no navigator.deviceMemory in
+                           // WebKit, so the page cannot decide this either. Literal true only
   locale:     "ja-JP",     // device language; the in-game switcher lives inside the compiled pack
   active:     "…",         // which wallet to play
   accounts:   [ { wallet: "…", token: "…", label: "…", linkedAt: 0 } ]
@@ -241,7 +245,7 @@ bare `window.open`). So the shell is the backstop:
 - `WKUIDelegate.createWebViewWith`: return `nil`, so no popup can open a window.
 
 **4. Configure the WebView for the realm.** It needs a secure context and cross-origin isolation
-(SharedArrayBuffer/threads). It is landscape-only on phones and runs the HD pack — the existing
+(SharedArrayBuffer/threads). It is landscape-only on phones — the existing
 loader comments in `realm/index.html` explain the memory budget, the DPR cap and the OOM net, all
 of which already special-case the app and should not be changed.
 

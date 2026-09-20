@@ -419,6 +419,19 @@
 	}
 	window.CHIK_METERED = readMetered();
 
+	// THE HD PACK IS OPT-IN, AND ONLY THE NATIVE SIDE CAN GRANT IT.
+	//
+	// The app used to take the 313MB HD pack purely because it was the app. Measured on a real
+	// iPhone that runs the device out of memory, so realm/index.html now gives a phone the 174MB
+	// lite pack unless this flag says otherwise.
+	//
+	// The page cannot make this decision: there is no way to read physical memory from JavaScript
+	// in WebKit — navigator.deviceMemory is not implemented. The shell reads
+	// ProcessInfo.processInfo.physicalMemory and decides. Absent or false means lite, which is the
+	// safe direction: a player on the lighter world is playing, and a player on a pack their phone
+	// cannot hold is watching it die at 90%.
+	window.CHIK_HD = !!(window.CHIK_IOS_APP && window.CHIK_IOS_APP.hd === true);
+
 	// Progress, for a native layer that would otherwise show a black box for several minutes.
 	// realm/index.html calls this from setBar()/say() when it exists.
 	var lastSent = -1;

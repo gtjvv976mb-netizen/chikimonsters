@@ -44,6 +44,31 @@ final class ShellModel: NSObject, ObservableObject {
 
     private let pathMonitor = NWPathMonitor()
 
+    /// Whether this device may take the 313 MB HD pack instead of the 174 MB lite one.
+    ///
+    /// THIS DEFAULTS TO NO, AND THAT IS DELIBERATE. The app used to take HD unconditionally. Forced
+    /// on a real iPhone — via Safari's Request Desktop Website, which serves the same 313 MB pack
+    /// under a slightly harsher budget than the app's — the device ran out of memory. The app is
+    /// kinder by a capped device pixel ratio and four fewer workers, but the pack is the same and
+    /// the pack is what dominates, so the honest expectation is that it dies too.
+    ///
+    /// The loader's own memory net would catch it — one kill drops the device to lite for 24 hours
+    /// — but that makes a player's FIRST launch a crash and a reload, which is also what an App
+    /// Review tester would see.
+    ///
+    /// THE THRESHOLD BELOW IS A STARTING POINT, NOT A MEASUREMENT. Peak boot holds the reassembled
+    /// pack blob, the engine's own copy of it and the compiled wasm at once, so the ceiling is well
+    /// above the 353 MB of downloads. 6 GB is the first tier where that is plausibly comfortable.
+    /// Raise or lower it from real device testing rather than reasoning — and note that
+    /// `physicalMemory` is total RAM, not what iOS will actually let one web content process have.
+    static let hdMinimumPhysicalMemory: UInt64 = 6 * 1024 * 1024 * 1024
+
+    static var deviceCanHoldHDPack: Bool {
+        // An iPad reports a desktop-class user agent, so the loader already gives it the HD pack
+        // and this flag is not consulted for it.
+        ProcessInfo.processInfo.physicalMemory >= hdMinimumPhysicalMemory
+    }
+
     var isLinked: Bool { record.isLinked }
     var activeWallet: String { record.activeAccount?.wallet ?? "" }
 
@@ -178,6 +203,9 @@ final class ShellModel: NSObject, ObservableObject {
         )
         // The page cannot see the interface; this is the only way it learns.
         payload["metered"] = isMetered
+        // Nor can it see how much memory this phone has — WebKit implements no
+        // navigator.deviceMemory. See `deviceCanHoldHDPack`.
+        payload["hd"] = Self.deviceCanHoldHDPack
         // The realm ships in English, Japanese and Chinese. The in-game switcher lives inside the
         // compiled pack, so the policy layer — which runs before the game — has no way to read it
         // and uses this instead. The device language is what the player has already told iOS.

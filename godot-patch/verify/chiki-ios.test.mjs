@@ -218,6 +218,28 @@ console.log('\napp mode — the navigation guard (the engine hands the pack wind
 	check(esThrew, 'EventSource is guarded — §3 claimed this before it was true');
 }
 
+console.log('\napp mode — the HD pack is opt-in, and only the shell can grant it');
+{
+	// Measured on a real iPhone: the 313MB HD pack runs the device out of memory. The app used to
+	// take it unconditionally. Default must now be "no".
+	const plain = boot({ app: {} });
+	check(plain.win.CHIK_HD === false, 'an app that says nothing gets the lite pack');
+
+	const granted = boot({ app: { hd: true } });
+	check(granted.win.CHIK_HD === true, 'a shell that has checked physical memory can grant HD');
+
+	// Anything other than a literal true is a no. A shell sending a string, a number or an
+	// object must not accidentally opt a 4GB phone into a pack that kills it.
+	for (const value of ['true', 1, {}, 'yes', null]) {
+		const b = boot({ app: { hd: value } });
+		if (b.win.CHIK_HD !== false) { check(false, 'hd: ' + JSON.stringify(value) + ' must not grant HD'); }
+	}
+	check(true, 'only a literal true grants it — no truthy strings, numbers or objects');
+
+	const web = boot();
+	check(web.CHIK_HD === undefined, 'the website is untouched by any of this');
+}
+
 console.log('\napp mode — the in-game news feed is filtered');
 {
 	const feed = [

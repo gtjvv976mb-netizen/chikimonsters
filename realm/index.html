@@ -1923,7 +1923,25 @@ const engine = new Engine(GODOT_CONFIG);
 		// opened a game. window.CHIK_METERED comes from the native shell (see chiki-ios.js §3d):
 		// WebKit implements no Network Information API, so the page cannot see this by itself.
 		const metered = !!window.CHIK_METERED;
-		const wantLite = oomN >= 1 || (!!window.CHIK_PHONE && !isIOSApp) || metered;
+		// THE APP NO LONGER TAKES THE HD PACK JUST BECAUSE IT IS THE APP.
+		//
+		// It used to: `!!window.CHIK_PHONE && !isIOSApp` exempted the native shell from the lite
+		// pack on purpose, on the reasoning that a dedicated app has more headroom than a browser
+		// tab. Measured on a real iPhone, that reasoning does not hold — forcing the HD pack in
+		// Safari (Request Desktop Website, which is the same 313MB pack under a slightly HARSHER
+		// budget: uncapped DPR and 24 workers, against the app's 2x cap and 20) ran the device out
+		// of memory. The app's configuration is a little kinder, but the pack is the same 313MB +
+		// 40MB wasm and that is what dominates, so the app would very likely die the same way.
+		//
+		// The OOM net would eventually rescue it — one kill and the device drops to lite for 24
+		// hours — but "eventually" means the player's FIRST launch is a crash and a reload, which
+		// is also what an App Review tester would see.
+		//
+		// So a phone gets the lite pack, app or not, unless the NATIVE side explicitly says this
+		// device has the memory (window.CHIK_HD, decided from ProcessInfo.physicalMemory — the web
+		// layer cannot see RAM). Desktop and iPad are unchanged: CHIK_PHONE is false for both.
+		const hdAllowed = !!window.CHIK_HD;
+		const wantLite = oomN >= 1 || metered || (!!window.CHIK_PHONE && !hdAllowed);
 		let man = null;
 		let usedLite = false;
 		if (wantLite) {
