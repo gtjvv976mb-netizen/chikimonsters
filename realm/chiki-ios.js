@@ -190,28 +190,40 @@
 	];
 	// Two families are refused by name.
 	//
-	// 1. THE WAGER ROUTES — wager_board, _mine, _post, _accept, _withdraw, _deposit (named in
-	//    godot-patch/README.md). PvP here is the server-hosted season match, which costs nothing.
+	// 1. THE WAGER ROUTES — kept as a belt-and-braces measure, and now known to be unnecessary:
+	//    the recovered pack has no wager route at all, and ChikiseumLiveClient refuses any
+	//    response that is not `currency: "NONE"` with `real_sol_enabled: false`. Costs nothing to
+	//    leave in place, and would catch a future build that added one.
 	//
 	// 2. CHAT — and this one is a safety decision, not a crypto one.
 	//
 	//    The game has world chat, party chat and private whispers between strangers, plus
 	//    player-set handles. App Review guideline 1.2 requires four things of an app carrying
 	//    user-generated content: a filter, a way to REPORT, a way to BLOCK, and published contact
-	//    details. Reading the backend: the filter exists (a server-authoritative profanity mask)
-	//    and contact details now exist, but there is NO report route and NO block route — the only
-	//    /report endpoints are fishing and kill telemetry. Two of four.
+	//    details. The filter exists (a server-authoritative profanity mask) and contact details
+	//    now exist, but there is NO report route and NO block route — and `Chat.gd` has no report,
+	//    block, mute or filter anywhere in its 1,169 lines. Two of four.
 	//
-	//    Building the missing two means changing the game, and the Godot project is gone. So the
-	//    app ships without chat instead. That is possible only because of how chat is transported:
-	//    it is plain HTTP (POST /chat/send, GET /chat, /world/chat, /cup/chat), while the
+	//    Building the missing two means rebuilding the pack, which needs a web export template
+	//    that does not exist (`godot-patch/RECOVERY.md`). So the app ships without chat instead.
+	//    That is possible only because of how chat is transported: it is plain HTTP, while the
 	//    WebSocket carries ONLY /world/move. Blocking these routes takes the chat away and leaves
 	//    player movement, presence and the rest of the world untouched.
 	//
-	//    `\/chat(\/|$)` catches every one of them — /chat, /chat/send, /chat/react, /chat/pin,
-	//    /chat/online, /world/chat and /cup/chat all either end in /chat or continue with /chat/.
-	//    It deliberately does not match /chatter or a /chat_tab_world.png asset.
-	var DENY_PATH = /\/chikiseum\/live\/v1\/wager_|\/chat(\/|$)/i;
+	//    THE ROUTES, read from the pack rather than from a network trace. `Chat.gd` calls exactly
+	//    two endpoints, and an earlier version of this comment named neither of them:
+	//
+	//      /world/chat — world chat.       Caught by `\/chat(\/|$)`.
+	//      /world/dm   — whispers AND party chat, both POSTing {to, text, …}.
+	//
+	//    **/world/dm was not matched, so private messages between strangers were still open in the
+	//    app** — the exact surface guideline 1.2 is about, and the one with no report or block.
+	//    It is matched by name now.
+	//
+	//    `\/chat(\/|$)` is kept broader than the pack needs so that a /chat or /chat/send on any
+	//    other surface is caught too. It deliberately does not match /chatter or a
+	//    /chat_tab_world.png asset, and `\/world\/dm(\/|$)` will not match /world/dmg either.
+	var DENY_PATH = /\/chikiseum\/live\/v1\/wager_|\/chat(\/|$)|\/world\/dm(\/|$)/i;
 
 	/** The art CDN, if one is ever configured. It is set in the body, long after this file parses,
 	 *  so it is read lazily rather than captured — a captured '' would lock the CDN out for good. */

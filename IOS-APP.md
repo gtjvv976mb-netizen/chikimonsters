@@ -169,7 +169,7 @@ future.
 | no chain traffic at all | `fetch` / `XHR` / `WebSocket` / `EventSource` / **`navigator.sendBeacon`** refuse every host but this origin and the backend | no |
 | no SOL wagers | nothing to refuse — the pack has no wager route, and the live client rejects any response that is not `currency: "NONE"` (the by-name refusal is kept as a belt-and-braces measure) | no |
 | **nothing tells the player where to get a wallet** | `__chikiPkErr` is owned by the loader, so `Chain.gd`'s *"Phantom not found — get it free at phantom.app"* is replaced before the pack can show it | no |
-| **no chat, whispers or player messages** | every chat route refused by name — `/chat`, `/chat/send`, `/chat/react`, `/chat/pin`, `/chat/online`, `/world/chat`, `/cup/chat`. Chat is plain HTTP; the WebSocket carries only `/world/move`, so movement is untouched | no |
+| **no chat, whispers or player messages** | refused by name. `Chat.gd` calls exactly two endpoints — `/world/chat` and **`/world/dm`**, the second carrying both whispers and party chat — plus `/chat*` on any other surface. Chat is plain HTTP; the WebSocket carries only `/world/move`, so movement is untouched | no |
 | no navigation out of the realm | `window.open`, anchor clicks and form posts are guarded; **same-origin `/arena/` and `/link/` are refused too** | no |
 | no token gate, no payout promises | the `$CHIKI` and `REWARDS` tabs are removed; the WELCOME, HOW TO PLAY, ROLES and EVERFLAME ISLE copy is rewritten | no |
 | the in-game news feed does not advertise markets | `updates.json` is filtered at the fetch layer — 38 of 169 entries dropped | no |
@@ -484,7 +484,7 @@ from the app copy and turn `pvp_mode` off, rather than shipping a Chikiseum that
 | `link/index.html` | the website page where a player mints a pairing code and manages linked devices |
 | `arena/index.html` | the test client; `?nocrypto=1` shows the app's surface |
 | `godot-patch/RECOVERY.md` | how the Godot project was recovered from the published pack, and why the pack cannot be rebuilt without a custom engine |
-| `godot-patch/verify/chiki-ios.test.mjs` | 150 checks over the policy layer — `node` only, no Godot |
+| `godot-patch/verify/chiki-ios.test.mjs` | 153 checks over the policy layer — `node` only, no Godot |
 | `godot-patch/verify/loader-policy.test.mjs` | tripwire: fails if `realm/index.html` loses the wiring |
 | `godot-patch/verify/verify.gd` | drives both arena clients against a fake server — needs Godot |
 

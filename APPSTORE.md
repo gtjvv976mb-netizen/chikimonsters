@@ -201,13 +201,26 @@ POST /chat/send   GET /chat      POST /chat/react   POST /chat/pin
 GET  /chat/online GET/POST /world/chat              GET/POST /cup/chat
 ```
 
+That list came from the backend. **The client's list is shorter, and one of its two routes was not
+on it.** `Chat.gd` in the recovered pack calls exactly two endpoints:
+
+```
+POST /world/chat    world chat
+POST /world/dm      whispers AND party chat  — {to, text, …}
+```
+
+`/world/dm` was not matched by the deny rule, so **private messages between strangers were still
+open in the app** — precisely the surface guideline 1.2 is about, and the one with no report or
+block behind it. It is refused by name now, with tests for it and for the near-miss `/world/dmg`.
+
 All plain HTTP. The WebSocket carries **only `/world/move`** — `server.js` says so at the handler:
 *"ONE MOVE HANDLER, TWO TRANSPORTS … a WebSocket now carries the same contract."* So refusing the
 chat routes takes the chat away and leaves movement, presence and the rest of the world working.
 
-`realm/chiki-ios.js` refuses all of them, and `CHIK_FEATURES.chat` / `.whispers` are false so a
-future pack build can also stop drawing the chat box. Fifteen checks in
-`godot-patch/verify/chiki-ios.test.mjs` pin it, including that `/world/move` still works.
+`realm/chiki-ios.js` refuses all of them, and `CHIK_FEATURES.chat` / `.whispers` are false —
+which a pack built with `godot-patch/apply-ios-pack-patch.py` could also act on to stop drawing
+the chat box. Seventeen checks in `godot-patch/verify/chiki-ios.test.mjs` pin it, including that
+`/world/move` still works.
 
 **So the answers above stand as written:** UGC **yes** (handles and chikimon nicknames still
 exist elsewhere in the game), Chat **no** — because it genuinely is not reachable from the app.

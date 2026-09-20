@@ -186,17 +186,25 @@ console.log('\napp mode — the network guard');
 	check(await rejects('https://api.chikimonsters.com/world/chat'), '/world/chat is refused');
 	check(await rejects('https://api.chikimonsters.com/cup/chat'), '/cup/chat is refused');
 
+	// The two above named from a network trace; these two are what Chat.gd actually calls, read
+	// from the recovered pack. /world/dm carries BOTH whispers and party chat, and it was not
+	// matched until the source was read — private messages between strangers, which is exactly
+	// the surface guideline 1.2 is about, and the one with no report or block behind it.
+	check(await rejects('https://api.chikimonsters.com/world/dm'), 'whispers are refused');
+	check(await rejects('https://api.chikimonsters.com/world/dm/'), 'and with a trailing slash');
+
 	// …and NOT the world itself. Chat is plain HTTP while the WebSocket carries only /world/move,
 	// so taking chat away leaves movement, presence and the rest of the game working.
 	check(await resolves('https://api.chikimonsters.com/world/move'), 'player movement still works');
 	check(await resolves('https://api.chikimonsters.com/world/state'), 'the world still works');
 	check(await resolves('https://api.chikimonsters.com/chatter'), 'a route merely starting with "chat" is not caught');
+	check(await resolves('https://api.chikimonsters.com/world/dmg'), 'and /world/dmg is not mistaken for /world/dm');
 	check(await resolves('https://api.chikimonsters.com/chikiseum/live/v1/lobby'), 'the arena lobby is allowed');
 	check(await resolves('https://api.chikimonsters.com/chikiseum/live/v1/season_queue'), 'the season match is allowed');
 	check(await resolves('https://chiki-backend-singapore.onrender.com/verify'), 'the backend is allowed');
 	check(await resolves('index.pck.0.bin'), 'same-origin pack chunks are allowed');
 	check(await resolves('blob:https://chikimonsters.com/abc'), 'blob URLs are allowed');
-	check(win.CHIK_POLICY_BLOCKED.length === 12, 'every refusal is recorded for QA (got ' + win.CHIK_POLICY_BLOCKED.length + ')');
+	check(win.CHIK_POLICY_BLOCKED.length === 14, 'every refusal is recorded for QA (got ' + win.CHIK_POLICY_BLOCKED.length + ')');
 
 	let threw = false;
 	try { const x = new win.XMLHttpRequest(); x.open('POST', 'https://api.mainnet-beta.solana.com'); }
