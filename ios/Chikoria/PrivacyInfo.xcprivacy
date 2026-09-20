@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  The app's privacy manifest. Add it to the app target in Xcode (File → New → File → App Privacy),
+  or drag this one in and make sure it is in "Copy Bundle Resources".
+
+  THIS FILE DESCRIBES THE APP AS IT IS BUILT TODAY, and it has to stay true as the app changes.
+  Two of these answers in particular are only correct because of decisions made elsewhere:
+
+    * NSPrivacyTracking is false because the app contains no advertising SDK, no analytics SDK and
+      no third-party framework of any kind. If telemetry is ever added, it has to be declared here
+      AND in the App Privacy answers in App Store Connect, and the two must agree.
+
+    * NSPrivacyCollectedDataTypes is EMPTY. The app itself collects nothing: the link token and the
+      device id live in the Keychain on the device, and the wallet address is the player's own
+      account identifier held by the game server, which the player created on the website — not
+      something this app gathers. If you disagree with that reading, the conservative answer is to
+      declare the wallet address as "Other User Content" or a user ID linked to the player; it
+      costs nothing to over-declare and a mis-declaration is what gets an app pulled.
+
+  REQUIRED-REASON APIS: the app links UserDefaults through Foundation (SwiftUI and WKWebView both
+  touch it), which is a required-reason API even when your own code never calls it directly. CA92.1
+  is the correct reason for an app that only reads and writes its own defaults inside its own
+  container. The other required-reason categories — file timestamps, disk space, active keyboards,
+  system boot time — are not used by this app's own code.
+-->
+<plist version="1.0">
+<dict>
+	<key>NSPrivacyTracking</key>
+	<false/>
+
+	<key>NSPrivacyTrackingDomains</key>
+	<array/>
+
+	<key>NSPrivacyCollectedDataTypes</key>
+	<array/>
+
+	<key>NSPrivacyAccessedAPITypes</key>
+	<array>
+		<dict>
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<!-- CA92.1: access only to defaults in the app's own container. -->
+				<string>CA92.1</string>
+			</array>
+		</dict>
+	</array>
+</dict>
+</plist>

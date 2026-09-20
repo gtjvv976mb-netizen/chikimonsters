@@ -38,6 +38,65 @@
 	var noCrypto = isApp || forced;
 
 	window.CHIK_NO_CRYPTO = noCrypto;
+
+	// ------------------------------------------------------------------ §1b language
+	//
+	// The realm ships in English, Japanese and Chinese, and the player picks inside the game. This
+	// file runs before the game does, so it cannot read that choice — it uses the shell's locale
+	// (the device language, which is what the player has already told iOS) and falls back to the
+	// browser's. Every player-facing string below goes through T().
+	//
+	// Note the loading screen's own panels have always been English-only markup; the rewrite in
+	// realm/index.html does not change that either way. What is localised here is what this file
+	// itself says to the player: the refusals and the pairing errors.
+	var LANG = (function () {
+		var raw = '';
+		try {
+			raw = String((window.CHIK_IOS_APP && window.CHIK_IOS_APP.locale)
+				|| navigator.language || navigator.userLanguage || 'en');
+		} catch (e) { raw = 'en'; }
+		raw = raw.toLowerCase();
+		if (raw.indexOf('ja') === 0) { return 'ja'; }
+		if (raw.indexOf('zh') === 0) { return 'zh'; }
+		return 'en';
+	}());
+	window.CHIK_LANG = LANG;
+
+	var STRINGS = {
+		blocked: {
+			en: 'This is not available in the Chikoria app.',
+			ja: 'この機能はチコリアアプリでは利用できません。',
+			zh: '此功能在 Chikoria 应用中不可用。',
+		},
+		// Names no outside destination, in every language — see the note on guideline 3.1.1 below.
+		noTrade: {
+			en: 'Selling and trading are not available in the app. Everything you earn here is yours to keep.',
+			ja: 'アプリでは売買・取引はできません。ここで手に入れたものは、すべてあなたのものです。',
+			zh: '应用内无法买卖或交易。你在这里获得的一切都归你所有。',
+		},
+		codeShort: {
+			en: 'That code looks too short.',
+			ja: 'コードが短すぎるようです。',
+			zh: '这个代码似乎太短了。',
+		},
+		codeBad: {
+			en: 'That code is not valid any more. Mint a new one on the website.',
+			ja: 'このコードは無効です。ウェブサイトで新しいコードを発行してください。',
+			zh: '该代码已失效。请在网站上重新生成一个。',
+		},
+		maintenance: {
+			en: 'Chikoria is down for maintenance. Try again shortly.',
+			ja: 'チコリアはメンテナンス中です。しばらくしてからお試しください。',
+			zh: 'Chikoria 正在维护中，请稍后再试。',
+		},
+	};
+
+	function T(key) {
+		var row = STRINGS[key];
+		if (!row) { return key; }
+		return row[LANG] || row.en;
+	}
+
 	if (!noCrypto) {
 		// On the web nothing here applies: the site keeps the Trading Post, the marketplace, story
 		// payouts and SOL wagers exactly as they are. Publish the policy anyway so one object always
@@ -180,7 +239,7 @@
 			var no = verdict(url);
 			if (no) {
 				refuse(url, no);
-				throw new Error('This is not available in the Chikoria app.');
+				throw new Error(T('blocked'));
 			}
 			this.__chikVerify = /\/verify(\?|$)/.test(String(url).split('#')[0]);
 			return xopen.apply(this, arguments);
@@ -220,7 +279,7 @@
 				try { host = new URL(u, location.href).host; } catch (e) {}
 				if (host && ALLOWED_HOSTS.indexOf(host) < 0) {
 					refuse(u, 'origin');
-					throw new Error('This is not available in the Chikoria app.');
+					throw new Error(T('blocked'));
 				}
 				return protocols === undefined ? new RealWS(u) : new RealWS(u, protocols);
 			};
@@ -239,7 +298,7 @@
 				var no = verdict(url);
 				if (no) {
 					refuse(url, no);
-					throw new Error('This is not available in the Chikoria app.');
+					throw new Error(T('blocked'));
 				}
 				return cfg === undefined ? new RealES(url) : new RealES(url, cfg);
 			};
@@ -328,6 +387,51 @@
 		}, true);
 	} catch (e) {}
 
+	// ------------------------------------------------------------------ §3d metered connections
+	//
+	// A first launch pulls the HD pack: 313 MB of game data plus a 40 MB engine. The app takes it
+	// on purpose — it is the third variant beside desktop and mobile web — but nothing anywhere
+	// asked what network the phone is on, so a player on a cellular plan could burn 350 MB without
+	// being told.
+	//
+	// THE PAGE CANNOT ANSWER THAT QUESTION ITSELF. The Network Information API
+	// (navigator.connection, saveData, effectiveType) is not implemented in WebKit, so on iOS it is
+	// simply undefined — in Safari and in a WKWebView alike. Only the native side can see the
+	// interface, via NWPathMonitor's isExpensive/isConstrained. So the shell injects the verdict
+	// and may update it while the app runs; this publishes it for the loader to act on.
+	//
+	// What the loader does with it: takes the LITE pack instead (174 MB, already published), which
+	// is a 139 MB saving and needs no dialog. Chosen over asking because a modal in front of a
+	// player who just opened a game is worse than a slightly lighter world.
+	function readMetered() {
+		var app = window.CHIK_IOS_APP;
+		if (app && typeof app.metered === 'boolean') { return app.metered; }
+		// Non-iOS browsers DO implement this, so honour it where it exists.
+		try {
+			var c = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+			if (c) {
+				if (c.saveData === true) { return true; }
+				if (typeof c.type === 'string' && c.type === 'cellular') { return true; }
+				if (typeof c.effectiveType === 'string' && /^(slow-)?2g$/.test(c.effectiveType)) { return true; }
+			}
+		} catch (e) {}
+		return false;
+	}
+	window.CHIK_METERED = readMetered();
+
+	// Progress, for a native layer that would otherwise show a black box for several minutes.
+	// realm/index.html calls this from setBar()/say() when it exists.
+	var lastSent = -1;
+	window.CHIK_PROGRESS = function (fraction, note) {
+		var pct = Math.round(Math.max(0, Math.min(1, Number(fraction) || 0)) * 100);
+		if (pct === lastSent && !note) { return; }
+		lastSent = pct;
+		try {
+			var h = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.chikiLink;
+			if (h) { h.postMessage({ kind: 'progress', percent: pct, note: String(note || ''), metered: !!window.CHIK_METERED }); }
+		} catch (e) {}
+	};
+
 	// ------------------------------------------------------------------ §3c the news feed
 	//
 	// realm/updates.json is the in-game News panel: 169 entries of release notes, written for the
@@ -409,7 +513,7 @@
 	// IT MUST ALSO NOT NAME A DESTINATION. Pointing the player at an outside purchasing mechanism is
 	// what App Review guideline 3.1.1 restricts, and the earlier wording ("Selling and trading happen
 	// on chikimonsters.com") did exactly that. State the fact, offer no outside route.
-	var NOPE = 'Selling and trading are not available in the app. Everything you earn here is yours to keep.';
+	var NOPE = T('noTrade');
 
 	window.__chikiBuyDone = ''; window.__chikiBuySig = ''; window.__chikiBuyErr = '';
 	window.__chikiBuy = function () {
@@ -752,7 +856,7 @@
 		if (!cfg || typeof cfg !== 'object') { return; }
 		if (cfg.min_shell) { MIN_SHELL = String(cfg.min_shell); checkShellVersion(); }
 		if (cfg.paused === true) {
-			announce('paused', { message: String(cfg.message || 'Chikoria is down for maintenance. Try again shortly.') });
+			announce('paused', { message: String(cfg.message || T('maintenance')) });
 		}
 	};
 
@@ -800,7 +904,7 @@
 		/** Redeem a code minted on chikimonsters.com/link/. Resolves to {wallet}. */
 		redeem: function (code) {
 			var clean = String(code || '').toUpperCase().replace(/[^0-9A-Z]/g, '');
-			if (clean.length < 6) { return Promise.reject(new Error('That code looks too short.')); }
+			if (clean.length < 6) { return Promise.reject(new Error(T('codeShort'))); }
 			return realFetch(apiBase() + '/link/redeem', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
@@ -813,7 +917,7 @@
 			}).then(function (r) {
 				return r.json().catch(function () { return {}; }).then(function (j) {
 					if (!r.ok || !j.linkToken || !j.wallet) {
-						throw new Error(j.error || 'That code is not valid any more. Mint a new one on the website.');
+						throw new Error(j.error || T('codeBad'));
 					}
 					adopt(String(j.wallet), String(j.linkToken), String(j.label || ''));
 					announce('linked', { wallet: j.wallet });

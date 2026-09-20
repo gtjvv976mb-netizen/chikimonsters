@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Privacy — Chikoria</title>
+<meta name="description" content="What the Chikoria game and iOS app hold about you, and what they do not.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='26'%3E%F0%9F%94%92%3C/text%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#0b1220; --panel:#121c30; --line:#24334e;
+    --ink:#eaf2ff; --dim:#93a6c4; --gold:#ffd34d;
+    color-scheme: dark;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{min-height:100%;background:var(--bg);color:var(--ink);
+    font:16px/1.65 'Nunito',system-ui,-apple-system,Segoe UI,sans-serif}
+  body{padding:max(20px,env(safe-area-inset-top)) 18px max(24px,env(safe-area-inset-bottom))}
+  .wrap{max-width:720px;margin:0 auto}
+  h1{font-size:clamp(24px,5vw,32px);margin-bottom:6px}
+  h2{font-size:19px;color:var(--gold);margin:30px 0 10px}
+  p,li{color:var(--ink)}
+  p{margin:10px 0}
+  ul{margin:10px 0 10px 22px}
+  li{margin:6px 0}
+  .sub{color:var(--dim);font-size:14px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;margin:18px 0}
+  .draft{background:#2a2415;border-color:#5c4a2b;color:#ffe9b8}
+  a{color:var(--gold)}
+  code{background:#0a1322;border:1px solid var(--line);border-radius:5px;padding:1px 6px;font-size:14px}
+  footer{margin:34px 0 0;color:var(--dim);font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Privacy</h1>
+  <p class="sub">Chikoria, chikimonsters.com, and the Chikoria iOS app.</p>
+
+  <div class="card draft">
+    <b>Draft — not yet reviewed by a lawyer.</b> This page is written to be accurate about what the
+    software actually does, which is the hard part. It is not legal advice and it has not been
+    checked against GDPR, CCPA or the App Store's own requirements. Have someone qualified read it
+    before the app is submitted, and change whatever they tell you to.
+  </div>
+
+  <h2>The short version</h2>
+  <p>Your Chikoria account is a Solana wallet address. We hold what you did in the game against
+  that address — your chikimon, your satchel, your quests, your battles. We do not hold your name,
+  your email, your phone number or your location, because we never ask for them.</p>
+
+  <h2>What we hold</h2>
+  <ul>
+    <li><b>Your wallet address.</b> It is your account name. It is public on the Solana blockchain
+    by design, and it is how your saved game is found.</li>
+    <li><b>Your game progress.</b> Creatures, items, levels, quest state, battle results — the
+    cloud save the website and the app both read.</li>
+    <li><b>A device link.</b> When you pair the iOS app, the server issues that device a token so
+    it can play your account without a wallet. It is stored in the iPhone's Keychain and sent to
+    our server to sign in. It authorises playing; it cannot sign a transaction, spend, sell or move
+    anything.</li>
+    <li><b>A device identifier we generate.</b> A random value made on your device the first time
+    the app runs, so you can see and revoke that device from the website. It is not your phone's
+    identifier, and it is not shared with anyone.</li>
+    <li><b>Ordinary server logs.</b> Requests to our servers are logged, including IP address, for
+    security and debugging.</li>
+  </ul>
+
+  <h2>What we do not do</h2>
+  <ul>
+    <li>We do not ask for, receive or store your private key or seed phrase. Ever. Nobody
+    legitimate ever will.</li>
+    <li>The iOS app contains <b>no wallet</b> and cannot construct, sign or send a transaction.</li>
+    <li>We do not sell your data.</li>
+    <li>We do not track you across other apps or websites. The iOS app contains no advertising
+    SDK and no analytics SDK.</li>
+    <li>We do not collect your contacts, photos, microphone, camera or location.</li>
+  </ul>
+
+  <h2>The iOS app specifically</h2>
+  <p>The app is the game's world with the money taken out of it. It has no wallet, no purchases and
+  no trading. It talks to two places and nothing else: this website, and the Chikoria game server.
+  It is not permitted to reach anything else — not a blockchain node, not a marketplace, not an
+  advertiser — and that restriction is enforced in the app itself, not merely promised here.</p>
+  <p>If you are curious, the enforcement is public:
+  <a href="https://github.com/gtjvv976mb-netizen/chikimonsters/blob/main/realm/chiki-ios.js">chiki-ios.js</a>
+  is the file that does it.</p>
+
+  <h2>The blockchain part</h2>
+  <p>Some things you earn are recorded on the Solana blockchain. That ledger is public and
+  permanent, and it is not ours to edit or erase. Anything written there stays there, whatever we
+  do with our own records. That is the nature of the technology, not a policy choice.</p>
+
+  <h2>Your choices</h2>
+  <ul>
+    <li><b>Unlink a device.</b> On the website, open <a href="/link/">Realm Link</a> and revoke it.
+    The token stops working immediately. You can also unlink from inside the app.</li>
+    <li><b>Delete your account.</b> Ask from the app, under Account, or write to the address below.
+    We delete your Chikoria progress from our servers. Assets held on-chain belong to your wallet
+    and are outside our reach.</li>
+    <li><b>Ask what we hold.</b> Write to the address below with your wallet address.</li>
+  </ul>
+
+  <h2>Children</h2>
+  <p>Chikoria is not directed at children under 13, and we do not knowingly hold data about them.
+  If you believe a child has an account, contact us and we will remove it.</p>
+
+  <h2>Changes</h2>
+  <p>If this page changes in a way that matters, we will say so in the game's news panel rather
+  than quietly editing it.</p>
+
+  <h2>Contact</h2>
+  <p><!-- FILL THIS IN before publishing. App Store Connect requires a working support URL and a
+       contact route, and a privacy policy with no way to reach anyone fails review. -->
+  <code>privacy@chikimonsters.com</code> — <b>replace with a monitored address before submission.</b></p>
+
+  <footer>
+    <p>Last updated: <span id="updated">—</span> ·
+    <a href="/">chikimonsters.com</a> · <a href="/link/">Realm Link</a></p>
+  </footer>
+</div>
+<script>
+  // Stamped from the document rather than hardcoded, so an edit cannot leave a stale date behind.
+  document.getElementById("updated").textContent =
+    new Date(document.lastModified).toLocaleDateString(undefined, { year:"numeric", month:"long", day:"numeric" });
+</script>
+</body>
+</html>

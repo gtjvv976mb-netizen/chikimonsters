@@ -134,7 +134,7 @@ func claim(for_match_id: String = "") -> Dictionary:
 	if id == "":
 		id = match_id if match_id != "" else _last_match
 	if id == "":
-		failed.emit("NOTHING_TO_CLAIM", "There is no finished match to collect.")
+		failed.emit("NOTHING_TO_CLAIM", tr("There is no finished match to collect."))
 		return {}
 	var response := await _call("season_claim", {"match_id": id})
 	if response.is_empty():
@@ -173,17 +173,22 @@ static func rewards_text(rewards: Array) -> String:
 
 
 ## What the player should do next, in one line, or "" when it is the server's move.
+##
+## NOTE the translation calls are TranslationServer.translate(), not tr(). This is a `static func`
+## and tr() is an instance method on Object — calling it here would not compile. The singleton does
+## the same lookup and, like tr(), returns the key unchanged when no translation exists, so English
+## still reads correctly before any translation file is added for these strings.
 static func next_step(state: Dictionary) -> String:
 	if state.get("reward_pending", false) == true:
-		return "Collect your prize."
+		return TranslationServer.translate("Collect your prize.")
 	match String(state.get("status", "")):
-		"idle":    return "Queue for a match."
-		"queued":  return "Finding an opponent…"
-		"paired":  return "Opponent found. Entering…"
-		"ready":   return "Waiting for both fighters…"
-		"active":  return "Fight!"
-		"decided": return "Collect your prize."
-		"left":    return "You left the queue."
+		"idle":    return TranslationServer.translate("Queue for a match.")
+		"queued":  return TranslationServer.translate("Finding an opponent…")
+		"paired":  return TranslationServer.translate("Opponent found. Entering…")
+		"ready":   return TranslationServer.translate("Waiting for both fighters…")
+		"active":  return TranslationServer.translate("Fight!")
+		"decided": return TranslationServer.translate("Collect your prize.")
+		"left":    return TranslationServer.translate("You left the queue.")
 	return ""
 
 
@@ -276,16 +281,16 @@ func _absorb(response: Dictionary) -> void:
 ## wording is about protocol rather than about what the player should do.
 func _friendly(code: String, message: String) -> String:
 	match code:
-		"SEASON_DISABLED":  return "Season matches are switched off right now."
-		"SEASON_CLOSED":    return "This season has ended. The next one starts soon."
-		"NOT_ADMITTED":     return "Pick a chikimon for the arena first."
-		"ALREADY_QUEUED":   return "You are already in the queue."
-		"NOT_QUEUED":       return "You are not in the queue."
-		"ACCOUNT_BUSY":     return "Finish your current match first."
-		"DAILY_CAP":        return "You have had every rewarded match today. Come back tomorrow."
-		"INCOMPATIBLE":     return "No opponent in your band right now — try again in a moment."
-		"ALREADY_CLAIMED":  return "You have already collected that prize."
-		"MATCH_UNDECIDED":  return "That match is not finished yet."
-		"RATE_LIMIT":       return "Too quick — try again in a moment."
-		"UNAVAILABLE":      return "The arena is restarting. Try again shortly."
+		"SEASON_DISABLED":  return tr("Season matches are switched off right now.")
+		"SEASON_CLOSED":    return tr("This season has ended. The next one starts soon.")
+		"NOT_ADMITTED":     return tr("Pick a chikimon for the arena first.")
+		"ALREADY_QUEUED":   return tr("You are already in the queue.")
+		"NOT_QUEUED":       return tr("You are not in the queue.")
+		"ACCOUNT_BUSY":     return tr("Finish your current match first.")
+		"DAILY_CAP":        return tr("You have had every rewarded match today. Come back tomorrow.")
+		"INCOMPATIBLE":     return tr("No opponent in your band right now — try again in a moment.")
+		"ALREADY_CLAIMED":  return tr("You have already collected that prize.")
+		"MATCH_UNDECIDED":  return tr("That match is not finished yet.")
+		"RATE_LIMIT":       return tr("Too quick — try again in a moment.")
+		"UNAVAILABLE":      return tr("The arena is restarting. Try again shortly.")
 	return message

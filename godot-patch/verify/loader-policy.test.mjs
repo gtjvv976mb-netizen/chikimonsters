@@ -126,9 +126,16 @@ console.log('\nthe policy layer still carries every guard');
 	check(/MIN_SHELL/.test(policy) && /stale-shell/.test(policy), 'the shell version handshake exists');
 	check(/CHIK_LINK_CONFIG/.test(policy), 'the server can pause the app without a release');
 	// The steering rule: the refusal copy must not name an outside destination (guideline 3.1.1).
-	const nope = (policy.match(/var NOPE = '([^']+)'/) || [])[1] || '';
-	check(nope.length > 0 && !/chikimonsters\.com|website/i.test(nope),
-		'the refusal copy names no outside store');
+	// Checked across EVERY language, not just English — a translation that helpfully added the
+	// website back would be the same violation, and would be the easy one to miss.
+	const block = (policy.match(/noTrade:\s*\{([\s\S]*?)\},/) || [])[1] || '';
+	const variants = [...block.matchAll(/^\s*(en|ja|zh):\s*'([^']*)'/gm)].map((m) => [m[1], m[2]]);
+	check(variants.length === 3, 'the refusal copy exists in all three languages (got ' + variants.length + ')');
+	const steering = variants.filter(([, text]) => /chikimonsters\.com|website|ウェブサイト|网站/i.test(text));
+	check(steering.length === 0,
+		'and none of them names an outside store' + (steering.length ? ' (' + steering.map((s) => s[0]).join(', ') + ')' : ''));
+	check(/function T\(key\)/.test(policy) && /window\.CHIK_LANG/.test(policy),
+		'player-facing strings go through a language table');
 }
 
 console.log('\nevery inline script still parses');

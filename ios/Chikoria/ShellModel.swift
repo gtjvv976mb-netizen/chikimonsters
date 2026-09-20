@@ -1,6 +1,7 @@
 import Foundation
 import WebKit
 import UIKit
+import Network
 
 /// What the player should be looking at.
 enum ShellPhase: Equatable {
@@ -28,6 +29,20 @@ final class ShellModel: NSObject, ObservableObject {
     @Published private(set) var phase: ShellPhase = .booting
     @Published private(set) var record: LinkRecord
     @Published private(set) var policyIsLive = false     // proved by a 'ready' message, never assumed
+
+    /// 0…100 while the realm builds itself, plus the loader's own status line. Without this the
+    /// app is a black box for the several minutes a cold boot takes.
+    @Published private(set) var progress: Int = 0
+    @Published private(set) var progressNote: String = ""
+
+    /// Whether the phone is on a connection the player pays for by the megabyte.
+    ///
+    /// ONLY THE NATIVE SIDE CAN ANSWER THIS. WebKit implements no Network Information API, so
+    /// `navigator.connection` is undefined in the web layer on iOS — in Safari and in a WKWebView
+    /// alike. The page therefore cannot choose the lighter pack on its own; it waits to be told.
+    @Published private(set) var isMetered = false
+
+    private let pathMonitor = NWPathMonitor()
 
     var isLinked: Bool { record.isLinked }
     var activeWallet: String { record.activeAccount?.wallet ?? "" }
@@ -106,8 +121,36 @@ final class ShellModel: NSObject, ObservableObject {
         // re-pairs on every launch with no error anywhere.
         controller.add(MessageProxy(self), name: "chikiLink")
 
+        startPathMonitor()
         installInjection()
     }
+
+    /// Watch the interface so the pack choice can be made before the download starts, and so a
+    /// player who walks off Wi-Fi mid-session is told rather than silently billed.
+    ///
+    /// `isExpensive` covers cellular and personal hotspots; `isConstrained` is Low Data Mode, which
+    /// is the player explicitly asking apps to use less. Either is a reason to take the lite pack.
+    private func startPathMonitor() {
+        // Read the current path synchronously if one is already available, so the very first
+        // injection carries the right answer rather than defaulting to "unmetered" and being
+        // corrected after the download has begun.
+        isMetered = pathMonitor.currentPath.isExpensive || pathMonitor.currentPath.isConstrained
+
+        pathMonitor.pathUpdateHandler = { [weak self] path in
+            let metered = path.isExpensive || path.isConstrained
+            Task { @MainActor [weak self] in
+                guard let self, metered != self.isMetered else { return }
+                self.isMetered = metered
+                // Tell the page. It cannot change the pack that is already downloading, but a
+                // later launch — and the OOM fallback — will honour it.
+                self.webView.evaluateJavaScript("window.CHIK_METERED = \(metered); true;", completionHandler: nil)
+                self.installInjection()
+            }
+        }
+        pathMonitor.start(queue: DispatchQueue(label: "com.chikimonsters.path"))
+    }
+
+    deinit { pathMonitor.cancel() }
 
     // MARK: - Injection
 
@@ -128,11 +171,17 @@ final class ShellModel: NSObject, ObservableObject {
     /// an account switch would revert, and the reload after a first pairing would land unlinked on
     /// a device that had just paired.
     private func installInjection() {
-        let payload = record.injectionPayload(
+        var payload = record.injectionPayload(
             deviceName: UIDevice.current.model,     // "iPhone" — not the player's device name
             version: appVersion,
             build: appBuild
         )
+        // The page cannot see the interface; this is the only way it learns.
+        payload["metered"] = isMetered
+        // The realm ships in English, Japanese and Chinese. The in-game switcher lives inside the
+        // compiled pack, so the policy layer — which runs before the game — has no way to read it
+        // and uses this instead. The device language is what the player has already told iOS.
+        payload["locale"] = Locale.preferredLanguages.first ?? "en"
         // Built with JSONSerialization, never string interpolation: a wallet or label is data, and
         // a stray quote in it would be a script-injection bug in our own shell.
         guard let data = try? JSONSerialization.data(withJSONObject: payload),
@@ -329,6 +378,10 @@ final class ShellModel: NSObject, ObservableObject {
 
         case "paused":
             phase = .paused(body["message"] as? String ?? "Chikoria is down for maintenance.")
+
+        case "progress":
+            progress = body["percent"] as? Int ?? progress
+            progressNote = body["note"] as? String ?? progressNote
 
         case "external-link":
             openExternal(body["url"] as? String)

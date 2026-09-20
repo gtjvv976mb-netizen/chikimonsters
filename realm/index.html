@@ -1612,9 +1612,15 @@ const engine = new Engine(GODOT_CONFIG);
 		pct.textContent = Math.round(v * 100) + '%';
 		// a screen reader previously had no way to know this page was doing anything at all
 		if (barwrap) { barwrap.setAttribute('aria-valuenow', String(Math.round(v * 100))); }
+		// and the native shell had no way at all: without this the app shows a black box for the
+		// several minutes a cold boot takes, which is indistinguishable from a hang.
+		if (window.CHIK_PROGRESS) { window.CHIK_PROGRESS(v, ''); }
 	}
 	// The loader's own messages used to go to #tip, where the 4.2s carousel erased them.
-	function say(msg) { if (statusLine) { statusLine.textContent = msg; } }
+	function say(msg) {
+		if (statusLine) { statusLine.textContent = msg; }
+		if (window.CHIK_PROGRESS) { window.CHIK_PROGRESS(lastBar, msg); }
+	}
 	let failed = false;
 	function fail(e) {
 		if (failed) { return; }
@@ -1910,7 +1916,14 @@ const engine = new Engine(GODOT_CONFIG);
 		// The OOM net above still applies to it: a device that was memory-killed drops to the lite
 		// pack on the next load rather than looping.
 		const isIOSApp = !!window.CHIK_IOS_APP;
-		const wantLite = oomN >= 1 || (!!window.CHIK_PHONE && !isIOSApp);
+		// A METERED CONNECTION TAKES THE LITE PACK. The app otherwise pulls 313MB of pack plus a
+		// 40MB engine, and nothing used to ask what network the phone was on — a player on a
+		// cellular plan could spend 350MB of it without being told. The lite pack is 174MB and is
+		// already published, so this is a 139MB saving with no dialog in front of someone who just
+		// opened a game. window.CHIK_METERED comes from the native shell (see chiki-ios.js §3d):
+		// WebKit implements no Network Information API, so the page cannot see this by itself.
+		const metered = !!window.CHIK_METERED;
+		const wantLite = oomN >= 1 || (!!window.CHIK_PHONE && !isIOSApp) || metered;
 		let man = null;
 		let usedLite = false;
 		if (wantLite) {

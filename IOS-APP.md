@@ -180,8 +180,12 @@ parses, so it must be complete before the first script runs:
 window.CHIK_IOS_APP = {
   deviceName: "iPhone",
   version:    "1.0.0",     // compared against MIN_SHELL; too old → a "stale-shell" message
-  keychain:   true,        // "I hold the credential" — turns OFF all localStorage writes
+  keychain:   true,        // "I hold the credential" — no link data is written to localStorage
   deviceId:   "…",         // from the Keychain. MUST be stable: the token is bound to it
+  metered:    false,       // NWPathMonitor isExpensive/isConstrained. The page CANNOT see this:
+                           // WebKit implements no Network Information API, so navigator.connection
+                           // is undefined on iOS. A true here takes the 174MB pack, not the 313MB one
+  locale:     "ja-JP",     // device language; the in-game switcher lives inside the compiled pack
   active:     "…",         // which wallet to play
   accounts:   [ { wallet: "…", token: "…", label: "…", linkedAt: 0 } ]
 };
@@ -216,6 +220,7 @@ it.
 | `kind` | payload | what the shell does |
 |---|---|---|
 | `ready` | `{linked, wallet, deviceId, custody}` | `linked: false` → show the pairing screen |
+| `progress` | `{percent, note, metered}` | show it — a cold boot is minutes of black box otherwise |
 | `persist` | `{deviceId, active, accounts:[{wallet,token,label,linkedAt}]}` | **write to the Keychain** (replace wholesale; an empty `accounts` means erase) |
 | `linked` | `{wallet}` | dismiss pairing, show the game |
 | `switched` | `{wallet}` | the page is reloading with another account |

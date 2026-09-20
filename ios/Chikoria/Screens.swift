@@ -70,6 +70,17 @@ struct RootView: View {
         .preferredColorScheme(.dark)
         .task { model.start() }
         .sheet(isPresented: $showAccount) { AccountView(model: model) }
+        .overlay(alignment: .bottom) {
+            // The web loader draws its own bar, so this does not duplicate it. It carries the one
+            // thing the page cannot know and the player would otherwise only discover on their
+            // bill: that this is a large download and they are not on Wi-Fi.
+            if model.phase == .booting && model.isMetered {
+                MeteredBanner(percent: model.progress)
+                    .padding(.bottom, 12)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+        }
+        .animation(.easeInOut, value: model.isMetered)
         .overlay(alignment: .topTrailing) {
             if model.phase == .playing {
                 Button { showAccount = true } label: {
@@ -279,6 +290,41 @@ struct AccountView: View {
 
     private func short(_ s: String) -> String {
         s.count > 12 ? "\(s.prefix(4))…\(s.suffix(4))" : s
+    }
+}
+
+// MARK: - Metered banner
+
+/// Shown only on a connection the player pays for by the megabyte.
+///
+/// The numbers are honest about which pack is actually being fetched: the loader drops to the
+/// lighter 174 MB pack on a metered connection rather than the 313 MB one, so quoting the larger
+/// figure here would be wrong as well as alarming.
+struct MeteredBanner: View {
+    let percent: Int
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "antenna.radiowaves.left.and.right")
+                .foregroundStyle(Ink.gold)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Building the realm over mobile data")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(Ink.text)
+                Text("Using the lighter world — about 175 MB, once. Wi-Fi is kinder to your plan.")
+                    .font(.caption2)
+                    .foregroundStyle(Ink.dim)
+            }
+            Spacer(minLength: 0)
+            Text("\(percent)%")
+                .font(.footnote.monospacedDigit().weight(.bold))
+                .foregroundStyle(Ink.gold)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(Ink.panel.opacity(0.95), in: RoundedRectangle(cornerRadius: 12))
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Ink.line))
+        .padding(.horizontal, 16)
     }
 }
 

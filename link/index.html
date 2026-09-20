@@ -80,7 +80,7 @@
       <button class="ghost" id="bNew">New code</button></div>
     <div class="code" id="code">&middot;&middot;&middot;&middot;&middot;&middot;&middot;&middot;</div>
     <div class="clock" id="clock"></div>
-    <ol class="muted">
+    <ol class="muted" id="steps">
       <li>Open <b>Chikoria</b> on your iPhone.</li>
       <li>Tap <b>Link my account</b>.</li>
       <li>Type the code above. It is good for one device, once.</li>
@@ -103,6 +103,88 @@
   </p>
 </div>
 
+<script>
+// LANGUAGE. This is the one page a player who does not read English MUST use to get into the app
+// at all — everything else they can reach is inside the game, which has its own switcher. So the
+// three steps and the headline are translated from navigator.language, with a manual switch for a
+// player whose device language is not the one they read.
+(function(){
+"use strict";
+const I18N = {
+  en: {
+    title: "🔗 Realm Link",
+    sub: "Pair the Chikoria app on your iPhone to this account. Everything you own comes with you, and everything you gather there is here when you get back.",
+    h1: "1 · Sign in with your wallet",
+    h2: "2 · Type this into the app",
+    steps: ["Open <b>Chikoria</b> on your iPhone.", "Tap <b>Link my account</b>.", "Type the code above. It is good for one device, once."],
+    connect: "Connect Phantom",
+    newCode: "New code",
+    note: "Phantom signs one message proving the account is yours. It is not a transaction and moves nothing. <b>The app never sees your wallet</b> — that is the point of this page.",
+  },
+  ja: {
+    title: "🔗 レルムリンク",
+    sub: "iPhone のチコリアアプリをこのアカウントに接続します。持ち物はすべて一緒に移り、アプリで集めたものも戻ってきたときにここにあります。",
+    h1: "1 · ウォレットでサインイン",
+    h2: "2 · アプリにこのコードを入力",
+    steps: ["iPhone で <b>Chikoria</b> を開きます。", "<b>アカウントを接続</b>をタップします。", "上のコードを入力します。1台につき1回だけ有効です。"],
+    connect: "Phantom に接続",
+    newCode: "新しいコード",
+    note: "Phantom がアカウントの所有を証明するメッセージに1回署名します。取引ではなく、何も動かしません。<b>アプリがウォレットに触れることはありません</b> — それがこのページの目的です。",
+  },
+  zh: {
+    title: "🔗 领域连接",
+    sub: "将 iPhone 上的 Chikoria 应用与此账号配对。你拥有的一切都会随你同行，在应用中收集的东西回到这里时也都在。",
+    h1: "1 · 使用钱包登录",
+    h2: "2 · 在应用中输入此代码",
+    steps: ["在 iPhone 上打开 <b>Chikoria</b>。", "点击<b>连接我的账号</b>。", "输入上方的代码。每台设备仅可使用一次。"],
+    connect: "连接 Phantom",
+    newCode: "新代码",
+    note: "Phantom 会签署一条证明账号归你所有的消息。这不是交易，不会转移任何资产。<b>应用永远不会接触你的钱包</b> —— 这正是本页面的意义。",
+  },
+};
+
+const LANG = (function(){
+  try {
+    const saved = localStorage.getItem("chikLinkLang");
+    if (saved && I18N[saved]) return saved;
+  } catch (e) {}
+  const raw = String(navigator.language || "en").toLowerCase();
+  if (raw.indexOf("ja") === 0) return "ja";
+  if (raw.indexOf("zh") === 0) return "zh";
+  return "en";
+})();
+
+(function applyLanguage(){
+  const t = I18N[LANG];
+  document.documentElement.lang = LANG;
+  const set = (sel, html) => { const el = document.querySelector(sel); if (el) el.innerHTML = html; };
+  set("h1", t.title);
+  set(".sub", t.sub);
+  set("#cSignin h2", t.h1);
+  set("#cCode h2", t.h2);
+  set("#cSignin .muted", t.note);
+  const bc = document.getElementById("bConnect"); if (bc) bc.textContent = t.connect;
+  const bn = document.getElementById("bNew"); if (bn) bn.textContent = t.newCode;
+  const steps = document.getElementById("steps");
+  if (steps) steps.innerHTML = t.steps.map(s => "<li>" + s + "</li>").join("");
+
+  // A manual switch, because a device language is not always a reading language.
+  const bar = document.createElement("div");
+  bar.className = "row";
+  bar.style.cssText = "justify-content:center;margin-top:18px;gap:8px";
+  ["en","ja","zh"].forEach(code => {
+    const b = document.createElement("button");
+    b.className = "ghost";
+    b.style.cssText = "padding:6px 12px;font-size:13px";
+    b.textContent = { en: "English", ja: "日本語", zh: "中文" }[code];
+    if (code === LANG) b.style.borderColor = "var(--gold)";
+    b.onclick = () => { try { localStorage.setItem("chikLinkLang", code); } catch(e){} location.reload(); };
+    bar.appendChild(b);
+  });
+  document.querySelector(".wrap").appendChild(bar);
+})();
+})();
+</script>
 <script>
 (function(){
 "use strict";

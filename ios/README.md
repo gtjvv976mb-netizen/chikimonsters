@@ -7,6 +7,10 @@ The Swift in `Chikoria/` is complete and pasteable. What is *not* here is an Xco
 `.xcodeproj` is machine-generated, merges badly and would be stale within a week. You create it
 once, in five minutes, and add these files.
 
+> **Not compiled.** These sources were written without a Mac. They are structurally checked and
+> two compile errors were caught by review before they shipped, but "it builds" is a claim only
+> Xcode can make. Expect to fix something the first time you press Run.
+
 ---
 
 ## 0. Before you start: what blocks what
@@ -53,8 +57,9 @@ must hold 500k $CHIKI. See `../IOS-APP.md`.
 4. Save it *outside* this repository. This repo is published by GitHub Pages — every tracked file
    is served at `chikimonsters.com/<path>`, and an Xcode project has no business there.
 5. Delete the generated `ContentView.swift` and `ChikoriaApp.swift`.
-6. Drag in all four files from `ios/Chikoria/`: `ChikoriaApp.swift`, `ShellModel.swift`,
-   `Screens.swift`, `LinkKeychain.swift`. Tick **Copy items if needed**.
+6. Drag in everything from `ios/Chikoria/`: `ChikoriaApp.swift`, `ShellModel.swift`,
+   `Screens.swift`, `LinkKeychain.swift` and `PrivacyInfo.xcprivacy`. Tick **Copy items if
+   needed**, and check that the privacy manifest lands in **Copy Bundle Resources**.
 
 ---
 
@@ -194,14 +199,20 @@ Still to build before a submission is realistic:
 
 - [ ] The backend routes (`../IOS-APP.md`, "Backend work this needs")
 - [ ] Account deletion — the app asks `/link/delete_account`, which does not exist yet
-- [ ] A privacy policy and support URL, both required by App Store Connect
-- [ ] `PrivacyInfo.xcprivacy` and the App Privacy answers — decide telemetry first, since that is
-      what they have to describe
+- [x] A privacy policy — `/privacy/` (DRAFT, needs legal review and a real contact address)
+- [ ] A support URL and a monitored contact address
+- [x] `PrivacyInfo.xcprivacy` — written; add it to the target. Read its header comment: two of the
+      answers are only true because the app has no SDKs, and they stop being true the day it does
+- [ ] The App Privacy answers in App Store Connect — they must agree with that manifest
 - [ ] Age rating answers
 - [ ] A decision on the 500k $CHIKI gate
-- [ ] A first-run download experience: ~350 MB on whatever connection the player is on, with no
-      metering check anywhere today
-- [ ] Localisation — the game ships EN/日本語/中文 and every screen here is English
+- [x] Metered connections — the shell watches `NWPathMonitor` and the loader takes the 174 MB pack
+      instead of the 313 MB one on cellular or Low Data Mode. The page cannot do this by itself:
+      WebKit implements no Network Information API, so `navigator.connection` is undefined on iOS
+- [x] Localisation of the surfaces this revision added — the policy refusals, the pairing page and
+      the season panel are EN/日本語/中文. **Still English:** the native screens in `Screens.swift`
+      (extract to a String Catalog) and the loading-screen panels, which have always been
+      English-only markup — the in-game switcher lives inside the compiled pack
 
 ---
 

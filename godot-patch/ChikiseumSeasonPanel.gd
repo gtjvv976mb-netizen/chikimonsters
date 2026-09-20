@@ -87,11 +87,11 @@ func _on_queue_pressed() -> void:
 	if client == null:
 		return
 	if client.in_queue:
-		_say("Leaving the queue…")
+		_say(tr("Leaving the queue…"))
 		await client.leave_queue()
-		_say("You left the queue.")
+		_say(tr("You left the queue."))
 	else:
-		_say("Looking for an opponent…")
+		_say(tr("Looking for an opponent…"))
 		await client.join_queue()
 	_sync_buttons()
 
@@ -100,7 +100,7 @@ func _on_claim_pressed() -> void:
 	if client == null or _reward_match == "":
 		return
 	_claim_button.disabled = true
-	_say("Opening your prize…")
+	_say(tr("Opening your prize…"))
 	await client.claim(_reward_match)
 
 
@@ -125,21 +125,21 @@ func _on_board(season: Dictionary, standing: Dictionary, prizes: Dictionary) -> 
 func _on_queued(position: int, eta_seconds: int) -> void:
 	# Position 0 means the server is not counting places — don't invent one.
 	if position > 0:
-		_say("In the queue — %d ahead of you%s." % [position, _eta_suffix(eta_seconds)])
+		_say(tr("In the queue — %d ahead of you%s.") % [position, _eta_suffix(eta_seconds)])
 	else:
-		_say("In the queue — finding an opponent%s." % _eta_suffix(eta_seconds))
+		_say(tr("In the queue — finding an opponent%s.") % _eta_suffix(eta_seconds))
 	_sync_buttons()
 
 
 func _on_matched(match_id: String) -> void:
-	_say("Opponent found. The arena is hosting your match…")
+	_say(tr("Opponent found. The arena is hosting your match…"))
 	_sync_buttons()
 	enter_match_requested.emit(match_id)
 
 
 func _on_reward_ready(match_id: String) -> void:
 	_reward_match = match_id
-	_say("Your match is decided — collect your prize.")
+	_say(tr("Your match is decided — collect your prize."))
 	_sync_buttons()
 
 
@@ -148,9 +148,9 @@ func _on_rewarded(rewards: Array, odds: Dictionary) -> void:
 	if rewards.is_empty():
 		# A decided match with no items is a real outcome, not an error: say so plainly rather
 		# than leaving the player staring at a ceremony that never resolves.
-		_say("No prize from that one. Queue again.")
+		_say(tr("No prize from that one. Queue again."))
 	else:
-		_say("You won %s — it is on your account." % ChikiseumSeasonClient.rewards_text(rewards))
+		_say(tr("You won %s — it is on your account.") % ChikiseumSeasonClient.rewards_text(rewards))
 	# The odds the server actually rolled against, when it sends them. Never reconstructed here.
 	if not odds.is_empty() and _prize_box:
 		_prize_box.add_child(_note(_odds_text(odds)))
@@ -163,7 +163,7 @@ func _on_rewarded(rewards: Array, odds: Dictionary) -> void:
 
 func _standing_text(standing: Dictionary) -> String:
 	if standing.is_empty():
-		return "Your first season match is waiting."
+		return tr("Your first season match is waiting.")
 	var parts: PackedStringArray = []
 	if standing.has("rank"):
 		parts.append("rank %d" % int(standing["rank"]))
@@ -185,7 +185,7 @@ func _render_prizes(prizes: Dictionary) -> void:
 	for child in _prize_box.get_children():
 		child.queue_free()
 	if prizes.is_empty():
-		_prize_box.add_child(_note("The prize table is loading…"))
+		_prize_box.add_child(_note(tr("The prize table is loading…")))
 		return
 	for bucket in ["win", "loss", "streak_bonus"]:
 		var rows: Variant = prizes.get(bucket, [])
@@ -196,14 +196,14 @@ func _render_prizes(prizes: Dictionary) -> void:
 			if typeof(reward) != TYPE_DICTIONARY:
 				continue
 			_prize_box.add_child(_note("  " + _prize_line(reward)))
-	_prize_box.add_child(_note("Prizes land on your account — the same one the website shows."))
+	_prize_box.add_child(_note(tr("Prizes land on your account — the same one the website shows.")))
 
 
 func _bucket_title(bucket: String) -> String:
 	match bucket:
-		"win":          return "Win"
-		"loss":         return "Play"          # losing still pays something; don't call it "Loss"
-		"streak_bonus": return "On a streak"
+		"win":          return tr("Win")
+		"loss":         return tr("Play")          # losing still pays something; don't call it "Loss"
+		"streak_bonus": return tr("On a streak")
 	return bucket.capitalize()
 
 
@@ -234,7 +234,7 @@ func _sync_buttons() -> void:
 		return
 	if _queue_button:
 		var fighting := client.match_id != "" and _reward_match == ""
-		_queue_button.text = "Leave queue" if client.in_queue else "Find a match"
+		_queue_button.text = tr("Leave queue") if client.in_queue else tr("Find a match")
 		# While a hosted match is live there is nothing to queue for, and leaving it is a forfeit
 		# the server decides — not something this button should offer.
 		_queue_button.disabled = fighting
@@ -248,31 +248,31 @@ func _build_ui() -> void:
 	add_child(root)
 
 	var title := HBoxContainer.new()
-	title.add_child(_text("Chikiseum · season match"))
+	title.add_child(_text(tr("Chikiseum · season match")))
 	var close := Button.new()
-	close.text = "Close"
+	close.text = tr("Close")
 	close.pressed.connect(func(): closed.emit())
 	title.add_child(close)
 	root.add_child(title)
 
-	_season_label = _text("Season")
+	_season_label = _text(tr("Season"))
 	root.add_child(_season_label)
 	_standing_label = _note("")
 	root.add_child(_standing_label)
 
 	var actions := HBoxContainer.new()
 	_queue_button = Button.new()
-	_queue_button.text = "Find a match"
+	_queue_button.text = tr("Find a match")
 	_queue_button.pressed.connect(_on_queue_pressed)
 	actions.add_child(_queue_button)
 	_claim_button = Button.new()
-	_claim_button.text = "Collect prize"
+	_claim_button.text = tr("Collect prize")
 	_claim_button.visible = false
 	_claim_button.pressed.connect(_on_claim_pressed)
 	actions.add_child(_claim_button)
 	root.add_child(actions)
 
-	root.add_child(_note("Free to enter. The arena hosts the match; the winner takes fish, eggs and resources."))
+	root.add_child(_note(tr("Free to enter. The arena hosts the match; the winner takes fish, eggs and resources.")))
 
 	_prize_box = VBoxContainer.new()
 	root.add_child(_prize_box)
