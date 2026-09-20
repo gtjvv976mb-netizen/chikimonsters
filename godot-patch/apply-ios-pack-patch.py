@@ -12,20 +12,30 @@ This script is that change. It is deliberately a patcher rather than a diff: the
 is recovered game source and must not be committed to this repository (`RECOVERY.md` explains
 why), so what lives here is the *instruction*, not the code.
 
-Eight changes, every one gated on the loader's published policy and therefore a no-op on the
+Nineteen changes, every one gated on the loader's published policy and therefore a no-op on the
 website:
 
   1. adds `ChikFeat.gd`, a small reader for `window.CHIK_FEATURES`
-  2. `GameHUD.open_market()` refuses when `trading_post` is off — that one function is the only
+  2. **the welcome panel** — the first screen a player sees — stops offering "Connect Phantom
+     Wallet" as its primary action, and its subtitle stops framing a wallet as the way in
+  3. `GameHUD.open_market()` refuses when `trading_post` is off — that one function is the only
      way into the marketplace (`Player.gd` is its sole caller, at the Trading Post's world
      location), so gating it removes the Magic Eden tab and every Phantom purchase string with it
-  3. the Chikiseum drops its **Chikoria Cup** tab when `crypto` is off, opens on My Deck instead,
+  4. the Chikiseum drops its **Chikoria Cup** tab when `crypto` is off, opens on My Deck instead,
      and stops claiming "champions win real SOL" in HOW TO BATTLE — the Cup pays a real SOL prize
      pool and was the default tab, so it is the first thing a reviewer would have seen
-  4. the wallet gate stops naming Phantom and stops drawing its "Get Phantom ↗" button
-  5. the token gate stops telling the player to "Hold 500,000 $CHIKI to enter"
+  5. the wallet gate stops naming Phantom and stops drawing its "Get Phantom ↗" button
+  6. the token gate stops telling the player to "Hold 500,000 $CHIKI to enter"
+  7. **the chat box goes** — world, whisper and party channels and the text input. News and system
+     stay, because the pack itself treats those two as read-only
+  8. the news banner stops saying "Hold 500,000 $CHIKI to keep earning"
+  9. the in-game help loses its "$CHIKI economy", "Play & earn" and "Safe by design" sections and
+     its $CHIKI and Trading Post topics, and Getting Started stops opening on a wallet
 
 It does NOT touch PvP. The Chikiseum's duels are already stake-free and stay exactly as they are.
+
+Items 2, 8 and 9 were found by BOOTING the rebuilt pack in a browser, not by reading the source.
+The welcome panel in particular is the first thing on screen, and reading alone had missed it.
 
 It does not change any GATE'S BEHAVIOUR either — only what the gate says. Whether an app player
 needs the 500k hold is an open product decision and the server's to enforce; this makes the refusal
@@ -231,6 +241,105 @@ CHAT_READY_NEW = '''	_build_ui()
 		_switch("news")
 	_panel.visible = false'''
 
+# The news banner. Also found by booting: with the chat channels gone the panel opens on News, and
+# the banner at the top of it reads "Hold 500,000 $CHIKI to keep earning." — the same instruction
+# removed from the onboarding gate, arriving by another route. The loader's news filter cannot
+# reach it, because this string is not in the feed; it is hardcoded in Chat.gd.
+NEWS_BANNER_OLD = '''		_news_banner.text = "\U0001F30D The Open-Gates event has ended — thanks for playing! Hold 500,000 $CHIKI to keep earning."'''
+
+NEWS_BANNER_NEW = '''		_news_banner.text = "\U0001F30D The Open-Gates event has ended — thanks for playing!" if not ChikFeat.on("crypto") else "\U0001F30D The Open-Gates event has ended — thanks for playing! Hold 500,000 $CHIKI to keep earning."'''
+
+# ----------------------------------------------------------------------- the in-game help
+#
+# Three consecutive help sections explain $CHIKI as a real Solana token, tell the player to
+# hold 500,000 of it, and describe collecting real SOL rewards to a wallet. None of it is true
+# of the app, and all of it reads as instructions for transacting outside it.
+HELP_ECON_OLD = '''	_h2(body, "🪙  The $CHIKI economy")
+	var c3: = _card(body)
+	_p(c3, "$CHIKI is the only in-game token — a real Solana token (pump.fun), 1 billion supply, deflationary. In-game $CHIKI mirrors your real wallet hold and can never exceed it. Shop fees, eggs and craft costs SINK it; Collect banks Pouch coins and burns 10%. Trading Post buys settle on-chain and split three ways:\\n👤 75% to the seller   ·   🏦 20% into the live reward pool   ·   🔥 5% burned forever.\\nThe pool refills from on-chain trading fees, so the rewards grow as the community grows.", INKB, 13)
+
+
+	_h2(body, "💰  Play & earn")
+	var c4: = _card(body)
+	_p(c4, "Hold at least 500,000 $CHIKI to enter the realm. As you play, real SOL rewards accrue in your Pouch from the shared pool — Collect anytime to move them to your wallet (a small burn keeps $CHIKI deflationary). Hold 800,000+ and a bonus second egg is yours.", INKB, 13)
+
+
+	_h2(body, "🛡  Safe by design")
+	var c5: = _card(body)
+	_p(c5, "Phantom asks for one free sign-in signature to prove the wallet is yours. It is never a transaction, never exposes your keys or seed phrase, and never gives the game permission to move funds.", INKB, 13)'''
+
+HELP_ECON_NEW = '''	if ChikFeat.on("crypto"):
+		_h2(body, "🪙  The $CHIKI economy")
+		var c3: = _card(body)
+		_p(c3, "$CHIKI is the only in-game token — a real Solana token (pump.fun), 1 billion supply, deflationary. In-game $CHIKI mirrors your real wallet hold and can never exceed it. Shop fees, eggs and craft costs SINK it; Collect banks Pouch coins and burns 10%. Trading Post buys settle on-chain and split three ways:\\n👤 75% to the seller   ·   🏦 20% into the live reward pool   ·   🔥 5% burned forever.\\nThe pool refills from on-chain trading fees, so the rewards grow as the community grows.", INKB, 13)
+
+
+		_h2(body, "💰  Play & earn")
+		var c4: = _card(body)
+		_p(c4, "Hold at least 500,000 $CHIKI to enter the realm. As you play, real SOL rewards accrue in your Pouch from the shared pool — Collect anytime to move them to your wallet (a small burn keeps $CHIKI deflationary). Hold 800,000+ and a bonus second egg is yours.", INKB, 13)
+
+
+		_h2(body, "🛡  Safe by design")
+		var c5: = _card(body)
+		_p(c5, "Phantom asks for one free sign-in signature to prove the wallet is yours. It is never a transaction, never exposes your keys or seed phrase, and never gives the game permission to move funds.", INKB, 13)'''
+
+# The help INDEX carries the same thing as browsable topics. _howto_topics() is a function, so
+# the crypto topics can be filtered out by key rather than each string being rewritten. 'nft'
+# stays: it is display-only avatars and the Meme Dynasty, with nothing to buy.
+HELP_TOPICS_OLD = '''func _howto_topics() -> Array:\n\treturn ['''
+
+HELP_TOPICS_NEW = """func _howto_topics() -> Array:
+\tvar _topics: Array = _howto_topics_all()
+\tif ChikFeat.on("crypto"):
+\t\treturn _topics
+\tvar _kept: Array = []
+\tfor _t in _topics:
+\t\tif not String(_t.get("k", "")) in ["chiki", "trade"]:
+\t\t\t_kept.append(_t)
+\treturn _kept
+
+
+func _howto_topics_all() -> Array:
+\treturn ["""
+
+# ...and the Getting Started topic, which survives, still opened on a wallet.
+HELP_START_HOW_OLD = '''		"how": ["Connect Phantom at the gate — or press Play Demo to try a sealed sandbox first.", '''
+
+HELP_START_HOW_NEW = '''		"how": [("Pair this device with your Chikoria account \\u2014 or press Play Demo to try a sealed sandbox first." if not ChikFeat.on("crypto") else "Connect Phantom at the gate \\u2014 or press Play Demo to try a sealed sandbox first."), '''
+
+HELP_START_NUM_OLD = '''		"num": ["Hold 500,000 $CHIKI to start earning", "800,000 unlocks a 2nd starter egg", "Demo progress is sandboxed and never touches a wallet"]}, '''
+
+HELP_START_NUM_NEW = '''		"num": (["Everything starts at zero \\u2014 the island pays for work", "Your progress syncs with the website", "Demo progress is sandboxed"] if not ChikFeat.on("crypto") else ["Hold 500,000 $CHIKI to start earning", "800,000 unlocks a 2nd starter egg", "Demo progress is sandboxed and never touches a wallet"])}, '''
+
+# ----------------------------------------------------------------------------- the welcome panel
+#
+# FOUND BY BOOTING THE REBUILT PACK, not by reading. `Onboarding._show_gate()` is not the screen a
+# player actually sees first — `InfoBar` draws a "Welcome to Chikoria" panel with a
+# "🔗  Connect Phantom Wallet" button as the primary action, and it is the very first thing on
+# screen. Patching the other gate and stopping there would have shipped an app whose opening screen
+# is a wallet-connect button.
+#
+# The subtitle goes too: it names Phantom and $CHIKI and frames a wallet as the way to load your
+# own trainer, which in the app is done by pairing instead.
+WELCOME_TEXT_OLD = '''	p1.text = "Connect your Phantom wallet to load YOUR trainer, progress and $CHIKI — or step in as a guest first."'''
+
+WELCOME_TEXT_NEW = '''	p1.text = "Pair this device with your Chikoria account to load your trainer and progress — or step in as a guest first." if not ChikFeat.on("crypto") else "Connect your Phantom wallet to load YOUR trainer, progress and $CHIKI — or step in as a guest first."'''
+
+WELCOME_BTN_OLD = '''	var cb: = Button.new()
+	cb.text = "\U0001F517  Connect Phantom Wallet"
+	cb.custom_minimum_size = Vector2(0, 46)
+	UISkin.plaque(cb, Color("7b5cd6"))
+	cb.pressed.connect(open_wallet_pop)
+	v.add_child(cb)'''
+
+WELCOME_BTN_NEW = '''	if ChikFeat.on("crypto"):
+		var cb: = Button.new()
+		cb.text = "\U0001F517  Connect Phantom Wallet"
+		cb.custom_minimum_size = Vector2(0, 46)
+		UISkin.plaque(cb, Color("7b5cd6"))
+		cb.pressed.connect(open_wallet_pop)
+		v.add_child(cb)'''
+
 EDITS = [
 	("GameHUD.gd", MARKET_OLD, MARKET_NEW, "the Trading Post refuses when trading is off"),
 	("Chikiseum.gd", TABS_OLD, TABS_NEW, "the Chikoria Cup tab is not built"),
@@ -243,6 +352,13 @@ EDITS = [
 	("Chat.gd", CHAT_INPUT_OLD, CHAT_INPUT_NEW, "the chat text box is hidden and not editable"),
 	("Chat.gd", CHAT_TOGGLE_OLD, CHAT_TOGGLE_NEW, "collapsing and reopening does not bring it back"),
 	("Chat.gd", CHAT_READY_OLD, CHAT_READY_NEW, "the panel opens on News instead of a dead tab"),
+	("Chat.gd", NEWS_BANNER_OLD, NEWS_BANNER_NEW, 'the news banner stops saying "Hold 500,000 $CHIKI"'),
+	("InfoBar.gd", HELP_ECON_OLD, HELP_ECON_NEW, "the $CHIKI / play-and-earn help sections are not drawn"),
+	("InfoBar.gd", HELP_TOPICS_OLD, HELP_TOPICS_NEW, "the $CHIKI and Trading Post help topics are filtered out"),
+	("InfoBar.gd", HELP_START_HOW_OLD, HELP_START_HOW_NEW, "Getting Started stops opening on a wallet"),
+	("InfoBar.gd", HELP_START_NUM_OLD, HELP_START_NUM_NEW, "Getting Started stops naming a token hold"),
+	("InfoBar.gd", WELCOME_TEXT_OLD, WELCOME_TEXT_NEW, "the welcome panel stops selling a wallet"),
+	("InfoBar.gd", WELCOME_BTN_OLD, WELCOME_BTN_NEW, 'the "Connect Phantom Wallet" button is not built'),
 ]
 
 
