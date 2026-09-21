@@ -50,7 +50,7 @@ The version-stamped files that **must** go up together, and all of them:
 |---|---|---|
 | desktop pack | `index.pck.0.bin` … `index.pck.12.bin` | **13** |
 | mobile/lite pack | `index.pck.lite.0.bin` … `index.pck.lite.6.bin` | **7** |
-| **iOS app pack** (once built) | `index.pck.ios.lite.0.bin` … `.6.bin` + its manifest | **7** |
+| **iOS app pack** | `index.pck.ios.lite.0.bin` … `index.pck.ios.lite.6.bin` | **7** |
 | engine | `index.wasm.0.bin`, `index.wasm.1.bin` | 2 |
 | manifests | `index.pck.manifest.json`, `index.pck.lite.manifest.json`, `virtual-files.json` | 3 |
 | loader + engine glue | `index.html`, `index.js`, `chiki-ios.js`, `coi-serviceworker.min.js`, `index.audio.worklet.js`, `index.audio.position.worklet.js`, `solana-web3.js` | 7 |
@@ -63,16 +63,18 @@ The version-stamped files that **must** go up together, and all of them:
 Verify before you publish:
 
 ```sh
-ls realm/index.pck.[0-9]*.bin      | wc -l   # 13
-ls realm/index.pck.lite.[0-9]*.bin | wc -l   # 7
-ls realm/index.wasm.[0-9]*.bin     | wc -l   # 2
-ls -p realm/ | grep -v /           | wc -l   # 42 files, + reborn-art/
+ls realm/index.pck.[0-9]*.bin          | wc -l   # 13
+ls realm/index.pck.lite.[0-9]*.bin     | wc -l   # 7
+ls realm/index.pck.ios.lite.[0-9]*.bin | wc -l   # 7   <- iOS app only
+ls realm/index.wasm.[0-9]*.bin         | wc -l   # 2
+ls -p realm/ | grep -v /               | wc -l   # 50 files, + reborn-art/
 ```
 
 > These counts were wrong in this document until `chiki-ios.js` was added: it claimed 8 lite
 > chunks against a 7-chunk pack, and 42 top-level files against a folder holding 40 files plus
-> `reborn-art/`. It is 42 now because this work added `chiki-ios.js` and `selftest.html`. Count
-> them, don't trust the table either.
+> `reborn-art/`. It went to 42 when this work added `chiki-ios.js` and `selftest.html`, and to
+> **50** when the iOS pack family landed (7 chunks + a manifest). Count them, don't trust the
+> table either.
 
 **`selftest.html` must stay under `/realm/`.** It reports whether this device can run the engine,
 and the Cloudflare COOP/COEP rule that decides that is **path-scoped to `/realm/*`** — a copy
