@@ -9,7 +9,7 @@
     <meta name="theme-color" content="#100b23" />
     <meta
       name="description"
-      content="Enter Chikoria, meet your Chikimons, and explore the Wicked Temple and Chikiseum in Chiki Monsters."
+      content="Step into Chikoria. Explore, gather, meet your Chikimon, and battle through the Wicked Temple and Chikiseum. See the real game in motion."
     />
     <meta property="og:type" content="website" />
     <meta property="og:title" content="Chiki Monsters — Enter Chikoria" />
@@ -60,7 +60,8 @@
           <span></span><span></span><span></span>
         </button>
         <div class="nav-links" id="nav-links">
-          <a href="#chikimons">Chikimons</a><a href="#adventures">Adventures</a
+          <a href="#journey">The World</a><a href="#gameplay">Watch Gameplay</a
+          ><a href="#chikimons">Chikimons</a
           ><a href="#chikoria">Chikoria</a
           ><a class="nav-play enter-game" href="/realm/"
             >Play Now <span aria-hidden="true">↗</span></a
@@ -71,7 +72,9 @@
 
     <main id="main" tabindex="-1">
       <section class="hero" aria-labelledby="hero-title">
-        <div class="hero-land" aria-hidden="true"></div>
+        <div class="hero-land scene-layer scene-layer-back" aria-hidden="true"></div>
+        <div class="hero-light scene-layer scene-layer-mid" aria-hidden="true"></div>
+        <div class="hero-near scene-layer scene-layer-front" aria-hidden="true"></div>
         <div class="hero-haze" aria-hidden="true"></div>
         <div class="hero-content section-wrap">
           <p class="eyebrow">
@@ -82,8 +85,8 @@
             A little monster.<br /><em>A legendary adventure.</em>
           </h1>
           <p class="hero-lead">
-            Find your Chikimon, uncover a world alive with secrets, and bring
-            your own magic to every battle.
+            Follow the path into Chikoria. Find your Chikimon, explore its
+            wild corners, and make every battle your own.
           </p>
           <div class="hero-actions">
             <a class="button button-gold enter-game" href="/realm/"
@@ -95,41 +98,120 @@
           </div>
           <p class="hero-note">Your adventure begins in the Chikoria Realm.</p>
         </div>
-        <div class="hero-cast" aria-label="Firix, Dragonos, and Galador">
-          <div class="hero-creature hero-creature-left" data-parallax="-12">
+        <div class="hero-cast" aria-label="2D portraits of Dragonos, Firix, and Galador">
+          <div class="hero-creature hero-creature-left" data-depth="0.36">
             <img
-              src="/site-assets/dragonos-poster.webp"
-              data-loop="/site-assets/dragonos-loop.webp"
-              width="420"
-              height="420"
-              alt="Dragonos"
+              src="/site-assets/dex-dragonos.webp"
+              width="540"
+              height="540"
+              alt="Dragonos illustrated Chikimon portrait"
               decoding="async"
             />
           </div>
-          <div class="hero-creature hero-creature-center" data-parallax="8">
+          <div class="hero-creature hero-creature-center" data-depth="0.62">
             <img
-              src="/site-assets/firix-poster.webp"
-              data-loop="/site-assets/firix-loop.webp"
-              width="480"
-              height="480"
-              alt="Firix"
+              src="/site-assets/dex-firix.webp"
+              width="540"
+              height="540"
+              alt="Firix illustrated Chikimon portrait"
               decoding="async"
             />
           </div>
-          <div class="hero-creature hero-creature-right" data-parallax="-8">
+          <div class="hero-creature hero-creature-right" data-depth="0.45">
             <img
-              src="/site-assets/galador-poster.webp"
-              data-loop="/site-assets/galador-loop.webp"
-              width="420"
-              height="420"
-              alt="Galador"
+              src="/site-assets/dex-galador.webp"
+              width="540"
+              height="540"
+              alt="Galador illustrated Chikimon portrait"
               decoding="async"
             />
           </div>
         </div>
-        <a class="scroll-cue" href="#chikimons"
+        <a class="scroll-cue" href="#journey"
           >Explore the world <span aria-hidden="true">↓</span></a
         >
+      </section>
+
+      <section class="journey" id="journey" aria-label="Journey through Chikoria">
+        <div class="journey-stage" aria-hidden="true">
+          <div class="journey-scene journey-scene-realm"></div>
+          <div class="journey-scene journey-scene-temple"></div>
+          <div class="journey-scene journey-scene-arena"></div>
+          <div class="journey-vignette"></div>
+          <div class="journey-perspective"></div>
+          <div class="journey-progress"><span></span></div>
+        </div>
+        <div class="journey-beats">
+          <div class="journey-beat" data-scene="realm">
+            <div class="journey-copy">
+              <p class="kicker">01 / FOLLOW THE PATH</p>
+              <h2>The world opens<br /><em>as you move.</em></h2>
+              <p>Roam the Chikoria Realm, discover its hidden corners, and meet the creatures who call it home.</p>
+              <span class="journey-step" aria-hidden="true">Scroll to travel <span>↓</span></span>
+            </div>
+          </div>
+          <div class="journey-beat" data-scene="temple">
+            <div class="journey-copy">
+              <p class="kicker">02 / THROUGH THE GATE</p>
+              <h2>When the temple calls,<br /><em>answer.</em></h2>
+              <p>Push into the Wicked Temple. Move, dodge, and unleash your Chikimon's ability cards against the corrupted horde.</p>
+              <span class="journey-step" aria-hidden="true">Keep exploring <span>↓</span></span>
+            </div>
+          </div>
+          <div class="journey-beat" data-scene="arena">
+            <div class="journey-copy">
+              <p class="kicker">03 / STEP INTO THE LIGHT</p>
+              <h2>The Chikiseum<br /><em>is waiting.</em></h2>
+              <p>Read your rival, own the floor, and make every move count in a living arena.</p>
+              <a class="journey-step journey-watch-link" href="#gameplay">See the game in motion <span aria-hidden="true">↓</span></a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="gameplay-section section-pad" id="gameplay" aria-labelledby="gameplay-title">
+        <div class="section-wrap">
+          <div class="section-heading reveal">
+            <p class="kicker">REAL FOOTAGE / REAL CHIKORIA</p>
+            <h2 id="gameplay-title">Don't imagine it.<br /><em>Watch it move.</em></h2>
+            <p>These are moments from the game itself. Pick a path and see what awaits inside.</p>
+          </div>
+          <div class="gameplay-grid">
+            <article class="gameplay-card gameplay-card-wide reveal">
+              <div class="gameplay-media">
+                <img src="/site-assets/poster-exploration.webp" width="960" height="540" alt="Exploring the Chikoria Realm in-game" loading="lazy" decoding="async" />
+                <video controls playsinline preload="none" aria-label="Chikoria exploration gameplay"></video>
+                <button class="gameplay-play" type="button" data-video="/site-assets/video-exploration.mp4" aria-label="Play Chikoria exploration footage"><span class="play-icon" aria-hidden="true"></span><span>Watch gameplay</span></button>
+              </div>
+              <div class="gameplay-caption"><div><span class="gameplay-index">01 / EXPLORE</span><h3>Wander into wonder</h3></div><p>Follow your curiosity through Chikoria.</p></div>
+            </article>
+            <article class="gameplay-card reveal">
+              <div class="gameplay-media">
+                <img src="/site-assets/poster-gathering.webp" width="960" height="540" alt="Gathering items in the Chikoria Realm in-game" loading="lazy" decoding="async" />
+                <video controls playsinline preload="none" aria-label="Chikoria gathering gameplay"></video>
+                <button class="gameplay-play" type="button" data-video="/site-assets/video-gathering.mp4" aria-label="Play gathering footage"><span class="play-icon" aria-hidden="true"></span><span>Watch gameplay</span></button>
+              </div>
+              <div class="gameplay-caption"><div><span class="gameplay-index">02 / GATHER</span><h3>Find your next surprise</h3></div><p>There's more to discover between battles.</p></div>
+            </article>
+            <article class="gameplay-card reveal">
+              <div class="gameplay-media">
+                <img src="/site-assets/poster-wicked-temple.webp" width="960" height="540" alt="Battling corrupted Chikimons inside the Wicked Temple" loading="lazy" decoding="async" />
+                <video controls playsinline preload="none" aria-label="Wicked Temple battle gameplay"></video>
+                <button class="gameplay-play" type="button" data-video="/site-assets/video-wicked-temple.mp4" aria-label="Play Wicked Temple battle footage"><span class="play-icon" aria-hidden="true"></span><span>Watch gameplay</span></button>
+              </div>
+              <div class="gameplay-caption"><div><span class="gameplay-index">03 / BATTLE</span><h3>Break the corruption</h3></div><p>Move, dodge, and play your ability cards.</p></div>
+            </article>
+            <article class="gameplay-card gameplay-card-wide reveal">
+              <div class="gameplay-media">
+                <img src="/site-assets/poster-chikiseum.webp" width="960" height="540" alt="Chikimon battle in the Chikiseum arena" loading="lazy" decoding="async" />
+                <video controls playsinline preload="none" aria-label="Chikiseum battle gameplay"></video>
+                <button class="gameplay-play" type="button" data-video="/site-assets/video-chikiseum.mp4" aria-label="Play Chikiseum battle footage"><span class="play-icon" aria-hidden="true"></span><span>Watch gameplay</span></button>
+              </div>
+              <div class="gameplay-caption"><div><span class="gameplay-index">04 / COMPETE</span><h3>Own the arena</h3></div><p>Every second and every card matters.</p></div>
+            </article>
+          </div>
+          <div class="gameplay-cta reveal"><span>Ready to go from watching to playing?</span><a class="button button-gold enter-game" href="/realm/">Enter Chikoria <span aria-hidden="true">→</span></a></div>
+        </div>
       </section>
 
       <section class="intro-band" aria-label="The Chikoria story">
@@ -156,9 +238,6 @@
               own personality to the world.
             </p>
           </div>
-          <p class="sr-only" id="creature-preview-hint">
-            Focus a Chikimon card to preview its walking animation on desktop.
-          </p>
           <div class="creature-grid">
             <article class="creature-card creature-card-fire reveal">
               <div class="creature-card-glow" aria-hidden="true"></div>
@@ -170,15 +249,6 @@
                   height="540"
                   alt="Firix, a fiery Chikimon"
                   loading="lazy"
-                  decoding="async"
-                />
-                <img
-                  class="creature-walk"
-                  data-walk="/site-assets/firix-walk.webp"
-                  width="512"
-                  height="512"
-                  alt=""
-                  aria-hidden="true"
                   decoding="async"
                 />
               </div>
@@ -200,15 +270,6 @@
                   loading="lazy"
                   decoding="async"
                 />
-                <img
-                  class="creature-walk"
-                  data-walk="/site-assets/dragonos-walk.webp"
-                  width="512"
-                  height="512"
-                  alt=""
-                  aria-hidden="true"
-                  decoding="async"
-                />
               </div>
               <div class="creature-card-copy">
                 <span class="creature-number">02 / DRAGON</span>
@@ -226,15 +287,6 @@
                   height="540"
                   alt="Galador, a blue legendary Chikimon"
                   loading="lazy"
-                  decoding="async"
-                />
-                <img
-                  class="creature-walk"
-                  data-walk="/site-assets/galador-walk.webp"
-                  width="512"
-                  height="512"
-                  alt=""
-                  aria-hidden="true"
                   decoding="async"
                 />
               </div>
