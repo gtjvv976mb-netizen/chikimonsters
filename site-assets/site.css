@@ -1518,8 +1518,8 @@ h3 {
   .hero-near { display: none; }
   .hero-occlusion {
     background-position: 56% center;
-    -webkit-mask-image: linear-gradient(to bottom, transparent 84%, #000 99%);
-    mask-image: linear-gradient(to bottom, transparent 84%, #000 99%);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 91%, #000 100%);
+    mask-image: linear-gradient(to bottom, transparent 91%, #000 100%);
   }
   .hero-near { background-size: auto 145%; background-position: 56% bottom; }
   .hero-cast { left: 50%; right: auto; transform: translate3d(-50%, var(--cast-y, 0px), 0); }
@@ -1537,8 +1537,9 @@ h3 {
   .gameplay-cta { flex-direction: column; gap: 15px; text-align: center; }
 }
 @media (max-width: 580px) {
-  .hero-cast { width: 340px; max-width: 98vw; height: 240px; bottom: 4%; }
-  .hero-content { padding-bottom: 270px; }
+  .hero { min-height: max(700px, 100svh); }
+  .hero-cast { width: 300px; max-width: 94vw; height: 175px; bottom: 1%; }
+  .hero-content { padding-top: clamp(95px, 14vh, 125px); padding-bottom: 175px; }
   .hero-note { display: none; }
   .hero h1 { font-size: clamp(42px, 11.4vw, 60px); }
   .hero-lead { max-width: 330px; }
