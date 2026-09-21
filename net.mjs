@@ -1,0 +1,10 @@
+import { chromium } from 'playwright';
+const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' }).catch(() => chromium.launch());
+const p = await b.newPage({ viewport: { width: 1280, height: 800 } });
+p.on('response', r => { if (r.status() >= 400) console.log('  ', r.status(), r.url()); });
+p.on('requestfailed', r => console.log('   FAILED', r.url(), r.failure()?.errorText));
+await p.goto('http://localhost:4321/', { waitUntil: 'networkidle' });
+await p.waitForTimeout(3000);
+const loaded = await p.evaluate(() => performance.getEntriesByType('resource').filter(e => e.name.includes('.glb')).map(e => [e.name.split('/').pop(), Math.round(e.transferSize/1024)+'KB']));
+console.log('  GLB loaded:', JSON.stringify(loaded));
+await b.close();

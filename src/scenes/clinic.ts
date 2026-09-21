@@ -20,14 +20,40 @@
  * never covers the thing it is describing.
  */
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 
 type Waypoint = { pos: [number, number, number]; look: [number, number, number] };
+
+/**
+ * Generated meshes that replace the hand-built stand-ins once they arrive.
+ * The scene renders immediately from primitives and swaps each prop in as its
+ * file loads, so a slow or failed download degrades to the blocky version
+ * rather than to an empty room.
+ *
+ * `height` is the real-world height in metres the mesh is scaled to — a
+ * generated model arrives at an arbitrary scale and has to be fitted to the
+ * room rather than trusted.
+ */
+const PROPS: Record<
+  string,
+  { file: string; height: number; pos: [number, number, number]; rotY: number; float?: boolean }
+> = {
+  chair: { file: 'chair.glb', height: 1.4, pos: [1.5, 0, -16.3], rotY: Math.PI * 0.85 },
+  cart: { file: 'cart.glb', height: 1.15, pos: [0.15, 0, -15.0], rotY: 0.6 },
+  // The generated lamp came with its own floor stand, so it rests on the
+  // ground beside the chair rather than hanging.
+  light: { file: 'light.glb', height: 2.1, pos: [2.9, 0, -17.2], rotY: -0.5 },
+  desk: { file: 'desk.glb', height: 1.12, pos: [1.7, 0, -0.3], rotY: 0.1 },
+  bench: { file: 'bench.glb', height: 0.85, pos: [-3.4, 0, 1.6], rotY: Math.PI / 2 },
+};
 
 const WAYPOINTS: Waypoint[] = [
   // Back from the kerb, tilted up: the whole shopfront, above the text panel.
   { pos: [0, 2.2, 17.5], look: [0, 4.1, 6] },
-  // Inside, past the canopy. Desk ahead and right; panel sits left.
-  { pos: [-1.3, 1.6, 4.2], look: [1.9, 1.25, -1.2] },
+  // Inside, close to the desk. Sat further left the right-hand wall filled a
+  // third of the frame and the desk read as a distant smudge.
+  { pos: [-0.4, 1.55, 3.1], look: [1.7, 1.1, -1.0] },
   // Turned toward the consult corner on the left; panel sits right.
   { pos: [1.7, 1.6, -3.4], look: [-1.9, 1.2, -8.6] },
   // Alongside the chair, looking down the length of it; panel sits left.
@@ -56,11 +82,90 @@ const box = (w: number, h: number, d: number) => new THREE.BoxGeometry(w, h, d);
 const mat = (color: number, o: THREE.MeshLambertMaterialParameters = {}) =>
   new THREE.MeshLambertMaterial({ color, ...o });
 
-function put(parent: THREE.Object3D, geo: THREE.BufferGeometry, m: THREE.Material, x: number, y: number, z: number) {
+function put(
+  parent: THREE.Object3D,
+  geo: THREE.BufferGeometry,
+  m: THREE.Material,
+  x: number,
+  y: number,
+  z: number,
+  /** Marks this mesh as a stand-in for the named generated prop. */
+  tag?: string
+) {
   const mesh = new THREE.Mesh(geo, m);
   mesh.position.set(x, y, z);
+  if (tag) mesh.userData.prop = tag;
   parent.add(mesh);
   return mesh;
+}
+
+/** Scale a generated mesh to a real height and seat it where the room needs it. */
+function fitInto(obj: THREE.Object3D, p: (typeof PROPS)[string]) {
+  const size = new THREE.Box3().setFromObject(obj).getSize(new THREE.Vector3());
+  obj.scale.setScalar(p.height / Math.max(size.y, 1e-6));
+  obj.rotation.y = p.rotY;
+  obj.updateMatrixWorld(true);
+
+  const box = new THREE.Box3().setFromObject(obj);
+  const c = box.getCenter(new THREE.Vector3());
+  obj.position.x += p.pos[0] - c.x;
+  obj.position.z += p.pos[2] - c.z;
+  // Floor-standing props rest on the ground; a hanging lamp centres instead.
+  obj.position.y += p.float ? p.pos[1] - c.y : p.pos[1] - box.min.y;
+}
+
+/**
+ * Fetch a mesh as raw bytes. A `.txt` sidecar holds the same GLB base64-encoded,
+ * for hosts that refuse to serve `.glb` — costs a third more bytes, so it is
+ * only ever the fallback.
+ */
+async function fetchMesh(url: string): Promise<ArrayBuffer> {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`${res.status} ${url}`);
+  if (!url.endsWith('.txt')) return res.arrayBuffer();
+  const bin = atob((await res.text()).trim());
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes.buffer;
+}
+
+/** Load each generated prop, hiding its stand-in only once it is actually in. */
+function loadProps(scene: THREE.Scene) {
+  const loader = new GLTFLoader();
+  for (const [key, p] of Object.entries(PROPS)) {
+    // Resolved against the page, NOT `import.meta.url`: the bundler rewrites
+    // that pattern into a static asset map, and these files live in public/
+    // rather than src/, so the map is empty and every lookup came back
+    // undefined. Against document.baseURI the bundler leaves it alone.
+    const url = new URL(`models/${p.file}`, document.baseURI).href;
+
+    void (async () => {
+      let buffer: ArrayBuffer;
+      try {
+        buffer = await fetchMesh(url);
+      } catch {
+        try {
+          buffer = await fetchMesh(`${url}.txt`);
+        } catch {
+          return; // Neither form available: the stand-in stays.
+        }
+      }
+      loader.parse(
+        buffer,
+        '',
+        (gltf) => {
+          fitInto(gltf.scene, p);
+          scene.add(gltf.scene);
+          scene.traverse((o) => {
+            if (o.userData.prop === key) o.visible = false;
+          });
+        },
+        () => {
+          /* Unparseable mesh: keep the stand-in rather than a hole. */
+        }
+      );
+    })();
+  }
 }
 
 /** A stylised person: no face, friendly proportions, deliberately not lifelike. */
@@ -120,8 +225,8 @@ function buildScene(scene: THREE.Scene) {
 
   // --- act 2: reception, desk on the right --------------------------------
   const rec = new THREE.Group();
-  put(rec, box(3.8, 1.05, 0.85), mat(C.accent), 2.0, 0.53, 0);
-  put(rec, box(4.1, 0.13, 1.1), mat(0xf6f2ea), 2.0, 1.12, 0);
+  put(rec, box(3.8, 1.05, 0.85), mat(C.accent), 2.0, 0.53, 0, 'desk');
+  put(rec, box(4.1, 0.13, 1.1), mat(0xf6f2ea), 2.0, 1.12, 0, 'desk');
   const mon = put(rec, box(0.9, 0.55, 0.06), mat(0x22302c), 1.5, 1.5, -0.15);
   mon.rotation.y = 0.5;
   const monFace = put(rec, box(0.8, 0.46, 0.02), mat(C.accentSoft), 1.54, 1.5, -0.11);
@@ -135,8 +240,8 @@ function buildScene(scene: THREE.Scene) {
   // Waiting side, opposite the desk.
   for (let i = 0; i < 3; i++) {
     const z = 2.6 - i * 0.82;
-    put(rec, box(0.64, 0.12, 0.62), mat(C.fabric), -3.5, 0.46, z);
-    put(rec, box(0.14, 0.64, 0.62), mat(C.fabric), -3.84, 0.78, z);
+    put(rec, box(0.64, 0.12, 0.62), mat(C.fabric), -3.5, 0.46, z, 'bench');
+    put(rec, box(0.14, 0.64, 0.62), mat(C.fabric), -3.84, 0.78, z, 'bench');
   }
   const waiting = figure({ top: C.warm, bottom: 0x4a4a52, seated: true });
   waiting.position.set(-3.4, 0.3, 1.78);
@@ -170,23 +275,23 @@ function buildScene(scene: THREE.Scene) {
 
   // --- act 4: the operatory, chair on the right ---------------------------
   const op = new THREE.Group();
-  put(op, new THREE.CylinderGeometry(0.44, 0.58, 0.18, 16), mat(C.metalDark), 1.0, 0.09, -16);
-  put(op, new THREE.CylinderGeometry(0.17, 0.21, 0.68, 12), mat(C.metal), 1.0, 0.5, -16);
-  put(op, box(0.78, 0.22, 1.5), mat(C.accent), 1.0, 0.94, -16.1);
-  const back = put(op, box(0.78, 0.22, 1.3), mat(C.accent), 1.0, 1.2, -17.1);
+  put(op, new THREE.CylinderGeometry(0.44, 0.58, 0.18, 16), mat(C.metalDark), 1.0, 0.09, -16, 'chair');
+  put(op, new THREE.CylinderGeometry(0.17, 0.21, 0.68, 12), mat(C.metal), 1.0, 0.5, -16, 'chair');
+  put(op, box(0.78, 0.22, 1.5), mat(C.accent), 1.0, 0.94, -16.1, 'chair');
+  const back = put(op, box(0.78, 0.22, 1.3), mat(C.accent), 1.0, 1.2, -17.1, 'chair');
   back.rotation.x = -0.36;
-  const head = put(op, box(0.54, 0.2, 0.42), mat(C.accentDeep), 1.0, 1.58, -17.76);
+  const head = put(op, box(0.54, 0.2, 0.42), mat(C.accentDeep), 1.0, 1.58, -17.76, 'chair');
   head.rotation.x = -0.36;
 
   // Overhead light, dropped from the ceiling behind the chair rather than on
   // a long articulated arm — at eye level the arm just crossed the frame as
   // two sticks, and the dome read as a grey blob seen edge-on.
-  put(op, new THREE.CylinderGeometry(0.06, 0.06, 1.35, 8), mat(C.metal), 2.5, 3.6, -16.4);
-  const elbow = put(op, new THREE.CylinderGeometry(0.06, 0.06, 1.55, 8), mat(C.metal), 1.78, 2.95, -16.35);
+  put(op, new THREE.CylinderGeometry(0.06, 0.06, 1.35, 8), mat(C.metal), 2.5, 3.6, -16.4, 'light');
+  const elbow = put(op, new THREE.CylinderGeometry(0.06, 0.06, 1.55, 8), mat(C.metal), 1.78, 2.95, -16.35, 'light');
   elbow.rotation.z = Math.PI / 2;
   // A flattened disc reads as a lamp from the side; a hemisphere does not.
-  put(op, new THREE.CylinderGeometry(0.5, 0.44, 0.17, 24), mat(0xf4f6f4), 1.05, 2.42, -16.2);
-  put(op, new THREE.CylinderGeometry(0.43, 0.43, 0.05, 24), new THREE.MeshBasicMaterial({ color: 0xfff4d6 }), 1.05, 2.31, -16.2);
+  put(op, new THREE.CylinderGeometry(0.5, 0.44, 0.17, 24), mat(0xf4f6f4), 1.05, 2.42, -16.2, 'light');
+  put(op, new THREE.CylinderGeometry(0.43, 0.43, 0.05, 24), new THREE.MeshBasicMaterial({ color: 0xfff4d6 }), 1.05, 2.31, -16.2, 'light');
   const glow = new THREE.PointLight(0xfff0cc, 5, 5.5, 2.4);
   glow.position.set(1.05, 2.15, -16.2);
   op.add(glow);
@@ -201,8 +306,8 @@ function buildScene(scene: THREE.Scene) {
   }
 
   // Delivery unit and operator stool.
-  put(op, box(0.6, 1.05, 0.5), mat(0xeef1ee), -0.4, 0.52, -15.4);
-  put(op, box(0.56, 0.06, 0.46), mat(C.metal), -0.4, 1.08, -15.4);
+  put(op, box(0.6, 1.05, 0.5), mat(0xeef1ee), -0.4, 0.52, -15.4, 'cart');
+  put(op, box(0.56, 0.06, 0.46), mat(C.metal), -0.4, 1.08, -15.4, 'cart');
   put(op, new THREE.CylinderGeometry(0.28, 0.26, 0.12, 14), mat(C.fabric), 0.0, 0.62, -16.8);
   put(op, new THREE.CylinderGeometry(0.05, 0.05, 0.56, 8), mat(C.metal), 0.0, 0.3, -16.8);
 
@@ -234,15 +339,24 @@ export function mountClinicScene(root: HTMLElement) {
   const camera = new THREE.PerspectiveCamera(46, 1, 0.1, 140);
 
   // Bounced up a little: the first pass left interiors reading brown.
-  scene.add(new THREE.HemisphereLight(0xffffff, 0xeae4da, 1.35));
-  const key = new THREE.DirectionalLight(0xfff4e2, 1.0);
+  scene.add(new THREE.HemisphereLight(0xffffff, 0xeae4da, 0.85));
+  const key = new THREE.DirectionalLight(0xfff4e2, 0.85);
   key.position.set(6, 11, 9);
   scene.add(key);
   const fill = new THREE.DirectionalLight(0xdfeef0, 0.4);
   fill.position.set(-7, 5, -8);
   scene.add(fill);
 
+  // The generated props carry PBR materials, which need something to reflect
+  // or they render as flat grey — metal especially goes black. A generated
+  // room environment gives them that without shipping an HDR file.
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+  // Enough to light the props' metal, not so much that it bleaches the walls.
+  scene.environmentIntensity = 0.3;
+
   buildScene(scene);
+  loadProps(scene);
 
   // Background follows the page so the scene sits inside the design.
   const syncTheme = () => {

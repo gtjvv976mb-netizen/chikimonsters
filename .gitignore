@@ -9,3 +9,6 @@ dist/
 
 # visual check output
 shots/
+
+# 50MB+ raw generated meshes, kept out of git
+raw-models/

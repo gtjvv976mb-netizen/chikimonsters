@@ -5,7 +5,7 @@ const errs = [];
 p.on('pageerror', (e) => errs.push(String(e)));
 p.on('console', (m) => { if (m.type() === 'error') errs.push(m.text()); });
 await p.goto('http://localhost:4321/', { waitUntil: 'networkidle' });
-await p.waitForTimeout(2000);
+await p.waitForTimeout(4000);
 const names = ['1-street', '2-reception', '3-booking', '4-chair'];
 for (let i = 0; i < 4; i++) {
   await p.evaluate((n) => window.scrollTo(0, n * window.innerHeight), i);
