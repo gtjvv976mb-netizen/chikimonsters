@@ -46,6 +46,15 @@ const PROPS: Record<
   light: { file: 'light.glb', height: 2.1, pos: [2.9, 0, -17.2], rotY: -0.5 },
   desk: { file: 'desk.glb', height: 1.12, pos: [1.7, 0, -0.3], rotY: 0.1 },
   bench: { file: 'bench.glb', height: 0.85, pos: [-3.4, 0, 1.6], rotY: Math.PI / 2 },
+  tray: { file: 'tray.glb', height: 1.05, pos: [2.4, 0, -15.3], rotY: 0.3 },
+  // No `building` entry on purpose. The generated shopfront came back as a
+  // complete building WITH an interior, so putting it on the camera path
+  // wrapped the camera inside its walls. The hand-built facade stays: it was
+  // made with a door gap to walk through, which a solid mesh cannot do.
+  // public/models/building.glb is kept for reference.
+  receptionist: { file: 'receptionist.glb', height: 1.64, pos: [2.3, 0, -1.2], rotY: Math.PI - 0.3 },
+  dentist: { file: 'dentist.glb', height: 1.76, pos: [-3.1, 0, -9.1], rotY: 0.9 },
+  seatedPatient: { file: 'patient.glb', height: 1.28, pos: [-1.3, 0, -7.6], rotY: -1.9 },
 };
 
 const WAYPOINTS: Waypoint[] = [
@@ -210,6 +219,7 @@ function buildScene(scene: THREE.Scene) {
     const d = put(fa, box(1.6, 3.3, 0.08), mat(C.glass, { transparent: true, opacity: 0.55 }), s * 0.9, 1.65, 6.1);
     d.rotation.y = s * 0.22;
   }
+  fa.userData.prop = 'building'; // whole shopfront swaps out as one piece
   put(fa, box(5.2, 0.16, 1.4), mat(C.brickDark), 0, 0.08, 7.3); // step
   for (const x of [-2.9, 2.9]) {
     put(fa, new THREE.CylinderGeometry(0.34, 0.28, 0.56, 12), mat(0xc9a882), x, 0.28, 8.0);
@@ -235,6 +245,7 @@ function buildScene(scene: THREE.Scene) {
   const receptionist = figure({ top: C.accentSoft, bottom: 0x2f4d47 });
   receptionist.position.set(2.3, 0, -1.0);
   receptionist.rotation.y = Math.PI - 0.25;
+  receptionist.userData.prop = 'receptionist';
   rec.add(receptionist);
 
   // Waiting side, opposite the desk.
@@ -261,11 +272,13 @@ function buildScene(scene: THREE.Scene) {
   const dentist = figure({ top: 0xf4f6f4, bottom: C.accent, skin: C.skin2 });
   dentist.position.set(-3.1, 0, -9.1);
   dentist.rotation.y = 0.9;
+  dentist.userData.prop = 'dentist';
   con.add(dentist);
 
   const patient = figure({ top: 0xe4b7a0, bottom: 0x53565e, seated: true });
   patient.position.set(-1.3, 0.3, -7.6);
   patient.rotation.y = -1.9;
+  patient.userData.prop = 'seatedPatient';
   con.add(patient);
   for (const [x, z, r] of [[-3.1, -9.1, 0.9], [-1.3, -7.6, -1.9]] as const) {
     const stool = put(con, new THREE.CylinderGeometry(0.27, 0.25, 0.12, 14), mat(C.fabric), x, 0.5, z);
@@ -297,11 +310,11 @@ function buildScene(scene: THREE.Scene) {
   op.add(glow);
 
   // Instrument tray, tools in a cup.
-  put(op, new THREE.CylinderGeometry(0.045, 0.045, 0.98, 8), mat(C.metal), 2.3, 0.49, -15.5);
-  put(op, box(0.66, 0.05, 0.46), mat(0xdfe5e1), 2.3, 0.99, -15.5);
-  put(op, new THREE.CylinderGeometry(0.095, 0.085, 0.19, 12), mat(0xcdd6d1), 2.42, 1.1, -15.42);
+  put(op, new THREE.CylinderGeometry(0.045, 0.045, 0.98, 8), mat(C.metal), 2.3, 0.49, -15.5, 'tray');
+  put(op, box(0.66, 0.05, 0.46), mat(0xdfe5e1), 2.3, 0.99, -15.5, 'tray');
+  put(op, new THREE.CylinderGeometry(0.095, 0.085, 0.19, 12), mat(0xcdd6d1), 2.42, 1.1, -15.42, 'tray');
   for (let i = 0; i < 4; i++) {
-    const t = put(op, new THREE.CylinderGeometry(0.013, 0.013, 0.36, 6), mat(i % 2 ? 0xa9b3ad : 0xdcd2b8), 2.38 + i * 0.03, 1.29, -15.42 + (i - 1.5) * 0.03);
+    const t = put(op, new THREE.CylinderGeometry(0.013, 0.013, 0.36, 6), mat(i % 2 ? 0xa9b3ad : 0xdcd2b8), 2.38 + i * 0.03, 1.29, -15.42 + (i - 1.5) * 0.03, 'tray');
     t.rotation.z = (i - 1.5) * 0.07;
   }
 
