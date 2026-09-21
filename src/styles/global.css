@@ -179,6 +179,20 @@ body {
 }
 [data-palette]::backdrop { background: rgb(0 0 0 / 0.1); }
 
+/* Each act sits in a readable panel over the scene rather than as bare text
+   on geometry, which stops the copy fighting whatever is behind it. */
+.act-panel {
+  background: color-mix(in srgb, var(--c-bg) 86%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--c-line);
+}
+
+/* No WebGL: the sticky canvas would be an empty gap, so collapse it and let
+   the acts flow as ordinary sections. */
+[data-scene-failed] .sticky { display: none; }
+[data-scene-failed] > div:last-child { margin-top: 0; }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.001ms !important;
