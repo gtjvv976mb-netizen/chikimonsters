@@ -165,7 +165,12 @@ final class ShellModel: NSObject, ObservableObject {
         #if DEBUG
         // Without this Safari Web Inspector cannot attach, and every diagnostic the web layer
         // offers — CHIK_POLICY_BLOCKED, CHIK_LINK.status(), CHIK_FEATURES — is unreachable.
-        webView.isInspectable = true
+        //
+        // `#if DEBUG` is a COMPILE-time flag and says nothing about the OS, so the availability
+        // check is still required: isInspectable arrived in iOS 16.4 and this app deploys to 16.0.
+        if #available(iOS 16.4, *) {
+            webView.isInspectable = true
+        }
         #endif
 
         // The handler goes in the PAGE world, with no contentWorld argument. chiki-ios.js looks it

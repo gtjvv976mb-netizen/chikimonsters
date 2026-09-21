@@ -1,0 +1,257 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		949D7EE86D127584E5878C25 /* ChikoriaApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DD412687F292B173C14DB45 /* ChikoriaApp.swift */; };
+		9C65F6757B38C7535EC6E0AC /* LinkKeychain.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFB5BB21DCA329F0DD0A1C9A /* LinkKeychain.swift */; };
+		C7A47CD38C4B077515D167A7 /* Screens.swift in Sources */ = {isa = PBXBuildFile; fileRef = C90FE0E2057F19BE22EB6175 /* Screens.swift */; };
+		9E510FBB01AD6C74649B69C2 /* ShellModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D797F5E73E8E281D163A1084 /* ShellModel.swift */; };
+		61BA7613148615C44DF4FAB8 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BCE1C3AFD747585B922996D2 /* Assets.xcassets */; };
+		6C76BEBE2B13C8EAE176CF8B /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = E252C46ABE7E17DA73DBFDBA /* PrivacyInfo.xcprivacy */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		1A1A50608886CD85271B60A0 /* Chikoria.app */ = {isa = PBXFileReference; explicitFileType = "wrapper.application"; includeInIndex = 0; path = "Chikoria.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		6DD412687F292B173C14DB45 /* ChikoriaApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ChikoriaApp.swift"; sourceTree = "<group>"; };
+		EFB5BB21DCA329F0DD0A1C9A /* LinkKeychain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "LinkKeychain.swift"; sourceTree = "<group>"; };
+		C90FE0E2057F19BE22EB6175 /* Screens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Screens.swift"; sourceTree = "<group>"; };
+		D797F5E73E8E281D163A1084 /* ShellModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ShellModel.swift"; sourceTree = "<group>"; };
+		BCE1C3AFD747585B922996D2 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Assets.xcassets"; sourceTree = "<group>"; };
+		E252C46ABE7E17DA73DBFDBA /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = "PrivacyInfo.xcprivacy"; sourceTree = "<group>"; };
+		3CEC2E71A782058B06028252 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Info.plist"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		054BFFFF47B708B850E5177C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		E74C50741331EFE080FD56EF = {
+			isa = PBXGroup;
+			children = (
+				C145D5F98D36514E8BA73C74 /* Chikoria */,
+				CE2DAEE287BBDCF7E995E8F9 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		C145D5F98D36514E8BA73C74 /* Chikoria */ = {
+			isa = PBXGroup;
+			children = (
+				6DD412687F292B173C14DB45 /* ChikoriaApp.swift */,
+				EFB5BB21DCA329F0DD0A1C9A /* LinkKeychain.swift */,
+				C90FE0E2057F19BE22EB6175 /* Screens.swift */,
+				D797F5E73E8E281D163A1084 /* ShellModel.swift */,
+				BCE1C3AFD747585B922996D2 /* Assets.xcassets */,
+				E252C46ABE7E17DA73DBFDBA /* PrivacyInfo.xcprivacy */,
+				3CEC2E71A782058B06028252 /* Info.plist */,
+			);
+			path = "Chikoria";
+			sourceTree = "<group>";
+		};
+		CE2DAEE287BBDCF7E995E8F9 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				1A1A50608886CD85271B60A0 /* Chikoria.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		420603E9735D8A311E3CFD98 /* Chikoria */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FF7BFED897F8AED7BFB5B3A7 /* Build configuration list for PBXNativeTarget "Chikoria" */;
+			buildPhases = (
+				357A4EAC8783002450F14BDC /* Sources */,
+				054BFFFF47B708B850E5177C /* Frameworks */,
+				92932CFB6B7064271A699909 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "Chikoria";
+			productName = "Chikoria";
+			productReference = 1A1A50608886CD85271B60A0 /* Chikoria.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		D21B6106938B73677C512777 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					420603E9735D8A311E3CFD98 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = D2EF1688EC34436A8C4BA534 /* Build configuration list for PBXProject "Chikoria" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = E74C50741331EFE080FD56EF;
+			productRefGroup = CE2DAEE287BBDCF7E995E8F9 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				420603E9735D8A311E3CFD98 /* Chikoria */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		92932CFB6B7064271A699909 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				61BA7613148615C44DF4FAB8 /* Assets.xcassets in Resources */,
+				6C76BEBE2B13C8EAE176CF8B /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		357A4EAC8783002450F14BDC /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				949D7EE86D127584E5878C25 /* ChikoriaApp.swift in Sources */,
+				9C65F6757B38C7535EC6E0AC /* LinkKeychain.swift in Sources */,
+				C7A47CD38C4B077515D167A7 /* Screens.swift in Sources */,
+				9E510FBB01AD6C74649B69C2 /* ShellModel.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		BA2B0B94193476A519166257 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("DEBUG=1", "$(inherited)");
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				ONLY_ACTIVE_ARCH = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		8B412453383E0B27506FF8D4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		3902895446B1FA235ACACA3B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "Chikoria/Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks");
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.chikimonsters.Chikoria";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A764B1496310F4A70E5FBA3B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "Chikoria/Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks");
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.chikimonsters.Chikoria";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		D2EF1688EC34436A8C4BA534 /* Build configuration list for PBXProject "Chikoria" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BA2B0B94193476A519166257 /* Debug */,
+				8B412453383E0B27506FF8D4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		FF7BFED897F8AED7BFB5B3A7 /* Build configuration list for PBXNativeTarget "Chikoria" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3902895446B1FA235ACACA3B /* Debug */,
+				A764B1496310F4A70E5FBA3B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = D21B6106938B73677C512777 /* Project object */;
+}
