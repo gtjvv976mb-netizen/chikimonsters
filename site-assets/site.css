@@ -589,6 +589,99 @@ h3 {
   color: #d6cede;
   margin: 0;
 }
+.roster-section {
+  margin-top: clamp(58px, 7vw, 92px);
+  padding-top: clamp(36px, 5vw, 62px);
+  border-top: 1px solid rgba(255, 218, 157, .17);
+}
+.roster-head {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 19px;
+}
+.roster-head h3 {
+  margin: 10px 0 0;
+  font-size: clamp(32px, 3.8vw, 49px);
+  line-height: 1.08;
+}
+.roster-head h3 em { color: var(--cyan); }
+.roster-controls { display: flex; align-items: center; gap: 9px; }
+.roster-controls[hidden] { display: none; }
+.roster-arrow {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 221, 154, .4);
+  border-radius: 50%;
+  background: rgba(34, 22, 61, .86);
+  color: var(--gold);
+  font-size: 23px;
+  line-height: 1;
+  transition: background .2s ease, transform .2s ease;
+}
+.roster-arrow:not(:disabled):hover { background: rgba(99, 64, 139, .86); transform: translateY(-2px); }
+.roster-arrow:disabled { opacity: .35; cursor: default; }
+.roster-swipe-hint { display: none; color: #cfc1df; font-size: 11px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
+.roster-track {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: clamp(185px, 19vw, 230px);
+  gap: 15px;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 4px;
+  padding: 4px 4px 19px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 216, 137, .42) rgba(255, 255, 255, .06);
+}
+.roster-track:focus-visible { outline-offset: 3px; border-radius: 10px; }
+.roster-card {
+  min-width: 0;
+  min-height: 294px;
+  position: relative;
+  overflow: hidden;
+  scroll-snap-align: start;
+  border: 1px solid rgba(255, 216, 153, .20);
+  border-radius: 17px;
+  background:
+    radial-gradient(circle at 50% 37%, var(--roster-glow, rgba(144, 121, 218, .33)), transparent 61%),
+    linear-gradient(160deg, #302342, #18122e 78%);
+  box-shadow: 0 12px 28px rgba(4, 2, 13, .18);
+  transition: transform .27s ease, border-color .27s ease;
+}
+.roster-card:nth-child(4n+1) { --roster-glow: rgba(118, 215, 244, .31); }
+.roster-card:nth-child(4n+2) { --roster-glow: rgba(198, 115, 238, .30); }
+.roster-card:nth-child(4n+3) { --roster-glow: rgba(255, 186, 107, .30); }
+.roster-card:nth-child(4n) { --roster-glow: rgba(131, 223, 158, .29); }
+.roster-card:hover { transform: translateY(-5px); border-color: rgba(255, 227, 169, .53); }
+.roster-art {
+  height: 214px;
+  display: grid;
+  place-items: center;
+  padding: 15px 9px 1px;
+}
+.roster-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 13px 9px rgba(8, 5, 22, .39));
+  transition: transform .35s ease;
+}
+.roster-card:hover .roster-art img { transform: scale(1.06) translateY(-3px); }
+.roster-label {
+  position: absolute;
+  inset: auto 15px 13px;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 9px;
+}
+.roster-label h4 { margin: 0; font: 800 27px/1.1 "Baloo 2", system-ui, sans-serif; }
+.roster-label span { color: var(--gold); font-size: 10px; font-weight: 900; letter-spacing: .1em; }
 .section-after {
   text-align: center;
   color: var(--muted);
@@ -1535,6 +1628,10 @@ h3 {
   .gameplay-caption { display: block; }
   .gameplay-caption p { text-align: left; margin-top: 7px; }
   .gameplay-cta { flex-direction: column; gap: 15px; text-align: center; }
+  .roster-track { grid-auto-columns: min(39vw, 220px); gap: 12px; }
+  .roster-card { min-height: 260px; }
+  .roster-art { height: 190px; }
+  .roster-label h4 { font-size: 23px; }
 }
 @media (max-width: 580px) {
   .hero { min-height: max(700px, 100svh); }
@@ -1555,6 +1652,11 @@ h3 {
   .gameplay-slot-status { padding: 8px 11px; font-size: 9px; letter-spacing: .08em; }
   .gameplay-caption { padding-top: 14px; }
   .gameplay-caption h3 { font-size: 31px; }
+  .roster-head { align-items: start; }
+  .roster-head h3 { font-size: 35px; }
+  .roster-controls { display: none; }
+  .roster-swipe-hint { display: block; margin: 2px 0 12px; }
+  .roster-track { grid-auto-columns: min(62vw, 230px); }
 }
 @media (prefers-reduced-motion: reduce) {
   .hero .scene-layer,

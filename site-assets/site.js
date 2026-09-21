@@ -132,6 +132,39 @@
     scheduleScroll();
   });
 
+  // The extended 2D roster is a native scroll-snap strip. Buttons are a
+  // desktop enhancement; swiping and keyboard scrolling work without JS.
+  const roster = document.getElementById("roster-track");
+  const rosterControls = document.querySelector(".roster-controls");
+  if (roster && rosterControls) {
+    const previous = rosterControls.querySelector('[data-roster-dir="-1"]');
+    const next = rosterControls.querySelector('[data-roster-dir="1"]');
+    function moveRoster(direction) {
+      roster.scrollBy({
+        left: direction * roster.clientWidth * .82,
+        behavior: reduceMotion.matches ? "auto" : "smooth",
+      });
+    }
+    function updateRosterControls() {
+      const maxScroll = Math.max(0, roster.scrollWidth - roster.clientWidth);
+      rosterControls.hidden = maxScroll < 2;
+      previous.disabled = roster.scrollLeft < 3;
+      next.disabled = roster.scrollLeft > maxScroll - 3;
+    }
+    for (const button of [previous, next]) {
+      button.addEventListener("click", () => moveRoster(Number(button.dataset.rosterDir)));
+    }
+    roster.addEventListener("keydown", (event) => {
+      if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
+        event.preventDefault();
+        moveRoster(event.key === "ArrowRight" ? 1 : -1);
+      }
+    });
+    roster.addEventListener("scroll", updateRosterControls, { passive: true });
+    window.addEventListener("resize", updateRosterControls, { passive: true });
+    requestAnimationFrame(updateRosterControls);
+  }
+
   // Gameplay footage is intentionally not wired yet. The four static preview
   // cards in index.html carry data-video-slot IDs (exploration, gathering,
   // wicked-temple, chikiseum). When verified footage is available, add a
