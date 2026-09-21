@@ -1,0 +1,2 @@
+# Runtime chunks are opaque binary archives; never line-diff or normalize them.
+realm/*.bin binary
