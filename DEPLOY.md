@@ -21,7 +21,7 @@ Assets"` and `"observed_deployment": "d68b7d7b"`). That branch is a frozen, rece
 of what is live there; it is not a source tree to edit. Its README also says, in capitals, not to
 merge its 649 MB runtime into this repo.
 
-- **Homepage:** `index.html` — press the $CHIKI token → intro video → routes into the 3D MMO at `realm/`.
+- **Homepage:** `index.html` with `site-assets/` — the Chiki Monsters main site. Play links route into the 3D MMO at `realm/`; the legacy intro video loads only if a visitor chooses Watch the Intro.
 - **The MMO:** `realm/` — a Godot 4.6 web export. The engine files are split into ≤24 MB chunks so
   GitHub's 25 MB web uploader accepts them; `realm/index.html` streams them back into one Blob at
   runtime, stamping every chunk URL with the build hash so browsers never mix old and new chunks.
@@ -122,8 +122,8 @@ It names each missing hook. `IOS-APP.md` has what each one is and why.
 
 ## First-time / full deploy
 
-Upload the whole repo. Required for serving: `index.html`, `realm/`, `link/`, `privacy/`,
-`support/`, `ui/`, `chikidex/`, `audio/`, `models.js`, `intro.mp4`, `homepage-hero.png`,
+Upload the whole repo. Required for serving: `index.html`, `site-assets/`, `realm/`, `link/`, `privacy/`,
+`support/`, `ui/`, `chikidex/`, `audio/`, `models.js`, `intro.mp4`,
 `.nojekyll`, `CNAME`.
 
 `privacy/` and `support/` exist because App Store Connect requires a privacy policy URL and a
