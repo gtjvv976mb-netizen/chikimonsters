@@ -15,7 +15,7 @@ app now refuses every chat route. See §2.)
 | Blocker | Why it blocks | Who can clear it |
 |---|---|---|
 | **No build exists** | The Swift in `ios/` has never been compiled. Submission needs an archive uploaded from Xcode on a Mac. | You, with a Mac |
-| **The backend has no `/link/*` routes** | Pairing calls `/link/redeem`, which 404s. **A reviewer cannot get past the first screen.** | Backend work — see `IOS-APP.md` |
+| **The backend `/link/*` routes are not deployed** | Written, tested and pushed (`gtjvv976mb-netizen/backend`, branch `claude/vigilant-clarke-bpkqwt`) — but until that branch is merged and Render redeploys, `/link/redeem` still 404s and **a reviewer cannot get past the first screen.** | Merge + deploy the backend branch |
 | **No screenshots or preview video** | Both must be captured from the running app. They cannot be drawn, and faking them is a rejection *and* a guideline violation. | You, once a build runs |
 | **The app still shows a shop** | Until the iOS pack is published: a player can walk to the Trading Post and open a marketplace with a `🪄 Magic Eden` tab, the welcome screen's main button is *Connect Phantom Wallet*, and the Chikiseum says *"champions win real SOL"*. Every button refuses — but 3.1.1 is about what an app **presents**. | **Built and verified** — publish `index.pck.ios.lite.*` to `realm/`. The website's packs are untouched. |
 
@@ -461,7 +461,8 @@ Nothing below can move ahead of the thing above it.
       Expect `CHIKISEUM_CARD_EXPORT_REJECTED` at step 3 — it is a provenance gate, not a failure.
 - [ ] **Decide:** does an app player need the 500k $CHIKI hold
 - [ ] **Decide:** what account deletion does
-- [ ] Backend: `/link/new`, `/link/redeem`, `linkToken` on `/verify`, `/link/devices`, `/link/revoke`, `/link/delete_account`
+- [x] Backend: `/link/new`, `/link/redeem`, `linkToken` on `/verify`, `/link/devices`, `/link/revoke`, `/link/delete_account` — written and tested (50 checks against the real server), **awaiting merge + deploy**
+- [ ] **Decide** what account deletion actually removes. The request/grace/cancel flow is live; the execution step is deliberately unwired (`realmLink.due()` lists what is past its grace)
 - [ ] Publish `link/` and `privacy/` (they are on the branch, not on `main`)
 - [x] Support page — `support/` is written
 - [ ] Replace the placeholder addresses in `support/` and `privacy/` with a monitored inbox

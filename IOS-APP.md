@@ -354,6 +354,14 @@ Decide this before writing the review notes, because one of the five bullets abo
 
 ## Backend work this needs
 
+**Status: written, tested and pushed** — `gtjvv976mb-netizen/backend`, branch
+`claude/vigilant-clarke-bpkqwt`, in `realm-link.js` plus a small amount of wiring in `server.js`.
+`realm-link.test.mjs` boots the real server and drives the whole flow with genuine Ed25519
+sign-ins: 50 checks. It is not live until that branch is merged and Render redeploys.
+
+The one thing it deliberately does **not** do is execute an account deletion — see the note at the
+end of this section.
+
 Nothing in the app can ship without these. None of them move money.
 
 ### Realm Link
@@ -443,6 +451,14 @@ and the Chikiseum works in the app with no wallet provider present.
 marketplace listings, withdrawals and payout claims stay signature-only. The device policy in
 `realm/chiki-ios.js` is a client and a client can be bypassed by someone who is not using our
 client; the server is what makes "the app cannot sell" true rather than merely tidy.
+
+**This is now enforced.** A link session's market token is drawn from a separate pool, keyed by
+token rather than by wallet — so a player signed in on the web and paired on a phone stay
+distinguishable even for the same wallet at the same moment. One middleware refuses that fact on
+`/market/op`, `/market/buy-onchain`, `/market/order-pay`, the four `/nft/market/*` writes,
+`/meme/buy`, `/claim`, the quest payouts and `/cup/register` + `/cup/ready`. Earning is untouched
+on purpose: minting, hatching, gathering, node claims and profile saves all still work from the
+app, and the test asserts both halves.
 
 ---
 
