@@ -83,7 +83,7 @@
     document.querySelectorAll(".reveal").forEach((element) => reveals.observe(element));
   }
 
-  // Three painted scene planes create a camera-like scroll journey. One passive
+  // Four painted scene planes create a camera-like scroll journey. One passive
   // scroll listener and one rAF update; only compositor-friendly transforms move.
   let scrollFrame = 0;
   function renderScroll() {
@@ -106,8 +106,8 @@
     if (journeyRect.bottom > 0 && journeyRect.top < window.innerHeight) {
       const viewport = window.innerHeight;
       const travelled = Math.max(0, -journeyRect.top);
-      const active = Math.min(2, Math.floor((travelled + viewport * 0.5) / viewport));
-      journey.dataset.scene = ["realm", "temple", "arena"][active];
+      const active = Math.min(3, Math.floor((travelled + viewport * 0.5) / viewport));
+      journey.dataset.scene = ["realm", "gathering", "temple", "arena"][active];
       if (canMoveScene()) {
         const progress = Math.max(0, Math.min(1, travelled / Math.max(1, journeyRect.height - viewport)));
         journey.style.setProperty("--journey-y", `${(-progress * 54).toFixed(1)}px`);
@@ -132,38 +132,11 @@
     scheduleScroll();
   });
 
-  // Real game clips download only after a visitor presses Play; no autoplay.
-  const gameplayVideos = [...document.querySelectorAll(".gameplay-media video")];
-  for (const media of document.querySelectorAll(".gameplay-media")) {
-    const button = media.querySelector(".gameplay-play");
-    const video = media.querySelector("video");
-    button.addEventListener("click", () => {
-      for (const other of gameplayVideos) if (other !== video) other.pause();
-      media.classList.add("is-playing");
-      video.src = button.dataset.video;
-      video.load();
-      video.play().catch(() => {
-        /* Controls remain visible for a second tap if play is blocked. */
-      });
-    });
-    video.addEventListener("error", () => {
-      media.classList.remove("is-playing");
-      button.disabled = true;
-      button.setAttribute("aria-label", "Gameplay clip is temporarily unavailable");
-      button.querySelector("span:last-child").textContent = "Clip unavailable";
-      video.removeAttribute("src");
-    });
-  }
-  if ("IntersectionObserver" in window) {
-    const pauseHidden = new IntersectionObserver((entries) => {
-      for (const entry of entries) if (!entry.isIntersecting) entry.target.pause();
-    }, { threshold: 0.01 });
-    gameplayVideos.forEach((video) => pauseHidden.observe(video));
-  }
+  // Gameplay footage is intentionally not wired yet. The four static preview
+  // cards in index.html carry data-video-slot IDs (exploration, gathering,
+  // wicked-temple, chikiseum). When verified footage is available, add a
+  // poster and a click-to-play video for each matching slot; never autoplay.
   document.addEventListener("visibilitychange", () => {
-    if (document.hidden) {
-      gameplayVideos.forEach((video) => video.pause());
-      introVideo.pause();
-    }
+    if (document.hidden) introVideo.pause();
   });
 })();

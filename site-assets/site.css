@@ -1310,20 +1310,41 @@ h3 {
 .hero-haze { z-index: 0; pointer-events: none; }
 .hero-content { z-index: 5; padding-top: clamp(130px, 15vh, 190px); padding-bottom: 36px; }
 .hero-cast {
-  z-index: 4;
-  width: min(47vw, 610px);
-  height: min(39vw, 490px);
-  right: max(2%, calc((100vw - 1410px) / 2));
-  bottom: 9%;
+  z-index: 3;
+  width: min(42vw, 540px);
+  height: min(29vw, 350px);
+  right: max(3%, calc((100vw - 1380px) / 2));
+  bottom: 7%;
   transform: translate3d(0, var(--cast-y, 0px), 0);
+  filter: drop-shadow(0 12px 10px rgba(20, 12, 31, .34));
+}
+.hero-cast::before {
+  content: "";
+  position: absolute;
+  inset: 3% 0 12%;
+  background: radial-gradient(ellipse at 65% 40%, rgba(255, 204, 129, .22), transparent 65%);
+  pointer-events: none;
 }
 .hero-creature { transition: none; transform: translate3d(0, var(--sprite-y, 0px), 0); }
 .hero-creature-left { left: 0; bottom: 3%; width: 46%; height: 68%; z-index: 2; }
 .hero-creature-center { left: 27%; bottom: 0; width: 46%; height: 86%; z-index: 3; }
 .hero-creature-right { right: 0; bottom: 5%; width: 43%; height: 70%; z-index: 1; }
+.hero-creature img { filter: sepia(.08) saturate(.91) brightness(.96); }
 .hero-creature-left img { transform: scale(1.19); transform-origin: 58% 70%; }
 .hero-creature-right img { transform: scale(1.05); transform-origin: 45% 70%; }
 .hero-creature-center img { transform: scale(1.11); transform-origin: 50% 73%; }
+.hero-occlusion {
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  background:
+    url("/site-assets/scene-chikoria.webp") center 52% / cover no-repeat,
+    url("/site-assets/hero-chikoria.webp") center 52% / cover no-repeat;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 77%, #000 96%);
+  mask-image: linear-gradient(to bottom, transparent 77%, #000 96%);
+  transform: translate3d(0, var(--back-y, 0px), 0) scale(1.09);
+  pointer-events: none;
+}
 /* Each chapter is normal document content; the sticky painted stage behind it
    transitions from Realm to Temple to Chikiseum as the visitor scrolls. */
 .journey { position: relative; isolation: isolate; background: #100b22; }
@@ -1347,10 +1368,13 @@ h3 {
   will-change: transform, opacity;
 }
 .journey-scene-realm { background-image: url("/site-assets/scene-chikoria.webp"), url("/site-assets/hero-chikoria.webp"); opacity: 1; }
+.journey-scene-gathering { background-image: url("/site-assets/scene-gathering.webp"); }
 .journey-scene-temple { background-image: url("/site-assets/wicked-temple.webp"); }
 .journey-scene-arena { background-image: url("/site-assets/chikiseum.webp"); }
+.journey[data-scene="gathering"] .journey-scene-realm,
 .journey[data-scene="temple"] .journey-scene-realm,
 .journey[data-scene="arena"] .journey-scene-realm { opacity: 0; }
+.journey[data-scene="gathering"] .journey-scene-gathering { opacity: 1; }
 .journey[data-scene="temple"] .journey-scene-temple { opacity: 1; }
 .journey[data-scene="arena"] .journey-scene-arena { opacity: 1; }
 .journey-vignette {
@@ -1439,42 +1463,48 @@ h3 {
   background: #090817;
   box-shadow: 0 25px 50px rgba(3, 1, 15, .32), 0 0 0 1px rgba(255, 217, 137, .22);
 }
-.gameplay-media > img,
-.gameplay-media > video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.gameplay-media > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .gameplay-media > img { transition: transform .6s ease, filter .4s ease; }
 .gameplay-card:hover .gameplay-media > img { transform: scale(1.035); filter: saturate(1.12); }
-.gameplay-media > video { display: none; background: #05020e; }
-.gameplay-media.is-playing > img,
-.gameplay-media.is-playing > .gameplay-play { display: none; }
-.gameplay-media.is-playing > video { display: block; }
-.gameplay-play {
+.gameplay-slot-overlay {
   position: absolute;
   inset: 0;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  width: 100%;
-  border: 0;
-  background: linear-gradient(0deg, rgba(8, 6, 24, .30), transparent 52%);
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: clamp(17px, 3vw, 35px);
+  background: linear-gradient(180deg, rgba(8, 6, 24, .37), transparent 35%, transparent 52%, rgba(8, 6, 24, .68));
   color: #fff9eb;
+  pointer-events: none;
+}
+.gameplay-slot-label {
+  border: 1px solid rgba(255, 228, 164, .7);
+  border-radius: 4px;
+  padding: 6px 12px;
+  background: rgba(17, 10, 36, .66);
   font-size: 12px;
   font-weight: 900;
-  letter-spacing: .18em;
+  letter-spacing: .15em;
   text-transform: uppercase;
-  text-shadow: 0 2px 7px #070517;
+  backdrop-filter: blur(7px);
 }
-.gameplay-play .play-icon {
-  width: 76px;
-  height: 76px;
-  background: rgba(11, 8, 27, .62);
-  border: 2px solid rgba(255, 230, 172, .85);
-  box-shadow: 0 0 0 11px rgba(255, 231, 166, .12), 0 12px 32px rgba(0, 0, 0, .35);
-  transition: transform .24s ease, background .24s ease;
+.gameplay-slot-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid rgba(255, 255, 255, .24);
+  border-radius: 100px;
+  padding: 9px 14px;
+  background: rgba(12, 8, 30, .76);
+  box-shadow: 0 8px 24px rgba(5, 3, 15, .2);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  backdrop-filter: blur(8px);
 }
-.gameplay-play:hover .play-icon,
-.gameplay-play:focus-visible .play-icon { transform: scale(1.1); background: rgba(233, 175, 70, .82); }
+.gameplay-slot-status::before { content: ""; flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 9px var(--gold); }
 .gameplay-caption { display: flex; justify-content: space-between; gap: 28px; align-items: end; padding: 19px 4px 3px; }
 .gameplay-index { color: var(--gold); font-size: 11px; letter-spacing: .2em; font-weight: 900; }
 .gameplay-caption h3 { font-size: clamp(27px, 3vw, 42px); line-height: 1.1; margin: 6px 0 0; }
@@ -1485,6 +1515,12 @@ h3 {
   .hero .scene-layer,
   .journey-scene { will-change: auto; }
   .hero-land { background-position: 56% center; }
+  .hero-near { display: none; }
+  .hero-occlusion {
+    background-position: 56% center;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 84%, #000 99%);
+    mask-image: linear-gradient(to bottom, transparent 84%, #000 99%);
+  }
   .hero-near { background-size: auto 145%; background-position: 56% bottom; }
   .hero-cast { left: 50%; right: auto; transform: translate3d(-50%, var(--cast-y, 0px), 0); }
   .hero-creature-left { display: block; width: 40%; height: 64%; left: 3%; bottom: 0; }
@@ -1501,7 +1537,7 @@ h3 {
   .gameplay-cta { flex-direction: column; gap: 15px; text-align: center; }
 }
 @media (max-width: 580px) {
-  .hero-cast { width: 390px; max-width: 108vw; height: 280px; bottom: 4%; }
+  .hero-cast { width: 340px; max-width: 98vw; height: 240px; bottom: 4%; }
   .hero-content { padding-bottom: 270px; }
   .hero-note { display: none; }
   .hero h1 { font-size: clamp(42px, 11.4vw, 60px); }
@@ -1514,8 +1550,8 @@ h3 {
   .gameplay-grid { grid-template-columns: 1fr; gap: 34px; }
   .gameplay-card-wide { grid-column: auto; }
   .gameplay-media { border-radius: 13px; }
-  .gameplay-play .play-icon { width: 54px; height: 54px; box-shadow: 0 0 0 7px rgba(255, 231, 166, .12); }
-  .gameplay-play { gap: 11px; font-size: 10px; }
+  .gameplay-slot-label { padding: 5px 9px; font-size: 9px; }
+  .gameplay-slot-status { padding: 8px 11px; font-size: 9px; letter-spacing: .08em; }
   .gameplay-caption { padding-top: 14px; }
   .gameplay-caption h3 { font-size: 31px; }
 }
@@ -1527,8 +1563,9 @@ h3 {
   .journey-beats { margin-top: 0; }
   .journey-beat { min-height: 570px; background-position: center; background-size: cover; }
   .journey-beat:nth-child(1) { background-image: linear-gradient(90deg, rgba(7, 5, 18, .82), rgba(7, 5, 18, .38)), url("/site-assets/scene-chikoria.webp"), url("/site-assets/hero-chikoria.webp"); }
-  .journey-beat:nth-child(2) { background-image: linear-gradient(90deg, rgba(7, 5, 18, .82), rgba(7, 5, 18, .38)), url("/site-assets/wicked-temple.webp"); }
-  .journey-beat:nth-child(3) { background-image: linear-gradient(90deg, rgba(7, 5, 18, .82), rgba(7, 5, 18, .38)), url("/site-assets/chikiseum.webp"); }
+  .journey-beat:nth-child(2) { background-image: linear-gradient(90deg, rgba(7, 5, 18, .82), rgba(7, 5, 18, .38)), url("/site-assets/scene-gathering.webp"); }
+  .journey-beat:nth-child(3) { background-image: linear-gradient(90deg, rgba(7, 5, 18, .82), rgba(7, 5, 18, .38)), url("/site-assets/wicked-temple.webp"); }
+  .journey-beat:nth-child(4) { background-image: linear-gradient(90deg, rgba(7, 5, 18, .82), rgba(7, 5, 18, .38)), url("/site-assets/chikiseum.webp"); }
 }
 @media (max-width: 760px) and (prefers-reduced-motion: reduce) {
   .hero-cast { transform: translateX(-50%) !important; }

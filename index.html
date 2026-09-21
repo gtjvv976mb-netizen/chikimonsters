@@ -60,7 +60,7 @@
           <span></span><span></span><span></span>
         </button>
         <div class="nav-links" id="nav-links">
-          <a href="#journey">The World</a><a href="#gameplay">Watch Gameplay</a
+          <a href="#journey">The World</a><a href="#gameplay">Game Modes</a
           ><a href="#chikimons">Chikimons</a
           ><a href="#chikoria">Chikoria</a
           ><a class="nav-play enter-game" href="/realm/"
@@ -127,6 +127,7 @@
             />
           </div>
         </div>
+        <div class="hero-occlusion scene-layer" aria-hidden="true"></div>
         <a class="scroll-cue" href="#journey"
           >Explore the world <span aria-hidden="true">↓</span></a
         >
@@ -135,6 +136,7 @@
       <section class="journey" id="journey" aria-label="Journey through Chikoria">
         <div class="journey-stage" aria-hidden="true">
           <div class="journey-scene journey-scene-realm"></div>
+          <div class="journey-scene journey-scene-gathering"></div>
           <div class="journey-scene journey-scene-temple"></div>
           <div class="journey-scene journey-scene-arena"></div>
           <div class="journey-vignette"></div>
@@ -150,9 +152,17 @@
               <span class="journey-step" aria-hidden="true">Scroll to travel <span>↓</span></span>
             </div>
           </div>
+          <div class="journey-beat" data-scene="gathering">
+            <div class="journey-copy">
+              <p class="kicker">02 / BY THE RIVERSIDE</p>
+              <h2>Every path holds<br /><em>a discovery.</em></h2>
+              <p>Pause at Chikoria's bright waterways. Gather what you need, fish for surprises, and see where the trail leads.</p>
+              <span class="journey-step" aria-hidden="true">Journey onward <span>↓</span></span>
+            </div>
+          </div>
           <div class="journey-beat" data-scene="temple">
             <div class="journey-copy">
-              <p class="kicker">02 / THROUGH THE GATE</p>
+              <p class="kicker">03 / THROUGH THE GATE</p>
               <h2>When the temple calls,<br /><em>answer.</em></h2>
               <p>Push into the Wicked Temple. Move, dodge, and unleash your Chikimon's ability cards against the corrupted horde.</p>
               <span class="journey-step" aria-hidden="true">Keep exploring <span>↓</span></span>
@@ -160,10 +170,10 @@
           </div>
           <div class="journey-beat" data-scene="arena">
             <div class="journey-copy">
-              <p class="kicker">03 / STEP INTO THE LIGHT</p>
+              <p class="kicker">04 / STEP INTO THE LIGHT</p>
               <h2>The Chikiseum<br /><em>is waiting.</em></h2>
               <p>Read your rival, own the floor, and make every move count in a living arena.</p>
-              <a class="journey-step journey-watch-link" href="#gameplay">See the game in motion <span aria-hidden="true">↓</span></a>
+              <a class="journey-step journey-watch-link" href="#gameplay">Explore the game modes <span aria-hidden="true">↓</span></a>
             </div>
           </div>
         </div>
@@ -172,45 +182,44 @@
       <section class="gameplay-section section-pad" id="gameplay" aria-labelledby="gameplay-title">
         <div class="section-wrap">
           <div class="section-heading reveal">
-            <p class="kicker">REAL FOOTAGE / REAL CHIKORIA</p>
-            <h2 id="gameplay-title">Don't imagine it.<br /><em>Watch it move.</em></h2>
-            <p>These are moments from the game itself. Pick a path and see what awaits inside.</p>
+            <p class="kicker">FOUR WAYS INTO CHIKORIA</p>
+            <h2 id="gameplay-title">Pick your path.<br /><em>Make it yours.</em></h2>
+            <p>Explore the world and its challenges below. Gameplay clips will join these previews once recorded.</p>
           </div>
+          <!-- Future footage mapping: data-video-slot="exploration|gathering|wicked-temple|chikiseum"
+               corresponds to /site-assets/video-{slot}.mp4. Add a verified clip and poster to the
+               matching card only when that recording exists; these previews are intentionally inert. -->
           <div class="gameplay-grid">
-            <article class="gameplay-card gameplay-card-wide reveal">
+            <article class="gameplay-card gameplay-card-wide reveal" data-video-slot="exploration">
               <div class="gameplay-media">
-                <img src="/site-assets/poster-exploration.webp" width="960" height="540" alt="Exploring the Chikoria Realm in-game" loading="lazy" decoding="async" />
-                <video controls playsinline preload="none" aria-label="Chikoria exploration gameplay"></video>
-                <button class="gameplay-play" type="button" data-video="/site-assets/video-exploration.mp4" aria-label="Play Chikoria exploration footage"><span class="play-icon" aria-hidden="true"></span><span>Watch gameplay</span></button>
+                <img src="/site-assets/scene-chikoria.webp" width="1344" height="752" alt="Illustrated Chikoria landscape preview" loading="lazy" decoding="async" />
+                <div class="gameplay-slot-overlay"><span class="gameplay-slot-label">World exploration</span><span class="gameplay-slot-status">Gameplay clip coming soon</span></div>
               </div>
               <div class="gameplay-caption"><div><span class="gameplay-index">01 / EXPLORE</span><h3>Wander into wonder</h3></div><p>Follow your curiosity through Chikoria.</p></div>
             </article>
-            <article class="gameplay-card reveal">
+            <article class="gameplay-card reveal" data-video-slot="gathering">
               <div class="gameplay-media">
-                <img src="/site-assets/poster-gathering.webp" width="960" height="540" alt="Gathering items in the Chikoria Realm in-game" loading="lazy" decoding="async" />
-                <video controls playsinline preload="none" aria-label="Chikoria gathering gameplay"></video>
-                <button class="gameplay-play" type="button" data-video="/site-assets/video-gathering.mp4" aria-label="Play gathering footage"><span class="play-icon" aria-hidden="true"></span><span>Watch gameplay</span></button>
+                <img src="/site-assets/scene-gathering.webp" width="1344" height="752" alt="Illustrated Chikoria gathering scene" loading="lazy" decoding="async" />
+                <div class="gameplay-slot-overlay"><span class="gameplay-slot-label">Gather and discover</span><span class="gameplay-slot-status">Gameplay clip coming soon</span></div>
               </div>
               <div class="gameplay-caption"><div><span class="gameplay-index">02 / GATHER</span><h3>Find your next surprise</h3></div><p>There's more to discover between battles.</p></div>
             </article>
-            <article class="gameplay-card reveal">
+            <article class="gameplay-card reveal" data-video-slot="wicked-temple">
               <div class="gameplay-media">
-                <img src="/site-assets/poster-wicked-temple.webp" width="960" height="540" alt="Battling corrupted Chikimons inside the Wicked Temple" loading="lazy" decoding="async" />
-                <video controls playsinline preload="none" aria-label="Wicked Temple battle gameplay"></video>
-                <button class="gameplay-play" type="button" data-video="/site-assets/video-wicked-temple.mp4" aria-label="Play Wicked Temple battle footage"><span class="play-icon" aria-hidden="true"></span><span>Watch gameplay</span></button>
+                <img src="/site-assets/wicked-temple.webp" width="1344" height="752" alt="Illustrated Wicked Temple scene" loading="lazy" decoding="async" />
+                <div class="gameplay-slot-overlay"><span class="gameplay-slot-label">Wicked Temple</span><span class="gameplay-slot-status">Gameplay clip coming soon</span></div>
               </div>
               <div class="gameplay-caption"><div><span class="gameplay-index">03 / BATTLE</span><h3>Break the corruption</h3></div><p>Move, dodge, and play your ability cards.</p></div>
             </article>
-            <article class="gameplay-card gameplay-card-wide reveal">
+            <article class="gameplay-card gameplay-card-wide reveal" data-video-slot="chikiseum">
               <div class="gameplay-media">
-                <img src="/site-assets/poster-chikiseum.webp" width="960" height="540" alt="Chikimon battle in the Chikiseum arena" loading="lazy" decoding="async" />
-                <video controls playsinline preload="none" aria-label="Chikiseum battle gameplay"></video>
-                <button class="gameplay-play" type="button" data-video="/site-assets/video-chikiseum.mp4" aria-label="Play Chikiseum battle footage"><span class="play-icon" aria-hidden="true"></span><span>Watch gameplay</span></button>
+                <img src="/site-assets/chikiseum.webp" width="1672" height="941" alt="Illustrated Chikiseum arena scene" loading="lazy" decoding="async" />
+                <div class="gameplay-slot-overlay"><span class="gameplay-slot-label">The Chikiseum</span><span class="gameplay-slot-status">Gameplay clip coming soon</span></div>
               </div>
               <div class="gameplay-caption"><div><span class="gameplay-index">04 / COMPETE</span><h3>Own the arena</h3></div><p>Every second and every card matters.</p></div>
             </article>
           </div>
-          <div class="gameplay-cta reveal"><span>Ready to go from watching to playing?</span><a class="button button-gold enter-game" href="/realm/">Enter Chikoria <span aria-hidden="true">→</span></a></div>
+          <div class="gameplay-cta reveal"><span>Ready to step inside?</span><a class="button button-gold enter-game" href="/realm/">Enter Chikoria <span aria-hidden="true">→</span></a></div>
         </div>
       </section>
 
