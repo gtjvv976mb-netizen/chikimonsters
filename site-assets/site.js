@@ -9,10 +9,21 @@
   const watch = document.getElementById("watch-intro");
   const hero = document.querySelector(".hero");
   const journey = document.querySelector(".journey");
+  const motionToggle = document.getElementById("motion-toggle");
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   const wideScreen = window.matchMedia("(min-width: 761px)");
   const saveData = Boolean(navigator.connection && navigator.connection.saveData);
-  const canMoveScene = () => wideScreen.matches && !reduceMotion.matches && !saveData && !document.hidden;
+  let motionOptIn = false;
+  const motionEnabled = () => !reduceMotion.matches || motionOptIn;
+  const canMoveScene = () => wideScreen.matches && motionEnabled() && !saveData && !document.hidden;
+
+  function syncMotionToggle() {
+    motionToggle.hidden = !reduceMotion.matches;
+    motionToggle.setAttribute("aria-pressed", String(motionOptIn));
+    motionToggle.setAttribute("aria-label", `${motionOptIn ? "Turn off" : "Turn on"} cinematic scroll motion`);
+    motionToggle.querySelector(".cinematic-toggle-state").textContent = motionOptIn ? "On" : "Off";
+  }
+  syncMotionToggle();
 
   document.getElementById("year").textContent = String(new Date().getFullYear());
 
@@ -119,16 +130,27 @@
   function scheduleScroll() {
     if (!scrollFrame) scrollFrame = requestAnimationFrame(renderScroll);
   }
+  function clearSceneTransforms() {
+    for (const property of ["--back-y", "--mid-y", "--front-y", "--cast-y"]) hero.style.removeProperty(property);
+    for (const sprite of hero.querySelectorAll(".hero-creature[data-depth]")) sprite.style.removeProperty("--sprite-y");
+    for (const property of ["--journey-y", "--journey-near-y", "--journey-progress"]) journey.style.removeProperty(property);
+  }
+  motionToggle.addEventListener("click", () => {
+    motionOptIn = !motionOptIn;
+    document.documentElement.classList.toggle("motion-opt-in", motionOptIn);
+    syncMotionToggle();
+    if (!motionEnabled()) clearSceneTransforms();
+    // The control is in the hero, so the stage can switch before the next paint.
+    renderScroll();
+  });
   renderScroll();
   window.addEventListener("scroll", scheduleScroll, { passive: true });
   window.addEventListener("resize", scheduleScroll, { passive: true });
   reduceMotion.addEventListener("change", () => {
-    if (reduceMotion.matches) {
-      for (const property of ["--back-y", "--mid-y", "--front-y", "--cast-y"]) hero.style.removeProperty(property);
-      for (const sprite of hero.querySelectorAll(".hero-creature[data-depth]")) sprite.style.removeProperty("--sprite-y");
-      journey.style.removeProperty("--journey-y");
-      journey.style.removeProperty("--journey-near-y");
-    }
+    motionOptIn = false;
+    document.documentElement.classList.remove("motion-opt-in");
+    syncMotionToggle();
+    if (!motionEnabled()) clearSceneTransforms();
     scheduleScroll();
   });
 
@@ -142,7 +164,7 @@
     function moveRoster(direction) {
       roster.scrollBy({
         left: direction * roster.clientWidth * .82,
-        behavior: reduceMotion.matches ? "auto" : "smooth",
+        behavior: motionEnabled() ? "smooth" : "auto",
       });
     }
     function updateRosterControls() {
