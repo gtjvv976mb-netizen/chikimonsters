@@ -8,6 +8,21 @@
 // uses Palmer. Same tooth, three names — so each button carries all three
 // and the segmented control relabels without re-rendering.
 
+import { CONDITION_LABEL, type ToothCondition, type Notation } from '../data/demo';
+
+interface Props {
+  /** Existing findings, keyed by FDI number. Empty means a fresh chart. */
+  marks?: Partial<Record<number, ToothCondition>>;
+  /** Which numbering to show first. Staff can switch it in the control. */
+  notation?: Notation;
+}
+
+const { marks = {}, notation = 'fdi' } = Astro.props;
+
+const stateOf = (fdi: number): ToothCondition => marks[fdi] ?? 'sound';
+const labelFor = (fdi: number, name: string | number) =>
+  `Tooth ${name}, currently ${CONDITION_LABEL[stateOf(fdi)]}. Activate to change.`;
+
 type Tooth = { fdi: number; universal: number; palmer: string };
 
 const QUADRANTS: Record<number, { palmer: string; universalStart: number; ascending: boolean }> = {
@@ -46,7 +61,7 @@ const notations = [
 
 <div
   data-odontogram
-  data-notation="fdi"
+  data-notation={notation}
   class="flex flex-col gap-7 rounded-3xl border border-line bg-surface p-6 sm:p-8 lg:flex-row"
 >
   <div class="flex min-w-0 flex-1 flex-col">
@@ -59,7 +74,7 @@ const notations = [
               type="radio"
               name="notation"
               value={n.id}
-              checked={i === 0}
+              checked={n.id === notation}
               class="peer sr-only"
               data-notation-input
             />
@@ -88,13 +103,13 @@ const notations = [
                 type="button"
                 class="tooth"
                 data-tooth
-                data-state="sound"
+                data-state={stateOf(t.fdi)}
                 data-fdi={t.fdi}
                 data-universal={t.universal}
                 data-palmer={t.palmer}
-                aria-label={`Tooth ${t.fdi}, currently Sound. Activate to change.`}
+                aria-label={labelFor(t.fdi, t[notation])}
               ></button>
-              <span class="text-[11px] tabular-nums text-muted" data-label>{t.fdi}</span>
+              <span class="text-[11px] tabular-nums text-muted" data-label>{t[notation]}</span>
             </div>
           ))}
         </div>
@@ -116,13 +131,13 @@ const notations = [
                 type="button"
                 class="tooth tooth--lower"
                 data-tooth
-                data-state="sound"
+                data-state={stateOf(t.fdi)}
                 data-fdi={t.fdi}
                 data-universal={t.universal}
                 data-palmer={t.palmer}
-                aria-label={`Tooth ${t.fdi}, currently Sound. Activate to change.`}
+                aria-label={labelFor(t.fdi, t[notation])}
               ></button>
-              <span class="text-[11px] tabular-nums text-muted" data-label>{t.fdi}</span>
+              <span class="text-[11px] tabular-nums text-muted" data-label>{t[notation]}</span>
             </div>
           ))}
         </div>
@@ -181,6 +196,13 @@ const notations = [
     const counter = root.querySelector<HTMLElement>('[data-count]');
     const clear = root.querySelector<HTMLButtonElement>('[data-clear]');
     const marks = new Map<HTMLButtonElement, string>();
+
+    // Seed from what the server rendered, so an existing patient chart keeps
+    // its findings instead of blanking the moment the script runs.
+    teeth.forEach((btn) => {
+      const s = btn.dataset.state;
+      if (s && s !== 'sound') marks.set(btn, s);
+    });
 
     const nameOf = (btn: HTMLButtonElement) =>
       btn.dataset[root.dataset.notation ?? 'fdi'] ?? btn.dataset.fdi!;

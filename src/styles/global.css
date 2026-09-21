@@ -138,6 +138,16 @@ body {
 .tooth[data-state="crown"]   { background: var(--c-crown);  border-color: var(--c-crown); }
 .tooth[data-state="missing"] { background: var(--c-tooth-missing); border-color: var(--c-tooth-line); opacity: 0.6; }
 
+/* Findings beyond the five the demo chart cycles through. Mid-tone hues so
+   the same value reads on both the bone and the near-black ground. */
+.tooth[data-state="bridge"]     { background: var(--c-crown); border-color: var(--c-crown); }
+.tooth[data-state="root_canal"] { background: #8b5cf6; border-color: #8b5cf6; }
+.tooth[data-state="sealant"]    { background: #0ea5e9; border-color: #0ea5e9; }
+.tooth[data-state="implant"]    { background: #64748b; border-color: #64748b; }
+.tooth[data-state="veneer"]     { background: #d946ef; border-color: #d946ef; }
+.tooth[data-state="unerupted"],
+.tooth[data-state="impacted"]   { background: transparent; border-style: dashed; }
+
 .swatch { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; border: 1px solid var(--c-tooth-line); }
 
 @media (prefers-reduced-motion: reduce) {
