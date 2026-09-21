@@ -171,6 +171,13 @@ console.log('\nthe app loads its own pack, and the website keeps its own');
 		"the website's own families are still reachable");
 	check(at('index.pck.ios.lite.manifest.json') < at('index.pck.lite.manifest.json'),
 		'and the iOS family is tried BEFORE them, not after');
+	// An HD phone skips ios.lite on the first pass. If only ios.lite is published, it must still
+	// land there rather than on the website's desktop pack — which would put a marketplace in
+	// front of an App Review tester.
+	check(hasLoose(html, "if (isIOSApp && !wantLite) { candidates.push(['index.pck.ios.lite.manifest.json'"),
+		'an HD phone still falls back to the iOS lite pack, never to the website pack');
+	check((html.match(/index\.pck\.ios\.lite\.manifest\.json/g) || []).length >= 2,
+		'the iOS lite pack is reachable on both the lite and the HD path');
 	check(/window\.CHIK_PACK\s*=/.test(html), 'the mounted family is published as window.CHIK_PACK');
 	check(hasLoose(html, '(usedLite || usedIOS) && !CDN_HAS_LITE'),
 		'iOS chunks are fetched same-origin, like the lite family');

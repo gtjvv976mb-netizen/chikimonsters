@@ -1957,9 +1957,15 @@ const engine = new Engine(GODOT_CONFIG);
 		// Each entry is tried in order and a 404 falls straight through, so this degrades rather
 		// than breaks: before the iOS family is published the app still boots on the website's
 		// packs (with the shop visible), and after it is published the website is unaffected.
+		// The app tries EVERY iOS family before any website one, including the lite pack when it
+		// wanted the full-size one. That last fallback is the important one: a phone the shell says
+		// has the memory (CHIK_HD) skips ios.lite, and if only ios.lite has been published it would
+		// otherwise drop straight to the website's desktop pack — and ship a visible marketplace to
+		// an App Review tester. Lower-resolution textures are a much better failure than that.
 		const candidates = [];
 		if (isIOSApp && wantLite) { candidates.push(['index.pck.ios.lite.manifest.json', true, true]); }
 		if (isIOSApp) { candidates.push(['index.pck.ios.manifest.json', false, true]); }
+		if (isIOSApp && !wantLite) { candidates.push(['index.pck.ios.lite.manifest.json', true, true]); }
 		if (wantLite) { candidates.push(['index.pck.lite.manifest.json', true, false]); }
 
 		let man = null;

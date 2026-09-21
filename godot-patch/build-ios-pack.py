@@ -1,55 +1,52 @@
 #!/usr/bin/env python3
-"""Build the iOS app's pack from the SHIPPED pack plus only the scripts the patch changed.
+"""Build the iOS app's pack: the SHIPPED pack, with only the patched scripts swapped in.
 
-    python3 godot-patch/build-ios-pack.py <shipped-extract> <patched-extract> <out.zip>
+    python3 godot-patch/build-ios-pack.py realm/ godot-patch/ios-overlay out/index.pck
+    python3 godot-patch/chunk-pack.py out/ realm/ --ios --lite
 
-The iOS app needs a pack where the shop, the wallet button and the chat box are not drawn. The
-website must keep the pack it has. The obvious way to get there — re-export the recovered project
-and ship that to the app — replaces every asset and every script at once, and it is far more
-change than the job needs.
+The app must not draw a marketplace, a wallet button or a chat box. The website must keep all
+three. Those are drawn by GDScript inside the pack, so the two cannot share one — but they can
+share almost all of one.
 
-This does the small version instead. Godot loads a ZIP as a pack (the shipped
-`index.pck.lite.*.bin` family already is one), so the iOS pack is built as:
+This takes the pack `realm/` already serves and rewrites **eight files**: the six compiled scripts
+`apply-ios-pack-patch.py` changes, the new `ChikFeat.gdc` with its `.remap`, and the global class
+cache that registers `ChikFeat` as a class name. Out of 5,459 files. Textures, scenes, audio, card
+art and every other script are carried over byte for byte.
 
-    everything from the shipped pack, byte for byte
-    + the handful of compiled scripts `apply-ios-pack-patch.py` actually changed
-
-Textures, scenes, audio, the card art and every other script stay exactly as they are today.
-
-WHY THIS MATTERS, measured rather than assumed. Compiling the *recovered* project and diffing its
-compiled scripts against the shipped ones:
+WHY SO SMALL A CHANGE, measured rather than assumed. Compiling the *recovered* project and diffing
+its compiled scripts against the shipped ones gives:
 
     91 scripts, 74 byte-identical, 17 different — but only 6 were patched.
 
 The other 11 differ purely because decompiling and recompiling GDScript does not round-trip
-byte-exactly. Shipping a whole re-export would carry all 11 of those into the app for no reason.
-Swapping only the patched files holds the exposure to the 6 that had to change.
+byte-exactly. A full re-export would carry all 11 into the app for no reason. This carries none.
 
-`.godot/global_script_class_cache.cfg` comes across too: `ChikFeat` declares a `class_name`, and
-that cache is what registers a global class at runtime. Without it the patched scripts load and
-then fail on `Identifier "ChikFeat" not declared`.
+NO TOOLCHAIN NEEDED. The base can be the published chunks themselves, so rebuilding the iOS pack
+needs neither GDRE Tools, nor a Godot editor, nor a web export template — only this repo and
+Python. `base` may be:
 
-Getting the two input directories (GDRE Tools, `--extract`, which copies bytes verbatim rather
-than reconstructing them):
+  * a directory holding `index.pck.lite.*.bin` + its manifest (i.e. `realm/`)
+  * a single `.pck` / `.pcz` / `.zip` file
+  * an already-extracted directory
 
-    ./gdre_tools.x86_64 --headless --extract=index.pck.lite      --output=shipped-lite
-    ./gdre_tools.x86_64 --headless --extract=out/index.pck       --output=patched
-
-Then chunk the result for `realm/` with `godot-patch/chunk-pack.py`.
+The output is a ZIP, which is what the shipped lite pack already is. **Godot recognises a zip pack
+by file extension**, so `chunk-pack.py` writes `"fs_name": "index.pcz"` into the manifest and
+`realm/index.html` mounts it under that name. A zip mounted as `index.pck` is refused with
+"Cannot open resource pack" — a pack that downloads perfectly and never opens.
 """
 
 import hashlib
+import json
 import os
 import sys
 import zipfile
 from pathlib import Path
 
-# Written by the patch; not present in the shipped pack.
-ADDED = ["ChikFeat.gdc", "ChikFeat.gd.remap"]
-
-# Changed by the patch. Kept explicit rather than "whatever differs", so a re-export that happens
-# to perturb an unrelated script cannot smuggle it into the app.
-REPLACED = [
+# Every file the iOS patch touches. Explicit rather than "whatever differs", so a regenerated
+# overlay cannot smuggle an unrelated script into the app.
+OVERLAY_FILES = [
+	"ChikFeat.gdc",
+	"ChikFeat.gd.remap",
 	"GameHUD.gdc",
 	"Chikiseum.gdc",
 	"Onboarding.gdc",
@@ -59,8 +56,55 @@ REPLACED = [
 ]
 
 
-def sha(p: Path) -> str:
-	return hashlib.sha256(p.read_bytes()).hexdigest()
+def join_chunks(base: Path) -> bytes | None:
+	"""Reassemble a chunked family exactly as realm/index.html does, if one is there."""
+	for stem in ("index.pck.lite", "index.pck"):
+		manifest = base / f"{stem}.manifest.json"
+		if not manifest.is_file():
+			continue
+		man = json.loads(manifest.read_text(encoding="utf-8"))
+		data = b"".join((base / name).read_bytes() for name in man["chunks"])
+		if len(data) != man["total"]:
+			raise SystemExit(f"error: {stem} chunks total {len(data):,}, manifest says {man['total']:,}")
+		if man.get("sha256") and hashlib.sha256(data).hexdigest() != man["sha256"]:
+			raise SystemExit(f"error: {stem} chunks do not match the sha256 in its manifest")
+		print(f"base: {stem} reassembled from {len(man['chunks'])} chunks ({len(data):,} bytes)")
+		return data
+	return None
+
+
+def read_base(base: Path) -> dict[str, bytes]:
+	"""Return {path_in_pack: bytes} for a chunk directory, a zip file, or an extracted tree."""
+	if base.is_dir():
+		data = join_chunks(base)
+		if data is not None:
+			tmp = base / ".chiki-base-tmp.zip"
+			try:
+				tmp.write_bytes(data)
+				if not zipfile.is_zipfile(tmp):
+					raise SystemExit(
+						"error: the base pack is not a zip.\n"
+						"Only the lite family is a zip; a GDPC pack has to be extracted first:\n"
+						"  ./gdre_tools.x86_64 --headless --extract=<pack> --output=extracted")
+				with zipfile.ZipFile(tmp) as z:
+					return {i.filename: z.read(i) for i in z.infolist() if not i.is_dir()}
+			finally:
+				tmp.unlink(missing_ok=True)
+		out = {}
+		for dirpath, _dirs, files in os.walk(base):
+			for name in files:
+				p = Path(dirpath) / name
+				out[str(p.relative_to(base))] = p.read_bytes()
+		print(f"base: {len(out):,} files from {base}")
+		return out
+
+	if zipfile.is_zipfile(base):
+		with zipfile.ZipFile(base) as z:
+			out = {i.filename: z.read(i) for i in z.infolist() if not i.is_dir()}
+		print(f"base: {len(out):,} files from {base}")
+		return out
+
+	raise SystemExit(f"error: {base} is neither a chunk directory, a zip pack, nor an extracted tree")
 
 
 def main() -> int:
@@ -68,61 +112,63 @@ def main() -> int:
 	if len(args) != 3:
 		print(__doc__)
 		return 2
-	shipped, patched, out = Path(args[0]), Path(args[1]), Path(args[2])
+	base, overlay, out = Path(args[0]), Path(args[1]), Path(args[2])
 
-	for d in (shipped, patched):
-		if not d.is_dir():
-			print(f"error: {d} is not a directory")
-			return 1
-
-	missing = [f for f in ADDED + REPLACED if not (patched / f).is_file()]
+	if not overlay.is_dir():
+		print(f"error: {overlay} is not a directory")
+		return 1
+	missing = [f for f in OVERLAY_FILES if not (overlay / f).is_file()]
 	if missing:
-		print("error: the patched export is missing files this script must copy:")
+		print("error: the overlay is incomplete:")
 		for f in missing:
 			print(f"  {f}")
-		print("\nDid apply-ios-pack-patch.py run before the export?")
 		return 1
 
-	absent = [f for f in REPLACED if not (shipped / f).is_file()]
+	files = read_base(base)
+	absent = [f for f in OVERLAY_FILES if f not in files and not f.startswith("ChikFeat")]
 	if absent:
-		print("error: the shipped pack does not contain files this script expects to replace:")
+		print("error: the base pack does not contain files this expects to replace:")
 		for f in absent:
 			print(f"  {f}")
+		print("\nIs this the right pack? The overlay targets build 1eb4980816.")
 		return 1
 
-	swap = {f: patched / f for f in ADDED + REPLACED}
-	unchanged = identical = 0
+	replaced = added = unchanged = 0
+	for rel in OVERLAY_FILES:
+		blob = (overlay / rel).read_bytes()
+		if rel in files:
+			if files[rel] == blob:
+				unchanged += 1
+			replaced += 1
+		else:
+			added += 1
+		files[rel] = blob
 
+	# Deterministic: sorted names and a fixed timestamp, which is also what the shipped pack uses
+	# (every entry in it is dated 1980-01-01). Two runs over the same inputs give the same bytes,
+	# so the pack can be diffed and its sha256 quoted in a release note.
 	out.parent.mkdir(parents=True, exist_ok=True)
 	with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED, compresslevel=6) as z:
-		for dirpath, _dirs, files in os.walk(shipped):
-			for name in sorted(files):
-				src = Path(dirpath) / name
-				rel = str(src.relative_to(shipped))
-				if rel in swap:
-					continue                      # written below, from the patched export
-				z.write(src, rel)
-				unchanged += 1
-		for rel, src in sorted(swap.items()):
-			shipped_copy = shipped / rel
-			if shipped_copy.is_file() and sha(shipped_copy) == sha(src):
-				identical += 1
-			z.write(src, rel)
-
-	print(f"wrote {out}  ({out.stat().st_size:,} bytes)")
-	print(f"  {unchanged:,} files carried over byte-for-byte from the shipped pack")
-	print(f"  {len(swap)} files taken from the patched export:")
-	for rel in sorted(swap):
-		note = "  (identical to shipped — patch had no effect here?)" if identical and sha(shipped / rel) == sha(swap[rel]) else ""
-		print(f"      {rel}{note}")
+		for rel in sorted(files):
+			info = zipfile.ZipInfo(rel, date_time=(1980, 1, 1, 0, 0, 0))
+			info.compress_type = zipfile.ZIP_DEFLATED
+			info.create_system = 3          # Unix, as the shipped pack reports
+			info.external_attr = 0o644 << 16
+			z.writestr(info, files[rel])
 
 	with zipfile.ZipFile(out) as z:
 		bad = z.testzip()
 	if bad:
 		print(f"FAILED: corrupt entry {bad}")
 		return 1
-	print("\nzip verified. Chunk it for realm/ with:")
-	print(f"  python3 godot-patch/chunk-pack.py <dir containing this as index.pck> realm/ --ios")
+
+	kept = len(files) - replaced - added
+	print(f"wrote {out}  ({out.stat().st_size:,} bytes)")
+	print(f"  {kept:,} files carried over byte-for-byte")
+	print(f"  {replaced} replaced, {added} added"
+	      + (f"  ** {unchanged} of the replacements were IDENTICAL — is the overlay stale? **" if unchanged else ""))
+	print("\nzip verified. Now chunk it for realm/:")
+	print(f"  python3 godot-patch/chunk-pack.py {out.parent} realm/ --ios --lite")
 	return 0
 
 
