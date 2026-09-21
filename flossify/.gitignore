@@ -1,0 +1,26 @@
+node_modules/
+dist/
+.astro/
+.env
+.env.*
+!.env.example
+.DS_Store
+*.log
+
+# visual check output written to the repo root by the verify scripts.
+# Anchored with a leading slash: a bare `shots/` also matched
+# public/shots/, which quietly kept the product screenshots the home
+# page depends on out of the repository.
+/shots/
+
+# 50MB+ raw generated meshes, kept out of git
+raw-models/
+
+# 1MB+ raw generated renders, kept out of git
+raw-clinic/
+scripts-clinic.mjs
+verify.mjs
+audit.mjs
+diag.mjs
+shoot.mjs
+scripts-tour.mjs

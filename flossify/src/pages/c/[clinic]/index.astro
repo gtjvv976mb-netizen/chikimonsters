@@ -1,0 +1,157 @@
+---
+import ClinicLayout from '../../../layouts/Clinic.astro';
+import {
+  clinics, clinicBySlug, patientsOf, appointmentsOf, claimsOf,
+  patientById, peso, daysWaiting,
+} from '../../../data/demo';
+
+export function getStaticPaths() {
+  return clinics.map((c) => ({ params: { clinic: c.slug } }));
+}
+
+const { clinic: slug } = Astro.params;
+const clinic = clinicBySlug(slug!)!;
+
+const patients = patientsOf(slug!);
+const today = appointmentsOf(slug!).sort((a, b) => a.startsAt.localeCompare(b.startsAt));
+const claims = claimsOf(slug!);
+
+const inChair = today.filter((a) => a.status === 'in_chair').length;
+const waiting = today.filter((a) => a.status === 'in_lobby' || a.status === 'arrived').length;
+const receivable = patients.reduce((n, p) => n + p.balance, 0);
+
+// A filed claim past its provider's expected window is money the clinic has
+// already earned and nobody is chasing. This is the number to put up front.
+const open = claims.filter((c) => c.status === 'filed' || c.status === 'partly_approved');
+const overdue = open.filter((c) => daysWaiting(c.filedAt) > 60);
+const stuck = overdue.reduce((n, c) => n + (c.claimed - (c.approved ?? 0)), 0);
+
+const tiles = [
+  { label: 'In the chair', value: String(inChair), note: `${clinic.chairs} chairs` },
+  { label: 'Waiting', value: String(waiting), note: 'arrived or in lobby' },
+  { label: 'Patient balances', value: peso(receivable), note: `${patients.length} patients` },
+  { label: 'Stuck with HMOs', value: peso(stuck), note: `${overdue.length} past 60 days` },
+];
+
+const QUEUE: Record<string, { label: string; cls: string }> = {
+  in_chair:  { label: 'In chair',  cls: 'bg-accent text-surface' },
+  in_lobby:  { label: 'In lobby',  cls: 'bg-crown/20 text-crown' },
+  arrived:   { label: 'Arrived',   cls: 'bg-crown/20 text-crown' },
+  confirmed: { label: 'Confirmed', cls: 'bg-bg-soft text-ink-2' },
+  booked:    { label: 'Booked',    cls: 'bg-bg-soft text-ink-2' },
+  completed: { label: 'Completed', cls: 'bg-bg-soft text-muted' },
+  no_show:   { label: 'No show',   cls: 'bg-caries/15 text-caries' },
+  cancelled: { label: 'Cancelled', cls: 'bg-bg-soft text-muted' },
+};
+
+// Status is never colour alone: every badge carries its word.
+function claimStatus(c: (typeof claims)[number]) {
+  const days = daysWaiting(c.filedAt);
+  if (c.status === 'paid') return { label: 'Paid', tone: 'text-accent', dot: 'bg-accent' };
+  if (c.status === 'denied') return { label: 'Denied', tone: 'text-caries', dot: 'bg-caries' };
+  if (days > 120) return { label: `Overdue ${days}d`, tone: 'text-caries', dot: 'bg-caries' };
+  if (days > 60) return { label: `Late ${days}d`, tone: 'text-crown', dot: 'bg-crown' };
+  return { label: `Filed ${days}d`, tone: 'text-ink-2', dot: 'bg-muted' };
+}
+
+const time = (iso: string) =>
+  new Intl.DateTimeFormat('en-PH', { hour: 'numeric', minute: '2-digit', timeZone: clinic.timezone ?? 'Asia/Manila' }).format(new Date(iso));
+---
+
+<ClinicLayout clinic={clinic} title="Today" section="today">
+  <h1 class="font-display text-[clamp(1.75rem,4vw,2.5rem)] font-semibold tracking-[-0.02em]">Today</h1>
+
+  <dl class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    {tiles.map((t) => (
+      <div class="border border-line bg-surface p-5">
+        <dt class="text-xs font-semibold tracking-[0.09em] text-muted uppercase">{t.label}</dt>
+        <dd class="mt-2 font-display text-[32px] leading-none font-bold tabular-nums">{t.value}</dd>
+        <p class="mt-1.5 text-[13px] text-muted">{t.note}</p>
+      </div>
+    ))}
+  </dl>
+
+  <section class="mt-10">
+    <h2 class="font-display text-[22px] font-semibold">Queue</h2>
+    <ul class="mt-4 divide-y divide-line-2 overflow-hidden border border-line bg-surface">
+      {today.map((a) => {
+        const p = patientById(a.patientId)!;
+        const q = QUEUE[a.status];
+        return (
+          <li class="flex flex-wrap items-center gap-4 p-4 sm:px-6">
+            <span class="w-16 shrink-0 text-[15px] font-semibold tabular-nums">{time(a.startsAt)}</span>
+            <div class="min-w-0 flex-1">
+              <a href={`/c/${clinic.slug}/patients/${p.id}/`} class="text-[15.5px] font-semibold hover:text-accent">
+                {p.firstName} {p.lastName}
+              </a>
+              <p class="text-[13.5px] text-muted">{a.reason} &middot; {p.chartNo}</p>
+            </div>
+            {p.allergies.length > 0 && (
+              <span class="bg-caries/15 px-3 py-1 text-xs font-semibold text-caries">
+                Allergy: {p.allergies.join(', ')}
+              </span>
+            )}
+            <span class={` px-3 py-1.5 text-xs font-semibold ${q.cls}`}>{q.label}</span>
+          </li>
+        );
+      })}
+    </ul>
+  </section>
+
+  <section id="claims" class="mt-12 scroll-mt-24">
+    <h2 class="font-display text-[22px] font-semibold">HMO claims</h2>
+    <p class="mt-1.5 text-[14.5px] text-ink-2">
+      Filed, approved, and still waiting. Anything past sixty days is money already earned.
+    </p>
+    <div class="mt-4 overflow-x-auto border border-line bg-surface">
+      <table class="w-full min-w-[620px] border-collapse text-left">
+        <thead>
+          <tr class="border-b border-line bg-bg-soft">
+            <th scope="col" class="px-5 py-3.5 text-xs font-semibold tracking-[0.09em] text-muted uppercase">Patient</th>
+            <th scope="col" class="px-5 py-3.5 text-xs font-semibold tracking-[0.09em] text-muted uppercase">Provider</th>
+            <th scope="col" class="px-5 py-3.5 text-right text-xs font-semibold tracking-[0.09em] text-muted uppercase">Claimed</th>
+            <th scope="col" class="px-5 py-3.5 text-right text-xs font-semibold tracking-[0.09em] text-muted uppercase">Approved</th>
+            <th scope="col" class="px-5 py-3.5 text-xs font-semibold tracking-[0.09em] text-muted uppercase">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {claims.map((c, i) => {
+            const p = patientById(c.patientId)!;
+            const s = claimStatus(c);
+            return (
+              <tr class={i < claims.length - 1 ? 'border-b border-line-2' : ''}>
+                <th scope="row" class="px-5 py-3.5 text-[15px] font-medium">{p.firstName} {p.lastName}</th>
+                <td class="px-5 py-3.5 text-[15px] text-ink-2">{c.provider}</td>
+                <td class="px-5 py-3.5 text-right text-[15px] tabular-nums">{peso(c.claimed)}</td>
+                <td class="px-5 py-3.5 text-right text-[15px] tabular-nums text-ink-2">
+                  {c.approved === null ? '—' : peso(c.approved)}
+                </td>
+                <td class={`px-5 py-3.5 text-[14.5px] font-semibold ${s.tone}`}>
+                  <span class="flex items-center gap-2">
+                    <span class={`h-2.5 w-2.5 shrink-0  ${s.dot}`}></span>{s.label}
+                  </span>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="billing" class="mt-12 scroll-mt-24">
+    <h2 class="font-display text-[22px] font-semibold">Billing</h2>
+    {clinic.tin ? (
+      <p class="mt-2 text-[15px] text-ink-2">
+        Invoicing enabled. TIN <span class="font-semibold tabular-nums">{clinic.tin}</span>, branch
+        code {clinic.bir_branch_code ?? '00000'}.
+      </p>
+    ) : (
+      <p class="mt-2 border border-crown/40 bg-crown/10 p-4 text-[15px] leading-relaxed">
+        <strong class="font-semibold">Invoicing is blocked.</strong> This branch has no TIN on file,
+        and issuing a numbered invoice without one produces a document the Bureau will not accept.
+        Add it in settings before the first sale.
+      </p>
+    )}
+  </section>
+</ClinicLayout>

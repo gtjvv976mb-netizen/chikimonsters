@@ -1,0 +1,68 @@
+---
+import ClinicLayout from '../../../../layouts/Clinic.astro';
+import { clinics, clinicBySlug, patientsOf, peso } from '../../../../data/demo';
+
+export function getStaticPaths() {
+  return clinics.map((c) => ({ params: { clinic: c.slug } }));
+}
+
+const { clinic: slug } = Astro.params;
+const clinic = clinicBySlug(slug!)!;
+const patients = patientsOf(slug!).sort((a, b) => a.lastName.localeCompare(b.lastName));
+
+const age = (birth: string) =>
+  Math.floor((new Date('2026-09-21').getTime() - new Date(birth).getTime()) / 31_557_600_000);
+---
+
+<ClinicLayout clinic={clinic} title="Patients" section="patients">
+  <div class="flex flex-wrap items-end justify-between gap-4">
+    <h1 class="font-display text-[clamp(1.75rem,4vw,2.5rem)] font-semibold tracking-[-0.02em]">Patients</h1>
+    <p class="text-[14.5px] text-muted">{patients.length} on file</p>
+  </div>
+
+  <div class="mt-6 overflow-x-auto border border-line bg-surface">
+    <table class="w-full min-w-[680px] border-collapse text-left">
+      <caption class="sr-only">Patients registered at {clinic.name}</caption>
+      <thead>
+        <tr class="border-b border-line bg-bg-soft">
+          <th scope="col" class="px-5 py-3.5 text-xs font-semibold tracking-[0.09em] text-muted uppercase">Chart</th>
+          <th scope="col" class="px-5 py-3.5 text-xs font-semibold tracking-[0.09em] text-muted uppercase">Name</th>
+          <th scope="col" class="px-5 py-3.5 text-xs font-semibold tracking-[0.09em] text-muted uppercase">Age</th>
+          <th scope="col" class="px-5 py-3.5 text-xs font-semibold tracking-[0.09em] text-muted uppercase">Alerts</th>
+          <th scope="col" class="px-5 py-3.5 text-xs font-semibold tracking-[0.09em] text-muted uppercase">Last visit</th>
+          <th scope="col" class="px-5 py-3.5 text-right text-xs font-semibold tracking-[0.09em] text-muted uppercase">Balance</th>
+        </tr>
+      </thead>
+      <tbody>
+        {patients.map((p, i) => (
+          <tr class={i < patients.length - 1 ? 'border-b border-line-2' : ''}>
+            <td class="px-5 py-4 text-[14.5px] tabular-nums text-muted">{p.chartNo}</td>
+            <th scope="row" class="px-5 py-4">
+              <a href={`/c/${clinic.slug}/patients/${p.id}/`} class="text-[15.5px] font-semibold hover:text-accent">
+                {p.lastName}, {p.firstName}
+              </a>
+            </th>
+            <td class="px-5 py-4 text-[15px] tabular-nums text-ink-2">{age(p.birthDate)}</td>
+            <td class="px-5 py-4">
+              <div class="flex flex-wrap gap-1.5">
+                {p.allergies.map((a) => (
+                  <span class="bg-caries/15 px-2.5 py-1 text-[11.5px] font-semibold text-caries">{a}</span>
+                ))}
+                {p.conditions.map((c) => (
+                  <span class="bg-crown/15 px-2.5 py-1 text-[11.5px] font-semibold text-crown">{c}</span>
+                ))}
+                {p.allergies.length === 0 && p.conditions.length === 0 && (
+                  <span class="text-[14px] text-muted">—</span>
+                )}
+              </div>
+            </td>
+            <td class="px-5 py-4 text-[15px] tabular-nums text-ink-2">{p.lastVisit}</td>
+            <td class="px-5 py-4 text-right text-[15px] font-semibold tabular-nums">
+              {p.balance === 0 ? <span class="text-muted">—</span> : peso(p.balance)}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+</ClinicLayout>

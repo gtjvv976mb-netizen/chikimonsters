@@ -1,0 +1,630 @@
+---
+import Base from '../layouts/Base.astro';
+import lqip from '../data/lqip.json';
+// Written by shoot.mjs when the screenshots are recaptured, so the reserved
+// box can never drift out of step with the actual files.
+import shotSize from '../data/shot-size.json';
+
+// Two rendered widths exist per photograph. Keeping the pairs in one place
+// stops the srcset strings drifting apart as the page gets edited.
+const W: Record<string, [number, number]> = {
+  braces: [960, 1600],
+  aligner: [960, 1600],
+  instruments: [960, 1600],
+  handpiece: [640, 1000],
+  model: [640, 1000],
+  tray: [640, 1000],
+  xray: [640, 1000],
+  'clinic-tall': [448, 688],
+  'clinic-corridor': [448, 688],
+  'clinic-door': [448, 688],
+  'clinic-desk': [448, 688],
+  'clinic-chair': [448, 688],
+  'clinic-bench': [448, 688],
+};
+
+const set = (k: string) => `/img/${k}-${W[k][0]}.webp ${W[k][0]}w, /img/${k}-${W[k][1]}.webp ${W[k][1]}w`;
+const src = (k: string) => `/img/${k}-${W[k][1]}.webp`;
+const blur = (k: string) => lqip[k as keyof typeof lqip];
+
+// The strip under the hero. A real morning, in the order it happens.
+const queue = [
+  { no: '001', at: '09:00', state: 'Arrived' },
+  { no: '002', at: '09:30', state: 'In lobby' },
+  { no: '003', at: '10:15', state: 'Confirmed' },
+  { no: '004', at: '10:40', state: 'In chair' },
+];
+
+// The tour. Five plates, sequenced by how deep into the building you are, so
+// travelling along the track reads as walking in rather than as a slideshow.
+const tour = [
+  {
+    key: 'A',
+    at: '18:40',
+    img: 'clinic-door',
+    alt: 'The lit glass entrance of a small dental clinic at dusk, seen from the wet pavement',
+    title: 'The door',
+    body: 'You found the clinic the night before and booked the slot yourself, in about ninety seconds.',
+    did: 'No phone call, no waiting for the desk to open, no being put on hold.',
+  },
+  {
+    key: 'B',
+    at: '09:00',
+    img: 'clinic-desk',
+    alt: 'An empty pale-oak reception desk against a blank wall, terrazzo floor below',
+    title: 'Reception',
+    body: 'Nothing to fill in on arrival. Your history went in at home, and the consent was signed on your phone.',
+    did: 'The front desk sees you land on the day list the moment you walk in.',
+  },
+  {
+    key: 'C',
+    at: '09:12',
+    img: 'clinic-corridor',
+    alt: 'A bright dental clinic corridor with treatment bay doorways receding to a window',
+    title: 'The corridor',
+    body: 'Twelve minutes, not forty. The chair was ready because the schedule knew how long you would need.',
+    did: 'Your dentist already knows why you are here and what happened last time.',
+  },
+  {
+    key: 'D',
+    at: '09:15',
+    img: 'clinic-chair',
+    alt: 'A sage-grey dental chair beside a window, overhead light and instrument tray in view',
+    title: 'The chair',
+    body: 'The finding is charted at the chair — tooth, surface, condition — while it is still in front of them.',
+    did: 'Nothing gets written up later from memory. The note still makes sense next year.',
+  },
+  {
+    key: 'E',
+    at: '09:48',
+    img: 'clinic-bench',
+    alt: 'Sealed instrument cassettes in a row along a stainless sterilisation bench',
+    title: 'After',
+    body: 'The receipt is issued off the correct BIR series before you reach the door, and the HMO claim is already filed.',
+    did: 'The clinic is not chasing that money in three weeks. It went out today.',
+  },
+];
+
+// Real screens from the clinic workspace in this repo. Nothing mocked up.
+const screens = [
+  {
+    id: 'queue',
+    label: 'The day',
+    file: 'workspace / today',
+    title: 'Who has arrived, who is waiting, who is in the chair',
+    body: 'The front desk stops asking you, and you stop asking them. Allergies and alerts sit on the row, not three clicks away.',
+  },
+  {
+    id: 'patients',
+    label: 'Patients',
+    file: 'workspace / patients',
+    title: 'Every record, one search away',
+    body: 'Chart number, name, age, alerts, last visit, balance. Nothing to open before you know what you are looking at.',
+  },
+  {
+    id: 'tiles',
+    label: 'At a glance',
+    file: 'workspace / overview',
+    title: 'The four numbers that change your week',
+    body: 'In the chair, waiting, owed by patients, stuck with HMOs. The last one is money you have already earned.',
+  },
+];
+
+// Object photography only — equipment, teeth, braces, tools. No faces.
+const index = [
+  { img: 'instruments', alt: 'Stainless dental instruments laid out in a row on a folded cloth', title: 'Scheduling', body: 'Chairs, not calendars. Drag an appointment and the reminder, the room and the dentist move with it.' },
+  { img: 'handpiece', alt: 'A dental handpiece and bur resting on a pale worktop', title: 'Charting', body: 'Tooth, surfaces, finding — in that order, the way you would say it out loud.' },
+  { img: 'tray', alt: 'A stainless instrument tray with a mouth mirror and probe', title: 'Billing and BIR', body: 'Official receipts off the correct series, with the ATP dates watched for you. Nothing to reconcile by hand.' },
+  { img: 'xray', alt: 'A panoramic dental radiograph on a softly glowing light box', title: 'HMO claims', body: 'Filed, followed and aged. You can see which payor has been sitting on your money, and for how long.' },
+  { img: 'model', alt: 'A white dental study model of upper and lower teeth', title: 'Documents', body: 'Consent, certificates, clearances, prescriptions. The details you already hold get filled in for you.' },
+  { img: 'aligner', alt: 'A clear orthodontic aligner standing on a pale stone surface', title: 'Treatment plans', body: 'The plan, the cost and what the HMO covers, in something a patient can take home.' },
+];
+
+const figures = [
+  { n: '1', unit: 'link per clinic', body: 'Bookmark it once. It opens on today, on whatever device is nearest.' },
+  { n: '32', unit: 'teeth, five surfaces each', body: 'A finding on the mesial is not a finding on the whole tooth. The chart knows the difference.' },
+  { n: '0', unit: 'minutes of setup', body: 'Send us the spreadsheet, the old system, the shelf of index cards. Migration is our job.' },
+];
+
+const faqs = [
+  { q: 'Do I need to be good with computers?', a: 'No. If you can use a phone, you can use this. The parts you touch every day are the ones we worked hardest to make obvious, and we sit with you for the first week.' },
+  { q: 'I already use something else. Is moving painful?', a: 'It is our job, not yours. Send us whatever you have — another system, a spreadsheet, a shelf of index cards — and we bring the patients, charts and balances across while you carry on working.' },
+  { q: 'What happens to my records if I ever leave?', a: 'You take everything with you, in a format you can open without us. No exit fee. They were always yours.' },
+  { q: 'Does it work when the internet is down?', a: 'Charting, notes and your schedule run on the device in front of you and catch up quietly when the connection returns. Messages and card payments do need a signal, and the app is honest about which is which.' },
+  { q: 'Who is behind it?', a: 'A small team in Baguio City. You talk to the people who build it, which is why things get fixed quickly.' },
+];
+---
+
+<Base
+  title="Flossify — practice software for Philippine dental clinics"
+  description="Walk through a clinic running Flossify. The schedule, the chart, the receipt and the HMO claim, laid out before the door opens."
+>
+  <header class="sticky top-0 z-40 border-b border-line bg-bg/90 backdrop-blur-md">
+    <div class="mx-auto flex max-w-[1480px] items-center justify-between gap-6 px-5 py-4 sm:px-8">
+      <a href="/" class="font-display text-[17px] font-bold tracking-[-0.05em]">Flossify</a>
+
+      <span class="meta hidden md:block" aria-hidden="true"><span data-readout>00 / Index</span></span>
+
+      <nav class="flex items-center gap-6" aria-label="Primary">
+        <a href="#tour" class="meta hover:text-ink">Tour</a>
+        <a href="#product" class="meta hidden hover:text-ink sm:block">Product</a>
+        <a href="/clinics/" class="meta meta-ink underline decoration-line underline-offset-4 hover:decoration-accent">
+          Workspaces
+        </a>
+      </nav>
+    </div>
+    <div class="absolute inset-x-0 bottom-0 h-px"><div class="h-px w-0 bg-accent" data-progress></div></div>
+  </header>
+
+  <main id="main">
+    <section class="relative border-b border-line" aria-labelledby="hero-title">
+      <div class="grid-frame mx-auto max-w-[1480px] px-5 sm:px-8">
+        <div class="grid grid-cols-1 lg:grid-cols-12">
+          <div class="py-16 sm:py-24 lg:col-span-7 lg:py-32 lg:pr-16">
+            <p class="meta reveal">Practice management &middot; Philippines &middot; 2026</p>
+
+            <h1 id="hero-title" data-lines class="mt-8 font-display text-[clamp(2.6rem,8.4vw,6.8rem)] font-semibold">
+              <span class="line-clip"><span>Nobody hunting</span></span>
+              <span class="line-clip"><span>for a folder.</span></span>
+            </h1>
+
+            <p class="reveal reveal-d1 mt-9 max-w-[46ch] text-[18px] leading-relaxed text-ink-2">
+              Flossify runs the whole clinic — the schedule, the chart, the receipt and the
+              HMO claim. By the time the first patient walks in, the day is already laid out.
+            </p>
+
+            <div class="reveal reveal-d2 mt-10 flex flex-wrap gap-3">
+              <a href="#tour" class="btn btn-primary">Walk through a clinic</a>
+              <a href="/clinics/" class="btn btn-quiet">Open a workspace</a>
+            </div>
+          </div>
+
+          <div class="lg:col-span-5"></div>
+        </div>
+      </div>
+
+      <figure
+        class="media block aspect-[4/3] w-full border-t border-line lg:absolute lg:inset-y-0 lg:right-0 lg:aspect-auto lg:h-full lg:w-[34vw] lg:border-t-0 lg:border-l"
+        style={`background-image:url("${blur('clinic-tall')}")`}
+      >
+        <img
+          src={src('clinic-tall')}
+          srcset={set('clinic-tall')}
+          sizes="(min-width: 1024px) 34vw, 100vw"
+          alt="A modern dental treatment room with daylight falling across a terrazzo floor"
+          width="688"
+          height="1024"
+          fetchpriority="high"
+        />
+      </figure>
+
+      <div class="relative border-t border-line bg-bg">
+        <ul class="mx-auto grid max-w-[1480px] grid-cols-2 px-5 sm:px-8 md:grid-cols-4" data-ticker>
+          {queue.map((q, i) => (
+            <li class="flex items-baseline gap-3 border-line py-4 md:border-l md:pl-5 md:[&:first-child]:border-l-0" data-tick={i}>
+              <span class="meta tabular-nums">{q.no}</span>
+              <span class="meta tabular-nums">{q.at}</span>
+              <span class="meta" data-tick-state>{q.state}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+
+    <section id="doors" data-sec="01 / Who it is for" class="border-b border-line">
+      <div class="mx-auto max-w-[1480px] px-5 sm:px-8">
+        <div class="grid grid-cols-1 md:grid-cols-2">
+          <a href="/clinics/" class="door block border-b border-line py-14 md:border-b-0 md:pr-14 lg:py-20">
+            <p class="sec-no">01 &mdash; For clinics</p>
+            <h2 class="mt-6 font-display text-[clamp(1.8rem,3.2vw,2.7rem)] font-semibold">
+              Your clinic gets its own front door.
+            </h2>
+            <p class="mt-5 max-w-[40ch] text-ink-2">
+              One link per branch, open on today. Runs on the tablet at the chair and the
+              desktop at the desk, keeps working through a brownout, and catches up after.
+            </p>
+            <span class="meta meta-accent mt-8 inline-block">Open a workspace &rarr;</span>
+            <span class="door-rule mt-2"></span>
+          </a>
+
+          <a href="#tour" class="door block py-14 md:border-l md:border-line md:pl-14 lg:py-20">
+            <p class="sec-no">02 &mdash; For patients</p>
+            <h2 class="mt-6 font-display text-[clamp(1.8rem,3.2vw,2.7rem)] font-semibold">
+              Or you are the one in the chair.
+            </h2>
+            <p class="mt-5 max-w-[40ch] text-ink-2">
+              Book at eleven at night. Fill your history at home. Sign consent without a
+              clipboard. Know what it costs before you agree to it.
+            </p>
+            <span class="meta meta-accent mt-8 inline-block">Take the tour &rarr;</span>
+            <span class="door-rule mt-2"></span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section id="tour" data-sec="02 / The tour" class="tour relative border-b border-line" data-tour>
+      <div class="tour-stage">
+        <div class="tour-track" data-track>
+          {tour.map((t, i) => (
+            <article class="tour-plate grid grid-cols-1 lg:grid-cols-12">
+              <div class="flex flex-col justify-center px-5 py-14 sm:px-8 lg:col-span-5 lg:py-0 lg:pr-12">
+                <p class="sec-no">{t.key} &mdash; {t.at}</p>
+                <h2 class="mt-5 font-display text-[clamp(2rem,3.4vw,3.4rem)] font-semibold">{t.title}</h2>
+                <p class="mt-6 max-w-[38ch] text-[17px] text-ink-2">{t.body}</p>
+                <div class="rule mt-8 max-w-[38ch]"></div>
+                <p class="meta meta-accent mt-6">What Flossify did</p>
+                <p class="mt-2 max-w-[38ch] text-[15px] text-ink-2">{t.did}</p>
+              </div>
+
+              <figure
+                class="media h-[62vw] border-t border-line sm:h-[52vw] lg:col-span-7 lg:h-full lg:border-t-0 lg:border-l"
+                style={`background-image:url("${blur(t.img)}")`}
+              >
+                <img
+                  src={src(t.img)}
+                  srcset={set(t.img)}
+                  sizes="(min-width: 1024px) 58vw, 100vw"
+                  alt={t.alt}
+                  loading={i === 0 ? 'eager' : 'lazy'}
+                />
+              </figure>
+            </article>
+          ))}
+        </div>
+
+        <div class="tour-rail" aria-hidden="true">
+          {tour.map((t, i) => (
+            <div class="tour-stop" data-stop={i} data-on={i === 0 ? '' : undefined}>
+              <span class="meta block" style="color: inherit">{t.key} &nbsp; {t.title}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <section id="product" data-sec="03 / The product" class="border-b border-line">
+      <div class="mx-auto max-w-[1480px] px-5 py-16 sm:px-8 lg:py-28">
+        <div class="flex items-baseline gap-6">
+          <span class="sec-no">03</span>
+          <h2 class="font-display text-[clamp(1.9rem,4vw,3.2rem)] font-semibold">What the staff were looking at.</h2>
+        </div>
+        <div class="rule rule-draw mt-8"></div>
+
+        <div class="mt-12 grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-14">
+          <div class="lg:col-span-4">
+            <div role="tablist" aria-label="Product screens" aria-orientation="vertical" class="border-b border-line">
+              {screens.map((s, i) => (
+                <button
+                  type="button"
+                  role="tab"
+                  id={`tab-${s.id}`}
+                  aria-controls={`panel-${s.id}`}
+                  aria-selected={i === 0 ? 'true' : 'false'}
+                  tabindex={i === 0 ? 0 : -1}
+                  class="rail-item border-t border-line"
+                  data-rail
+                >
+                  <span class="sec-no block">{String(i + 1).padStart(2, '0')}</span>
+                  <span class="mt-2 block font-display text-[1.4rem] font-semibold">{s.label}</span>
+                </button>
+              ))}
+            </div>
+
+            {screens.map((s, i) => (
+              <p class="mt-8 max-w-[38ch] text-ink-2" data-rail-copy hidden={i !== 0}>{s.body}</p>
+            ))}
+          </div>
+
+          <div class="lg:col-span-8">
+            {screens.map((s, i) => (
+              <div
+                role="tabpanel"
+                id={`panel-${s.id}`}
+                aria-labelledby={`tab-${s.id}`}
+                tabindex="0"
+                class:list={['panel', i === 0 && 'is-shown']}
+                hidden={i !== 0}
+              >
+                <div class="frame">
+                  <div class="frame-bar"><span>{s.file}</span></div>
+                  <figure class="media media-auto" style={`background-image:url("${blur(`shot-${s.id}`)}")`}>
+                    <img src={`/shots/${s.id}.webp`} alt={s.title} width={shotSize[s.id][0]} height={shotSize[s.id][1]} loading="lazy" />
+                  </figure>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="services" data-sec="04 / What it does" class="border-b border-line">
+      <div class="mx-auto max-w-[1480px] px-5 py-16 sm:px-8 lg:py-28">
+        <div class="flex items-baseline gap-6">
+          <span class="sec-no">04</span>
+          <h2 class="font-display text-[clamp(1.9rem,4vw,3.2rem)] font-semibold">Everything a clinic actually does.</h2>
+        </div>
+        <div class="rule rule-draw mt-8"></div>
+
+        <div class="mt-12 grid grid-cols-1 gap-x-14 lg:grid-cols-12">
+          <div class="lg:col-span-7">
+            {index.map((s, i) => (
+              <button type="button" class="idx-row" data-idx={i} data-active={i === 0 ? '' : undefined}>
+                <span class="sec-no pt-1">{String(i + 1).padStart(2, '0')}</span>
+                <span class="block">
+                  <span class="idx-title block font-display text-[clamp(1.5rem,2.6vw,2rem)] font-semibold">{s.title}</span>
+                  <span class="mt-3 block max-w-[46ch] text-[16px] text-ink-2">{s.body}</span>
+                  <figure class="media mt-6 aspect-[16/9] w-full lg:hidden" style={`background-image:url("${blur(s.img)}")`}>
+                    <img src={src(s.img)} srcset={set(s.img)} sizes="100vw" alt={s.alt} loading="lazy" />
+                  </figure>
+                </span>
+                <span class="meta pt-1" aria-hidden="true">&rarr;</span>
+              </button>
+            ))}
+            <div class="border-t border-line"></div>
+          </div>
+
+          <div class="hidden lg:col-span-5 lg:block">
+            <div class="idx-pane sticky top-28 aspect-[4/5] border border-line">
+              {index.map((s, i) => (
+                <div class="idx-shot media" data-shot={i} data-active={i === 0 ? '' : undefined} style={`background-image:url("${blur(s.img)}")`}>
+                  <img src={src(s.img)} srcset={set(s.img)} sizes="40vw" alt={s.alt} loading="lazy" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="figures" data-sec="05 / In short" class="border-b border-line">
+      <div class="mx-auto max-w-[1480px] px-5 py-16 sm:px-8 lg:py-24">
+        <div class="grid grid-cols-1 md:grid-cols-3">
+          {figures.map((f, i) => (
+            <div class:list={['reveal', `reveal-d${i}`, 'border-t border-line pt-8 pb-10 md:pr-10', i > 0 && 'md:border-l md:pl-10 md:pr-0']}>
+              <p class="font-display text-[clamp(3.5rem,7vw,5.5rem)] font-semibold tabular-nums leading-none">{f.n}</p>
+              <p class="meta meta-ink mt-4">{f.unit}</p>
+              <p class="mt-4 max-w-[34ch] text-[16px] text-ink-2">{f.body}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <section id="questions" data-sec="06 / Questions" class="border-b border-line">
+      <div class="mx-auto max-w-[1480px] px-5 py-16 sm:px-8 lg:py-28">
+        <div class="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-14">
+          <div class="lg:col-span-4">
+            <div class="flex items-baseline gap-6">
+              <span class="sec-no">06</span>
+              <h2 class="font-display text-[clamp(1.9rem,4vw,2.8rem)] font-semibold">Questions.</h2>
+            </div>
+          </div>
+
+          <div class="lg:col-span-8">
+            {faqs.map((f) => (
+              <details class="q">
+                <summary><span class="font-display text-[1.25rem] font-semibold tracking-[-0.03em]">{f.q}</span></summary>
+                <p class="max-w-[62ch] pb-7 text-[16px] text-ink-2">{f.a}</p>
+              </details>
+            ))}
+            <div class="border-t border-line"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="on-invert bg-invert-bg text-invert-ink">
+      <div class="mx-auto max-w-[1480px] px-5 py-20 sm:px-8 lg:py-32">
+        <p class="meta" style="color: var(--c-invert-ink-2)">Start</p>
+        <h2 class="mt-7 max-w-[18ch] font-display text-[clamp(2.4rem,7vw,5.5rem)] font-semibold">
+          Open your clinic and see the day.
+        </h2>
+        <div class="mt-12 flex flex-wrap gap-3">
+          <a href="/clinics/" class="btn btn-primary">Open a workspace</a>
+          <a href="#tour" class="btn btn-quiet">Walk through it again</a>
+        </div>
+      </div>
+    </section>
+
+    <footer class="border-t border-line">
+      <div class="mx-auto max-w-[1480px] px-5 py-14 sm:px-8">
+        <div class="grid grid-cols-2 gap-8 md:grid-cols-4">
+          <div>
+            <p class="font-display text-[17px] font-bold tracking-[-0.05em]">Flossify</p>
+            <p class="meta mt-3">Baguio City &middot; Philippines</p>
+          </div>
+          <div>
+            <p class="meta meta-ink">Product</p>
+            <ul class="mt-3 space-y-2">
+              <li><a href="#tour" class="meta hover:text-ink">The tour</a></li>
+              <li><a href="#product" class="meta hover:text-ink">Screens</a></li>
+              <li><a href="/clinics/" class="meta hover:text-ink">Workspaces</a></li>
+            </ul>
+          </div>
+          <div>
+            <p class="meta meta-ink">More</p>
+            <ul class="mt-3 space-y-2">
+              <li><a href="#services" class="meta hover:text-ink">Services</a></li>
+              <li><a href="#questions" class="meta hover:text-ink">Questions</a></li>
+            </ul>
+          </div>
+          <div>
+            <p class="meta meta-ink">Colophon</p>
+            <p class="meta mt-3">Set in Archivo and IBM&nbsp;Plex&nbsp;Mono. Built with Astro.</p>
+          </div>
+        </div>
+
+        <div class="rule mt-12"></div>
+        <p class="meta mt-6">&copy; 2026 Flossify</p>
+      </div>
+    </footer>
+  </main>
+
+  <script>
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    /* --- scroll progress -------------------------------------------------- */
+    const bar = document.querySelector<HTMLElement>('[data-progress]');
+
+    /* --- the tour ---------------------------------------------------------
+       Scroll position maps to distance along a horizontal track. The page
+       scrolls normally the whole time — the track just reads how far down the
+       section you are, which is why this never fights the wheel. */
+    const tourEl = document.querySelector<HTMLElement>('[data-tour]');
+    const track = document.querySelector<HTMLElement>('[data-track]');
+    const stops = Array.from(document.querySelectorAll<HTMLElement>('[data-stop]'));
+    const plates = track ? track.children.length : 0;
+    let stageWidth = 0;
+
+    const travels = () =>
+      !reduced && window.matchMedia('(min-width: 1024px)').matches;
+
+    const measure = () => {
+      if (!tourEl || !track) return;
+      const stage = tourEl.querySelector<HTMLElement>('.tour-stage');
+      stageWidth = stage ? stage.clientWidth : 0;
+      tourEl.style.setProperty('--plates', String(plates));
+      tourEl.style.setProperty('--vw', `${stageWidth}px`);
+    };
+
+    const drawTour = () => {
+      if (!tourEl || !track) return;
+      if (!travels()) {
+        track.style.transform = '';
+        return;
+      }
+      const span = tourEl.offsetHeight - window.innerHeight;
+      const p = span > 0
+        ? Math.min(1, Math.max(0, -tourEl.getBoundingClientRect().top / span))
+        : 0;
+
+      track.style.transform = `translate3d(${-p * stageWidth * (plates - 1)}px, 0, 0)`;
+
+      const at = Math.round(p * (plates - 1));
+      stops.forEach((s, i) => s.toggleAttribute('data-on', i === at));
+    };
+
+    const draw = () => {
+      if (bar) {
+        const max = document.documentElement.scrollHeight - window.innerHeight;
+        bar.style.width = `${max > 0 ? (window.scrollY / max) * 100 : 0}%`;
+      }
+      drawTour();
+    };
+
+    let queued = false;
+    const onScroll = () => {
+      if (queued) return;
+      queued = true;
+      requestAnimationFrame(() => { draw(); queued = false; });
+    };
+
+    measure();
+    draw();
+    addEventListener('scroll', onScroll, { passive: true });
+    addEventListener('resize', () => { measure(); draw(); });
+
+    /* --- reveal on entry --------------------------------------------------
+       One observer for the three entry motions: rises, drawn rules and the
+       clipped display lines. Everything unobserves once it has played. */
+    const targets = document.querySelectorAll('.reveal, .rule-draw, [data-lines]');
+    if (reduced) {
+      targets.forEach((el) => el.classList.add('is-in'));
+    } else {
+      const io = new IntersectionObserver((entries) => {
+        for (const e of entries) {
+          if (!e.isIntersecting) continue;
+          e.target.classList.add('is-in');
+          io.unobserve(e.target);
+        }
+      }, { rootMargin: '0px 0px -12% 0px', threshold: 0.15 });
+      targets.forEach((el) => io.observe(el));
+    }
+
+    /* --- masthead section readout ----------------------------------------- */
+    const readout = document.querySelector<HTMLElement>('[data-readout]');
+    const marked = document.querySelectorAll<HTMLElement>('[data-sec]');
+    if (readout && marked.length) {
+      const seen = new IntersectionObserver((entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) readout.textContent = (e.target as HTMLElement).dataset.sec ?? '';
+        }
+      }, { rootMargin: '-15% 0px -70% 0px' });
+      marked.forEach((el) => seen.observe(el));
+    }
+
+    /* --- blur-up ----------------------------------------------------------
+       `complete` covers images the browser had cached, which never fire load
+       and would otherwise sit at opacity 0 forever. */
+    document.querySelectorAll<HTMLImageElement>('.media > img').forEach((img) => {
+      if (img.complete) img.classList.add('is-loaded');
+      else img.addEventListener('load', () => img.classList.add('is-loaded'), { once: true });
+    });
+
+    /* --- the queue ticker -------------------------------------------------- */
+    const ticks = document.querySelectorAll<HTMLElement>('[data-tick]');
+    if (ticks.length && !reduced) {
+      let at = 0;
+      const step = () => {
+        ticks.forEach((el, i) => {
+          const on = i === at;
+          el.querySelectorAll<HTMLElement>('.meta').forEach((m) => { m.style.color = on ? 'var(--c-ink)' : ''; });
+          const state = el.querySelector<HTMLElement>('[data-tick-state]');
+          if (state) state.style.color = on ? 'var(--c-accent)' : '';
+        });
+        at = (at + 1) % ticks.length;
+      };
+      step();
+      setInterval(step, 2600);
+    }
+
+    /* --- product rail -----------------------------------------------------
+       Roving tabindex: exactly one tab is reachable by Tab, and the arrows
+       move between them. Same pattern as the odontogram. */
+    const rails = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-rail]'));
+    const panels = Array.from(document.querySelectorAll<HTMLElement>('[role="tabpanel"]'));
+    const copies = Array.from(document.querySelectorAll<HTMLElement>('[data-rail-copy]'));
+
+    const select = (i: number, focus = false) => {
+      rails.forEach((r, n) => {
+        r.setAttribute('aria-selected', n === i ? 'true' : 'false');
+        r.tabIndex = n === i ? 0 : -1;
+      });
+      panels.forEach((p, n) => { p.hidden = n !== i; p.classList.toggle('is-shown', n === i); });
+      copies.forEach((c, n) => { c.hidden = n !== i; });
+      if (focus) rails[i].focus();
+    };
+
+    rails.forEach((r, i) => {
+      r.addEventListener('click', () => select(i));
+      r.addEventListener('keydown', (e) => {
+        const keys: Record<string, number> = {
+          ArrowDown: i + 1, ArrowRight: i + 1,
+          ArrowUp: i - 1, ArrowLeft: i - 1,
+          Home: 0, End: rails.length - 1,
+        };
+        const next = keys[e.key];
+        if (next === undefined) return;
+        e.preventDefault();
+        select((next + rails.length) % rails.length, true);
+      });
+    });
+
+    /* --- services index ---------------------------------------------------
+       Pointer and keyboard both drive it, so the photograph is not a
+       hover-only reward. */
+    const rows = Array.from(document.querySelectorAll<HTMLElement>('[data-idx]'));
+    const shots = Array.from(document.querySelectorAll<HTMLElement>('[data-shot]'));
+    const show = (i: number) => {
+      rows.forEach((r, n) => r.toggleAttribute('data-active', n === i));
+      shots.forEach((s, n) => s.toggleAttribute('data-active', n === i));
+    };
+    rows.forEach((r, i) => {
+      r.addEventListener('mouseenter', () => show(i));
+      r.addEventListener('focus', () => show(i));
+      r.addEventListener('click', () => show(i));
+    });
+  </script>
+</Base>
