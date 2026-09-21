@@ -328,6 +328,11 @@ p { text-wrap: pretty; }
 }
 .media > img.is-loaded { opacity: 1; }
 
+/* Screenshots are whatever shape the screen was. Forcing them into a fixed
+   box letterboxes or crops them; this lets the figure take the image's own
+   height instead. */
+.media-auto > img { height: auto; }
+
 /* --- the sticky narrative stage ------------------------------------------
    Three photographs stacked; scroll position cross-fades between them while
    the copy scrolls past. The slow scale on the active frame keeps a still
@@ -350,6 +355,63 @@ p { text-wrap: pretty; }
     linear-gradient(to right, color-mix(in srgb, var(--c-bg) 62%, transparent), transparent 62%),
     linear-gradient(to top, color-mix(in srgb, var(--c-bg) 46%, transparent), transparent 48%);
 }
+
+/* --- dental motif --------------------------------------------------------
+   The tooth silhouette from the charting UI, reused as the site's bullet:
+   square shoulders, rounded crown, tapered root. One shape, carried
+   everywhere, is what makes a theme read as deliberate rather than applied. */
+.tooth-marker {
+  width: 11px;
+  height: 14px;
+  flex: none;
+  background: currentColor;
+  border-radius: 3px 3px 6px 6px;
+}
+.tooth-marker-lg { width: 18px; height: 23px; border-radius: 5px 5px 10px 10px; }
+
+/* --- product frame -------------------------------------------------------
+   A restrained window chrome around real screenshots. Enough to read as
+   software, not so much that it becomes a skeuomorphic browser drawing. */
+.frame {
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--c-line);
+  background: var(--c-surface);
+  box-shadow: var(--shadow-md);
+}
+.frame-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--c-line-2);
+  background: var(--c-bg-soft);
+}
+.frame-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--c-line); }
+
+/* --- tabs ----------------------------------------------------------------
+   Clicking to change the screen, rather than scroll-jacking to change it:
+   the reader stays in charge, which is the whole argument the page is making. */
+.tab {
+  border-radius: 999px;
+  padding: 0.6rem 1.15rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--c-ink-2);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease;
+}
+.tab:hover { background: var(--c-bg-soft); color: var(--c-ink); }
+.tab[aria-selected="true"] {
+  background: var(--c-accent);
+  border-color: var(--c-accent);
+  color: var(--c-surface);
+}
+
+.panel { opacity: 0; transition: opacity 420ms ease, transform 420ms ease; }
+.panel[hidden] { display: none; }
+.panel.is-shown { opacity: 1; }
 
 }  /* end @layer components */
 
