@@ -1656,7 +1656,10 @@ h3 {
   .roster-head h3 { font-size: 35px; }
   .roster-controls { display: none; }
   .roster-swipe-hint { display: block; margin: 2px 0 12px; }
-  .roster-track { grid-auto-columns: min(62vw, 230px); }
+  /* A slim frame-edge teaser invites a swipe without cutting a creature in half. */
+  .roster-track { grid-auto-columns: calc(100vw - 66px); }
+  .roster-card { min-height: clamp(278px, 62vw, 340px); }
+  .roster-art { height: clamp(210px, 48vw, 270px); }
 }
 @media (prefers-reduced-motion: reduce) {
   .hero .scene-layer,
