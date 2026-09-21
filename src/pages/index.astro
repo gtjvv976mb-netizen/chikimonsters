@@ -1,81 +1,129 @@
 ---
 import Base from '../layouts/Base.astro';
 import lqip from '../data/lqip.json';
+// Written by shoot.mjs when the screenshots are recaptured, so the reserved
+// box can never drift out of step with the actual files.
+import shotSize from '../data/shot-size.json';
+
+// Two rendered widths exist per photograph. Keeping the pairs in one place
+// stops the srcset strings drifting apart as the page gets edited.
+const W: Record<string, [number, number]> = {
+  braces: [960, 1600],
+  aligner: [960, 1600],
+  instruments: [960, 1600],
+  handpiece: [640, 1000],
+  model: [640, 1000],
+  tray: [640, 1000],
+  xray: [640, 1000],
+  'clinic-tall': [448, 688],
+  'clinic-corridor': [448, 688],
+  'clinic-door': [448, 688],
+  'clinic-desk': [448, 688],
+  'clinic-chair': [448, 688],
+  'clinic-bench': [448, 688],
+};
+
+const set = (k: string) => `/img/${k}-${W[k][0]}.webp ${W[k][0]}w, /img/${k}-${W[k][1]}.webp ${W[k][1]}w`;
+const src = (k: string) => `/img/${k}-${W[k][1]}.webp`;
+const blur = (k: string) => lqip[k as keyof typeof lqip];
+
+// The strip under the hero. A real morning, in the order it happens.
+const queue = [
+  { no: '001', at: '09:00', state: 'Arrived' },
+  { no: '002', at: '09:30', state: 'In lobby' },
+  { no: '003', at: '10:15', state: 'Confirmed' },
+  { no: '004', at: '10:40', state: 'In chair' },
+];
+
+// The tour. Five plates, sequenced by how deep into the building you are, so
+// travelling along the track reads as walking in rather than as a slideshow.
+const tour = [
+  {
+    key: 'A',
+    at: '18:40',
+    img: 'clinic-door',
+    alt: 'The lit glass entrance of a small dental clinic at dusk, seen from the wet pavement',
+    title: 'The door',
+    body: 'You found the clinic the night before and booked the slot yourself, in about ninety seconds.',
+    did: 'No phone call, no waiting for the desk to open, no being put on hold.',
+  },
+  {
+    key: 'B',
+    at: '09:00',
+    img: 'clinic-desk',
+    alt: 'An empty pale-oak reception desk against a blank wall, terrazzo floor below',
+    title: 'Reception',
+    body: 'Nothing to fill in on arrival. Your history went in at home, and the consent was signed on your phone.',
+    did: 'The front desk sees you land on the day list the moment you walk in.',
+  },
+  {
+    key: 'C',
+    at: '09:12',
+    img: 'clinic-corridor',
+    alt: 'A bright dental clinic corridor with treatment bay doorways receding to a window',
+    title: 'The corridor',
+    body: 'Twelve minutes, not forty. The chair was ready because the schedule knew how long you would need.',
+    did: 'Your dentist already knows why you are here and what happened last time.',
+  },
+  {
+    key: 'D',
+    at: '09:15',
+    img: 'clinic-chair',
+    alt: 'A sage-grey dental chair beside a window, overhead light and instrument tray in view',
+    title: 'The chair',
+    body: 'The finding is charted at the chair — tooth, surface, condition — while it is still in front of them.',
+    did: 'Nothing gets written up later from memory. The note still makes sense next year.',
+  },
+  {
+    key: 'E',
+    at: '09:48',
+    img: 'clinic-bench',
+    alt: 'Sealed instrument cassettes in a row along a stainless sterilisation bench',
+    title: 'After',
+    body: 'The receipt is issued off the correct BIR series before you reach the door, and the HMO claim is already filed.',
+    did: 'The clinic is not chasing that money in three weeks. It went out today.',
+  },
+];
 
 // Real screens from the clinic workspace in this repo. Nothing mocked up.
 const screens = [
   {
     id: 'queue',
-    tab: 'The day',
+    label: 'The day',
+    file: 'workspace / today',
     title: 'Who has arrived, who is waiting, who is in the chair',
     body: 'The front desk stops asking you, and you stop asking them. Allergies and alerts sit on the row, not three clicks away.',
   },
   {
     id: 'patients',
-    tab: 'Patients',
+    label: 'Patients',
+    file: 'workspace / patients',
     title: 'Every record, one search away',
     body: 'Chart number, name, age, alerts, last visit, balance. Nothing to open before you know what you are looking at.',
   },
   {
     id: 'tiles',
-    tab: 'At a glance',
-    title: 'The numbers that actually change your week',
-    body: 'In the chair, waiting, owed by patients, and stuck with HMOs. The last one is money you have already earned.',
+    label: 'At a glance',
+    file: 'workspace / overview',
+    title: 'The four numbers that change your week',
+    body: 'In the chair, waiting, owed by patients, stuck with HMOs. The last one is money you have already earned.',
   },
 ];
 
 // Object photography only — equipment, teeth, braces, tools. No faces.
-const services = [
-  {
-    img: 'instruments', w: 1600,
-    alt: 'Stainless dental instruments laid out in a row on a folded cloth',
-    title: 'Records that stay tidy',
-    body: 'History, notes, images and what they still owe. One patient, one place, no folder to hunt for.',
-  },
-  {
-    img: 'handpiece', w: 1000,
-    alt: 'A dental handpiece and bur resting on a pale worktop',
-    title: 'Charting that keeps up',
-    body: 'Tooth, surfaces, finding. It reads back the way you would write it, so the note still makes sense next year.',
-  },
-  {
-    img: 'aligner', w: 1600,
-    alt: 'A clear orthodontic aligner standing on a pale stone surface',
-    title: 'Treatment plans patients follow',
-    body: 'Show the plan, the cost and what the HMO covers, in something they can take home and show whoever is paying.',
-  },
-  {
-    img: 'xray', w: 1000,
-    alt: 'A panoramic dental radiograph on a softly glowing light box',
-    title: 'Images on the record',
-    body: 'Radiographs and photos land on the patient, not in a folder on the desktop named final_2.',
-  },
-  {
-    img: 'model', w: 1000,
-    alt: 'A white dental study model of upper and lower teeth',
-    title: 'Paperwork that fills itself',
-    body: 'Consent, certificates, clearances, prescriptions. The details you already hold get filled in for you.',
-  },
-  {
-    img: 'tray', w: 1000,
-    alt: 'A stainless instrument tray with a mouth mirror and probe',
-    title: 'Money, without the headache',
-    body: 'Proper receipts, what each patient owes, and what the HMOs have not paid. One view you can read.',
-  },
+const index = [
+  { img: 'instruments', alt: 'Stainless dental instruments laid out in a row on a folded cloth', title: 'Scheduling', body: 'Chairs, not calendars. Drag an appointment and the reminder, the room and the dentist move with it.' },
+  { img: 'handpiece', alt: 'A dental handpiece and bur resting on a pale worktop', title: 'Charting', body: 'Tooth, surfaces, finding — in that order, the way you would say it out loud.' },
+  { img: 'tray', alt: 'A stainless instrument tray with a mouth mirror and probe', title: 'Billing and BIR', body: 'Official receipts off the correct series, with the ATP dates watched for you. Nothing to reconcile by hand.' },
+  { img: 'xray', alt: 'A panoramic dental radiograph on a softly glowing light box', title: 'HMO claims', body: 'Filed, followed and aged. You can see which payor has been sitting on your money, and for how long.' },
+  { img: 'model', alt: 'A white dental study model of upper and lower teeth', title: 'Documents', body: 'Consent, certificates, clearances, prescriptions. The details you already hold get filled in for you.' },
+  { img: 'aligner', alt: 'A clear orthodontic aligner standing on a pale stone surface', title: 'Treatment plans', body: 'The plan, the cost and what the HMO covers, in something a patient can take home.' },
 ];
 
-const forClinics = [
-  'Runs on the tablet at the chair and the desktop at the desk',
-  'Keeps working through a brownout, and catches up after',
-  'Every branch its own day, all of them in one view',
-  'Your records leave with you if you ever go',
-];
-
-const forPatients = [
-  'Fill your history at home, on your own phone',
-  'Sign consent without a clipboard',
-  'A reminder the night before, not a phone call at work',
-  'Know what a treatment costs before you agree to it',
+const figures = [
+  { n: '1', unit: 'link per clinic', body: 'Bookmark it once. It opens on today, on whatever device is nearest.' },
+  { n: '32', unit: 'teeth, five surfaces each', body: 'A finding on the mesial is not a finding on the whole tooth. The chart knows the difference.' },
+  { n: '0', unit: 'minutes of setup', body: 'Send us the spreadsheet, the old system, the shelf of index cards. Migration is our job.' },
 ];
 
 const faqs = [
@@ -88,380 +136,495 @@ const faqs = [
 ---
 
 <Base
-  title="Flossify — dental software your whole clinic can actually use"
-  description="Records, charting, the day's queue and payments for dental clinics. Designed around the people using it, not the people buying it."
+  title="Flossify — practice software for Philippine dental clinics"
+  description="Walk through a clinic running Flossify. The schedule, the chart, the receipt and the HMO claim, laid out before the door opens."
 >
-  <header class="fixed top-0 right-0 left-0 z-50 border-b border-line-2 bg-bg/75 backdrop-blur-xl">
-    <div class="mx-auto flex max-w-[1180px] items-center justify-between gap-4 px-5 py-3.5 sm:px-8">
-      <a href="/" class="group flex items-center gap-2.5" aria-label="Flossify, home">
-        <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-accent/10 text-accent transition-all duration-300 group-hover:bg-accent group-hover:text-surface">
-          <span class="tooth-marker"></span>
-        </span>
-        <span class="font-display text-[21px] leading-none font-bold tracking-[-0.02em]">Flossify</span>
-      </a>
-      <nav class="flex items-center gap-1.5 sm:gap-3" aria-label="Main">
-        <a href="#product" class="hidden rounded-full px-3.5 py-2 text-[14.5px] font-medium text-ink-2 transition-colors hover:bg-bg-soft hover:text-ink md:inline-block">See it</a>
-        <a href="#services" class="hidden rounded-full px-3.5 py-2 text-[14.5px] font-medium text-ink-2 transition-colors hover:bg-bg-soft hover:text-ink md:inline-block">What it does</a>
-        <a href="#faq" class="hidden rounded-full px-3.5 py-2 text-[14.5px] font-medium text-ink-2 transition-colors hover:bg-bg-soft hover:text-ink md:inline-block">Questions</a>
-        <button
-          type="button"
-          data-theme-toggle
-          class="ml-1 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-line text-ink-2 transition-colors hover:border-accent hover:text-accent"
-          aria-label="Switch between light and dark theme"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
-            <path d="M20.5 14.5A8.5 8.5 0 1 1 9.5 3.5a6.8 6.8 0 0 0 11 11Z"></path>
-          </svg>
-        </button>
-        <a href="/clinics/" class="btn btn-quiet px-5 py-2.5 text-[14.5px]">Clinic sign in</a>
+  <header class="sticky top-0 z-40 border-b border-line bg-bg/90 backdrop-blur-md">
+    <div class="mx-auto flex max-w-[1480px] items-center justify-between gap-6 px-5 py-4 sm:px-8">
+      <a href="/" class="font-display text-[17px] font-bold tracking-[-0.05em]">Flossify</a>
+
+      <span class="meta hidden md:block" aria-hidden="true"><span data-readout>00 / Index</span></span>
+
+      <nav class="flex items-center gap-6" aria-label="Primary">
+        <a href="#tour" class="meta hover:text-ink">Tour</a>
+        <a href="#product" class="meta hidden hover:text-ink sm:block">Product</a>
+        <a href="/clinics/" class="meta meta-ink underline decoration-line underline-offset-4 hover:decoration-accent">
+          Workspaces
+        </a>
       </nav>
     </div>
+    <div class="absolute inset-x-0 bottom-0 h-px"><div class="h-px w-0 bg-accent" data-progress></div></div>
   </header>
 
   <main id="main">
-    <!-- HERO -->
-    <section class="relative overflow-hidden bg-[#143b3c] text-[#eef5f2]">
-      <figure class="media absolute inset-y-0 right-0 hidden w-[64%] lg:block" style={`background-image:url("${lqip.braces}")`}>
+    <section class="relative border-b border-line" aria-labelledby="hero-title">
+      <div class="grid-frame mx-auto max-w-[1480px] px-5 sm:px-8">
+        <div class="grid grid-cols-1 lg:grid-cols-12">
+          <div class="py-16 sm:py-24 lg:col-span-7 lg:py-32 lg:pr-16">
+            <p class="meta reveal">Practice management &middot; Philippines &middot; 2026</p>
+
+            <h1 id="hero-title" data-lines class="mt-8 font-display text-[clamp(2.6rem,8.4vw,6.8rem)] font-semibold">
+              <span class="line-clip"><span>Nobody hunting</span></span>
+              <span class="line-clip"><span>for a folder.</span></span>
+            </h1>
+
+            <p class="reveal reveal-d1 mt-9 max-w-[46ch] text-[18px] leading-relaxed text-ink-2">
+              Flossify runs the whole clinic — the schedule, the chart, the receipt and the
+              HMO claim. By the time the first patient walks in, the day is already laid out.
+            </p>
+
+            <div class="reveal reveal-d2 mt-10 flex flex-wrap gap-3">
+              <a href="#tour" class="btn btn-primary">Walk through a clinic</a>
+              <a href="/clinics/" class="btn btn-quiet">Open a workspace</a>
+            </div>
+          </div>
+
+          <div class="lg:col-span-5"></div>
+        </div>
+      </div>
+
+      <figure
+        class="media block aspect-[4/3] w-full border-t border-line lg:absolute lg:inset-y-0 lg:right-0 lg:aspect-auto lg:h-full lg:w-[34vw] lg:border-t-0 lg:border-l"
+        style={`background-image:url("${blur('clinic-tall')}")`}
+      >
         <img
-          src="/img/braces-1600.webp"
-          srcset="/img/braces-960.webp 960w, /img/braces-1600.webp 1600w"
-          sizes="52vw"
-          alt="A dental study model fitted with ceramic orthodontic brackets"
-          width="1600" height="900"
+          src={src('clinic-tall')}
+          srcset={set('clinic-tall')}
+          sizes="(min-width: 1024px) 34vw, 100vw"
+          alt="A modern dental treatment room with daylight falling across a terrazzo floor"
+          width="688"
+          height="1024"
           fetchpriority="high"
-          data-fade
         />
       </figure>
-      <div
-        class="absolute inset-0 hidden lg:block"
-        style="background:linear-gradient(95deg,#143b3c 34%,rgba(20,59,60,0.94) 44%,rgba(20,59,60,0.45) 62%,rgba(20,59,60,0.08) 80%,transparent 92%)"
-        aria-hidden="true"
-      ></div>
 
-      <div class="relative mx-auto max-w-[1180px] px-5 pt-36 pb-20 sm:px-8 sm:pt-44 sm:pb-28">
-        <p class="reveal flex items-center gap-2.5 text-[13px] font-semibold tracking-[0.12em] text-[#7fd2bd] uppercase">
-          <span class="tooth-marker"></span>Dental clinic software · Baguio City
-        </p>
-        <h1 class="reveal reveal-d1 mt-6 max-w-[16ch] font-display text-[clamp(2.75rem,6.5vw,4.5rem)] leading-[1.02] font-semibold tracking-[-0.035em] text-[#f4faf7]">
-          Dental software your whole clinic can actually use.
-        </h1>
-        <p class="reveal reveal-d2 mt-7 max-w-[46ch] text-[clamp(1.0625rem,1.5vw,1.25rem)] leading-[1.55] text-[#b8d4cc]">
-          Designed around the dentist, the front desk and the patient — not around the person
-          signing the cheque.
-        </p>
-        <div class="reveal reveal-d3 mt-10 flex flex-wrap items-center gap-3.5">
-          <a href="#product" class="btn bg-[#7fd2bd] text-[#0d2a2b] hover:bg-[#9ee0cf]">See it working</a>
-          <a href="/clinics/" class="btn border-[#eef5f2]/25 bg-[#eef5f2]/5 text-[#eef5f2] hover:border-[#7fd2bd] hover:text-[#7fd2bd]">
-            Open a demo clinic
+      <div class="relative border-t border-line bg-bg">
+        <ul class="mx-auto grid max-w-[1480px] grid-cols-2 px-5 sm:px-8 md:grid-cols-4" data-ticker>
+          {queue.map((q, i) => (
+            <li class="flex items-baseline gap-3 border-line py-4 md:border-l md:pl-5 md:[&:first-child]:border-l-0" data-tick={i}>
+              <span class="meta tabular-nums">{q.no}</span>
+              <span class="meta tabular-nums">{q.at}</span>
+              <span class="meta" data-tick-state>{q.state}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+
+    <section id="doors" data-sec="01 / Who it is for" class="border-b border-line">
+      <div class="mx-auto max-w-[1480px] px-5 sm:px-8">
+        <div class="grid grid-cols-1 md:grid-cols-2">
+          <a href="/clinics/" class="door block border-b border-line py-14 md:border-b-0 md:pr-14 lg:py-20">
+            <p class="sec-no">01 &mdash; For clinics</p>
+            <h2 class="mt-6 font-display text-[clamp(1.8rem,3.2vw,2.7rem)] font-semibold">
+              Your clinic gets its own front door.
+            </h2>
+            <p class="mt-5 max-w-[40ch] text-ink-2">
+              One link per branch, open on today. Runs on the tablet at the chair and the
+              desktop at the desk, keeps working through a brownout, and catches up after.
+            </p>
+            <span class="meta meta-accent mt-8 inline-block">Open a workspace &rarr;</span>
+            <span class="door-rule mt-2"></span>
+          </a>
+
+          <a href="#tour" class="door block py-14 md:border-l md:border-line md:pl-14 lg:py-20">
+            <p class="sec-no">02 &mdash; For patients</p>
+            <h2 class="mt-6 font-display text-[clamp(1.8rem,3.2vw,2.7rem)] font-semibold">
+              Or you are the one in the chair.
+            </h2>
+            <p class="mt-5 max-w-[40ch] text-ink-2">
+              Book at eleven at night. Fill your history at home. Sign consent without a
+              clipboard. Know what it costs before you agree to it.
+            </p>
+            <span class="meta meta-accent mt-8 inline-block">Take the tour &rarr;</span>
+            <span class="door-rule mt-2"></span>
           </a>
         </div>
       </div>
     </section>
 
-    <div class="mx-auto max-w-[1180px] px-5 sm:px-8">
-      <!-- PRODUCT -->
-      <section id="product" class="scroll-mt-24 pt-24 sm:pt-32">
-        <div class="mx-auto max-w-[50ch] text-center">
-          <p class="eyebrow reveal">The actual software</p>
-          <h2 class="reveal reveal-d1 mt-4 font-display text-[clamp(2.125rem,4.5vw,3rem)] leading-[1.08] font-semibold tracking-[-0.03em]">
-            No demo call to see the product
-          </h2>
-          <p class="reveal reveal-d2 mt-5 text-[17.5px] leading-[1.6] text-ink-2">
-            These are real screens, running. Pick one.
-          </p>
-        </div>
-
-        <div class="reveal mt-10" data-tabs>
-          <div class="flex flex-wrap justify-center gap-2" role="tablist" aria-label="Product screens">
-            {screens.map((s, i) => (
-              <button
-                type="button"
-                class="tab"
-                role="tab"
-                id={`tab-${s.id}`}
-                aria-controls={`panel-${s.id}`}
-                aria-selected={i === 0 ? 'true' : 'false'}
-                tabindex={i === 0 ? 0 : -1}
-              >
-                {s.tab}
-              </button>
-            ))}
-          </div>
-
-          <div class="mt-8">
-            {screens.map((s, i) => (
-              <div
-                class:list={['panel', i === 0 && 'is-shown']}
-                role="tabpanel"
-                id={`panel-${s.id}`}
-                aria-labelledby={`tab-${s.id}`}
-                hidden={i !== 0}
-              >
-                <div class="frame">
-                  <div class="frame-bar" aria-hidden="true">
-                    <span class="frame-dot"></span>
-                    <span class="frame-dot"></span>
-                    <span class="frame-dot"></span>
-                  </div>
-                  <figure class="media media-auto" style={`background-image:url("${lqip[`shot-${s.id}`]}")`}>
-                    <img
-                      src={`/shots/${s.id}.webp`}
-                      alt={`The ${s.tab.toLowerCase()} screen in Flossify`}
-                      loading={i === 0 ? 'eager' : 'lazy'}
-                      data-fade
-                    />
-                  </figure>
-                </div>
-                <div class="mx-auto mt-7 max-w-[56ch] text-center">
-                  <h3 class="font-display text-[22px] leading-snug font-semibold tracking-[-0.015em]">{s.title}</h3>
-                  <p class="mt-2.5 text-[15.5px] leading-[1.6] text-ink-2">{s.body}</p>
-                </div>
+    <section id="tour" data-sec="02 / The tour" class="tour relative border-b border-line" data-tour>
+      <div class="tour-stage">
+        <div class="tour-track" data-track>
+          {tour.map((t, i) => (
+            <article class="tour-plate grid grid-cols-1 lg:grid-cols-12">
+              <div class="flex flex-col justify-center px-5 py-14 sm:px-8 lg:col-span-5 lg:py-0 lg:pr-12">
+                <p class="sec-no">{t.key} &mdash; {t.at}</p>
+                <h2 class="mt-5 font-display text-[clamp(2rem,3.4vw,3.4rem)] font-semibold">{t.title}</h2>
+                <p class="mt-6 max-w-[38ch] text-[17px] text-ink-2">{t.body}</p>
+                <div class="rule mt-8 max-w-[38ch]"></div>
+                <p class="meta meta-accent mt-6">What Flossify did</p>
+                <p class="mt-2 max-w-[38ch] text-[15px] text-ink-2">{t.did}</p>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
-      <!-- SERVICES -->
-      <section id="services" class="scroll-mt-24 pt-28 sm:pt-40">
-        <div class="mx-auto max-w-[48ch] text-center">
-          <p class="eyebrow reveal">What it takes off your hands</p>
-          <h2 class="reveal reveal-d1 mt-4 font-display text-[clamp(2.125rem,4.5vw,3rem)] leading-[1.08] font-semibold tracking-[-0.03em]">
-            The things that eat your day
-          </h2>
-        </div>
-        <div class="mt-14 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {services.map((s, i) => (
-            <article class:list={['card card-lift reveal overflow-hidden', `reveal-d${(i % 3) + 1}`]}>
-              <figure class="media aspect-[4/3]" style={`background-image:url("${lqip[s.img]}")`}>
+              <figure
+                class="media h-[62vw] border-t border-line sm:h-[52vw] lg:col-span-7 lg:h-full lg:border-t-0 lg:border-l"
+                style={`background-image:url("${blur(t.img)}")`}
+              >
                 <img
-                  src={`/img/${s.img}-${s.w}.webp`}
-                  srcset={s.w === 1600
-                    ? `/img/${s.img}-960.webp 960w, /img/${s.img}-1600.webp 1600w`
-                    : `/img/${s.img}-640.webp 640w, /img/${s.img}-1000.webp 1000w`}
-                  sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
-                  alt={s.alt}
-                  width={s.w} height={Math.round(s.w * 0.75)}
-                  loading="lazy"
-                  data-fade
+                  src={src(t.img)}
+                  srcset={set(t.img)}
+                  sizes="(min-width: 1024px) 58vw, 100vw"
+                  alt={t.alt}
+                  loading={i === 0 ? 'eager' : 'lazy'}
                 />
               </figure>
-              <div class="p-7">
-                <h3 class="font-display text-[20px] leading-snug font-semibold tracking-[-0.015em]">{s.title}</h3>
-                <p class="mt-2.5 text-[15px] leading-[1.6] text-ink-2">{s.body}</p>
-              </div>
             </article>
           ))}
         </div>
-      </section>
 
-      <!-- TWO AUDIENCES -->
-      <section class="pt-28 sm:pt-40">
-        <div class="grid gap-6 lg:grid-cols-2">
-          <div class="card reveal p-8 sm:p-10">
-            <p class="eyebrow">For the clinic</p>
-            <h2 class="mt-4 font-display text-[clamp(1.75rem,3vw,2.25rem)] leading-[1.1] font-semibold tracking-[-0.025em]">
-              Runs the way your day runs
-            </h2>
-            <ul class="mt-7 flex flex-col gap-4">
-              {forClinics.map((p) => (
-                <li class="flex items-start gap-3.5">
-                  <span class="tooth-marker mt-1 text-accent"></span>
-                  <span class="text-[15.5px] leading-[1.55]">{p}</span>
-                </li>
-              ))}
-            </ul>
-            <a href="/clinics/" class="btn btn-primary mt-9">Open a demo clinic</a>
-          </div>
-
-          <div class="card reveal reveal-d1 overflow-hidden">
-            <figure class="media aspect-[16/9]" style={`background-image:url("${lqip.operatory}")`}>
-              <img
-                src="/img/operatory-1600.webp"
-                srcset="/img/operatory-960.webp 960w, /img/operatory-1600.webp 1600w"
-                sizes="(min-width: 1024px) 50vw, 100vw"
-                alt="A calm modern dental operatory with a treatment chair and overhead light"
-                width="1600" height="900" loading="lazy" data-fade
-              />
-            </figure>
-            <div class="p-8 sm:p-10">
-              <p class="eyebrow">For your patients</p>
-              <h2 class="mt-4 font-display text-[clamp(1.75rem,3vw,2.25rem)] leading-[1.1] font-semibold tracking-[-0.025em]">
-                Less waiting, less paperwork
-              </h2>
-              <ul class="mt-7 flex flex-col gap-4">
-                {forPatients.map((p) => (
-                  <li class="flex items-start gap-3.5">
-                    <span class="tooth-marker mt-1 text-accent"></span>
-                    <span class="text-[15.5px] leading-[1.55]">{p}</span>
-                  </li>
-                ))}
-              </ul>
+        <div class="tour-rail" aria-hidden="true">
+          {tour.map((t, i) => (
+            <div class="tour-stop" data-stop={i} data-on={i === 0 ? '' : undefined}>
+              <span class="meta block" style="color: inherit">{t.key} &nbsp; {t.title}</span>
             </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- FAQ -->
-      <section id="faq" class="scroll-mt-24 pt-28 sm:pt-40">
-        <div class="mx-auto max-w-[46ch] text-center">
-          <p class="eyebrow reveal">Questions</p>
-          <h2 class="reveal reveal-d1 mt-4 font-display text-[clamp(2.125rem,4.5vw,3rem)] leading-[1.08] font-semibold tracking-[-0.03em]">
-            Things people ask us
-          </h2>
-        </div>
-        <div class="reveal mx-auto mt-12 max-w-[740px]">
-          {faqs.map((f, i) => (
-            <details class="group py-1">
-              {i > 0 && <hr class="rule" />}
-              <summary class="flex cursor-pointer items-center justify-between gap-5 py-5 text-[17.5px] font-semibold tracking-[-0.01em] transition-colors hover:text-accent [&::-webkit-details-marker]:hidden">
-                {f.q}
-                <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-line text-muted transition-all duration-300 group-open:rotate-45 group-open:border-accent group-open:text-accent">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true">
-                    <path d="M12 5v14M5 12h14"></path>
-                  </svg>
-                </span>
-              </summary>
-              <p class="max-w-[62ch] pb-6 text-[15.5px] leading-[1.65] text-ink-2">{f.a}</p>
-            </details>
           ))}
         </div>
-      </section>
+      </div>
+    </section>
 
-      <!-- CTA -->
-      <section class="pt-28 sm:pt-40">
-        <div class="reveal relative overflow-hidden rounded-[32px] bg-[#143b3c] px-8 py-20 text-center text-[#eef5f2] sm:px-14">
-          <span
-            class="pointer-events-none absolute -top-28 left-1/2 h-72 w-[40rem] -translate-x-1/2 rounded-full bg-[#7fd2bd]/14 blur-3xl"
-            aria-hidden="true"
-          ></span>
-          <div class="relative">
-            <span class="tooth-marker tooth-marker-lg mx-auto mb-7 block text-[#7fd2bd]"></span>
-            <h2 class="mx-auto max-w-[19ch] font-display text-[clamp(2.125rem,4.5vw,3.125rem)] leading-[1.06] font-semibold tracking-[-0.03em] text-[#f4faf7]">
-              Open a clinic and click around
-            </h2>
-            <p class="mx-auto mt-6 max-w-[48ch] text-[17.5px] leading-[1.6] text-[#b8d4cc]">
-              No form, no call, no waiting on a reply. If it is not right for your clinic we would
-              rather you found out in the next five minutes than in three months.
-            </p>
-            <div class="mt-10 flex flex-wrap justify-center gap-3.5">
-              <a href="/clinics/" class="btn bg-[#7fd2bd] text-[#0d2a2b] hover:bg-[#9ee0cf]">Open a demo clinic</a>
-              <a href="#faq" class="btn border-[#eef5f2]/25 bg-[#eef5f2]/5 text-[#eef5f2] hover:border-[#7fd2bd] hover:text-[#7fd2bd]">
-                Talk to a person first
-              </a>
+    <section id="product" data-sec="03 / The product" class="border-b border-line">
+      <div class="mx-auto max-w-[1480px] px-5 py-16 sm:px-8 lg:py-28">
+        <div class="flex items-baseline gap-6">
+          <span class="sec-no">03</span>
+          <h2 class="font-display text-[clamp(1.9rem,4vw,3.2rem)] font-semibold">What the staff were looking at.</h2>
+        </div>
+        <div class="rule rule-draw mt-8"></div>
+
+        <div class="mt-12 grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-14">
+          <div class="lg:col-span-4">
+            <div role="tablist" aria-label="Product screens" aria-orientation="vertical" class="border-b border-line">
+              {screens.map((s, i) => (
+                <button
+                  type="button"
+                  role="tab"
+                  id={`tab-${s.id}`}
+                  aria-controls={`panel-${s.id}`}
+                  aria-selected={i === 0 ? 'true' : 'false'}
+                  tabindex={i === 0 ? 0 : -1}
+                  class="rail-item border-t border-line"
+                  data-rail
+                >
+                  <span class="sec-no block">{String(i + 1).padStart(2, '0')}</span>
+                  <span class="mt-2 block font-display text-[1.4rem] font-semibold">{s.label}</span>
+                </button>
+              ))}
+            </div>
+
+            {screens.map((s, i) => (
+              <p class="mt-8 max-w-[38ch] text-ink-2" data-rail-copy hidden={i !== 0}>{s.body}</p>
+            ))}
+          </div>
+
+          <div class="lg:col-span-8">
+            {screens.map((s, i) => (
+              <div
+                role="tabpanel"
+                id={`panel-${s.id}`}
+                aria-labelledby={`tab-${s.id}`}
+                tabindex="0"
+                class:list={['panel', i === 0 && 'is-shown']}
+                hidden={i !== 0}
+              >
+                <div class="frame">
+                  <div class="frame-bar"><span>{s.file}</span></div>
+                  <figure class="media media-auto" style={`background-image:url("${blur(`shot-${s.id}`)}")`}>
+                    <img src={`/shots/${s.id}.webp`} alt={s.title} width={shotSize[s.id][0]} height={shotSize[s.id][1]} loading="lazy" />
+                  </figure>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="services" data-sec="04 / What it does" class="border-b border-line">
+      <div class="mx-auto max-w-[1480px] px-5 py-16 sm:px-8 lg:py-28">
+        <div class="flex items-baseline gap-6">
+          <span class="sec-no">04</span>
+          <h2 class="font-display text-[clamp(1.9rem,4vw,3.2rem)] font-semibold">Everything a clinic actually does.</h2>
+        </div>
+        <div class="rule rule-draw mt-8"></div>
+
+        <div class="mt-12 grid grid-cols-1 gap-x-14 lg:grid-cols-12">
+          <div class="lg:col-span-7">
+            {index.map((s, i) => (
+              <button type="button" class="idx-row" data-idx={i} data-active={i === 0 ? '' : undefined}>
+                <span class="sec-no pt-1">{String(i + 1).padStart(2, '0')}</span>
+                <span class="block">
+                  <span class="idx-title block font-display text-[clamp(1.5rem,2.6vw,2rem)] font-semibold">{s.title}</span>
+                  <span class="mt-3 block max-w-[46ch] text-[16px] text-ink-2">{s.body}</span>
+                  <figure class="media mt-6 aspect-[16/9] w-full lg:hidden" style={`background-image:url("${blur(s.img)}")`}>
+                    <img src={src(s.img)} srcset={set(s.img)} sizes="100vw" alt={s.alt} loading="lazy" />
+                  </figure>
+                </span>
+                <span class="meta pt-1" aria-hidden="true">&rarr;</span>
+              </button>
+            ))}
+            <div class="border-t border-line"></div>
+          </div>
+
+          <div class="hidden lg:col-span-5 lg:block">
+            <div class="idx-pane sticky top-28 aspect-[4/5] border border-line">
+              {index.map((s, i) => (
+                <div class="idx-shot media" data-shot={i} data-active={i === 0 ? '' : undefined} style={`background-image:url("${blur(s.img)}")`}>
+                  <img src={src(s.img)} srcset={set(s.img)} sizes="40vw" alt={s.alt} loading="lazy" />
+                </div>
+              ))}
             </div>
           </div>
         </div>
-      </section>
-    </div>
+      </div>
+    </section>
+
+    <section id="figures" data-sec="05 / In short" class="border-b border-line">
+      <div class="mx-auto max-w-[1480px] px-5 py-16 sm:px-8 lg:py-24">
+        <div class="grid grid-cols-1 md:grid-cols-3">
+          {figures.map((f, i) => (
+            <div class:list={['reveal', `reveal-d${i}`, 'border-t border-line pt-8 pb-10 md:pr-10', i > 0 && 'md:border-l md:pl-10 md:pr-0']}>
+              <p class="font-display text-[clamp(3.5rem,7vw,5.5rem)] font-semibold tabular-nums leading-none">{f.n}</p>
+              <p class="meta meta-ink mt-4">{f.unit}</p>
+              <p class="mt-4 max-w-[34ch] text-[16px] text-ink-2">{f.body}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <section id="questions" data-sec="06 / Questions" class="border-b border-line">
+      <div class="mx-auto max-w-[1480px] px-5 py-16 sm:px-8 lg:py-28">
+        <div class="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-14">
+          <div class="lg:col-span-4">
+            <div class="flex items-baseline gap-6">
+              <span class="sec-no">06</span>
+              <h2 class="font-display text-[clamp(1.9rem,4vw,2.8rem)] font-semibold">Questions.</h2>
+            </div>
+          </div>
+
+          <div class="lg:col-span-8">
+            {faqs.map((f) => (
+              <details class="q">
+                <summary><span class="font-display text-[1.25rem] font-semibold tracking-[-0.03em]">{f.q}</span></summary>
+                <p class="max-w-[62ch] pb-7 text-[16px] text-ink-2">{f.a}</p>
+              </details>
+            ))}
+            <div class="border-t border-line"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="on-invert bg-invert-bg text-invert-ink">
+      <div class="mx-auto max-w-[1480px] px-5 py-20 sm:px-8 lg:py-32">
+        <p class="meta" style="color: var(--c-invert-ink-2)">Start</p>
+        <h2 class="mt-7 max-w-[18ch] font-display text-[clamp(2.4rem,7vw,5.5rem)] font-semibold">
+          Open your clinic and see the day.
+        </h2>
+        <div class="mt-12 flex flex-wrap gap-3">
+          <a href="/clinics/" class="btn btn-primary">Open a workspace</a>
+          <a href="#tour" class="btn btn-quiet">Walk through it again</a>
+        </div>
+      </div>
+    </section>
+
+    <footer class="border-t border-line">
+      <div class="mx-auto max-w-[1480px] px-5 py-14 sm:px-8">
+        <div class="grid grid-cols-2 gap-8 md:grid-cols-4">
+          <div>
+            <p class="font-display text-[17px] font-bold tracking-[-0.05em]">Flossify</p>
+            <p class="meta mt-3">Baguio City &middot; Philippines</p>
+          </div>
+          <div>
+            <p class="meta meta-ink">Product</p>
+            <ul class="mt-3 space-y-2">
+              <li><a href="#tour" class="meta hover:text-ink">The tour</a></li>
+              <li><a href="#product" class="meta hover:text-ink">Screens</a></li>
+              <li><a href="/clinics/" class="meta hover:text-ink">Workspaces</a></li>
+            </ul>
+          </div>
+          <div>
+            <p class="meta meta-ink">More</p>
+            <ul class="mt-3 space-y-2">
+              <li><a href="#services" class="meta hover:text-ink">Services</a></li>
+              <li><a href="#questions" class="meta hover:text-ink">Questions</a></li>
+            </ul>
+          </div>
+          <div>
+            <p class="meta meta-ink">Colophon</p>
+            <p class="meta mt-3">Set in Archivo and IBM&nbsp;Plex&nbsp;Mono. Built with Astro.</p>
+          </div>
+        </div>
+
+        <div class="rule mt-12"></div>
+        <p class="meta mt-6">&copy; 2026 Flossify</p>
+      </div>
+    </footer>
   </main>
 
-  <footer class="mx-auto mt-28 max-w-[1180px] px-5 pb-16 sm:px-8">
-    <hr class="rule" />
-    <div class="grid gap-10 pt-12 sm:grid-cols-2 lg:grid-cols-4">
-      <div class="lg:col-span-2">
-        <div class="flex items-center gap-2.5">
-          <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-accent/10 text-accent">
-            <span class="tooth-marker"></span>
-          </span>
-          <span class="font-display text-[19px] font-bold tracking-[-0.02em]">Flossify</span>
-        </div>
-        <p class="mt-4 max-w-[34ch] text-[15px] leading-[1.6] text-muted">
-          Dental clinic software. Built by Brylliant Labs in Baguio City, Philippines.
-        </p>
-      </div>
-      <div class="flex flex-col gap-3">
-        <span class="text-[11.5px] font-semibold tracking-[0.11em] text-faint uppercase">Product</span>
-        <a href="#product" class="text-[15px] text-ink-2 transition-colors hover:text-accent">See it</a>
-        <a href="#services" class="text-[15px] text-ink-2 transition-colors hover:text-accent">What it does</a>
-        <a href="/clinics/" class="text-[15px] text-ink-2 transition-colors hover:text-accent">Clinic sign in</a>
-      </div>
-      <div class="flex flex-col gap-3">
-        <span class="text-[11.5px] font-semibold tracking-[0.11em] text-faint uppercase">Company</span>
-        <a href="#faq" class="text-[15px] text-ink-2 transition-colors hover:text-accent">About</a>
-        <a href="#faq" class="text-[15px] text-ink-2 transition-colors hover:text-accent">Contact</a>
-        <a href="#faq" class="text-[15px] text-ink-2 transition-colors hover:text-accent">Security</a>
-      </div>
-    </div>
-    <p class="mt-14 text-[13px] text-faint">© 2026 Brylliant Labs, Inc.</p>
-  </footer>
-</Base>
+  <script>
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-<script>
-  const root = document.documentElement;
-  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    /* --- scroll progress -------------------------------------------------- */
+    const bar = document.querySelector<HTMLElement>('[data-progress]');
 
-  document.querySelector('[data-theme-toggle]')?.addEventListener('click', () => {
-    const dark =
-      root.dataset.theme === 'dark' ||
-      (!root.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches);
-    const next = dark ? 'light' : 'dark';
-    root.dataset.theme = next;
-    try {
-      localStorage.setItem('theme', next);
-    } catch (e) {
-      /* storage blocked: the toggle still works for this page view */
-    }
-  });
+    /* --- the tour ---------------------------------------------------------
+       Scroll position maps to distance along a horizontal track. The page
+       scrolls normally the whole time — the track just reads how far down the
+       section you are, which is why this never fights the wheel. */
+    const tourEl = document.querySelector<HTMLElement>('[data-tour]');
+    const track = document.querySelector<HTMLElement>('[data-track]');
+    const stops = Array.from(document.querySelectorAll<HTMLElement>('[data-stop]'));
+    const plates = track ? track.children.length : 0;
+    let stageWidth = 0;
 
-  // Blur-up. `complete` covers cached images, which never fire load.
-  document.querySelectorAll<HTMLImageElement>('img[data-fade]').forEach((img) => {
-    if (img.complete) img.classList.add('is-loaded');
-    else img.addEventListener('load', () => img.classList.add('is-loaded'), { once: true });
-  });
+    const travels = () =>
+      !reduced && window.matchMedia('(min-width: 1024px)').matches;
 
-  // Reveal once on entry; never animate back out on the way up.
-  const revealables = document.querySelectorAll('.reveal');
-  if (reduced || !('IntersectionObserver' in window)) {
-    revealables.forEach((el) => el.classList.add('is-in'));
-  } else {
-    const io = new IntersectionObserver(
-      (entries, obs) => {
+    const measure = () => {
+      if (!tourEl || !track) return;
+      const stage = tourEl.querySelector<HTMLElement>('.tour-stage');
+      stageWidth = stage ? stage.clientWidth : 0;
+      tourEl.style.setProperty('--plates', String(plates));
+      tourEl.style.setProperty('--vw', `${stageWidth}px`);
+    };
+
+    const drawTour = () => {
+      if (!tourEl || !track) return;
+      if (!travels()) {
+        track.style.transform = '';
+        return;
+      }
+      const span = tourEl.offsetHeight - window.innerHeight;
+      const p = span > 0
+        ? Math.min(1, Math.max(0, -tourEl.getBoundingClientRect().top / span))
+        : 0;
+
+      track.style.transform = `translate3d(${-p * stageWidth * (plates - 1)}px, 0, 0)`;
+
+      const at = Math.round(p * (plates - 1));
+      stops.forEach((s, i) => s.toggleAttribute('data-on', i === at));
+    };
+
+    const draw = () => {
+      if (bar) {
+        const max = document.documentElement.scrollHeight - window.innerHeight;
+        bar.style.width = `${max > 0 ? (window.scrollY / max) * 100 : 0}%`;
+      }
+      drawTour();
+    };
+
+    let queued = false;
+    const onScroll = () => {
+      if (queued) return;
+      queued = true;
+      requestAnimationFrame(() => { draw(); queued = false; });
+    };
+
+    measure();
+    draw();
+    addEventListener('scroll', onScroll, { passive: true });
+    addEventListener('resize', () => { measure(); draw(); });
+
+    /* --- reveal on entry --------------------------------------------------
+       One observer for the three entry motions: rises, drawn rules and the
+       clipped display lines. Everything unobserves once it has played. */
+    const targets = document.querySelectorAll('.reveal, .rule-draw, [data-lines]');
+    if (reduced) {
+      targets.forEach((el) => el.classList.add('is-in'));
+    } else {
+      const io = new IntersectionObserver((entries) => {
         for (const e of entries) {
           if (!e.isIntersecting) continue;
           e.target.classList.add('is-in');
-          obs.unobserve(e.target);
+          io.unobserve(e.target);
         }
-      },
-      { rootMargin: '0px 0px -10% 0px', threshold: 0.1 }
-    );
-    revealables.forEach((el) => io.observe(el));
-  }
+      }, { rootMargin: '0px 0px -12% 0px', threshold: 0.15 });
+      targets.forEach((el) => io.observe(el));
+    }
 
-  // Product tabs, with the arrow-key behaviour a tablist is supposed to have.
-  const tabs = document.querySelector<HTMLElement>('[data-tabs]');
-  if (tabs) {
-    const buttons = [...tabs.querySelectorAll<HTMLButtonElement>('[role="tab"]')];
-    const panels = buttons.map((b) =>
-      document.getElementById(b.getAttribute('aria-controls')!)
-    );
+    /* --- masthead section readout ----------------------------------------- */
+    const readout = document.querySelector<HTMLElement>('[data-readout]');
+    const marked = document.querySelectorAll<HTMLElement>('[data-sec]');
+    if (readout && marked.length) {
+      const seen = new IntersectionObserver((entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) readout.textContent = (e.target as HTMLElement).dataset.sec ?? '';
+        }
+      }, { rootMargin: '-15% 0px -70% 0px' });
+      marked.forEach((el) => seen.observe(el));
+    }
+
+    /* --- blur-up ----------------------------------------------------------
+       `complete` covers images the browser had cached, which never fire load
+       and would otherwise sit at opacity 0 forever. */
+    document.querySelectorAll<HTMLImageElement>('.media > img').forEach((img) => {
+      if (img.complete) img.classList.add('is-loaded');
+      else img.addEventListener('load', () => img.classList.add('is-loaded'), { once: true });
+    });
+
+    /* --- the queue ticker -------------------------------------------------- */
+    const ticks = document.querySelectorAll<HTMLElement>('[data-tick]');
+    if (ticks.length && !reduced) {
+      let at = 0;
+      const step = () => {
+        ticks.forEach((el, i) => {
+          const on = i === at;
+          el.querySelectorAll<HTMLElement>('.meta').forEach((m) => { m.style.color = on ? 'var(--c-ink)' : ''; });
+          const state = el.querySelector<HTMLElement>('[data-tick-state]');
+          if (state) state.style.color = on ? 'var(--c-accent)' : '';
+        });
+        at = (at + 1) % ticks.length;
+      };
+      step();
+      setInterval(step, 2600);
+    }
+
+    /* --- product rail -----------------------------------------------------
+       Roving tabindex: exactly one tab is reachable by Tab, and the arrows
+       move between them. Same pattern as the odontogram. */
+    const rails = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-rail]'));
+    const panels = Array.from(document.querySelectorAll<HTMLElement>('[role="tabpanel"]'));
+    const copies = Array.from(document.querySelectorAll<HTMLElement>('[data-rail-copy]'));
 
     const select = (i: number, focus = false) => {
-      buttons.forEach((b, j) => {
-        const on = i === j;
-        b.setAttribute('aria-selected', String(on));
-        b.tabIndex = on ? 0 : -1;
-        const panel = panels[j];
-        if (!panel) return;
-        if (on) {
-          panel.hidden = false;
-          requestAnimationFrame(() => panel.classList.add('is-shown'));
-        } else {
-          panel.classList.remove('is-shown');
-          panel.hidden = true;
-        }
+      rails.forEach((r, n) => {
+        r.setAttribute('aria-selected', n === i ? 'true' : 'false');
+        r.tabIndex = n === i ? 0 : -1;
       });
-      if (focus) buttons[i].focus();
+      panels.forEach((p, n) => { p.hidden = n !== i; p.classList.toggle('is-shown', n === i); });
+      copies.forEach((c, n) => { c.hidden = n !== i; });
+      if (focus) rails[i].focus();
     };
 
-    buttons.forEach((b, i) => {
-      b.addEventListener('click', () => select(i));
-      b.addEventListener('keydown', (e) => {
-        const step = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
-        if (!step) return;
+    rails.forEach((r, i) => {
+      r.addEventListener('click', () => select(i));
+      r.addEventListener('keydown', (e) => {
+        const keys: Record<string, number> = {
+          ArrowDown: i + 1, ArrowRight: i + 1,
+          ArrowUp: i - 1, ArrowLeft: i - 1,
+          Home: 0, End: rails.length - 1,
+        };
+        const next = keys[e.key];
+        if (next === undefined) return;
         e.preventDefault();
-        select((i + step + buttons.length) % buttons.length, true);
+        select((next + rails.length) % rails.length, true);
       });
     });
-  }
-</script>
+
+    /* --- services index ---------------------------------------------------
+       Pointer and keyboard both drive it, so the photograph is not a
+       hover-only reward. */
+    const rows = Array.from(document.querySelectorAll<HTMLElement>('[data-idx]'));
+    const shots = Array.from(document.querySelectorAll<HTMLElement>('[data-shot]'));
+    const show = (i: number) => {
+      rows.forEach((r, n) => r.toggleAttribute('data-active', n === i));
+      shots.forEach((s, n) => s.toggleAttribute('data-active', n === i));
+    };
+    rows.forEach((r, i) => {
+      r.addEventListener('mouseenter', () => show(i));
+      r.addEventListener('focus', () => show(i));
+      r.addEventListener('click', () => show(i));
+    });
+  </script>
+</Base>
