@@ -45,6 +45,17 @@ img {
   max-width: 100%;
   display: block;
 }
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
 em {
   font-style: normal;
   color: var(--gold);
@@ -506,7 +517,8 @@ h3 {
     box-shadow 0.32s,
     border-color 0.32s;
 }
-.creature-card:hover {
+.creature-card:hover,
+.creature-card:focus-visible {
   transform: translateY(-9px);
   box-shadow: 0 32px 60px rgba(3, 2, 12, 0.38);
   border-color: rgba(255, 225, 170, 0.42);
@@ -548,10 +560,30 @@ h3 {
   height: 100%;
   object-fit: contain;
   filter: drop-shadow(0 22px 20px rgba(5, 4, 19, 0.5));
-  transition: transform 0.4s;
+  transition:
+    transform 0.4s,
+    opacity 0.2s;
 }
-.creature-card:hover img {
+.creature-card:hover .creature-dex,
+.creature-card:focus-visible .creature-dex {
   transform: scale(1.07) translateY(-5px);
+}
+.creature-card-art .creature-walk {
+  position: absolute;
+  inset: 25px 12px 0;
+  width: calc(100% - 24px);
+  height: calc(100% - 25px);
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(1.48);
+}
+.creature-card.is-walking .creature-dex {
+  opacity: 0;
+  transform: scale(1.02);
+}
+.creature-card.is-walking .creature-walk {
+  opacity: 1;
+  transform: scale(1.48) translateY(-5px);
 }
 .creature-card-copy {
   position: absolute;

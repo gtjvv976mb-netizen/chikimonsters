@@ -140,6 +140,63 @@
   desktopMotion.addEventListener("change", refreshMotion);
   document.addEventListener("visibilitychange", refreshMotion);
 
+  // Keep the illustrated 2D dex portraits as the default. The Blender walk loops are
+  // requested only when a desktop visitor hovers or keyboard-focuses a card.
+  const cardMotion = window.matchMedia(
+    "(min-width: 761px) and (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)",
+  );
+  const creatureCards = [...document.querySelectorAll(".creature-card")];
+  function syncCardFocusability() {
+    for (const card of creatureCards) {
+      if (cardMotion.matches && !saveData) {
+        card.tabIndex = 0;
+        card.setAttribute("aria-labelledby", card.querySelector("h3").id);
+        card.setAttribute("aria-describedby", "creature-preview-hint");
+      } else {
+        card.removeAttribute("tabindex");
+        card.removeAttribute("aria-labelledby");
+        card.removeAttribute("aria-describedby");
+        card.classList.remove("is-walking");
+      }
+    }
+  }
+  function showWalk(card) {
+    if (!cardMotion.matches || saveData || document.hidden) return;
+    if (!card.matches(":hover") && !card.contains(document.activeElement))
+      return;
+    const walk = card.querySelector(".creature-walk");
+    if (!walk.hasAttribute("src")) {
+      walk.addEventListener("load", () => showWalk(card), { once: true });
+      walk.setAttribute("src", walk.dataset.walk);
+      return;
+    }
+    if (walk.complete && walk.naturalWidth > 0)
+      card.classList.add("is-walking");
+  }
+  for (const card of creatureCards) {
+    card.addEventListener("pointerenter", (event) => {
+      if (event.pointerType === "mouse" || event.pointerType === "pen")
+        showWalk(card);
+    });
+    card.addEventListener("pointerleave", () => {
+      if (!card.contains(document.activeElement))
+        card.classList.remove("is-walking");
+    });
+    card.addEventListener("focusin", () => showWalk(card));
+    card.addEventListener("focusout", () => {
+      queueMicrotask(() => {
+        if (!card.contains(document.activeElement) && !card.matches(":hover"))
+          card.classList.remove("is-walking");
+      });
+    });
+  }
+  syncCardFocusability();
+  cardMotion.addEventListener("change", syncCardFocusability);
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden)
+      creatureCards.forEach((card) => card.classList.remove("is-walking"));
+  });
+
   // A very small pointer response adds depth without scroll-linked work or canvas rendering.
   const hero = document.querySelector(".hero");
   let pointerFrame = 0;

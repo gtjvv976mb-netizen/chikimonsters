@@ -69,7 +69,7 @@
       </nav>
     </header>
 
-  <main id="main" tabindex="-1">
+    <main id="main" tabindex="-1">
       <section class="hero" aria-labelledby="hero-title">
         <div class="hero-land" aria-hidden="true"></div>
         <div class="hero-haze" aria-hidden="true"></div>
@@ -156,11 +156,15 @@
               own personality to the world.
             </p>
           </div>
+          <p class="sr-only" id="creature-preview-hint">
+            Focus a Chikimon card to preview its walking animation on desktop.
+          </p>
           <div class="creature-grid">
             <article class="creature-card creature-card-fire reveal">
               <div class="creature-card-glow" aria-hidden="true"></div>
               <div class="creature-card-art">
                 <img
+                  class="creature-dex"
                   src="/site-assets/dex-firix.webp"
                   width="540"
                   height="540"
@@ -168,10 +172,19 @@
                   loading="lazy"
                   decoding="async"
                 />
+                <img
+                  class="creature-walk"
+                  data-walk="/site-assets/firix-walk.webp"
+                  width="512"
+                  height="512"
+                  alt=""
+                  aria-hidden="true"
+                  decoding="async"
+                />
               </div>
               <div class="creature-card-copy">
                 <span class="creature-number">01 / FIRE</span>
-                <h3>Firix</h3>
+                <h3 id="firix-card-name">Firix</h3>
                 <p>A little spark with a fearless heart.</p>
               </div>
             </article>
@@ -179,6 +192,7 @@
               <div class="creature-card-glow" aria-hidden="true"></div>
               <div class="creature-card-art">
                 <img
+                  class="creature-dex"
                   src="/site-assets/dex-dragonos.webp"
                   width="540"
                   height="540"
@@ -186,10 +200,19 @@
                   loading="lazy"
                   decoding="async"
                 />
+                <img
+                  class="creature-walk"
+                  data-walk="/site-assets/dragonos-walk.webp"
+                  width="512"
+                  height="512"
+                  alt=""
+                  aria-hidden="true"
+                  decoding="async"
+                />
               </div>
               <div class="creature-card-copy">
                 <span class="creature-number">02 / DRAGON</span>
-                <h3>Dragonos</h3>
+                <h3 id="dragonos-card-name">Dragonos</h3>
                 <p>Power, pride, and a sky full of possibility.</p>
               </div>
             </article>
@@ -197,17 +220,27 @@
               <div class="creature-card-glow" aria-hidden="true"></div>
               <div class="creature-card-art">
                 <img
+                  class="creature-dex"
                   src="/site-assets/dex-galador.webp"
                   width="540"
                   height="540"
-                  alt="Galador, a golden Chikimon"
+                  alt="Galador, a blue legendary Chikimon"
                   loading="lazy"
+                  decoding="async"
+                />
+                <img
+                  class="creature-walk"
+                  data-walk="/site-assets/galador-walk.webp"
+                  width="512"
+                  height="512"
+                  alt=""
+                  aria-hidden="true"
                   decoding="async"
                 />
               </div>
               <div class="creature-card-copy">
                 <span class="creature-number">03 / LEGENDARY</span>
-                <h3>Galador</h3>
+                <h3 id="galador-card-name">Galador</h3>
                 <p>A guardian born to make its mark.</p>
               </div>
             </article>
