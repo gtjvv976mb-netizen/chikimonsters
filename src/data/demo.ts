@@ -11,6 +11,47 @@ export type ToothCondition =
 
 export type Notation = 'fdi' | 'universal' | 'palmer';
 
+export type Surface = 'mesial' | 'distal' | 'buccal' | 'lingual' | 'occlusal';
+
+/** A finding on one tooth. Surface-scoped conditions carry the surfaces they
+ *  affect; whole-tooth conditions do not, because "missing, mesial" is not a
+ *  thing a dentist can say. */
+export interface ToothMark {
+  condition: ToothCondition;
+  surfaces?: Surface[];
+}
+
+/** Which conditions are recorded per surface and which apply to the whole
+ *  tooth. Drives the palette: picking "missing" disables the surface row. */
+export const SURFACE_SCOPED: ToothCondition[] = ['caries', 'filled', 'sealant'];
+
+export const SURFACE_LABEL: Record<Surface, string> = {
+  mesial: 'Mesial',
+  distal: 'Distal',
+  buccal: 'Buccal',
+  lingual: 'Lingual',
+  occlusal: 'Occlusal',
+};
+
+/** Short forms staff actually write in notes: MOD, DB, and so on. */
+export const SURFACE_CODE: Record<Surface, string> = {
+  mesial: 'M', distal: 'D', buccal: 'B', lingual: 'L', occlusal: 'O',
+};
+
+/** Anteriors have an incisal edge, not an occlusal table. Same slot, different
+ *  word, and using the wrong one in a clinical note is an error. */
+export const isAnterior = (fdi: number) => fdi % 10 <= 3;
+export const occlusalWord = (fdi: number) => (isAnterior(fdi) ? 'Incisal' : 'Occlusal');
+export const occlusalCode = (fdi: number) => (isAnterior(fdi) ? 'I' : 'O');
+
+export const surfaceSummary = (fdi: number, s?: Surface[]) =>
+  !s || s.length === 0
+    ? ''
+    : (['mesial', 'occlusal', 'distal', 'buccal', 'lingual'] as Surface[])
+        .filter((x) => s.includes(x))
+        .map((x) => (x === 'occlusal' ? occlusalCode(fdi) : SURFACE_CODE[x]))
+        .join('');
+
 export interface Clinic {
   slug: string;
   name: string;
@@ -35,7 +76,7 @@ export interface Patient {
   conditions: string[];
   lastVisit: string;
   balance: number;
-  teeth: Partial<Record<number, ToothCondition>>;
+  teeth: Partial<Record<number, ToothMark>>;
 }
 
 export interface Appointment {
@@ -88,7 +129,14 @@ export const patients: Patient[] = [
     birthDate: '1988-03-14', sex: 'female', phone: '+63 917 555 0142',
     allergies: ['Penicillin'], conditions: ['Hypertension'],
     lastVisit: '2026-08-28', balance: 2400,
-    teeth: { 16: 'filled', 26: 'caries', 36: 'crown', 46: 'root_canal', 18: 'missing', 28: 'missing' },
+    teeth: {
+      16: { condition: 'filled', surfaces: ['occlusal'] },
+      26: { condition: 'caries', surfaces: ['mesial', 'occlusal'] },
+      36: { condition: 'crown' },
+      46: { condition: 'root_canal' },
+      18: { condition: 'missing' },
+      28: { condition: 'missing' },
+    },
   },
   {
     id: 'p2', clinic: 'session-road', chartNo: 'SR-0143',
@@ -96,7 +144,12 @@ export const patients: Patient[] = [
     birthDate: '1975-11-02', sex: 'male', phone: '+63 918 555 0143',
     allergies: [], conditions: ['Type 2 diabetes'],
     lastVisit: '2026-09-11', balance: 0,
-    teeth: { 11: 'veneer', 21: 'veneer', 37: 'filled', 47: 'caries' },
+    teeth: {
+      11: { condition: 'veneer' },
+      21: { condition: 'veneer' },
+      37: { condition: 'filled', surfaces: ['mesial', 'occlusal', 'distal'] },
+      47: { condition: 'caries', surfaces: ['distal'] },
+    },
   },
   {
     id: 'p3', clinic: 'session-road', chartNo: 'SR-0144',
@@ -104,7 +157,12 @@ export const patients: Patient[] = [
     birthDate: '2014-06-21', sex: 'female', phone: '+63 920 555 0144',
     allergies: ['Latex'], conditions: [],
     lastVisit: '2026-09-18', balance: 850,
-    teeth: { 16: 'sealant', 26: 'sealant', 36: 'sealant', 46: 'sealant' },
+    teeth: {
+      16: { condition: 'sealant', surfaces: ['occlusal'] },
+      26: { condition: 'sealant', surfaces: ['occlusal'] },
+      36: { condition: 'sealant', surfaces: ['occlusal'] },
+      46: { condition: 'sealant', surfaces: ['occlusal'] },
+    },
   },
   {
     id: 'p4', clinic: 'marikina-heights', chartNo: 'MH-0031',
@@ -112,7 +170,13 @@ export const patients: Patient[] = [
     birthDate: '1962-01-09', sex: 'male', phone: '+63 927 555 0031',
     allergies: [], conditions: ['On anticoagulants'],
     lastVisit: '2026-09-02', balance: 12750,
-    teeth: { 14: 'implant', 15: 'bridge', 16: 'bridge', 24: 'missing', 34: 'filled' },
+    teeth: {
+      14: { condition: 'implant' },
+      15: { condition: 'bridge' },
+      16: { condition: 'bridge' },
+      24: { condition: 'missing' },
+      34: { condition: 'filled', surfaces: ['buccal'] },
+    },
   },
 ];
 

@@ -18,12 +18,13 @@ speed has to be fast. Current build:
 
 | | This site | Molarsoft (Sept 2026) |
 | --- | --- | --- |
-| Total page weight, gzipped | 12.6 KB | ~580 KB of JS alone |
-| Separate JS requests | 0 | 23 |
+| Home page, gzipped | ~16 KB | ~580 KB of JS alone |
+| JS shipped | 1.9 KB gzipped, one file | 580 KB, 23 files |
 
-Scripts are small enough that Astro inlines them, so the page ships no
-separate JS file at all. Keep it that way: before adding a framework,
-check whether a few lines of vanilla JS will do.
+The odontogram script imports shared types, so Astro emits it as one small
+module rather than inlining it. Keep it that way: before adding a framework,
+check whether a few lines of vanilla JS will do. The whole site — ten pages
+plus assets — is 34 KB gzipped.
 
 ## Layout
 
@@ -41,9 +42,31 @@ Page copy lives in the frontmatter arrays at the top of `index.astro`
 ## The odontogram
 
 Full adult dentition. Every tooth is a real `<button>` rendered
-server-side, so it is keyboard-operable and visible with JS disabled. The
-script only flips a `data-state` attribute; the five states are styled in
-CSS.
+server-side, so it is keyboard-operable and visible with JS disabled.
+
+**Charting is a palette, not a cycle.** Clicking a tooth opens a popover:
+pick the surfaces, then the finding. An earlier version cycled through
+states on each click, which meant three clicks to record a crown and four
+more to undo a mis-click — fine for a demo, wrong at the chair with gloves
+on. The popover uses the native `popover` attribute, so Escape, light
+dismiss and focus handling come from the browser.
+
+Findings split the way dentists actually record them:
+
+- **Per surface** — caries, filled, sealant. Stored against mesial, distal,
+  buccal, lingual and the occlusal/incisal surface, and shown as pips placed
+  where that surface sits on the drawn tooth. "Mesial" is toward the
+  midline, so which side that is flips between quadrants; putting the pip on
+  the wrong side is a clinical error, not a cosmetic one.
+- **Whole tooth** — crown, bridge, veneer, root canal, implant, missing,
+  unerupted, impacted. "Missing on the mesial" is not something a dentist
+  can say, so picking one of these ignores the surface row.
+
+Anteriors have an incisal edge, not an occlusal table; the palette relabels
+that slot per tooth.
+
+Arrow keys move between teeth under a roving tabindex — 32 tab stops in a
+row is not navigation.
 
 Three notation systems, because the market is not one country:
 

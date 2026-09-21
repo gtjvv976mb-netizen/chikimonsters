@@ -2,8 +2,8 @@
 import ClinicLayout from '../../../../layouts/Clinic.astro';
 import Odontogram from '../../../../components/Odontogram.astro';
 import {
-  clinics, clinicBySlug, patientsOf, peso, CONDITION_LABEL,
-  type ToothCondition,
+  clinics, clinicBySlug, patientsOf, peso, CONDITION_LABEL, surfaceSummary,
+  type ToothCondition, type ToothMark,
 } from '../../../../data/demo';
 
 export function getStaticPaths() {
@@ -31,7 +31,10 @@ const ORDER: ToothCondition[] = [
   'crown', 'bridge', 'implant', 'veneer', 'filled', 'sealant', 'sound',
 ];
 const findings = Object.entries(patient.teeth)
-  .map(([fdi, condition]) => ({ fdi: Number(fdi), condition: condition as ToothCondition }))
+  .map(([fdi, mark]) => {
+    const m = mark as ToothMark;
+    return { fdi: Number(fdi), condition: m.condition, codes: surfaceSummary(Number(fdi), m.surfaces) };
+  })
   .sort((a, b) => ORDER.indexOf(a.condition) - ORDER.indexOf(b.condition) || a.fdi - b.fdi);
 ---
 
@@ -95,7 +98,9 @@ const findings = Object.entries(patient.teeth)
           <li class="flex items-center gap-3 rounded-xl border border-line bg-surface px-4 py-3.5">
             <span class="tooth h-8! w-6! shrink-0" data-state={f.condition} aria-hidden="true"></span>
             <div>
-              <p class="text-[15px] font-semibold tabular-nums">Tooth {f.fdi}</p>
+              <p class="text-[15px] font-semibold tabular-nums">
+                Tooth {f.fdi}{f.codes && <span class="text-accent"> {f.codes}</span>}
+              </p>
               <p class="text-[13.5px] text-ink-2">{CONDITION_LABEL[f.condition]}</p>
             </div>
           </li>

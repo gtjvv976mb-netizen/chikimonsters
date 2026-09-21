@@ -121,6 +121,7 @@ body {
 
 /* Tooth states live in CSS so the script only flips one attribute. */
 .tooth {
+  position: relative;
   width: 44px;
   height: 58px;
   padding: 0;
@@ -149,6 +150,34 @@ body {
 .tooth[data-state="impacted"]   { background: transparent; border-style: dashed; }
 
 .swatch { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; border: 1px solid var(--c-tooth-line); }
+
+/* Surface marks. A filling on the mesial is not a filling on the whole tooth,
+   so the tooth stays sound-coloured and the affected surfaces carry pips
+   positioned where that surface actually sits on the drawn tooth. */
+.pip {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  pointer-events: none;
+  border: 1px solid var(--c-surface);
+}
+.pip[data-on] { opacity: 1; }
+.tooth[data-surface-condition="caries"]  .pip[data-on] { background: var(--c-caries); }
+.tooth[data-surface-condition="filled"]  .pip[data-on] { background: var(--c-accent); }
+.tooth[data-surface-condition="sealant"] .pip[data-on] { background: #0ea5e9; }
+
+/* The popover is placed against the clicked tooth, so the centring the
+   browser applies by default has to be cleared. */
+[data-palette] {
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  max-width: calc(100vw - 16px);
+}
+[data-palette]::backdrop { background: rgb(0 0 0 / 0.1); }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
