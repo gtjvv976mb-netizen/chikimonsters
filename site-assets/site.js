@@ -5,21 +5,27 @@
   const menu = document.querySelector(".menu-toggle");
   const links = document.getElementById("nav-links");
   const dialog = document.getElementById("intro-dialog");
-  const video = document.getElementById("intro-video");
+  const introVideo = document.getElementById("intro-video");
   const watch = document.getElementById("watch-intro");
+  const hero = document.querySelector(".hero");
+  const journey = document.querySelector(".journey");
+  const motionToggle = document.getElementById("motion-toggle");
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-  const desktopMotion = window.matchMedia(
-    "(min-width: 761px) and (prefers-reduced-motion: no-preference)",
-  );
+  const wideScreen = window.matchMedia("(min-width: 761px)");
+  const saveData = Boolean(navigator.connection && navigator.connection.saveData);
+  let motionOptIn = false;
+  const motionEnabled = () => !reduceMotion.matches || motionOptIn;
+  const canMoveScene = () => wideScreen.matches && motionEnabled() && !saveData && !document.hidden;
 
-  document.getElementById("year").textContent = String(
-    new Date().getFullYear(),
-  );
+  function syncMotionToggle() {
+    motionToggle.hidden = !reduceMotion.matches;
+    motionToggle.setAttribute("aria-pressed", String(motionOptIn));
+    motionToggle.setAttribute("aria-label", `${motionOptIn ? "Turn off" : "Turn on"} cinematic scroll motion`);
+    motionToggle.querySelector(".cinematic-toggle-state").textContent = motionOptIn ? "On" : "Off";
+  }
+  syncMotionToggle();
 
-  const updateHeader = () =>
-    header.classList.toggle("is-scrolled", window.scrollY > 30);
-  updateHeader();
-  window.addEventListener("scroll", updateHeader, { passive: true });
+  document.getElementById("year").textContent = String(new Date().getFullYear());
 
   function setMenu(open) {
     menu.setAttribute("aria-expanded", String(open));
@@ -27,9 +33,7 @@
     links.classList.toggle("is-open", open);
     header.classList.toggle("menu-open", open);
   }
-  menu.addEventListener("click", () =>
-    setMenu(menu.getAttribute("aria-expanded") !== "true"),
-  );
+  menu.addEventListener("click", () => setMenu(menu.getAttribute("aria-expanded") !== "true"));
   links.addEventListener("click", (event) => {
     if (event.target.closest("a")) setMenu(false);
   });
@@ -46,25 +50,23 @@
       try {
         sessionStorage.setItem("realm-hero-done", "1");
       } catch (_) {
-        /* private mode */
+        /* Private browsing can disallow session storage. */
       }
     });
   }
 
   function closeIntro() {
-    video.pause();
-    video.removeAttribute("src");
-    video.load();
+    introVideo.pause();
+    introVideo.removeAttribute("src");
+    introVideo.load();
     if (dialog.open) dialog.close();
   }
   watch.addEventListener("click", () => {
     dialog.showModal();
-    video.src = "/intro.mp4";
-    const play = video.play();
-    if (play && play.catch)
-      play.catch(() => {
-        /* controls remain available */
-      });
+    introVideo.src = "/intro.mp4";
+    introVideo.play().catch(() => {
+      /* Native controls remain available when autoplay is denied. */
+    });
   });
   dialog.querySelector(".intro-close").addEventListener("click", closeIntro);
   dialog.addEventListener("cancel", (event) => {
@@ -75,7 +77,7 @@
     if (event.target === dialog) closeIntro();
   });
 
-  // Reveals are enhancement-only: a failed script or older browser never hides content.
+  // Enhancement only: all sections remain readable without JS or motion support.
   if ("IntersectionObserver" in window && !reduceMotion.matches) {
     document.documentElement.classList.add("motion-ready");
     const reveals = new IntersectionObserver(
@@ -87,139 +89,109 @@
           }
         }
       },
-      { threshold: 0.1, rootMargin: "0px 0px -35px 0px" },
+      { threshold: 0.08, rootMargin: "0px 0px -30px 0px" },
     );
-    document
-      .querySelectorAll(".reveal")
-      .forEach((element) => reveals.observe(element));
+    document.querySelectorAll(".reveal").forEach((element) => reveals.observe(element));
   }
 
-  // Real creature motion is loaded only for visible desktop scenes. Mobile and reduced-motion
-  // visitors keep the clean static posters, avoiding persistent animation and bandwidth.
-  const creatureImages = [
-    ...document.querySelectorAll(".hero-creature img[data-loop]"),
-  ];
-  const saveData = Boolean(
-    navigator.connection && navigator.connection.saveData,
-  );
-  function setCreatureSource(image, active) {
-    const target = active ? image.dataset.loop : image.dataset.poster;
-    if (image.getAttribute("src") !== target) image.setAttribute("src", target);
-  }
-  const loopObserver =
-    "IntersectionObserver" in window
-      ? new IntersectionObserver(
-          (entries) => {
-            for (const entry of entries) {
-              const image = entry.target;
-              const shouldLoop =
-                entry.isIntersecting &&
-                desktopMotion.matches &&
-                !saveData &&
-                !document.hidden;
-              setCreatureSource(image, shouldLoop);
-            }
-          },
-          { threshold: 0.15 },
-        )
-      : null;
-  creatureImages.forEach((image) => {
-    image.dataset.poster = image.getAttribute("src");
-    if (loopObserver) loopObserver.observe(image);
-  });
-  function refreshMotion() {
-    creatureImages.forEach((image) => {
-      const bounds = image.getBoundingClientRect();
-      const inView = bounds.bottom > 0 && bounds.top < window.innerHeight;
-      setCreatureSource(
-        image,
-        inView && desktopMotion.matches && !document.hidden && !saveData,
-      );
-    });
-  }
-  desktopMotion.addEventListener("change", refreshMotion);
-  document.addEventListener("visibilitychange", refreshMotion);
+  // Four painted scene planes create a camera-like scroll journey. One passive
+  // scroll listener and one rAF update; only compositor-friendly transforms move.
+  let scrollFrame = 0;
+  function renderScroll() {
+    scrollFrame = 0;
+    header.classList.toggle("is-scrolled", window.scrollY > 30);
 
-  // Keep the illustrated 2D dex portraits as the default. The Blender walk loops are
-  // requested only when a desktop visitor hovers or keyboard-focuses a card.
-  const cardMotion = window.matchMedia(
-    "(min-width: 761px) and (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)",
-  );
-  const creatureCards = [...document.querySelectorAll(".creature-card")];
-  function syncCardFocusability() {
-    for (const card of creatureCards) {
-      if (cardMotion.matches && !saveData) {
-        card.tabIndex = 0;
-        card.setAttribute("aria-labelledby", card.querySelector("h3").id);
-        card.setAttribute("aria-describedby", "creature-preview-hint");
-      } else {
-        card.removeAttribute("tabindex");
-        card.removeAttribute("aria-labelledby");
-        card.removeAttribute("aria-describedby");
-        card.classList.remove("is-walking");
+    const heroRect = hero.getBoundingClientRect();
+    if (heroRect.bottom > 0 && heroRect.top < window.innerHeight && canMoveScene()) {
+      const travel = Math.max(0, Math.min(heroRect.height, -heroRect.top));
+      hero.style.setProperty("--back-y", `${(-travel * 0.11).toFixed(1)}px`);
+      hero.style.setProperty("--mid-y", `${(-travel * 0.20).toFixed(1)}px`);
+      hero.style.setProperty("--front-y", `${(-travel * 0.30).toFixed(1)}px`);
+      hero.style.setProperty("--cast-y", `${(-travel * 0.27).toFixed(1)}px`);
+      for (const sprite of hero.querySelectorAll(".hero-creature[data-depth]")) {
+        sprite.style.setProperty("--sprite-y", `${(travel * Number(sprite.dataset.depth) * 0.10).toFixed(1)}px`);
+      }
+    }
+
+    const journeyRect = journey.getBoundingClientRect();
+    if (journeyRect.bottom > 0 && journeyRect.top < window.innerHeight) {
+      const viewport = window.innerHeight;
+      const travelled = Math.max(0, -journeyRect.top);
+      const active = Math.min(3, Math.floor((travelled + viewport * 0.5) / viewport));
+      journey.dataset.scene = ["realm", "gathering", "temple", "arena"][active];
+      if (canMoveScene()) {
+        const progress = Math.max(0, Math.min(1, travelled / Math.max(1, journeyRect.height - viewport)));
+        journey.style.setProperty("--journey-y", `${(-progress * 54).toFixed(1)}px`);
+        journey.style.setProperty("--journey-near-y", `${(progress * 42).toFixed(1)}px`);
+        journey.style.setProperty("--journey-progress", `${(progress * 100).toFixed(1)}%`);
       }
     }
   }
-  function showWalk(card) {
-    if (!cardMotion.matches || saveData || document.hidden) return;
-    if (!card.matches(":hover") && !card.contains(document.activeElement))
-      return;
-    const walk = card.querySelector(".creature-walk");
-    if (!walk.hasAttribute("src")) {
-      walk.addEventListener("load", () => showWalk(card), { once: true });
-      walk.setAttribute("src", walk.dataset.walk);
-      return;
-    }
-    if (walk.complete && walk.naturalWidth > 0)
-      card.classList.add("is-walking");
+  function scheduleScroll() {
+    if (!scrollFrame) scrollFrame = requestAnimationFrame(renderScroll);
   }
-  for (const card of creatureCards) {
-    card.addEventListener("pointerenter", (event) => {
-      if (event.pointerType === "mouse" || event.pointerType === "pen")
-        showWalk(card);
-    });
-    card.addEventListener("pointerleave", () => {
-      if (!card.contains(document.activeElement))
-        card.classList.remove("is-walking");
-    });
-    card.addEventListener("focusin", () => showWalk(card));
-    card.addEventListener("focusout", () => {
-      queueMicrotask(() => {
-        if (!card.contains(document.activeElement) && !card.matches(":hover"))
-          card.classList.remove("is-walking");
-      });
-    });
+  function clearSceneTransforms() {
+    for (const property of ["--back-y", "--mid-y", "--front-y", "--cast-y"]) hero.style.removeProperty(property);
+    for (const sprite of hero.querySelectorAll(".hero-creature[data-depth]")) sprite.style.removeProperty("--sprite-y");
+    for (const property of ["--journey-y", "--journey-near-y", "--journey-progress"]) journey.style.removeProperty(property);
   }
-  syncCardFocusability();
-  cardMotion.addEventListener("change", syncCardFocusability);
-  document.addEventListener("visibilitychange", () => {
-    if (document.hidden)
-      creatureCards.forEach((card) => card.classList.remove("is-walking"));
+  motionToggle.addEventListener("click", () => {
+    motionOptIn = !motionOptIn;
+    document.documentElement.classList.toggle("motion-opt-in", motionOptIn);
+    syncMotionToggle();
+    if (!motionEnabled()) clearSceneTransforms();
+    // The control is in the hero, so the stage can switch before the next paint.
+    renderScroll();
+  });
+  renderScroll();
+  window.addEventListener("scroll", scheduleScroll, { passive: true });
+  window.addEventListener("resize", scheduleScroll, { passive: true });
+  reduceMotion.addEventListener("change", () => {
+    motionOptIn = false;
+    document.documentElement.classList.remove("motion-opt-in");
+    syncMotionToggle();
+    if (!motionEnabled()) clearSceneTransforms();
+    scheduleScroll();
   });
 
-  // A very small pointer response adds depth without scroll-linked work or canvas rendering.
-  const hero = document.querySelector(".hero");
-  let pointerFrame = 0;
-  hero.addEventListener(
-    "pointermove",
-    (event) => {
-      if (
-        !desktopMotion.matches ||
-        !window.matchMedia("(hover: hover)").matches
-      )
-        return;
-      if (pointerFrame) return;
-      const x = (event.clientX / window.innerWidth - 0.5) * 2;
-      pointerFrame = requestAnimationFrame(() => {
-        hero.querySelectorAll("[data-parallax]").forEach((element) => {
-          element.style.setProperty(
-            "--shift-x",
-            `${x * Number(element.dataset.parallax)}px`,
-          );
-        });
-        pointerFrame = 0;
+  // The extended 2D roster is a native scroll-snap strip. Buttons are a
+  // desktop enhancement; swiping and keyboard scrolling work without JS.
+  const roster = document.getElementById("roster-track");
+  const rosterControls = document.querySelector(".roster-controls");
+  if (roster && rosterControls) {
+    const previous = rosterControls.querySelector('[data-roster-dir="-1"]');
+    const next = rosterControls.querySelector('[data-roster-dir="1"]');
+    function moveRoster(direction) {
+      roster.scrollBy({
+        left: direction * roster.clientWidth * .82,
+        behavior: motionEnabled() ? "smooth" : "auto",
       });
-    },
-    { passive: true },
-  );
+    }
+    function updateRosterControls() {
+      const maxScroll = Math.max(0, roster.scrollWidth - roster.clientWidth);
+      rosterControls.hidden = maxScroll < 2;
+      previous.disabled = roster.scrollLeft < 3;
+      next.disabled = roster.scrollLeft > maxScroll - 3;
+    }
+    for (const button of [previous, next]) {
+      button.addEventListener("click", () => moveRoster(Number(button.dataset.rosterDir)));
+    }
+    roster.addEventListener("keydown", (event) => {
+      if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
+        event.preventDefault();
+        moveRoster(event.key === "ArrowRight" ? 1 : -1);
+      }
+    });
+    roster.addEventListener("scroll", updateRosterControls, { passive: true });
+    window.addEventListener("resize", updateRosterControls, { passive: true });
+    requestAnimationFrame(updateRosterControls);
+  }
+
+  // Gameplay footage is intentionally not wired yet. The four static preview
+  // cards in index.html carry data-video-slot IDs (exploration, gathering,
+  // wicked-temple, chikiseum). When verified footage is available, add a
+  // poster and a click-to-play video for each matching slot; never autoplay.
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) introVideo.pause();
+  });
 })();

@@ -362,6 +362,28 @@ h3 {
   font-size: 12px;
   letter-spacing: 0.055em;
 }
+.cinematic-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 42px;
+  margin-top: 8px;
+  padding: 8px 4px;
+  border: 0;
+  border-bottom: 1px solid rgba(255, 222, 152, .56);
+  background: transparent;
+  color: #fff1d2;
+  font: 800 12px/1.3 "Baloo 2", sans-serif;
+  letter-spacing: .035em;
+  cursor: pointer;
+  text-shadow: 0 2px 8px #160d24;
+}
+.cinematic-toggle[hidden] { display: none; }
+.cinematic-toggle:hover { color: #fff; border-bottom-color: #fff; }
+.cinematic-toggle:focus-visible { outline: 2px solid #ffe09a; outline-offset: 5px; border-radius: 3px; }
+.cinematic-toggle-icon { color: #ffdd83; }
+.cinematic-toggle-state { color: #cbbdd6; }
+.cinematic-toggle[aria-pressed="true"] .cinematic-toggle-state { color: #aaf3d4; }
 .hero-cast {
   position: absolute;
   z-index: 2;
@@ -568,23 +590,6 @@ h3 {
 .creature-card:focus-visible .creature-dex {
   transform: scale(1.07) translateY(-5px);
 }
-.creature-card-art .creature-walk {
-  position: absolute;
-  inset: 25px 12px 0;
-  width: calc(100% - 24px);
-  height: calc(100% - 25px);
-  opacity: 0;
-  pointer-events: none;
-  transform: scale(1.48);
-}
-.creature-card.is-walking .creature-dex {
-  opacity: 0;
-  transform: scale(1.02);
-}
-.creature-card.is-walking .creature-walk {
-  opacity: 1;
-  transform: scale(1.48) translateY(-5px);
-}
 .creature-card-copy {
   position: absolute;
   z-index: 1;
@@ -605,6 +610,103 @@ h3 {
   font-size: 14px;
   color: #d6cede;
   margin: 0;
+}
+.roster-section {
+  margin-top: clamp(58px, 7vw, 92px);
+  padding-top: clamp(36px, 5vw, 62px);
+  border-top: 1px solid rgba(255, 218, 157, .17);
+}
+.roster-head {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 19px;
+}
+.roster-head h3 {
+  margin: 10px 0 0;
+  font-size: clamp(32px, 3.8vw, 49px);
+  line-height: 1.08;
+}
+.roster-head h3 em { color: var(--cyan); }
+.roster-controls { display: flex; align-items: center; gap: 9px; }
+.roster-controls[hidden] { display: none; }
+.roster-arrow {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 221, 154, .4);
+  border-radius: 50%;
+  background: rgba(34, 22, 61, .86);
+  color: var(--gold);
+  font-size: 23px;
+  line-height: 1;
+  transition: background .2s ease, transform .2s ease;
+}
+.roster-arrow:not(:disabled):hover { background: rgba(99, 64, 139, .86); transform: translateY(-2px); }
+.roster-arrow:disabled { opacity: .35; cursor: default; }
+.roster-swipe-hint { display: none; color: #cfc1df; font-size: 11px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
+.roster-track {
+  display: grid;
+  grid-auto-flow: column;
+  /* Four complete cards across the desktop track; no cut-off fifth portrait. */
+  grid-auto-columns: calc(25% - 11.25px);
+  gap: 15px;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 4px;
+  padding: 4px 4px 19px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 216, 137, .42) rgba(255, 255, 255, .06);
+}
+.roster-track:focus-visible { outline-offset: 3px; border-radius: 10px; }
+.roster-card {
+  min-width: 0;
+  min-height: 294px;
+  position: relative;
+  overflow: hidden;
+  scroll-snap-align: start;
+  border: 1px solid rgba(255, 216, 153, .20);
+  border-radius: 17px;
+  background:
+    radial-gradient(circle at 50% 37%, var(--roster-glow, rgba(144, 121, 218, .33)), transparent 61%),
+    linear-gradient(160deg, #302342, #18122e 78%);
+  box-shadow: 0 12px 28px rgba(4, 2, 13, .18);
+  transition: transform .27s ease, border-color .27s ease;
+}
+.roster-card:nth-child(4n+1) { --roster-glow: rgba(118, 215, 244, .31); }
+.roster-card:nth-child(4n+2) { --roster-glow: rgba(198, 115, 238, .30); }
+.roster-card:nth-child(4n+3) { --roster-glow: rgba(255, 186, 107, .30); }
+.roster-card:nth-child(4n) { --roster-glow: rgba(131, 223, 158, .29); }
+.roster-card:hover { transform: translateY(-5px); border-color: rgba(255, 227, 169, .53); }
+.roster-art {
+  height: 214px;
+  display: grid;
+  place-items: center;
+  padding: 15px 9px 1px;
+}
+.roster-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 13px 9px rgba(8, 5, 22, .39));
+  transition: transform .35s ease;
+}
+.roster-card:hover .roster-art img { transform: scale(1.06) translateY(-3px); }
+.roster-label {
+  position: absolute;
+  inset: auto 15px 13px;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 9px;
+}
+.roster-label h4 { margin: 0; font: 800 27px/1.1 "Baloo 2", system-ui, sans-serif; }
+.roster-label span { color: var(--gold); font-size: 10px; font-weight: 900; letter-spacing: .1em; }
+@media (min-width: 761px) and (max-width: 900px) {
+  .roster-track { grid-auto-columns: calc(33.333333% - 10px); }
 }
 .section-after {
   text-align: center;
@@ -1276,18 +1378,327 @@ h3 {
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  html {
+  html:not(.motion-opt-in) {
     scroll-behavior: auto;
   }
-  *,
-  *::before,
-  *::after {
+  html:not(.motion-opt-in) *,
+  html:not(.motion-opt-in) *::before,
+  html:not(.motion-opt-in) *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-  .motion-ready .reveal {
+  html:not(.motion-opt-in) .motion-ready .reveal {
     opacity: 1;
     transform: none;
   }
+}
+
+/* The cast is original, transparent 2D Chikimon art. Scenery alone carries the
+   perspective illusion: no model viewer, WebGL, or animated 3D creature export. */
+.hero-land {
+  background:
+    linear-gradient(110deg, rgba(10, 7, 25, .57), rgba(10, 7, 25, .08) 60%, rgba(14, 8, 33, .34)),
+    url("/site-assets/scene-chikoria.webp") center 52% / cover no-repeat,
+    url("/site-assets/hero-chikoria.webp") center 52% / cover no-repeat;
+}
+.hero .scene-layer { will-change: transform; }
+.hero-land { transform: translate3d(0, var(--back-y, 0px), 0) scale(1.09); }
+.hero-light {
+  position: absolute;
+  z-index: -2;
+  inset: -4%;
+  background: radial-gradient(ellipse 48% 60% at 62% 35%, rgba(255, 237, 154, .26), transparent 76%);
+  transform: translate3d(0, var(--mid-y, 0px), 0);
+  mix-blend-mode: screen;
+}
+.hero-near {
+  position: absolute;
+  z-index: -1;
+  inset: auto -3% -9%;
+  height: 42%;
+  background:
+    linear-gradient(to top, rgba(8, 9, 26, .55), transparent 80%),
+    url("/site-assets/scene-chikoria.webp") center bottom / 112% auto no-repeat,
+    url("/site-assets/hero-chikoria.webp") center bottom / 112% auto no-repeat;
+  -webkit-mask-image: linear-gradient(to top, #000 0%, #000 35%, transparent 100%);
+  mask-image: linear-gradient(to top, #000 0%, #000 35%, transparent 100%);
+  transform: translate3d(0, var(--front-y, 0px), 0) scale(1.04);
+  opacity: .75;
+}
+.hero-haze { z-index: 0; pointer-events: none; }
+.hero-content { z-index: 5; padding-top: clamp(130px, 15vh, 190px); padding-bottom: 36px; }
+.hero-cast {
+  z-index: 3;
+  width: min(42vw, 540px);
+  height: min(29vw, 350px);
+  right: max(3%, calc((100vw - 1380px) / 2));
+  bottom: 7%;
+  transform: translate3d(0, var(--cast-y, 0px), 0);
+  filter: drop-shadow(0 12px 10px rgba(20, 12, 31, .34));
+}
+.hero-cast::before {
+  content: "";
+  position: absolute;
+  inset: 3% 0 12%;
+  background: radial-gradient(ellipse at 65% 40%, rgba(255, 204, 129, .22), transparent 65%);
+  pointer-events: none;
+}
+.hero-creature { transition: none; transform: translate3d(0, var(--sprite-y, 0px), 0); }
+.hero-creature-left { left: 0; bottom: 3%; width: 46%; height: 68%; z-index: 2; }
+.hero-creature-center { left: 27%; bottom: 0; width: 46%; height: 86%; z-index: 3; }
+.hero-creature-right { right: 0; bottom: 5%; width: 43%; height: 70%; z-index: 1; }
+.hero-creature img { filter: sepia(.08) saturate(.91) brightness(.96); }
+.hero-creature-left img { transform: scale(1.19); transform-origin: 58% 70%; }
+.hero-creature-right img { transform: scale(1.05); transform-origin: 45% 70%; }
+.hero-creature-center img { transform: scale(1.11); transform-origin: 50% 73%; }
+.hero-occlusion {
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  background:
+    url("/site-assets/scene-chikoria.webp") center 52% / cover no-repeat,
+    url("/site-assets/hero-chikoria.webp") center 52% / cover no-repeat;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 77%, #000 96%);
+  mask-image: linear-gradient(to bottom, transparent 77%, #000 96%);
+  transform: translate3d(0, var(--back-y, 0px), 0) scale(1.09);
+  pointer-events: none;
+}
+/* Each chapter is normal document content; the sticky painted stage behind it
+   transitions from Realm to Temple to Chikiseum as the visitor scrolls. */
+.journey { position: relative; isolation: isolate; background: #100b22; }
+.journey-stage {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  min-height: 600px;
+  overflow: hidden;
+  z-index: 0;
+  background: #191131;
+}
+.journey-scene {
+  position: absolute;
+  inset: -5%;
+  background-position: center;
+  background-size: cover;
+  opacity: 0;
+  transform: translate3d(0, var(--journey-y, 0px), 0) scale(1.12);
+  transition: opacity .8s ease;
+  will-change: transform, opacity;
+}
+.journey-scene-realm { background-image: url("/site-assets/scene-chikoria.webp"), url("/site-assets/hero-chikoria.webp"); opacity: 1; }
+.journey-scene-gathering { background-image: url("/site-assets/scene-gathering.webp"); }
+.journey-scene-temple { background-image: url("/site-assets/wicked-temple.webp"); }
+.journey-scene-arena { background-image: url("/site-assets/chikiseum.webp"); }
+.journey[data-scene="gathering"] .journey-scene-realm,
+.journey[data-scene="temple"] .journey-scene-realm,
+.journey[data-scene="arena"] .journey-scene-realm { opacity: 0; }
+.journey[data-scene="gathering"] .journey-scene-gathering { opacity: 1; }
+.journey[data-scene="temple"] .journey-scene-temple { opacity: 1; }
+.journey[data-scene="arena"] .journey-scene-arena { opacity: 1; }
+.journey-vignette {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(7, 5, 18, .85), rgba(9, 7, 25, .48) 56%, rgba(9, 7, 25, .20)),
+    linear-gradient(0deg, #100b22 0%, transparent 25%, transparent 77%, rgba(11, 8, 27, .42));
+}
+.journey-perspective {
+  position: absolute;
+  inset: 55% -18% -40%;
+  background: radial-gradient(ellipse at 50% 100%, rgba(91, 51, 144, .32), transparent 65%);
+  transform: perspective(450px) rotateX(52deg) translate3d(0, var(--journey-near-y, 0px), 0);
+  pointer-events: none;
+}
+.journey-beats { position: relative; z-index: 2; margin-top: -100svh; }
+.journey-beat {
+  min-height: 100svh;
+  min-height: max(600px, 100svh);
+  display: flex;
+  align-items: center;
+  padding: 100px max(32px, calc((100vw - var(--wrap)) / 2));
+}
+.journey-copy { max-width: 690px; text-shadow: 0 4px 26px rgba(4, 3, 13, .72); }
+.journey-copy h2 {
+  margin: 20px 0 18px;
+  font-size: clamp(52px, 6.4vw, 96px);
+  line-height: 1.01;
+  letter-spacing: -.035em;
+  text-wrap: balance;
+}
+.journey-copy > p:not(.kicker) {
+  max-width: 500px;
+  font-size: clamp(17px, 1.6vw, 21px);
+  color: #fff4f1;
+  line-height: 1.57;
+}
+.journey-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 13px;
+  margin-top: 27px;
+  color: #ffe399;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+.journey-step span { font-size: 21px; }
+.journey-watch-link { padding-bottom: 6px; border-bottom: 1px solid currentColor; }
+.journey-progress {
+  position: absolute;
+  right: max(24px, calc((100vw - 1320px) / 2));
+  top: 50%;
+  width: 3px;
+  height: 140px;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, .25);
+  border-radius: 3px;
+}
+.journey-progress span {
+  display: block;
+  width: 100%;
+  height: var(--journey-progress, 0%);
+  border-radius: inherit;
+  background: #ffdb77;
+  box-shadow: 0 0 10px #ffdb77;
+}
+
+.gameplay-section {
+  position: relative;
+  background:
+    radial-gradient(ellipse 60% 32% at 50% 0, rgba(99, 66, 170, .38), transparent),
+    linear-gradient(180deg, #100b22, #1a1231 60%, #1a1231);
+}
+.gameplay-section .section-heading { max-width: 830px; }
+.gameplay-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+.gameplay-card { min-width: 0; }
+.gameplay-card-wide { grid-column: 1 / -1; }
+.gameplay-media {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+  border-radius: 18px;
+  background: #090817;
+  box-shadow: 0 25px 50px rgba(3, 1, 15, .32), 0 0 0 1px rgba(255, 217, 137, .22);
+}
+.gameplay-media > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.gameplay-media > img { transition: transform .6s ease, filter .4s ease; }
+.gameplay-card:hover .gameplay-media > img { transform: scale(1.035); filter: saturate(1.12); }
+.gameplay-slot-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: clamp(17px, 3vw, 35px);
+  background: linear-gradient(180deg, rgba(8, 6, 24, .37), transparent 35%, transparent 52%, rgba(8, 6, 24, .68));
+  color: #fff9eb;
+  pointer-events: none;
+}
+.gameplay-slot-label {
+  border: 1px solid rgba(255, 228, 164, .7);
+  border-radius: 4px;
+  padding: 6px 12px;
+  background: rgba(17, 10, 36, .66);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  backdrop-filter: blur(7px);
+}
+.gameplay-slot-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid rgba(255, 255, 255, .24);
+  border-radius: 100px;
+  padding: 9px 14px;
+  background: rgba(12, 8, 30, .76);
+  box-shadow: 0 8px 24px rgba(5, 3, 15, .2);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  backdrop-filter: blur(8px);
+}
+.gameplay-slot-status::before { content: ""; flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 9px var(--gold); }
+.gameplay-caption { display: flex; justify-content: space-between; gap: 28px; align-items: end; padding: 19px 4px 3px; }
+.gameplay-index { color: var(--gold); font-size: 11px; letter-spacing: .2em; font-weight: 900; }
+.gameplay-caption h3 { font-size: clamp(27px, 3vw, 42px); line-height: 1.1; margin: 6px 0 0; }
+.gameplay-caption p { max-width: 270px; margin: 0 0 4px; color: var(--muted); font-size: 14px; text-align: right; }
+.gameplay-cta { display: flex; align-items: center; justify-content: center; gap: 27px; margin-top: 50px; color: #e8dff0; font-weight: 800; }
+
+@media (max-width: 760px) {
+  .hero .scene-layer,
+  .journey-scene { will-change: auto; }
+  .hero-land { background-position: 56% center; }
+  .hero-near { display: none; }
+  .hero-occlusion {
+    background-position: 56% center;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 91%, #000 100%);
+    mask-image: linear-gradient(to bottom, transparent 91%, #000 100%);
+  }
+  .hero-near { background-size: auto 145%; background-position: 56% bottom; }
+  .hero-cast { left: 50%; right: auto; transform: translate3d(-50%, var(--cast-y, 0px), 0); }
+  .hero-creature-left { display: block; width: 40%; height: 64%; left: 3%; bottom: 0; }
+  .hero-creature-right { display: block; width: 34%; height: 55%; right: 5%; bottom: 0; }
+  .hero-creature-center { width: 62%; height: 89%; left: 19%; bottom: 0; }
+  .journey-beat { padding: 100px 30px; align-items: end; }
+  .journey-copy { margin-bottom: 10vh; }
+  .journey-copy h2 { font-size: clamp(49px, 8vw, 76px); }
+  .journey-vignette { background: linear-gradient(0deg, rgba(7, 5, 18, .89), rgba(9, 7, 25, .2) 82%); }
+  .journey-progress { right: 17px; height: 98px; }
+  .gameplay-grid { gap: 30px 16px; }
+  .gameplay-caption { display: block; }
+  .gameplay-caption p { text-align: left; margin-top: 7px; }
+  .gameplay-cta { flex-direction: column; gap: 15px; text-align: center; }
+  .roster-track { grid-auto-columns: calc(33.333333% - 8px); gap: 12px; }
+  .roster-card { min-height: 260px; }
+  .roster-art { height: 190px; }
+  .roster-label h4 { font-size: 23px; }
+}
+@media (max-width: 580px) {
+  .hero { min-height: max(700px, 100svh); }
+  .hero-cast { width: 300px; max-width: 94vw; height: 175px; bottom: 1%; }
+  .hero-content { padding-top: clamp(95px, 14vh, 125px); padding-bottom: 175px; }
+  .hero-note { display: none; }
+  .hero h1 { font-size: clamp(42px, 11.4vw, 60px); }
+  .hero-lead { max-width: 330px; }
+  .journey-beat { min-height: max(540px, 100svh); padding: 92px 25px 70px; }
+  .journey-copy { margin-bottom: 7vh; }
+  .journey-copy h2 { font-size: clamp(43px, 11vw, 60px); }
+  .journey-copy > p:not(.kicker) { font-size: 15px; max-width: 340px; }
+  .journey-step { margin-top: 15px; font-size: 10px; }
+  .gameplay-grid { grid-template-columns: 1fr; gap: 34px; }
+  .gameplay-card-wide { grid-column: auto; }
+  .gameplay-media { border-radius: 13px; }
+  .gameplay-slot-label { padding: 5px 9px; font-size: 9px; }
+  .gameplay-slot-status { padding: 8px 11px; font-size: 9px; letter-spacing: .08em; }
+  .gameplay-caption { padding-top: 14px; }
+  .gameplay-caption h3 { font-size: 31px; }
+  .roster-head { align-items: start; }
+  .roster-head h3 { font-size: 35px; }
+  .roster-controls { display: none; }
+  .roster-swipe-hint { display: block; margin: 2px 0 12px; }
+  /* A slim frame-edge teaser invites a swipe without cutting a creature in half. */
+  .roster-track { grid-auto-columns: calc(100vw - 66px); }
+  .roster-card { min-height: clamp(278px, 62vw, 340px); }
+  .roster-art { height: clamp(210px, 48vw, 270px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  html:not(.motion-opt-in) .hero .scene-layer,
+  html:not(.motion-opt-in) .journey-scene,
+  html:not(.motion-opt-in) .hero-cast { transform: none !important; will-change: auto; }
+  html:not(.motion-opt-in) .journey-stage { display: none; }
+  html:not(.motion-opt-in) .journey-beats { margin-top: 0; }
+  html:not(.motion-opt-in) .journey-beat { min-height: 570px; background-position: center; background-size: cover; }
+  html:not(.motion-opt-in) .journey-beat:nth-child(1) { background-image: linear-gradient(90deg, rgba(7, 5, 18, .82), rgba(7, 5, 18, .38)), url("/site-assets/scene-chikoria.webp"), url("/site-assets/hero-chikoria.webp"); }
+  html:not(.motion-opt-in) .journey-beat:nth-child(2) { background-image: linear-gradient(90deg, rgba(7, 5, 18, .82), rgba(7, 5, 18, .38)), url("/site-assets/scene-gathering.webp"); }
+  html:not(.motion-opt-in) .journey-beat:nth-child(3) { background-image: linear-gradient(90deg, rgba(7, 5, 18, .82), rgba(7, 5, 18, .38)), url("/site-assets/wicked-temple.webp"); }
+  html:not(.motion-opt-in) .journey-beat:nth-child(4) { background-image: linear-gradient(90deg, rgba(7, 5, 18, .82), rgba(7, 5, 18, .38)), url("/site-assets/chikiseum.webp"); }
+}
+@media (max-width: 760px) and (prefers-reduced-motion: reduce) {
+  html:not(.motion-opt-in) .hero-cast { transform: translateX(-50%) !important; }
 }
