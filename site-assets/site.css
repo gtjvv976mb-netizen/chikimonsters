@@ -628,7 +628,8 @@ h3 {
 .roster-track {
   display: grid;
   grid-auto-flow: column;
-  grid-auto-columns: clamp(185px, 19vw, 230px);
+  /* Four complete cards across the desktop track; no cut-off fifth portrait. */
+  grid-auto-columns: calc(25% - 11.25px);
   gap: 15px;
   overflow-x: auto;
   overscroll-behavior-inline: contain;
@@ -682,6 +683,9 @@ h3 {
 }
 .roster-label h4 { margin: 0; font: 800 27px/1.1 "Baloo 2", system-ui, sans-serif; }
 .roster-label span { color: var(--gold); font-size: 10px; font-weight: 900; letter-spacing: .1em; }
+@media (min-width: 761px) and (max-width: 900px) {
+  .roster-track { grid-auto-columns: calc(33.333333% - 10px); }
+}
 .section-after {
   text-align: center;
   color: var(--muted);
@@ -1628,7 +1632,7 @@ h3 {
   .gameplay-caption { display: block; }
   .gameplay-caption p { text-align: left; margin-top: 7px; }
   .gameplay-cta { flex-direction: column; gap: 15px; text-align: center; }
-  .roster-track { grid-auto-columns: min(39vw, 220px); gap: 12px; }
+  .roster-track { grid-auto-columns: calc(33.333333% - 8px); gap: 12px; }
   .roster-card { min-height: 260px; }
   .roster-art { height: 190px; }
   .roster-label h4 { font-size: 23px; }
