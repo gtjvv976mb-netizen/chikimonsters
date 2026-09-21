@@ -35,8 +35,8 @@
       as="image"
       fetchpriority="high"
     />
-    <link rel="stylesheet" href="/site-assets/site.css?v=world-scenes-22f9c86" />
-    <script src="/site-assets/site.js?v=world-scenes-22f9c86" defer></script>
+    <link rel="stylesheet" href="/site-assets/site.css?v=world-travel-20260922" />
+    <script src="/site-assets/site.js?v=world-travel-20260922" defer></script>
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
@@ -71,9 +71,19 @@
     </header>
 
     <main id="main" tabindex="-1">
+      <div class="world-track">
+        <div class="world-stage" aria-hidden="true">
+          <div class="journey-scene journey-scene-realm is-camera-active"><video class="scene-motion ambient-motion" data-src="/site-assets/scene-chikoria-motion.mp4" muted loop playsinline preload="none" aria-hidden="true"></video></div>
+          <div class="journey-scene journey-scene-gathering"><video class="scene-motion ambient-motion" data-src="/site-assets/scene-gathering-motion.mp4" muted loop playsinline preload="none" aria-hidden="true"></video></div>
+          <div class="journey-scene journey-scene-temple"><video class="scene-motion ambient-motion" data-src="/site-assets/scene-temple-motion.mp4" muted loop playsinline preload="none" aria-hidden="true"></video></div>
+          <div class="journey-scene journey-scene-arena"><video class="scene-motion ambient-motion" data-src="/site-assets/scene-arena-motion.mp4" muted loop playsinline preload="none" aria-hidden="true"></video></div>
+          <video class="world-travel" muted playsinline preload="none" aria-hidden="true"></video>
+          <div class="journey-vignette"></div>
+          <div class="world-threshold"></div>
+          <div class="journey-progress"><span></span></div>
+        </div>
       <section class="hero" aria-labelledby="hero-title">
         <div class="hero-land scene-layer scene-layer-back" aria-hidden="true"></div>
-        <video class="hero-motion ambient-motion" data-src="/site-assets/scene-chikoria-motion.mp4" muted loop playsinline preload="none" aria-hidden="true"></video>
         <div class="hero-light scene-layer scene-layer-mid" aria-hidden="true"></div>
         <div class="hero-haze" aria-hidden="true"></div>
         <div class="hero-content section-wrap">
@@ -108,15 +118,6 @@
       </section>
 
       <section class="journey" id="journey" aria-label="Journey through Chikoria">
-        <div class="journey-stage" aria-hidden="true">
-          <div class="journey-scene journey-scene-realm"><video class="scene-motion ambient-motion" data-src="/site-assets/scene-chikoria-motion.mp4" muted loop playsinline preload="none" aria-hidden="true"></video></div>
-          <div class="journey-scene journey-scene-gathering"><video class="scene-motion ambient-motion" data-src="/site-assets/scene-gathering-motion.mp4" muted loop playsinline preload="none" aria-hidden="true"></video></div>
-          <div class="journey-scene journey-scene-temple"><video class="scene-motion ambient-motion" data-src="/site-assets/scene-temple-motion.mp4" muted loop playsinline preload="none" aria-hidden="true"></video></div>
-          <div class="journey-scene journey-scene-arena"><video class="scene-motion ambient-motion" data-src="/site-assets/scene-arena-motion.mp4" muted loop playsinline preload="none" aria-hidden="true"></video></div>
-          <div class="journey-vignette"></div>
-          <div class="journey-perspective"></div>
-          <div class="journey-progress"><span></span></div>
-        </div>
         <div class="journey-beats">
           <div class="journey-beat" data-scene="realm">
             <div class="journey-copy">
@@ -152,6 +153,7 @@
           </div>
         </div>
       </section>
+      </div>
 
       <section class="gameplay-section section-pad" id="gameplay" aria-labelledby="gameplay-title">
         <div class="section-wrap">

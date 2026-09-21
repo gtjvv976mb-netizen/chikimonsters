@@ -1311,17 +1311,30 @@ h3 {
   }
 }
 
-/* Each scene is one painted image, including its Chikimons. The camera-like
-   depth comes from scaling that image, not from moving creatures separately. */
-.hero-land {
-  background:
-    linear-gradient(110deg, rgba(10, 7, 25, .64), rgba(10, 7, 25, .10) 62%, rgba(14, 8, 33, .18)),
-    url("/site-assets/scene-chikoria-cast.webp") center 52% / cover no-repeat;
+/* One painted stage persists behind the hero and all four chapter beats. */
+.world-track { position: relative; isolation: isolate; background: #100b22; }
+.world-stage {
+  position: sticky;
+  top: 0;
+  z-index: 0;
+  height: 100svh;
+  margin-bottom: -100svh;
+  overflow: hidden;
+  background: #191131;
+  perspective: 1100px;
+  perspective-origin: 50% 54%;
+  pointer-events: none;
 }
-.hero .scene-layer { will-change: transform; }
-.hero-land {
-  transform: translate3d(0, 0, 0) scale(var(--hero-scale, 1.045));
-  transform-origin: 58% 52%;
+.world-track > .hero,
+.world-track > .journey { position: relative; z-index: 1; background: transparent; }
+.world-track > .hero { isolation: isolate; }
+.hero-land { display: none; }
+.hero-light { z-index: 0; mix-blend-mode: normal; }
+.hero-haze {
+  z-index: 1;
+  background:
+    linear-gradient(90deg, rgba(12, 8, 29, .58), transparent 73%),
+    linear-gradient(180deg, rgba(12, 8, 29, .12), transparent 45%, rgba(16, 11, 34, .16));
 }
 /* Motion is a restrained accent over the scenery, never a replacement for
    its baked-in Chikimons. A hard clip protects the foreground even in browsers
@@ -1339,46 +1352,48 @@ h3 {
   transition: opacity .45s ease;
 }
 .ambient-motion.is-ready.is-active { opacity: var(--ambient-opacity, .2); }
-.hero-motion {
-  z-index: -2;
-  object-position: center 52%;
-  transform: translate3d(0, 0, 0) scale(var(--hero-scale, 1.045));
-  transform-origin: 58% 52%;
-  clip-path: inset(0 0 38% 0);
-  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 43%, transparent 65%);
-  mask-image: linear-gradient(to bottom, #000 0%, #000 43%, transparent 65%);
-  --ambient-opacity: .19;
+.world-travel {
+  position: absolute;
+  z-index: 5;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: var(--travel-opacity, 0);
+  pointer-events: none;
+}
+.world-stage::after {
+  content: "";
+  position: absolute;
+  z-index: 6;
+  inset: 0;
+  opacity: var(--travel-opacity, 0);
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(7, 5, 18, .54), rgba(7, 5, 18, .05) 68%);
 }
 .hero-light {
   position: absolute;
-  z-index: -2;
   inset: -4%;
-  background: radial-gradient(ellipse 48% 60% at 62% 35%, rgba(255, 237, 154, .26), transparent 76%);
-  mix-blend-mode: screen;
+  background: radial-gradient(ellipse 48% 60% at 62% 35%, rgba(255, 237, 154, .16), transparent 76%);
 }
-.hero-haze { z-index: 0; pointer-events: none; }
+.hero-haze { pointer-events: none; }
 .hero-content { z-index: 5; padding-top: clamp(130px, 15vh, 190px); padding-bottom: 36px; }
-/* Each chapter is normal document content; the sticky painted stage behind it
-   transitions from Realm to Temple to Chikiseum as the visitor scrolls. */
-.journey { position: relative; isolation: isolate; background: #100b22; }
-.journey-stage {
-  position: sticky;
-  top: 0;
-  height: 100svh;
-  overflow: hidden;
-  z-index: 0;
-  background: #191131;
-}
+/* The same camera properties can be set on the stage or overridden per scene. */
+.journey { isolation: isolate; }
 .journey-scene {
   position: absolute;
   inset: -2%;
+  z-index: 0;
   background-position: center;
   background-size: cover;
-  opacity: 0;
-  transform: translate3d(0, 0, 0) scale(var(--scene-scale, 1.045));
-  will-change: transform, opacity;
+  opacity: var(--scene-opacity, 0);
+  transform: translate3d(var(--camera-x, 0px), var(--camera-y, 0px), 0)
+    rotateX(var(--camera-tilt, 0deg)) scale(var(--camera-scale, 1.045));
+  backface-visibility: hidden;
 }
-.journey-scene-realm { background-image: url("/site-assets/scene-chikoria-cast.webp"); opacity: 1; transform-origin: 58% 56%; }
+.journey-scene.is-camera-active,
+.journey-scene.is-camera-next { will-change: transform, opacity; }
+.journey-scene-realm { background-image: url("/site-assets/scene-chikoria-cast.webp"); --scene-opacity: 1; transform-origin: 58% 56%; }
 .journey-scene-gathering { background-image: url("/site-assets/scene-gathering-cast.webp"); transform-origin: 54% 56%; }
 .journey-scene-temple { background-image: url("/site-assets/scene-temple-cast.webp"); transform-origin: 51% 49%; }
 .journey-scene-arena { background-image: url("/site-assets/scene-arena-cast.webp"); transform-origin: 50% 54%; }
@@ -1411,19 +1426,22 @@ h3 {
 }
 .journey-vignette {
   position: absolute;
+  z-index: 3;
   inset: 0;
   background:
-    linear-gradient(90deg, rgba(7, 5, 18, .85), rgba(9, 7, 25, .48) 56%, rgba(9, 7, 25, .20)),
-    linear-gradient(0deg, #100b22 0%, transparent 25%, transparent 77%, rgba(11, 8, 27, .42));
+    linear-gradient(90deg, rgba(7, 5, 18, .78), rgba(9, 7, 25, .4) 56%, rgba(9, 7, 25, .12)),
+    linear-gradient(0deg, rgba(16, 11, 34, .52), transparent 25%, transparent 77%, rgba(11, 8, 27, .3));
 }
-.journey-perspective {
+.world-threshold {
   position: absolute;
-  inset: 55% -18% -40%;
-  background: radial-gradient(ellipse at 50% 100%, rgba(91, 51, 144, .32), transparent 65%);
-  transform: perspective(450px) rotateX(52deg) translate3d(0, var(--journey-near-y, 0px), 0);
+  z-index: 4;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 75% 75% at 50% 52%, #23123e 0%, #110822 48%, #05030f 100%);
+  opacity: var(--threshold-opacity, var(--threshold, 0));
   pointer-events: none;
 }
-.journey-beats { position: relative; z-index: 2; margin-top: -100svh; }
+.journey-beats { position: relative; z-index: 2; }
 .journey-beat {
   min-height: 100svh;
   min-height: max(600px, 100svh);
@@ -1544,9 +1562,13 @@ h3 {
 .gameplay-cta { display: flex; align-items: center; justify-content: center; gap: 27px; margin-top: 50px; color: #e8dff0; font-weight: 800; }
 
 @media (max-width: 760px) {
-  .ambient-motion { display: none; }
+  .ambient-motion,
+  .world-travel { display: none; }
   .hero .scene-layer,
-  .journey-scene { will-change: auto; }
+  .journey-scene,
+  .journey-scene.is-camera-active,
+  .journey-scene.is-camera-next { will-change: auto; }
+  .world-stage { perspective: 850px; perspective-origin: 50% 72%; }
   .hero-land { background-position: 69% center; transform-origin: 69% 54%; }
   .journey-scene-realm { background-position: 69% center; transform-origin: 69% 56%; }
   .journey-scene-gathering { background-position: 57% center; transform-origin: 57% 55%; }
@@ -1596,11 +1618,11 @@ h3 {
 /* Static chapter cards remain meaningful without JS, or when the visitor
    requests reduced motion / data saving. Their art matches the moving stage. */
 html.scene-static .hero-land,
-html:not(.has-js) .hero-land { transform: none; will-change: auto; }
+html:not(.has-js) .hero-land { display: block; transform: none; will-change: auto; }
 html.scene-static .ambient-motion,
 html:not(.has-js) .ambient-motion { display: none; }
-html.scene-static .journey-stage,
-html:not(.has-js) .journey-stage { display: none; }
+html.scene-static .world-stage,
+html:not(.has-js) .world-stage { display: none; }
 html.scene-static .journey-beats,
 html:not(.has-js) .journey-beats { margin-top: 0; }
 html.scene-static .journey-beat,
@@ -1639,6 +1661,8 @@ html:not(.has-js) .journey-beat:nth-child(4) { background-image: linear-gradient
   .journey-scene-temple { background-image: url("/site-assets/scene-temple-mobile-cast.webp"); }
   .journey-scene-arena { background-image: url("/site-assets/scene-arena-mobile-cast.webp"); }
   .journey-scene { background-position: center 80%; transform-origin: center 72%; }
+  .journey-scene-realm,
+  .hero-land { background-position: center bottom; }
   html.scene-static .journey-beat,
   html:not(.has-js) .journey-beat { background-position: center 80%; }
   .journey-vignette { background: linear-gradient(180deg, rgba(7, 5, 18, .78), rgba(9, 7, 25, .42) 45%, transparent 74%); }
