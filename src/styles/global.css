@@ -154,7 +154,15 @@ p { text-wrap: pretty; }
 
 /* --- components ----------------------------------------------------------
    Named once here rather than as a long utility string repeated in markup,
-   so every button and card on the site is the same object. */
+   so every button and card on the site is the same object.
+
+   These live in @layer components on purpose. Unlayered, they are emitted
+   AFTER Tailwind's utilities and win on equal specificity — which is how
+   `.media { position: relative }` silently beat an `absolute` utility in the
+   markup and left the hero photograph sitting at intrinsic size in a corner.
+   In the components layer, a utility in the markup always wins. */
+@layer components {
+
 .btn {
   display: inline-flex;
   align-items: center;
@@ -209,6 +217,8 @@ p { text-wrap: pretty; }
   text-transform: uppercase;
   color: var(--c-accent);
 }
+
+}  /* end @layer components */
 
 /* Tooth states live in CSS so the script only flips one attribute. */
 .tooth {
@@ -270,10 +280,12 @@ p { text-wrap: pretty; }
 }
 [data-palette]::backdrop { background: rgb(0 0 0 / 0.1); }
 
-/* Each act sits in a readable panel over the scene rather than as bare text
-   on geometry, which stops the copy fighting whatever is behind it.
+@layer components {
+
+/* Each act sits in a readable panel over the photography rather than as bare
+   text on the image, which stops the copy fighting whatever is behind it.
    Near-opaque rather than heavily blurred: a translucent card over a busy
-   render is where these designs usually go muddy. */
+   photograph is where these designs usually go muddy. */
 .act-panel {
   position: relative;
   background: color-mix(in srgb, var(--c-bg) 94%, transparent);
@@ -296,10 +308,71 @@ p { text-wrap: pretty; }
 }
 .act-panel.is-centred > .eyebrow::before { margin-inline: auto; }
 
-/* No WebGL: the sticky canvas would be an empty gap, so collapse it and let
-   the acts flow as ordinary sections. */
-[data-scene-failed] .sticky { display: none; }
-[data-scene-failed] > div:last-child { margin-top: 0; }
+/* --- media: blur-up -------------------------------------------------------
+   Each figure carries a 20px blurred copy of itself as its background, so a
+   photograph resolves out of its own colours instead of snapping in over an
+   empty box. */
+.media {
+  position: relative;
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+}
+.media > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 700ms ease;
+}
+.media > img.is-loaded { opacity: 1; }
+
+/* --- the sticky narrative stage ------------------------------------------
+   Three photographs stacked; scroll position cross-fades between them while
+   the copy scrolls past. The slow scale on the active frame keeps a still
+   image from feeling frozen. */
+.stage-frame {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transform: scale(1.06);
+  transition: opacity 900ms ease, transform 6s linear;
+}
+.stage-frame.is-active { opacity: 1; transform: scale(1); }
+
+/* A scrim, warm rather than neutral grey, so the panel never sits on raw
+   photograph and the whole stage stays in the site's palette. */
+.stage-scrim {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to right, color-mix(in srgb, var(--c-bg) 62%, transparent), transparent 62%),
+    linear-gradient(to top, color-mix(in srgb, var(--c-bg) 46%, transparent), transparent 48%);
+}
+
+}  /* end @layer components */
+
+/* --- scroll reveal --------------------------------------------------------
+   Everything below the stage rises in once, never out again: content that
+   animates away as you scroll back up reads as broken, not lively. */
+.reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 700ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.reveal.is-in { opacity: 1; transform: none; }
+.reveal-d1 { transition-delay: 80ms; }
+.reveal-d2 { transition-delay: 160ms; }
+.reveal-d3 { transition-delay: 240ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal { opacity: 1; transform: none; transition: none; }
+  .stage-frame { transition: opacity 1ms linear; transform: none; }
+  .stage-frame.is-active { transform: none; }
+  .media > img { transition: none; opacity: 1; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

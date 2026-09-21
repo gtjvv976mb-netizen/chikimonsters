@@ -1,17 +1,13 @@
 ---
 import Base from '../layouts/Base.astro';
-import ClinicScene from '../components/ClinicScene.astro';
+import lqip from '../data/lqip.json';
 
-// Four acts, one per camera stop. Each begins as the camera arrives.
+// Three stops in the narrative, one photograph each. The stage cross-fades
+// between them as the copy scrolls past.
 const acts = [
   {
-    eyebrow: 'Walk in',
-    title: 'Everything your clinic does, in one calm place.',
-    body: 'Scroll, and you will walk through a clinic the way a patient does. Everything we make is for the people inside it — the ones on their feet all day.',
-    points: [],
-    align: 'center',
-  },
-  {
+    img: 'reception',
+    alt: 'A receptionist in mint scrubs welcoming a patient at a pale wood counter',
     eyebrow: 'The front desk',
     title: 'Nobody hunting for a folder',
     body: 'Your receptionist opens the day and it is already laid out. Who has arrived, who is waiting, who is running late.',
@@ -20,9 +16,11 @@ const acts = [
       'Every record opens in one tap, from any device at the desk',
       'The queue updates itself as people move through',
     ],
-    align: 'left',
+    side: 'left',
   },
   {
+    img: 'booking',
+    alt: 'A dentist and a patient looking at a tablet together across a small table',
     eyebrow: 'Booking',
     title: 'No more phone tag',
     body: 'Booking the next visit happens before the patient stands up, and the reminder goes out without anyone remembering to send it.',
@@ -31,9 +29,11 @@ const acts = [
       'Friendly reminders the night before, and again when a cleaning is due',
       'Consent and forms signed on the patient’s own phone',
     ],
-    align: 'right',
+    side: 'right',
   },
   {
+    img: 'operatory',
+    alt: 'A calm modern dental operatory with a teal treatment chair and overhead light',
     eyebrow: 'Chairside',
     title: 'Built for gloved hands',
     body: 'The part that matters. Big targets, no tiny menus, nothing that needs a second person typing while you work.',
@@ -42,55 +42,52 @@ const acts = [
       'Photos and X-rays land straight on the record',
       'The receipt is ready before the patient reaches the desk',
     ],
-    align: 'left',
+    side: 'left',
+  },
+];
+
+const details = [
+  {
+    img: 'charting',
+    w: 1000,
+    alt: 'Gloved hands holding a tablet chairside',
+    title: 'Charting that keeps up with you',
+    body: 'Tap a tooth, pick the surfaces, pick the finding. It reads back the way you would write it, so your notes still make sense next year.',
+  },
+  {
+    img: 'waiting',
+    w: 1000,
+    alt: 'A quiet clinic waiting area with bench seating and a plant by a window',
+    title: 'A day that runs on time',
+    body: 'See who has arrived, who is waiting, and who is in the chair. The front desk stops asking you, and you stop asking them.',
+  },
+  {
+    img: 'tray',
+    w: 1000,
+    alt: 'A stainless instrument tray with a mouth mirror and probe',
+    title: 'Paperwork that fills itself in',
+    body: 'Consent forms, certificates, clearances, prescriptions. The details you already have get filled in for you, and patients sign on their own phone.',
   },
 ];
 
 const settling = [
-  {
-    n: '01',
-    title: 'We bring your records across',
-    body: 'Another system, a spreadsheet, a shelf of index cards. You send it, we move it, and we do not charge for it.',
-  },
-  {
-    n: '02',
-    title: 'We set it up with you',
-    body: 'Your procedures, your prices, your forms, your staff logins. Sat down together, not left as homework.',
-  },
-  {
-    n: '03',
-    title: 'A person answers',
-    body: 'When something breaks, you reach someone who knows your clinic. Not a ticket number.',
-  },
+  { n: '01', title: 'We bring your records across', body: 'Another system, a spreadsheet, a shelf of index cards. You send it, we move it, and we do not charge for it.' },
+  { n: '02', title: 'We set it up with you', body: 'Your procedures, your prices, your forms, your staff logins. Sat down together, not left as homework.' },
+  { n: '03', title: 'A person answers', body: 'When something breaks, you reach someone who knows your clinic. Not a ticket number.' },
 ];
 
 const faqs = [
-  {
-    q: 'Do I need to be good with computers?',
-    a: 'No. If you can use a phone, you can use this. The parts you touch every day are the ones we worked hardest to make obvious, and we will sit with you for the first week.',
-  },
-  {
-    q: 'I already use something else. Is moving painful?',
-    a: 'It is our job, not yours. Send us whatever you have and we bring the patients, charts and balances across while you carry on working.',
-  },
-  {
-    q: 'What happens to my records if I ever leave?',
-    a: 'You take everything with you, in a format you can open without us. No exit fee. They were always yours.',
-  },
-  {
-    q: 'Does it work when the internet is down?',
-    a: 'Charting, notes and your schedule run on the device in front of you, and catch up quietly when the connection returns. Messages and card payments do need a signal, and the app is honest about which is which.',
-  },
-  {
-    q: 'Who is behind it?',
-    a: 'A small team in Baguio City. You talk to the people who build it, which is why things get fixed quickly.',
-  },
+  { q: 'Do I need to be good with computers?', a: 'No. If you can use a phone, you can use this. The parts you touch every day are the ones we worked hardest to make obvious, and we will sit with you for the first week.' },
+  { q: 'I already use something else. Is moving painful?', a: 'It is our job, not yours. Send us whatever you have and we bring the patients, charts and balances across while you carry on working.' },
+  { q: 'What happens to my records if I ever leave?', a: 'You take everything with you, in a format you can open without us. No exit fee. They were always yours.' },
+  { q: 'Does it work when the internet is down?', a: 'Charting, notes and your schedule run on the device in front of you, and catch up quietly when the connection returns. Messages and card payments do need a signal, and the app is honest about which is which.' },
+  { q: 'Who is behind it?', a: 'A small team in Baguio City. You talk to the people who build it, which is why things get fixed quickly.' },
 ];
 ---
 
 <Base
   title="Flossify — calm software for dental clinics"
-  description="Walk through a clinic as you scroll. Records, charting, booking and payments, built for the people on their feet all day."
+  description="Records, charting, booking and payments for dental clinics. Built for the people on their feet all day."
 >
   <header class="fixed top-0 right-0 left-0 z-40 border-b border-line-2 bg-bg/75 backdrop-blur-xl">
     <div class="mx-auto flex max-w-[1180px] items-center justify-between gap-4 px-5 py-3.5 sm:px-8">
@@ -103,14 +100,10 @@ const faqs = [
         </span>
         <span class="font-display text-[21px] leading-none font-bold tracking-[-0.02em]">Flossify</span>
       </a>
-
       <nav class="flex items-center gap-1.5 sm:gap-3" aria-label="Main">
-        <a href="#settling" class="hidden rounded-full px-3.5 py-2 text-[14.5px] font-medium text-ink-2 transition-colors hover:bg-bg-soft hover:text-ink sm:inline-block">
-          Getting started
-        </a>
-        <a href="#faq" class="hidden rounded-full px-3.5 py-2 text-[14.5px] font-medium text-ink-2 transition-colors hover:bg-bg-soft hover:text-ink sm:inline-block">
-          Questions
-        </a>
+        <a href="#work" class="hidden rounded-full px-3.5 py-2 text-[14.5px] font-medium text-ink-2 transition-colors hover:bg-bg-soft hover:text-ink sm:inline-block">What it does</a>
+        <a href="#settling" class="hidden rounded-full px-3.5 py-2 text-[14.5px] font-medium text-ink-2 transition-colors hover:bg-bg-soft hover:text-ink sm:inline-block">Getting started</a>
+        <a href="#faq" class="hidden rounded-full px-3.5 py-2 text-[14.5px] font-medium text-ink-2 transition-colors hover:bg-bg-soft hover:text-ink sm:inline-block">Questions</a>
         <button
           type="button"
           data-theme-toggle
@@ -126,49 +119,93 @@ const faqs = [
     </div>
   </header>
 
-  <!-- Act indicator: four screens of scroll with no chrome is disorienting. -->
-  <nav
-    data-acts
-    class="pointer-events-none fixed top-1/2 right-5 z-30 hidden -translate-y-1/2 flex-col gap-3 lg:flex"
-    aria-label="Walkthrough progress"
-  >
-    {acts.map((a, i) => (
-      <span class="flex items-center gap-2.5" data-act-dot={i}>
-        <span class="act-label text-[11px] font-semibold tracking-[0.08em] text-muted uppercase opacity-0 transition-opacity duration-300">
-          {a.eyebrow}
-        </span>
-        <span class="act-dot h-2 w-2 rounded-full bg-line transition-all duration-300"></span>
-      </span>
-    ))}
-  </nav>
-
   <main id="main">
-    <ClinicScene>
-      {acts.map((act) => (
-        <section
-          class:list={[
-            'flex h-[100svh] px-5 sm:px-8',
-            act.align === 'center' ? 'items-end pb-14 sm:pb-20' : 'items-center',
-          ]}
-        >
-          <div
-            class:list={[
-              'act-panel w-full rounded-[28px] p-7 sm:p-10',
-              act.align === 'center' && 'is-centred mx-auto max-w-[44rem] text-center',
-              act.align === 'left' && 'max-w-[35rem] lg:mr-auto lg:ml-[max(2rem,calc(50vw-35rem))]',
-              act.align === 'right' && 'max-w-[35rem] lg:mr-[max(2rem,calc(50vw-35rem))] lg:ml-auto',
-            ]}
+    <!-- HERO -->
+    <section class="relative flex min-h-[92svh] items-end overflow-hidden">
+      <figure class="media absolute inset-0" style={`background-image:url("${lqip.exterior}")`}>
+        <img
+          src="/img/exterior-1600.webp"
+          srcset="/img/exterior-960.webp 960w, /img/exterior-1600.webp 1600w"
+          sizes="100vw"
+          alt="The frontage of a small modern dental clinic on a quiet street"
+          width="1600" height="900"
+          fetchpriority="high"
+          data-fade
+        />
+      </figure>
+      <!-- Two scrims, not one. The vertical pass keeps the header legible and
+           settles the image into the page; the horizontal pass gives the copy
+           a readable ground on the left while the frontage stays visible on
+           the right. A single bottom-up gradient left the headline sitting on
+           bright glass at 2:1 contrast. -->
+      <div
+        class="absolute inset-0"
+        style="background:linear-gradient(to bottom, color-mix(in srgb, var(--c-bg) 80%, transparent), transparent 22%), linear-gradient(to top, color-mix(in srgb, var(--c-bg) 92%, transparent) 2%, transparent 38%)"
+        aria-hidden="true"
+      ></div>
+      <div
+        class="absolute inset-0"
+        style="background:linear-gradient(100deg, var(--c-bg) 4%, color-mix(in srgb, var(--c-bg) 94%, transparent) 34%, color-mix(in srgb, var(--c-bg) 55%, transparent) 54%, transparent 78%)"
+        aria-hidden="true"
+      ></div>
+
+      <div class="relative mx-auto w-full max-w-[1180px] px-5 pt-36 pb-20 sm:px-8 sm:pb-28">
+        <p class="eyebrow reveal">Dental clinic software · Baguio City</p>
+        <h1 class="reveal reveal-d1 mt-5 max-w-[17ch] font-display text-[clamp(2.75rem,7vw,4.75rem)] leading-[1.02] font-semibold tracking-[-0.035em]">
+          Everything your clinic does, in one calm place.
+        </h1>
+        <p class="reveal reveal-d2 mt-7 max-w-[52ch] text-[clamp(1.0625rem,1.6vw,1.3125rem)] leading-[1.55] text-ink-2">
+          Records, charting, booking and payments — built for the people on their feet all day,
+          not for the people buying the software.
+        </p>
+        <div class="reveal reveal-d3 mt-10 flex flex-wrap items-center gap-3.5">
+          <a href="/clinics/" class="btn btn-primary">Have a look around</a>
+          <a href="#work" class="btn btn-quiet">See what it does</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- STICKY NARRATIVE STAGE -->
+    <section id="work" data-stage class="relative scroll-mt-0">
+      <div class="sticky top-0 h-[100svh] overflow-hidden">
+        {acts.map((a, i) => (
+          <figure
+            class:list={['stage-frame media', i === 0 && 'is-active']}
+            data-stage-frame={i}
+            style={`background-image:url("${lqip[a.img]}")`}
           >
-            <p class="eyebrow">{act.eyebrow}</p>
-            <h2 class="mt-4 font-display text-[clamp(2.125rem,5vw,3.375rem)] leading-[1.04] font-semibold tracking-[-0.032em]">
-              {act.title}
-            </h2>
-            <p class="mt-5 max-w-[46ch] text-[clamp(1rem,1.4vw,1.1875rem)] leading-[1.6] text-ink-2">
-              {act.align === 'center' ? <span class="mx-auto block">{act.body}</span> : act.body}
-            </p>
-            {act.points.length > 0 && (
+            <img
+              src={`/img/${a.img}-1600.webp`}
+              srcset={`/img/${a.img}-960.webp 960w, /img/${a.img}-1600.webp 1600w`}
+              sizes="100vw"
+              alt={a.alt}
+              width="1600" height="900"
+              loading={i === 0 ? 'eager' : 'lazy'}
+              data-fade
+            />
+          </figure>
+        ))}
+        <div class="stage-scrim" aria-hidden="true"></div>
+      </div>
+
+      <div class="relative -mt-[100svh]">
+        {acts.map((a) => (
+          <div class="flex min-h-[100svh] items-center px-5 pt-32 pb-24 sm:px-8">
+            <div
+              class:list={[
+                'act-panel w-full rounded-[28px] p-7 sm:p-10',
+                a.side === 'left'
+                  ? 'max-w-[35rem] lg:mr-auto lg:ml-[max(2rem,calc(50vw-35rem))]'
+                  : 'max-w-[35rem] lg:mr-[max(2rem,calc(50vw-35rem))] lg:ml-auto',
+              ]}
+            >
+              <p class="eyebrow">{a.eyebrow}</p>
+              <h2 class="mt-4 font-display text-[clamp(2rem,4.5vw,3rem)] leading-[1.06] font-semibold tracking-[-0.032em]">
+                {a.title}
+              </h2>
+              <p class="mt-5 max-w-[46ch] text-[clamp(1rem,1.4vw,1.1875rem)] leading-[1.6] text-ink-2">{a.body}</p>
               <ul class="mt-7 flex flex-col gap-3.5">
-                {act.points.map((p) => (
+                {a.points.map((p) => (
                   <li class="flex items-start gap-3">
                     <span class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent/12 text-accent">
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -179,39 +216,63 @@ const faqs = [
                   </li>
                 ))}
               </ul>
-            )}
-            {act.align === 'center' && (
-              <p class="mt-9 flex items-center justify-center gap-2 text-[13.5px] text-muted">
-                Keep scrolling — the clinic comes to you
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <path d="M12 5v14M6 13l6 6 6-6"></path>
-                </svg>
-              </p>
-            )}
+            </div>
           </div>
-        </section>
-      ))}
-    </ClinicScene>
+        ))}
+      </div>
+    </section>
 
     <div class="mx-auto max-w-[1180px] px-5 sm:px-8">
+      <!-- DETAIL CARDS -->
+      <section class="pt-28 sm:pt-40">
+        <div class="mx-auto max-w-[48ch] text-center">
+          <p class="eyebrow reveal">What it takes off your hands</p>
+          <h2 class="reveal reveal-d1 mt-4 font-display text-[clamp(2.125rem,4.5vw,3rem)] leading-[1.08] font-semibold tracking-[-0.03em]">
+            Not a list of features
+          </h2>
+          <p class="reveal reveal-d2 mt-5 text-[17.5px] leading-[1.6] text-ink-2">
+            The things that eat your day, done for you.
+          </p>
+        </div>
+        <div class="mt-14 grid gap-6 lg:grid-cols-3">
+          {details.map((d, i) => (
+            <article class:list={['card card-lift reveal overflow-hidden', `reveal-d${i + 1}`]}>
+              <figure class="media aspect-[4/3]" style={`background-image:url("${lqip[d.img]}")`}>
+                <img
+                  src={`/img/${d.img}-1000.webp`}
+                  srcset={`/img/${d.img}-640.webp 640w, /img/${d.img}-1000.webp 1000w`}
+                  sizes="(min-width: 1024px) 33vw, 100vw"
+                  alt={d.alt}
+                  width="1000" height="750"
+                  loading="lazy"
+                  data-fade
+                />
+              </figure>
+              <div class="p-7">
+                <h3 class="font-display text-[21px] leading-snug font-semibold tracking-[-0.015em]">{d.title}</h3>
+                <p class="mt-3 text-[15.5px] leading-[1.6] text-ink-2">{d.body}</p>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
       <!-- GETTING STARTED -->
       <section id="settling" class="scroll-mt-24 pt-28 sm:pt-40">
         <div class="mx-auto max-w-[46ch] text-center">
-          <p class="eyebrow">Getting started</p>
-          <h2 class="mt-4 font-display text-[clamp(2.125rem,4.5vw,3rem)] leading-[1.08] font-semibold tracking-[-0.03em]">
+          <p class="eyebrow reveal">Getting started</p>
+          <h2 class="reveal reveal-d1 mt-4 font-display text-[clamp(2.125rem,4.5vw,3rem)] leading-[1.08] font-semibold tracking-[-0.03em]">
             Moving in is our job
           </h2>
-          <p class="mt-5 text-[17.5px] leading-[1.6] text-ink-2">
+          <p class="reveal reveal-d2 mt-5 text-[17.5px] leading-[1.6] text-ink-2">
             Changing systems is the scary part. So we do it, not you.
           </p>
         </div>
         <div class="mt-14 grid gap-5 lg:grid-cols-3">
-          {settling.map((s) => (
-            <div class="card card-lift p-8">
+          {settling.map((s, i) => (
+            <div class:list={['card card-lift reveal p-8', `reveal-d${i + 1}`]}>
               <span class="font-display text-[15px] font-bold tracking-[0.08em] text-accent">{s.n}</span>
-              <h3 class="mt-4 font-display text-[21px] leading-snug font-semibold tracking-[-0.015em]">
-                {s.title}
-              </h3>
+              <h3 class="mt-4 font-display text-[21px] leading-snug font-semibold tracking-[-0.015em]">{s.title}</h3>
               <p class="mt-3 text-[15.5px] leading-[1.6] text-ink-2">{s.body}</p>
             </div>
           ))}
@@ -221,12 +282,12 @@ const faqs = [
       <!-- FAQ -->
       <section id="faq" class="scroll-mt-24 pt-28 sm:pt-40">
         <div class="mx-auto max-w-[46ch] text-center">
-          <p class="eyebrow">Questions</p>
-          <h2 class="mt-4 font-display text-[clamp(2.125rem,4.5vw,3rem)] leading-[1.08] font-semibold tracking-[-0.03em]">
+          <p class="eyebrow reveal">Questions</p>
+          <h2 class="reveal reveal-d1 mt-4 font-display text-[clamp(2.125rem,4.5vw,3rem)] leading-[1.08] font-semibold tracking-[-0.03em]">
             Things people ask us
           </h2>
         </div>
-        <div class="mx-auto mt-12 max-w-[740px]">
+        <div class="reveal mx-auto mt-12 max-w-[740px]">
           {faqs.map((f, i) => (
             <details class="group py-1">
               {i > 0 && <hr class="rule" />}
@@ -246,7 +307,7 @@ const faqs = [
 
       <!-- CTA -->
       <section class="pt-28 sm:pt-40">
-        <div class="relative overflow-hidden rounded-[32px] bg-invert-bg px-8 py-20 text-center text-invert-ink sm:px-14">
+        <div class="reveal relative overflow-hidden rounded-[32px] bg-invert-bg px-8 py-20 text-center text-invert-ink sm:px-14">
           <span
             class="pointer-events-none absolute -top-24 left-1/2 h-64 w-[38rem] -translate-x-1/2 rounded-full bg-accent/12 blur-3xl"
             aria-hidden="true"
@@ -261,10 +322,7 @@ const faqs = [
             </p>
             <div class="mt-10 flex flex-wrap justify-center gap-3.5">
               <a href="/clinics/" class="btn btn-primary">Have a look around</a>
-              <a
-                href="#faq"
-                class="btn border-invert-ink/25 bg-invert-ink/5 text-invert-ink hover:border-accent hover:bg-accent/10 hover:text-accent"
-              >
+              <a href="#faq" class="btn border-invert-ink/25 bg-invert-ink/5 text-invert-ink hover:border-accent hover:bg-accent/10 hover:text-accent">
                 Talk to a person first
               </a>
             </div>
@@ -293,8 +351,8 @@ const faqs = [
       </div>
       <div class="flex flex-col gap-3">
         <span class="text-[11.5px] font-semibold tracking-[0.11em] text-faint uppercase">Product</span>
+        <a href="#work" class="text-[15px] text-ink-2 transition-colors hover:text-accent">What it does</a>
         <a href="#settling" class="text-[15px] text-ink-2 transition-colors hover:text-accent">Getting started</a>
-        <a href="#faq" class="text-[15px] text-ink-2 transition-colors hover:text-accent">Questions</a>
         <a href="/clinics/" class="text-[15px] text-ink-2 transition-colors hover:text-accent">Clinic sign in</a>
       </div>
       <div class="flex flex-col gap-3">
@@ -310,6 +368,8 @@ const faqs = [
 
 <script>
   const root = document.documentElement;
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
   document.querySelector('[data-theme-toggle]')?.addEventListener('click', () => {
     const dark =
       root.dataset.theme === 'dark' ||
@@ -323,28 +383,44 @@ const faqs = [
     }
   });
 
-  // Act indicator. Driven by the same scroll position as the camera, so the
-  // dot and the room always agree about which act you are in.
-  const rail = document.querySelector('[data-acts]');
-  const scene = document.querySelector('[data-scene]');
-  if (rail && scene) {
-    const dots = [...rail.querySelectorAll('[data-act-dot]')];
-    const update = () => {
-      const span = scene.offsetHeight - innerHeight;
-      const t = span > 0 ? Math.min(1, Math.max(0, -scene.getBoundingClientRect().top / span)) : 0;
-      const past = scene.getBoundingClientRect().bottom < innerHeight * 0.5;
-      rail.style.opacity = past ? '0' : '1';
-      const active = Math.min(dots.length - 1, Math.round(t * (dots.length - 1)));
-      dots.forEach((d, i) => {
-        const dot = d.querySelector('.act-dot');
-        const label = d.querySelector('.act-label');
-        const on = i === active;
-        if (dot instanceof HTMLElement) {
-          dot.style.background = on ? 'var(--c-accent)' : 'var(--c-line)';
-          dot.style.width = on ? '22px' : '8px';
+  // Blur-up. `complete` covers images the browser already had cached, which
+  // otherwise never fire load and would stay invisible.
+  document.querySelectorAll<HTMLImageElement>('img[data-fade]').forEach((img) => {
+    if (img.complete) img.classList.add('is-loaded');
+    else img.addEventListener('load', () => img.classList.add('is-loaded'), { once: true });
+  });
+
+  // Reveal on entry, once. Unobserved after firing so scrolling back up does
+  // not animate anything away.
+  const revealables = document.querySelectorAll('.reveal');
+  if (reduced || !('IntersectionObserver' in window)) {
+    revealables.forEach((el) => el.classList.add('is-in'));
+  } else {
+    const io = new IntersectionObserver(
+      (entries, obs) => {
+        for (const e of entries) {
+          if (!e.isIntersecting) continue;
+          e.target.classList.add('is-in');
+          obs.unobserve(e.target);
         }
-        if (label instanceof HTMLElement) label.style.opacity = on ? '1' : '0';
-      });
+      },
+      { rootMargin: '0px 0px -12% 0px', threshold: 0.1 }
+    );
+    revealables.forEach((el) => io.observe(el));
+  }
+
+  // The stage: scroll position picks which photograph is showing.
+  const stage = document.querySelector<HTMLElement>('[data-stage]');
+  if (stage) {
+    const frames = [...stage.querySelectorAll<HTMLElement>('[data-stage-frame]')];
+    let current = -1;
+    const update = () => {
+      const span = stage.offsetHeight - innerHeight;
+      const t = span > 0 ? Math.min(1, Math.max(0, -stage.getBoundingClientRect().top / span)) : 0;
+      const next = Math.min(frames.length - 1, Math.floor(t * frames.length));
+      if (next === current) return;
+      current = next;
+      frames.forEach((f, i) => f.classList.toggle('is-active', i === next));
     };
     addEventListener('scroll', update, { passive: true });
     addEventListener('resize', update);
