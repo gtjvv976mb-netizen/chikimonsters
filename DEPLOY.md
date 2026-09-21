@@ -127,8 +127,10 @@ Upload the whole repo. Required for serving: `index.html`, `realm/`, `link/`, `p
 `.nojekyll`, `CNAME`.
 
 `privacy/` and `support/` exist because App Store Connect requires a privacy policy URL and a
-working support URL. **Both still carry placeholder contact addresses** — replace them with a
-monitored inbox before submitting, or the pages fail review on their own.
+working support URL. They name `support@chikimonsters.com` and `privacy@chikimonsters.com`.
+**Those two mailboxes must exist and be read before submission** — a published address that
+bounces fails review and fails the player just as surely as no address at all. Forwarding to an
+inbox you already read is fine; silence is not.
 
 `link/` is where a player pairs the iOS app to their account; the app sends them to
 `chikimonsters.com/link/` by name, so it has to be live before the app ships.

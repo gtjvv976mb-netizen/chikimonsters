@@ -112,9 +112,9 @@ manifest, about 175 MB, alongside the packs already there. Nothing the website s
 | **Bundle ID** | `com.chikimonsters.Chikoria` | |
 | **SKU** | `chikoria-ios-001` | |
 | **Copyright** | `2026 Chikimonsters` | |
-| **Support URL** | `https://chikimonsters.com/support/` | written (`support/`); **replace the placeholder email with a monitored inbox** |
+| **Support URL** | `https://chikimonsters.com/support/` | written, and names `support@chikimonsters.com`. **Create that mailbox and read it before submitting** |
 | **Marketing URL** | `https://chikimonsters.com/` | |
-| **Privacy Policy URL** | `https://chikimonsters.com/privacy/` | drafted, needs legal review + a real contact address |
+| **Privacy Policy URL** | `https://chikimonsters.com/privacy/` | drafted, names `privacy@chikimonsters.com`; still needs legal review |
 
 ### Promotional text (170 chars, editable without review)
 
@@ -465,7 +465,7 @@ Nothing below can move ahead of the thing above it.
 - [ ] **Decide** what account deletion actually removes. The request/grace/cancel flow is live; the execution step is deliberately unwired (`realmLink.due()` lists what is past its grace)
 - [ ] Publish `link/` and `privacy/` (they are on the branch, not on `main`)
 - [x] Support page — `support/` is written
-- [ ] Replace the placeholder addresses in `support/` and `privacy/` with a monitored inbox
+- [ ] Create `support@chikimonsters.com` and `privacy@chikimonsters.com` (forwarding is fine) — both pages name them
 - [ ] Apple Developer Program enrolment, if not already done
 - [ ] Create the Xcode project (`ios/README.md`) and get it running on a real iPhone
 - [ ] **Open `/realm/selftest.html` inside the app** — confirms the engine can run there at all
