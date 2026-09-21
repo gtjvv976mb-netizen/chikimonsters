@@ -110,13 +110,104 @@ body {
   background: var(--c-bg);
   color: var(--c-ink);
   font-family: var(--font-body);
+  font-size: 17px;
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
+
+/* Fraunces is an optical-size variable face. Without this it renders at its
+   caption optical size at every scale, which is what makes generated pages
+   look subtly wrong at display sizes. */
+.font-display,
+h1, h2, h3 {
+  font-variation-settings: "opsz" 96, "SOFT" 0, "WONK" 0;
+  text-wrap: balance;
+}
+p { text-wrap: pretty; }
 
 :focus-visible {
   outline: 2px solid var(--c-accent);
   outline-offset: 3px;
-  border-radius: 4px;
+  border-radius: 6px;
+}
+
+/* --- elevation -----------------------------------------------------------
+   Two steps only. A shadow system with five levels reads as indecision; the
+   tint is warm rather than neutral so cards sit on the bone ground rather
+   than floating above a grey one. */
+:root {
+  --shadow-sm: 0 1px 2px rgb(22 33 30 / 0.04), 0 2px 6px -2px rgb(22 33 30 / 0.06);
+  --shadow-md: 0 2px 4px rgb(22 33 30 / 0.04), 0 14px 32px -12px rgb(22 33 30 / 0.16);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.3), 0 2px 6px -2px rgb(0 0 0 / 0.4);
+    --shadow-md: 0 2px 4px rgb(0 0 0 / 0.3), 0 14px 32px -12px rgb(0 0 0 / 0.6);
+  }
+}
+:root[data-theme="dark"] {
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.3), 0 2px 6px -2px rgb(0 0 0 / 0.4);
+  --shadow-md: 0 2px 4px rgb(0 0 0 / 0.3), 0 14px 32px -12px rgb(0 0 0 / 0.6);
+}
+
+/* --- components ----------------------------------------------------------
+   Named once here rather than as a long utility string repeated in markup,
+   so every button and card on the site is the same object. */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 999px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  padding: 0.9rem 1.75rem;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease,
+    transform 160ms ease, box-shadow 160ms ease;
+}
+.btn:active { transform: translateY(1px); }
+
+.btn-primary {
+  background: var(--c-accent);
+  color: var(--c-surface);
+  box-shadow: var(--shadow-sm);
+}
+.btn-primary:hover { background: var(--c-accent-deep); box-shadow: var(--shadow-md); }
+
+.btn-quiet {
+  background: transparent;
+  color: var(--c-ink);
+  border-color: var(--c-line);
+}
+.btn-quiet:hover { border-color: var(--c-accent); color: var(--c-accent); }
+
+.card {
+  background: var(--c-surface);
+  border: 1px solid var(--c-line);
+  border-radius: 22px;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 200ms ease, border-color 200ms ease, transform 200ms ease;
+}
+.card-lift:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+
+/* A hairline that fades at both ends — a full-width rule looks like a default,
+   this looks drawn. */
+.rule {
+  height: 1px;
+  border: 0;
+  background: linear-gradient(90deg, transparent, var(--c-line) 15%, var(--c-line) 85%, transparent);
+}
+
+.eyebrow {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--c-accent);
 }
 
 /* Tooth states live in CSS so the script only flips one attribute. */
@@ -180,13 +271,30 @@ body {
 [data-palette]::backdrop { background: rgb(0 0 0 / 0.1); }
 
 /* Each act sits in a readable panel over the scene rather than as bare text
-   on geometry, which stops the copy fighting whatever is behind it. */
+   on geometry, which stops the copy fighting whatever is behind it.
+   Near-opaque rather than heavily blurred: a translucent card over a busy
+   render is where these designs usually go muddy. */
 .act-panel {
-  background: color-mix(in srgb, var(--c-bg) 86%, transparent);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid var(--c-line);
+  position: relative;
+  background: color-mix(in srgb, var(--c-bg) 94%, transparent);
+  backdrop-filter: blur(20px) saturate(1.1);
+  -webkit-backdrop-filter: blur(20px) saturate(1.1);
+  border: 1px solid color-mix(in srgb, var(--c-line) 70%, transparent);
+  box-shadow: var(--shadow-md);
 }
+
+/* A short accent rule above the eyebrow — one deliberate mark that signals
+   the panel was designed rather than defaulted. */
+.act-panel > .eyebrow::before {
+  content: "";
+  display: block;
+  width: 34px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--c-accent);
+  margin-bottom: 1.25rem;
+}
+.act-panel.is-centred > .eyebrow::before { margin-inline: auto; }
 
 /* No WebGL: the sticky canvas would be an empty gap, so collapse it and let
    the acts flow as ordinary sections. */
