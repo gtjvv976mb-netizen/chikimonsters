@@ -1,6 +1,7 @@
 (() => {
   "use strict";
 
+  document.documentElement.classList.add("has-js");
   const header = document.querySelector(".site-header");
   const menu = document.querySelector(".menu-toggle");
   const links = document.getElementById("nav-links");
@@ -15,7 +16,83 @@
   const saveData = Boolean(navigator.connection && navigator.connection.saveData);
   let motionOptIn = false;
   const motionEnabled = () => !reduceMotion.matches || motionOptIn;
-  const canMoveScene = () => wideScreen.matches && motionEnabled() && !saveData && !document.hidden;
+  const canMoveScene = () => motionEnabled() && !saveData && !document.hidden;
+  const clamp = (value, low = 0, high = 1) => Math.max(low, Math.min(high, value));
+  const smoothstep = (value) => {
+    const t = clamp(value);
+    return t * t * (3 - 2 * t);
+  };
+  const scenes = Array.from(journey.querySelectorAll(".journey-scene"));
+  const firstBeat = journey.querySelector(".journey-beat");
+  const heroAmbient = hero.querySelector(".hero-motion");
+  const sceneAmbients = scenes.map((scene) => scene.querySelector(".scene-motion"));
+  const allAmbients = [heroAmbient, ...sceneAmbients];
+  const canPlayAmbient = () => wideScreen.matches && canMoveScene();
+  let activeAmbient = null;
+  let pendingAmbient = null;
+  let ambientTimer = 0;
+
+  // Sources stay in data-src until the visitor reaches that scene. A failed or
+  // blocked clip simply leaves the complete painted scene in place.
+  for (const video of allAmbients) {
+    video.addEventListener("loadeddata", () => video.classList.add("is-ready"));
+    video.addEventListener("playing", () => {
+      video.dataset.requested = "";
+      video.classList.add("is-active");
+    });
+    video.addEventListener("pause", () => video.classList.remove("is-active"));
+    video.addEventListener("error", () => {
+      video.dataset.failed = "1";
+      video.dataset.requested = "";
+      video.classList.remove("is-ready", "is-active");
+      video.pause();
+      video.removeAttribute("src");
+      if (activeAmbient === video) activeAmbient = null;
+      if (pendingAmbient === video) pendingAmbient = null;
+    });
+  }
+
+  function startAmbient(video) {
+    if (!video || !canPlayAmbient() || video.dataset.failed || video.dataset.blocked) return;
+    activeAmbient = video;
+    if (!video.hasAttribute("src")) {
+      video.src = video.dataset.src;
+      video.load();
+    }
+    if (video.paused && !video.dataset.requested) {
+      video.dataset.requested = "1";
+      video.play().catch(() => {
+        video.dataset.requested = "";
+        video.dataset.blocked = "1";
+        video.classList.remove("is-active");
+      });
+    }
+  }
+
+  function useAmbient(next) {
+    if (!canPlayAmbient()) next = null;
+    if (next && (next.dataset.failed || next.dataset.blocked)) next = null;
+    if (pendingAmbient === next) {
+      if (next && activeAmbient === next && next.paused) startAmbient(next);
+      return;
+    }
+    clearTimeout(ambientTimer);
+    pendingAmbient = next;
+    if (activeAmbient && activeAmbient !== next) {
+      activeAmbient.pause();
+      activeAmbient.classList.remove("is-active");
+      activeAmbient.dataset.requested = "";
+      activeAmbient = null;
+    }
+    // A visitor flying past a chapter never starts downloading its clip.
+    if (next) ambientTimer = setTimeout(() => {
+      if (pendingAmbient === next) startAmbient(next);
+    }, 240);
+  }
+
+  function syncSceneMode() {
+    document.documentElement.classList.toggle("scene-static", !motionEnabled() || saveData);
+  }
 
   function syncMotionToggle() {
     motionToggle.hidden = !reduceMotion.matches;
@@ -24,6 +101,7 @@
     motionToggle.querySelector(".cinematic-toggle-state").textContent = motionOptIn ? "On" : "Off";
   }
   syncMotionToggle();
+  syncSceneMode();
 
   document.getElementById("year").textContent = String(new Date().getFullYear());
 
@@ -94,8 +172,10 @@
     document.querySelectorAll(".reveal").forEach((element) => reveals.observe(element));
   }
 
-  // Four painted scene planes create a camera-like scroll journey. One passive
-  // scroll listener and one rAF update; only compositor-friendly transforms move.
+  // Each painted scene already contains its creatures. As the viewport travels
+  // through four chapters, zoom the current painting toward its focal point
+  // and reveal the next one through a scroll-linked crossfade. No separate
+  // Chikimon layer can drift away from its ground, light, or shadow.
   let scrollFrame = 0;
   function renderScroll() {
     scrollFrame = 0;
@@ -103,42 +183,59 @@
 
     const heroRect = hero.getBoundingClientRect();
     if (heroRect.bottom > 0 && heroRect.top < window.innerHeight && canMoveScene()) {
-      const travel = Math.max(0, Math.min(heroRect.height, -heroRect.top));
-      hero.style.setProperty("--back-y", `${(-travel * 0.11).toFixed(1)}px`);
-      hero.style.setProperty("--mid-y", `${(-travel * 0.20).toFixed(1)}px`);
-      hero.style.setProperty("--front-y", `${(-travel * 0.30).toFixed(1)}px`);
-      hero.style.setProperty("--cast-y", `${(-travel * 0.27).toFixed(1)}px`);
-      for (const sprite of hero.querySelectorAll(".hero-creature[data-depth]")) {
-        sprite.style.setProperty("--sprite-y", `${(travel * Number(sprite.dataset.depth) * 0.10).toFixed(1)}px`);
-      }
+      const heroProgress = clamp(-heroRect.top / Math.max(1, heroRect.height));
+      const heroZoom = 1.045 + (wideScreen.matches ? 0.27 : 0.15) * heroProgress;
+      hero.style.setProperty("--hero-scale", heroZoom.toFixed(4));
     }
 
     const journeyRect = journey.getBoundingClientRect();
-    if (journeyRect.bottom > 0 && journeyRect.top < window.innerHeight) {
+    let dominantScene = 0;
+    if (journeyRect.bottom > 0 && journeyRect.top < window.innerHeight && canMoveScene()) {
       const viewport = window.innerHeight;
       const travelled = Math.max(0, -journeyRect.top);
-      const active = Math.min(3, Math.floor((travelled + viewport * 0.5) / viewport));
-      journey.dataset.scene = ["realm", "gathering", "temple", "arena"][active];
-      if (canMoveScene()) {
-        const progress = Math.max(0, Math.min(1, travelled / Math.max(1, journeyRect.height - viewport)));
-        journey.style.setProperty("--journey-y", `${(-progress * 54).toFixed(1)}px`);
-        journey.style.setProperty("--journey-near-y", `${(progress * 42).toFixed(1)}px`);
-        journey.style.setProperty("--journey-progress", `${(progress * 100).toFixed(1)}%`);
+      const chapterHeight = Math.max(1, firstBeat.offsetHeight);
+      const position = clamp((travelled + viewport * 0.08) / chapterHeight, 0, 3.08);
+      const zoomRange = wideScreen.matches ? 0.34 : 0.18;
+      let highestOpacity = -1;
+
+      for (let index = 0; index < scenes.length; index += 1) {
+        // A shared .36-chapter window keeps both image layers complementary:
+        // a visitor can stop mid-scroll without seeing a black flash or jump.
+        const entering = index === 0 ? 1 : smoothstep((position - (index - 0.38)) / 0.36);
+        const exiting = index === scenes.length - 1 ? 1 : 1 - smoothstep((position - (index + 0.62)) / 0.36);
+        const opacity = entering * exiting;
+        if (opacity > highestOpacity) {
+          highestOpacity = opacity;
+          dominantScene = index;
+        }
+        const local = clamp(position - index + 0.08);
+        scenes[index].style.opacity = opacity.toFixed(3);
+        scenes[index].style.setProperty("--scene-scale", (1.045 + local * zoomRange).toFixed(4));
       }
+      const progress = clamp(travelled / Math.max(1, journeyRect.height - viewport));
+      journey.style.setProperty("--journey-near-y", `${(progress * (wideScreen.matches ? 42 : 18)).toFixed(1)}px`);
+      journey.style.setProperty("--journey-progress", `${(progress * 100).toFixed(1)}%`);
     }
+    const showHero = heroRect.bottom > window.innerHeight * 0.45 && heroRect.top < window.innerHeight;
+    const showJourney = journeyRect.bottom > 0 && journeyRect.top < window.innerHeight;
+    useAmbient(canPlayAmbient() && showHero ? heroAmbient : canPlayAmbient() && showJourney ? sceneAmbients[dominantScene] : null);
   }
   function scheduleScroll() {
     if (!scrollFrame) scrollFrame = requestAnimationFrame(renderScroll);
   }
   function clearSceneTransforms() {
-    for (const property of ["--back-y", "--mid-y", "--front-y", "--cast-y"]) hero.style.removeProperty(property);
-    for (const sprite of hero.querySelectorAll(".hero-creature[data-depth]")) sprite.style.removeProperty("--sprite-y");
-    for (const property of ["--journey-y", "--journey-near-y", "--journey-progress"]) journey.style.removeProperty(property);
+    hero.style.removeProperty("--hero-scale");
+    for (const scene of scenes) {
+      scene.style.removeProperty("--scene-scale");
+      scene.style.removeProperty("opacity");
+    }
+    for (const property of ["--journey-near-y", "--journey-progress"]) journey.style.removeProperty(property);
   }
   motionToggle.addEventListener("click", () => {
     motionOptIn = !motionOptIn;
     document.documentElement.classList.toggle("motion-opt-in", motionOptIn);
     syncMotionToggle();
+    syncSceneMode();
     if (!motionEnabled()) clearSceneTransforms();
     // The control is in the hero, so the stage can switch before the next paint.
     renderScroll();
@@ -150,6 +247,7 @@
     motionOptIn = false;
     document.documentElement.classList.remove("motion-opt-in");
     syncMotionToggle();
+    syncSceneMode();
     if (!motionEnabled()) clearSceneTransforms();
     scheduleScroll();
   });
@@ -192,6 +290,9 @@
   // wicked-temple, chikiseum). When verified footage is available, add a
   // poster and a click-to-play video for each matching slot; never autoplay.
   document.addEventListener("visibilitychange", () => {
-    if (document.hidden) introVideo.pause();
+    if (document.hidden) {
+      introVideo.pause();
+      useAmbient(null);
+    } else scheduleScroll();
   });
 })();

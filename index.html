@@ -19,7 +19,7 @@
     />
     <meta
       property="og:image"
-      content="https://chikimonsters.com/site-assets/hero-chikoria.webp"
+      content="https://chikimonsters.com/site-assets/scene-chikoria-cast.webp"
     />
     <title>Chiki Monsters — Enter Chikoria</title>
     <link rel="icon" href="/realm/index.icon.png" type="image/png" />
@@ -31,7 +31,7 @@
     />
     <link
       rel="preload"
-      href="/site-assets/hero-chikoria.webp"
+      href="/site-assets/scene-chikoria-cast.webp"
       as="image"
       fetchpriority="high"
     />
@@ -73,8 +73,8 @@
     <main id="main" tabindex="-1">
       <section class="hero" aria-labelledby="hero-title">
         <div class="hero-land scene-layer scene-layer-back" aria-hidden="true"></div>
+        <video class="hero-motion ambient-motion" data-src="/site-assets/scene-chikoria-motion.mp4" muted loop playsinline preload="none" aria-hidden="true"></video>
         <div class="hero-light scene-layer scene-layer-mid" aria-hidden="true"></div>
-        <div class="hero-near scene-layer scene-layer-front" aria-hidden="true"></div>
         <div class="hero-haze" aria-hidden="true"></div>
         <div class="hero-content section-wrap">
           <p class="eyebrow">
@@ -102,36 +102,6 @@
           </button>
           <p class="hero-note">Your adventure begins in the Chikoria Realm.</p>
         </div>
-        <div class="hero-cast" aria-label="2D portraits of Dragonos, Firix, and Galador">
-          <div class="hero-creature hero-creature-left" data-depth="0.36">
-            <img
-              src="/site-assets/dex-dragonos.webp"
-              width="540"
-              height="540"
-              alt="Dragonos illustrated Chikimon portrait"
-              decoding="async"
-            />
-          </div>
-          <div class="hero-creature hero-creature-center" data-depth="0.62">
-            <img
-              src="/site-assets/dex-firix.webp"
-              width="540"
-              height="540"
-              alt="Firix illustrated Chikimon portrait"
-              decoding="async"
-            />
-          </div>
-          <div class="hero-creature hero-creature-right" data-depth="0.45">
-            <img
-              src="/site-assets/dex-galador.webp"
-              width="540"
-              height="540"
-              alt="Galador illustrated Chikimon portrait"
-              decoding="async"
-            />
-          </div>
-        </div>
-        <div class="hero-occlusion scene-layer" aria-hidden="true"></div>
         <a class="scroll-cue" href="#journey"
           >Explore the world <span aria-hidden="true">↓</span></a
         >
@@ -139,10 +109,10 @@
 
       <section class="journey" id="journey" aria-label="Journey through Chikoria">
         <div class="journey-stage" aria-hidden="true">
-          <div class="journey-scene journey-scene-realm"></div>
-          <div class="journey-scene journey-scene-gathering"></div>
-          <div class="journey-scene journey-scene-temple"></div>
-          <div class="journey-scene journey-scene-arena"></div>
+          <div class="journey-scene journey-scene-realm"><video class="scene-motion ambient-motion" data-src="/site-assets/scene-chikoria-motion.mp4" muted loop playsinline preload="none" aria-hidden="true"></video></div>
+          <div class="journey-scene journey-scene-gathering"><video class="scene-motion ambient-motion" data-src="/site-assets/scene-gathering-motion.mp4" muted loop playsinline preload="none" aria-hidden="true"></video></div>
+          <div class="journey-scene journey-scene-temple"><video class="scene-motion ambient-motion" data-src="/site-assets/scene-temple-motion.mp4" muted loop playsinline preload="none" aria-hidden="true"></video></div>
+          <div class="journey-scene journey-scene-arena"><video class="scene-motion ambient-motion" data-src="/site-assets/scene-arena-motion.mp4" muted loop playsinline preload="none" aria-hidden="true"></video></div>
           <div class="journey-vignette"></div>
           <div class="journey-perspective"></div>
           <div class="journey-progress"><span></span></div>
@@ -196,28 +166,28 @@
           <div class="gameplay-grid">
             <article class="gameplay-card gameplay-card-wide reveal" data-video-slot="exploration">
               <div class="gameplay-media">
-                <img src="/site-assets/scene-chikoria.webp" width="1344" height="752" alt="Illustrated Chikoria landscape preview" loading="lazy" decoding="async" />
+                <img src="/site-assets/scene-chikoria-cast.webp" width="1672" height="941" alt="Illustrated Chikoria landscape with Chikimons in the scenery" loading="lazy" decoding="async" />
                 <div class="gameplay-slot-overlay"><span class="gameplay-slot-label">World exploration</span><span class="gameplay-slot-status">Gameplay clip coming soon</span></div>
               </div>
               <div class="gameplay-caption"><div><span class="gameplay-index">01 / EXPLORE</span><h3>Wander into wonder</h3></div><p>Follow your curiosity through Chikoria.</p></div>
             </article>
             <article class="gameplay-card reveal" data-video-slot="gathering">
               <div class="gameplay-media">
-                <img src="/site-assets/scene-gathering.webp" width="1344" height="752" alt="Illustrated Chikoria gathering scene" loading="lazy" decoding="async" />
+                <img src="/site-assets/scene-gathering-cast.webp" width="1344" height="752" alt="Illustrated Chikimons beside Chikoria's gathering river" loading="lazy" decoding="async" />
                 <div class="gameplay-slot-overlay"><span class="gameplay-slot-label">Gather and discover</span><span class="gameplay-slot-status">Gameplay clip coming soon</span></div>
               </div>
               <div class="gameplay-caption"><div><span class="gameplay-index">02 / GATHER</span><h3>Find your next surprise</h3></div><p>There's more to discover between battles.</p></div>
             </article>
             <article class="gameplay-card reveal" data-video-slot="wicked-temple">
               <div class="gameplay-media">
-                <img src="/site-assets/wicked-temple.webp" width="1344" height="752" alt="Illustrated Wicked Temple scene" loading="lazy" decoding="async" />
+                <img src="/site-assets/scene-temple-cast.webp" width="1344" height="752" alt="Illustrated Chikimons at the Wicked Temple" loading="lazy" decoding="async" />
                 <div class="gameplay-slot-overlay"><span class="gameplay-slot-label">Wicked Temple</span><span class="gameplay-slot-status">Gameplay clip coming soon</span></div>
               </div>
               <div class="gameplay-caption"><div><span class="gameplay-index">03 / BATTLE</span><h3>Break the corruption</h3></div><p>Move, dodge, and play your ability cards.</p></div>
             </article>
             <article class="gameplay-card gameplay-card-wide reveal" data-video-slot="chikiseum">
               <div class="gameplay-media">
-                <img src="/site-assets/chikiseum.webp" width="1672" height="941" alt="Illustrated Chikiseum arena scene" loading="lazy" decoding="async" />
+                <img src="/site-assets/scene-arena-cast.webp" width="1599" height="900" alt="Illustrated Chikimons in the Chikiseum arena" loading="lazy" decoding="async" />
                 <div class="gameplay-slot-overlay"><span class="gameplay-slot-label">The Chikiseum</span><span class="gameplay-slot-status">Gameplay clip coming soon</span></div>
               </div>
               <div class="gameplay-caption"><div><span class="gameplay-index">04 / COMPETE</span><h3>Own the arena</h3></div><p>Every second and every card matters.</p></div>
@@ -362,10 +332,10 @@
             <article class="adventure-card adventure-temple reveal">
               <img
                 class="adventure-art"
-                src="/site-assets/wicked-temple.webp"
-                width="920"
-                height="780"
-                alt="The Wicked Temple, a dark stone battleground"
+                src="/site-assets/scene-temple-cast.webp"
+                width="1344"
+                height="752"
+                alt="Chikimons outside the Wicked Temple gate"
                 loading="lazy"
                 decoding="async"
               />
@@ -388,10 +358,10 @@
             <article class="adventure-card adventure-arena reveal">
               <img
                 class="adventure-art"
-                src="/site-assets/chikiseum.webp"
-                width="920"
-                height="780"
-                alt="The Chikiseum, a stone arena lit by blue and violet crystals"
+                src="/site-assets/scene-arena-cast.webp"
+                width="1599"
+                height="900"
+                alt="Chikimons facing off in the crystal-lit Chikiseum"
                 loading="lazy"
                 decoding="async"
               />
@@ -534,7 +504,7 @@
         controls
         playsinline
         preload="none"
-        poster="/site-assets/hero-chikoria.webp"
+        poster="/site-assets/scene-chikoria-cast.webp"
         aria-label="Chiki Monsters introduction"
       ></video>
       <p>
