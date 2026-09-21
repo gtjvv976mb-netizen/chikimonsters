@@ -1,0 +1,154 @@
+@import "tailwindcss";
+
+/* Design direction A — warm editorial.
+   Semantic names map to CSS variables so dark mode is a variable swap,
+   not a second set of utility classes scattered through the markup. */
+@theme inline {
+  --color-bg: var(--c-bg);
+  --color-bg-soft: var(--c-bg-soft);
+  --color-surface: var(--c-surface);
+  --color-ink: var(--c-ink);
+  --color-ink-2: var(--c-ink-2);
+  --color-muted: var(--c-muted);
+  --color-faint: var(--c-faint);
+  --color-line: var(--c-line);
+  --color-line-2: var(--c-line-2);
+  --color-accent: var(--c-accent);
+  --color-accent-deep: var(--c-accent-deep);
+  --color-caries: var(--c-caries);
+  --color-crown: var(--c-crown);
+  --color-invert-bg: var(--c-invert-bg);
+  --color-invert-ink: var(--c-invert-ink);
+  --color-invert-ink-2: var(--c-invert-ink-2);
+  --color-invert-line: var(--c-invert-line);
+
+  --font-display: "Fraunces", Georgia, "Times New Roman", serif;
+  --font-body: "Public Sans", system-ui, -apple-system, sans-serif;
+}
+
+:root {
+  --c-bg: #f7f5f2;
+  --c-bg-soft: #fbfaf7;
+  --c-surface: #ffffff;
+  --c-ink: #16211e;
+  --c-ink-2: #4a5551;
+  --c-muted: #8a8377;
+  --c-faint: #b4ac9d;
+  --c-line: #e4ded2;
+  --c-line-2: #ede7db;
+  --c-accent: #0b6557;
+  --c-accent-deep: #08463c;
+  --c-caries: #c2410c;
+  --c-crown: #a16207;
+  --c-invert-bg: #16211e;
+  --c-invert-ink: #f7f5f2;
+  --c-invert-ink-2: #bfc7c2;
+  --c-invert-line: #55625c;
+
+  --c-tooth-sound: #ffffff;
+  --c-tooth-line: #cfc7b8;
+  --c-tooth-missing: #e8e3da;
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --c-bg: #0c1110;
+    --c-bg-soft: #0f1715;
+    --c-surface: #141c1a;
+    --c-ink: #e9f0eb;
+    --c-ink-2: #c6d6cc;
+    --c-muted: #9db3a7;
+    --c-faint: #7e948a;
+    --c-line: #27352e;
+    --c-line-2: #1e2a25;
+    --c-accent: #6ee7a8;
+    --c-accent-deep: #a6f2cb;
+    --c-caries: #f97316;
+    --c-crown: #fbbf24;
+    --c-invert-bg: #141c1a;
+    --c-invert-ink: #e9f0eb;
+    --c-invert-ink-2: #9db3a7;
+    --c-invert-line: #3a4b42;
+
+    --c-tooth-sound: #1b2623;
+    --c-tooth-line: #3a4b42;
+    --c-tooth-missing: #121a18;
+
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --c-bg: #0c1110;
+  --c-bg-soft: #0f1715;
+  --c-surface: #141c1a;
+  --c-ink: #e9f0eb;
+  --c-ink-2: #c6d6cc;
+  --c-muted: #9db3a7;
+  --c-faint: #7e948a;
+  --c-line: #27352e;
+  --c-line-2: #1e2a25;
+  --c-accent: #6ee7a8;
+  --c-accent-deep: #a6f2cb;
+  --c-caries: #f97316;
+  --c-crown: #fbbf24;
+  --c-invert-bg: #141c1a;
+  --c-invert-ink: #e9f0eb;
+  --c-invert-ink-2: #9db3a7;
+  --c-invert-line: #3a4b42;
+
+  --c-tooth-sound: #1b2623;
+  --c-tooth-line: #3a4b42;
+  --c-tooth-missing: #121a18;
+
+  color-scheme: dark;
+}
+
+body {
+  background: var(--c-bg);
+  color: var(--c-ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--c-accent);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* Tooth states live in CSS so the script only flips one attribute. */
+.tooth {
+  width: 44px;
+  height: 58px;
+  padding: 0;
+  display: block;
+  cursor: pointer;
+  border: 2px solid var(--c-tooth-line);
+  background: var(--c-tooth-sound);
+  border-radius: 9px 9px 17px 17px;
+  transition: background 120ms ease, border-color 120ms ease, transform 120ms ease;
+}
+.tooth--lower { border-radius: 17px 17px 9px 9px; }
+.tooth:hover { transform: translateY(-2px); }
+.tooth[data-state="caries"]  { background: var(--c-caries); border-color: var(--c-caries); }
+.tooth[data-state="filled"]  { background: var(--c-accent); border-color: var(--c-accent); }
+.tooth[data-state="crown"]   { background: var(--c-crown);  border-color: var(--c-crown); }
+.tooth[data-state="missing"] { background: var(--c-tooth-missing); border-color: var(--c-tooth-line); opacity: 0.6; }
+
+.swatch { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; border: 1px solid var(--c-tooth-line); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .tooth:hover { transform: none; }
+}
+
+@media (max-width: 900px) {
+  .tooth { width: 34px; height: 46px; }
+}

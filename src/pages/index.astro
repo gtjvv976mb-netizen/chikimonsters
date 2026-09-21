@@ -1,0 +1,373 @@
+---
+import Base from '../layouts/Base.astro';
+import Odontogram from '../components/Odontogram.astro';
+
+const steps = [
+  { no: '01', title: 'Add your clinic', body: 'Name, address, branches, and the staff who need a login. Two minutes.' },
+  { no: '02', title: 'Bring your patients', body: 'Upload a spreadsheet or your old system export. We map the columns with you.' },
+  { no: '03', title: 'Chart someone', body: 'The odontogram you just used, on a real record, with images and notes attached.' },
+  { no: '04', title: 'Issue an invoice', body: 'Numbered, BIR-shaped, printable, and already in your finance view.' },
+];
+
+const pillars = [
+  {
+    title: 'BIR-ready from day one',
+    body: 'Sequential numbering, the fields the Bureau expects, and an export your accountant will not send back. Built around the EOPT Act invoicing rules rather than bolted on afterwards.',
+  },
+  {
+    title: 'HMO claims that track themselves',
+    body: 'Maxicare, Intellicare, Medicard and the rest. Attach the LOA, see what is filed, what is approved, and what is still sitting unpaid after ninety days.',
+  },
+  {
+    title: 'Keeps working in a brownout',
+    body: 'Charting, notes, appointments and the queue run on the device. When power and signal return, everything syncs. A clinic should not stop because the internet did.',
+  },
+];
+
+const basics = [
+  'Patient records',
+  'Dental charting',
+  'Prescriptions',
+  'Custom forms',
+  'Queue and agenda',
+  'Reminders and recall',
+  'Finance dashboard',
+  'Multi-branch',
+];
+
+// Competitor column reflects molarsoft.com as published in September 2026.
+// Re-verify every row before this page goes live and date the claim below.
+const comparison = [
+  { cap: 'See the product before talking to sales', us: 'On this page', them: 'Demo required' },
+  { cap: 'Self-serve sign up', us: 'Yes', them: 'Message on Facebook' },
+  { cap: 'Free trial', us: '[YOUR TRIAL]', them: 'None published' },
+  { cap: 'Published price', us: 'Yes', them: 'Yes' },
+  { cap: 'Storage for imaging', us: '[YOUR STORAGE]', them: '10 GB' },
+  { cap: 'Works offline', us: 'Yes', them: 'Browser only' },
+  { cap: 'Dark mode', us: 'Yes', them: 'No' },
+  { cap: 'FDI, Universal and Palmer notation', us: 'All three', them: 'Not published' },
+  { cap: 'BIR-ready invoicing', us: 'Yes', them: 'Not published' },
+  { cap: 'HMO claim tracking', us: 'Yes', them: 'Not published' },
+];
+
+const includes = [
+  'Unlimited patients',
+  'Unlimited staff logins',
+  'Offline mode',
+  'BIR invoicing',
+  'HMO claim tracking',
+  'Free migration',
+];
+
+const faqs = [
+  {
+    q: 'Is my patient data safe under the Data Privacy Act?',
+    a: '[YOUR COMPLIANCE STATEMENT]. Write this one yourself once your DPO is registered with the National Privacy Commission, and link the registration. Do not claim compliance before it is true.',
+  },
+  {
+    q: 'What happens to my records if I stop paying?',
+    a: 'You export everything, in a format you can open without us: patients, charts, images and balances. We do not hold records hostage, and there is no fee to leave.',
+  },
+  {
+    q: 'Does it really work without internet?',
+    a: 'Charting, notes, appointments and the queue run from the device. When the connection returns, everything syncs. Payments and SMS need a connection, and the app tells you which is which.',
+  },
+  {
+    q: 'How much storage do I get for X-rays?',
+    a: '[YOUR STORAGE POLICY]. A panoramic runs 5 to 20 MB, so a hard 10 GB cap fills in months for a clinic that images. Decide whether you cap it, meter it, or absorb it, and say so plainly here.',
+  },
+  {
+    q: 'Who is behind this?',
+    a: 'Flossify is built by Brylliant Labs, a two-founder software studio in Baguio City. You talk to the people who write the code.',
+  },
+];
+
+const nav = [
+  { href: '#features', label: 'Features' },
+  { href: '#compare', label: 'Compare' },
+  { href: '#pricing', label: 'Pricing' },
+  { href: '#faq', label: 'FAQ' },
+];
+---
+
+<Base
+  title="Flossify — dental practice software you can try right now"
+  description="Dental practice software for clinics. Chart a patient on the homepage before you talk to anyone. BIR-ready invoicing, HMO claim tracking, and it keeps working in a brownout."
+>
+  <header class="sticky top-0 z-40 border-b border-line-2 bg-bg/85 backdrop-blur">
+    <div class="mx-auto flex max-w-[1280px] items-center justify-between gap-4 px-5 py-4 sm:px-8">
+      <a href="/" class="flex items-center gap-2.5" aria-label="Flossify, home">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" class="text-accent" aria-hidden="true">
+          <path d="M5.5 4.5c0 6.5 13 4 13 10.5 0 3.2-2.8 5-6 4.5"></path>
+          <circle cx="5.5" cy="4.5" r="1.7" fill="currentColor" stroke="none"></circle>
+          <circle cx="12.5" cy="19.5" r="1.7" fill="currentColor" stroke="none"></circle>
+        </svg>
+        <span class="font-display text-[23px] font-bold tracking-tight">Flossify</span>
+      </a>
+
+      <nav class="flex items-center gap-5 sm:gap-7" aria-label="Main">
+        {nav.map((n) => (
+          <a href={n.href} class="hidden text-sm font-medium text-ink-2 hover:text-accent sm:inline">
+            {n.label}
+          </a>
+        ))}
+        <button
+          type="button"
+          data-theme-toggle
+          class="cursor-pointer rounded-full border border-line p-2 text-ink-2 hover:border-accent hover:text-accent"
+          aria-label="Switch between light and dark theme"
+        >
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+            <path d="M20.5 14.5A8.5 8.5 0 1 1 9.5 3.5a6.8 6.8 0 0 0 11 11Z"></path>
+          </svg>
+        </button>
+        <a href="#pricing" class="rounded-full bg-ink px-5 py-2.5 text-sm font-semibold text-bg hover:bg-accent">
+          Start free
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main" class="mx-auto max-w-[1280px] px-5 sm:px-8">
+    <!-- HERO -->
+    <section class="pt-14 sm:pt-20">
+      <div class="flex flex-col items-start justify-between gap-8 lg:flex-row lg:items-end">
+        <h1 class="max-w-[660px] font-display text-[clamp(2.5rem,6vw,3.875rem)] leading-[1.02] font-semibold tracking-[-0.025em]">
+          Try the chart before you talk to sales.
+        </h1>
+        <p class="max-w-[380px] text-[17px] leading-relaxed text-ink-2">
+          Every dental system makes you book a demo first. This one lets you click a tooth. Right here, right now.
+        </p>
+      </div>
+
+      <ul class="mt-8 flex flex-wrap gap-2.5">
+        {['BIR-ready invoices', 'HMO claim tracking', 'Works through a brownout'].map((p) => (
+          <li class="rounded-full border border-line bg-surface px-4 py-2 text-[13px] font-medium text-ink-2">{p}</li>
+        ))}
+      </ul>
+
+      <div class="mt-7">
+        <Odontogram />
+      </div>
+
+      <div class="mt-7 flex flex-wrap items-center gap-4">
+        <a href="#pricing" class="rounded-full bg-accent px-7 py-4 text-[15px] font-semibold text-surface hover:bg-accent-deep">
+          Start free
+        </a>
+        <a href="#pricing" class="rounded-full border border-line px-7 py-4 text-[15px] font-semibold text-ink hover:border-accent hover:text-accent">
+          See pricing
+        </a>
+        <span class="text-sm text-muted">No card. No demo call. No Facebook message.</span>
+      </div>
+    </section>
+
+    <!-- FIRST TEN MINUTES -->
+    <section class="pt-24 sm:pt-32">
+      <h2 class="font-display text-[clamp(1.75rem,3.5vw,2.5rem)] font-semibold tracking-tight">
+        What the first ten minutes look like.
+      </h2>
+      <div class="mt-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {steps.map((s) => (
+          <div class="rounded-2xl border border-line bg-surface p-6">
+            <span class="text-xs font-semibold tracking-[0.1em] text-accent">{s.no}</span>
+            <h3 class="mt-2.5 font-display text-[21px] font-semibold">{s.title}</h3>
+            <p class="mt-2 text-[14.5px] leading-relaxed text-ink-2">{s.body}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <!-- FEATURES -->
+    <section id="features" class="scroll-mt-24 pt-24 sm:pt-32">
+      <h2 class="max-w-[780px] font-display text-[clamp(2rem,4.5vw,2.875rem)] leading-tight font-semibold tracking-[-0.025em]">
+        The three things nobody else has built for this market.
+      </h2>
+      <p class="mt-3.5 max-w-[620px] text-[17px] leading-relaxed text-ink-2">
+        Charting and scheduling are table stakes. These are the parts of running a clinic that no dental software currently touches.
+      </p>
+
+      <div class="mt-9 grid gap-5 lg:grid-cols-3">
+        {pillars.map((p) => (
+          <div class="rounded-3xl border border-line bg-surface p-8">
+            <h3 class="font-display text-[26px] font-semibold tracking-tight">{p.title}</h3>
+            <p class="mt-3 text-[15.5px] leading-relaxed text-ink-2">{p.body}</p>
+          </div>
+        ))}
+      </div>
+
+      <p class="mt-9 text-xs font-semibold tracking-[0.1em] text-muted uppercase">
+        And everything you would expect
+      </p>
+      <ul class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {basics.map((b) => (
+          <li class="rounded-xl border border-line bg-bg-soft px-4.5 py-4 text-[15px] font-medium">{b}</li>
+        ))}
+      </ul>
+    </section>
+
+    <!-- COMPARE -->
+    <section id="compare" class="scroll-mt-24 pt-24 sm:pt-32">
+      <h2 class="font-display text-[clamp(2rem,4.5vw,2.875rem)] font-semibold tracking-[-0.025em]">Side by side.</h2>
+
+      <div class="mt-7 overflow-x-auto rounded-3xl border border-line bg-surface">
+        <table class="w-full min-w-[640px] border-collapse text-left">
+          <caption class="sr-only">Flossify compared with Molarsoft</caption>
+          <thead>
+            <tr class="border-b border-line bg-bg-soft">
+              <th scope="col" class="px-6 py-4 text-xs font-semibold tracking-[0.1em] text-muted uppercase">Capability</th>
+              <th scope="col" class="px-6 py-4 font-display text-lg font-bold">Flossify</th>
+              <th scope="col" class="px-6 py-4 text-[15px] font-semibold text-ink-2">Molarsoft</th>
+            </tr>
+          </thead>
+          <tbody>
+            {comparison.map((r, i) => (
+              <tr class={i < comparison.length - 1 ? 'border-b border-line-2' : ''}>
+                <th scope="row" class="px-6 py-4 text-[15.5px] font-medium">{r.cap}</th>
+                <td class="px-6 py-4 text-[15.5px] font-semibold text-accent">{r.us}</td>
+                <td class="px-6 py-4 text-[15.5px] text-muted">{r.them}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <p class="mt-3.5 text-[12.5px] leading-relaxed text-muted">
+        Molarsoft column reflects what is published on molarsoft.com as of September 2026. Re-verify every row before this page goes live, and keep the date on the claim.
+      </p>
+    </section>
+
+    <!-- PRICING -->
+    <section id="pricing" class="scroll-mt-24 pt-24 sm:pt-32">
+      <h2 class="font-display text-[clamp(2rem,4.5vw,2.875rem)] font-semibold tracking-[-0.025em]">One price. Published.</h2>
+      <p class="mt-3.5 max-w-[560px] text-[17px] leading-relaxed text-ink-2">
+        You should not have to sit through a call to find out what software costs.
+      </p>
+
+      <div class="mt-8 grid gap-5 lg:grid-cols-[1fr_340px]">
+        <div class="rounded-3xl border border-line bg-surface p-8 sm:p-10">
+          <div class="flex flex-wrap items-baseline gap-3">
+            <span class="font-display text-[52px] leading-none font-bold tracking-tight">&#8369;[YOUR PRICE]</span>
+            <span class="text-[17px] text-muted">per month, per clinic</span>
+          </div>
+          <p class="mt-2 text-[15px] text-ink-2">Additional branches &#8369;[YOUR BRANCH PRICE] each.</p>
+
+          <ul class="mt-7 grid gap-3 sm:grid-cols-2">
+            {includes.map((i) => (
+              <li class="flex items-start gap-2.5">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" class="mt-1 shrink-0 text-accent" aria-hidden="true">
+                  <path d="M4 12.5l5 5L20 6.5"></path>
+                </svg>
+                <span class="text-[15.5px]">{i}</span>
+              </li>
+            ))}
+          </ul>
+
+          <a href="#pricing" class="mt-8 inline-block rounded-full bg-accent px-8 py-4 text-[15px] font-semibold text-surface hover:bg-accent-deep">
+            Start free
+          </a>
+        </div>
+
+        <div class="rounded-3xl bg-invert-bg p-8 text-invert-ink">
+          <h3 class="font-display text-[26px] font-semibold">Switching from something else?</h3>
+          <p class="mt-3.5 text-[15.5px] leading-relaxed text-invert-ink-2">
+            Send us your export. We migrate patients, charts and balances, and we do not charge for it. Your data stays yours, and you can take it out the same way on any day you like.
+          </p>
+          <a href="#faq" class="mt-6 inline-block rounded-full border border-invert-line px-6 py-3 text-[15px] font-semibold">
+            Talk to us about migrating
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section id="faq" class="scroll-mt-24 pt-24 sm:pt-32">
+      <h2 class="font-display text-[clamp(2rem,4.5vw,2.875rem)] font-semibold tracking-[-0.025em]">Questions.</h2>
+      <div class="mt-6 max-w-[860px]">
+        {faqs.map((f) => (
+          <details class="group border-t border-line py-5 last:border-b">
+            <summary class="flex cursor-pointer items-center justify-between gap-4 text-[17.5px] font-semibold [&::-webkit-details-marker]:hidden">
+              {f.q}
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" class="shrink-0 text-muted transition-transform group-open:rotate-45" aria-hidden="true">
+                <path d="M12 5v14M5 12h14"></path>
+              </svg>
+            </summary>
+            <p class="mt-3 text-[15.5px] leading-relaxed text-ink-2">{f.a}</p>
+          </details>
+        ))}
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="pt-24 sm:pt-32">
+      <div class="flex flex-col items-start justify-between gap-8 rounded-3xl bg-invert-bg px-8 py-14 text-invert-ink sm:px-14 lg:flex-row lg:items-center">
+        <div class="max-w-[560px]">
+          <h2 class="font-display text-[clamp(2rem,4vw,2.875rem)] leading-tight font-semibold tracking-[-0.025em]">
+            You already used it. Now put a patient in it.
+          </h2>
+          <p class="mt-4 text-[17px] leading-relaxed text-invert-ink-2">
+            Set up your clinic in about ten minutes. No card, no call, no waiting on a reply.
+          </p>
+        </div>
+        <div class="flex shrink-0 flex-col gap-3">
+          <a href="#pricing" class="rounded-full bg-accent px-9 py-4 text-center text-base font-semibold text-surface hover:bg-accent-deep">
+            Start free
+          </a>
+          <a href="#faq" class="rounded-full border border-invert-line px-9 py-4 text-center text-base font-semibold">
+            Book a walkthrough
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="mx-auto mt-20 max-w-[1280px] px-5 pb-14 sm:px-8">
+    <div class="flex flex-col justify-between gap-10 border-t border-line pt-8 lg:flex-row">
+      <div class="max-w-[320px]">
+        <div class="flex items-center gap-2.5">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="text-accent" aria-hidden="true">
+            <path d="M5.5 4.5c0 6.5 13 4 13 10.5 0 3.2-2.8 5-6 4.5"></path>
+            <circle cx="5.5" cy="4.5" r="1.7" fill="currentColor" stroke="none"></circle>
+          </svg>
+          <span class="font-display text-[19px] font-bold">Flossify</span>
+        </div>
+        <p class="mt-3.5 text-sm leading-relaxed text-muted">
+          Dental practice software. Built by Brylliant Labs in Baguio City.
+        </p>
+      </div>
+
+      <div class="flex flex-wrap gap-12 sm:gap-16">
+        <div class="flex flex-col gap-2.5">
+          <span class="text-xs font-semibold tracking-[0.1em] text-faint uppercase">Product</span>
+          <a href="#features" class="text-[14.5px] text-ink-2 hover:text-accent">Features</a>
+          <a href="#pricing" class="text-[14.5px] text-ink-2 hover:text-accent">Pricing</a>
+          <a href="#compare" class="text-[14.5px] text-ink-2 hover:text-accent">Compare</a>
+        </div>
+        <div class="flex flex-col gap-2.5">
+          <span class="text-xs font-semibold tracking-[0.1em] text-faint uppercase">Company</span>
+          <a href="#faq" class="text-[14.5px] text-ink-2 hover:text-accent">FAQ</a>
+          <a href="#faq" class="text-[14.5px] text-ink-2 hover:text-accent">Contact</a>
+          <a href="#faq" class="text-[14.5px] text-ink-2 hover:text-accent">Security</a>
+        </div>
+      </div>
+    </div>
+    <p class="mt-7 text-[13px] text-faint">
+      &#169; 2026 Brylliant Labs, Inc. &middot; [YOUR SEC REGISTRATION NUMBER] &middot; Baguio City, Philippines
+    </p>
+  </footer>
+</Base>
+
+<script>
+  const root = document.documentElement;
+  document.querySelector('[data-theme-toggle]')?.addEventListener('click', () => {
+    const dark =
+      root.dataset.theme === 'dark' ||
+      (!root.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches);
+    const next = dark ? 'light' : 'dark';
+    root.dataset.theme = next;
+    try {
+      localStorage.setItem('theme', next);
+    } catch (e) {
+      /* storage blocked: the toggle still works for this page view */
+    }
+  });
+</script>
