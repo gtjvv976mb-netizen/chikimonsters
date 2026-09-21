@@ -20,7 +20,7 @@ const age = (birth: string) =>
     <p class="text-[14.5px] text-muted">{patients.length} on file</p>
   </div>
 
-  <div class="mt-6 overflow-x-auto rounded-2xl border border-line bg-surface">
+  <div class="mt-6 overflow-x-auto border border-line bg-surface">
     <table class="w-full min-w-[680px] border-collapse text-left">
       <caption class="sr-only">Patients registered at {clinic.name}</caption>
       <thead>
@@ -46,10 +46,10 @@ const age = (birth: string) =>
             <td class="px-5 py-4">
               <div class="flex flex-wrap gap-1.5">
                 {p.allergies.map((a) => (
-                  <span class="rounded-full bg-caries/15 px-2.5 py-1 text-[11.5px] font-semibold text-caries">{a}</span>
+                  <span class="bg-caries/15 px-2.5 py-1 text-[11.5px] font-semibold text-caries">{a}</span>
                 ))}
                 {p.conditions.map((c) => (
-                  <span class="rounded-full bg-crown/15 px-2.5 py-1 text-[11.5px] font-semibold text-crown">{c}</span>
+                  <span class="bg-crown/15 px-2.5 py-1 text-[11.5px] font-semibold text-crown">{c}</span>
                 ))}
                 {p.allergies.length === 0 && p.conditions.length === 0 && (
                   <span class="text-[14px] text-muted">—</span>

@@ -20,7 +20,7 @@ import { clinics } from '../data/demo';
 
     <div
       role="note"
-      class="mt-8 max-w-[720px] rounded-2xl border border-crown/40 bg-crown/10 p-5 text-[14.5px] leading-relaxed"
+      class="mt-8 max-w-[720px] border border-crown/40 bg-crown/10 p-5 text-[14.5px] leading-relaxed"
     >
       <strong class="font-semibold">These links are open because there is no login yet.</strong>
       In production every one of them sits behind authentication. A workspace URL is an address,
@@ -30,12 +30,12 @@ import { clinics } from '../data/demo';
 
     <ul class="mt-10 grid gap-5 lg:grid-cols-2">
       {clinics.map((c) => (
-        <li class="rounded-[26px] border border-line bg-surface p-8">
+        <li class="border border-line bg-surface p-8">
           <h2 class="font-display text-[26px] font-semibold tracking-tight">{c.name}</h2>
           <p class="mt-1.5 text-[15px] text-muted">{c.group} &middot; {c.city}</p>
           <a
             href={`/c/${c.slug}/`}
-            class="mt-7 inline-block rounded-full bg-accent px-7 py-3.5 text-[15px] font-semibold text-surface hover:bg-accent-deep"
+            class="mt-7 inline-block bg-accent px-7 py-3.5 text-[15px] font-semibold text-surface hover:bg-accent-deep"
           >
             Open this clinic
           </a>
