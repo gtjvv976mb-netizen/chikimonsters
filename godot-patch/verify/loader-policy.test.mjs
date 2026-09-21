@@ -157,6 +157,31 @@ console.log('\nthe policy layer still carries every guard');
 		'player-facing strings go through a language table');
 }
 
+console.log('\nthe app loads its own pack, and the website keeps its own');
+{
+	// The iOS pack family is what takes the Trading Post, the wallet button and the chat box off
+	// the screen. If an export overwrites this selection, the app silently falls back to the
+	// website's pack and ships a marketplace to the App Store — the exact failure this file exists
+	// to catch, and one that looks completely fine at boot.
+	check(at('index.pck.ios.lite.manifest.json') > 0, 'the phone-sized iOS pack is tried first');
+	check(at('index.pck.ios.manifest.json') > 0, 'the full-size iOS pack is tried too');
+	check(hasLoose(html, "if (isIOSApp && wantLite) { candidates.push(['index.pck.ios.lite.manifest.json'"),
+		'both are gated on isIOSApp, so the website never fetches them');
+	check(at('index.pck.lite.manifest.json') > 0 && at('index.pck.manifest.json') > 0,
+		"the website's own families are still reachable");
+	check(at('index.pck.ios.lite.manifest.json') < at('index.pck.lite.manifest.json'),
+		'and the iOS family is tried BEFORE them, not after');
+	check(/window\.CHIK_PACK\s*=/.test(html), 'the mounted family is published as window.CHIK_PACK');
+	check(hasLoose(html, '(usedLite || usedIOS) && !CDN_HAS_LITE'),
+		'iOS chunks are fetched same-origin, like the lite family');
+
+	// Godot recognises a zip pack by FILE EXTENSION, so a zip mounted as index.pck is refused with
+	// "Cannot open resource pack". The manifest carries fs_name for exactly that, and the iOS pack
+	// is a zip — dropping this line produces a pack that downloads perfectly and never opens.
+	check(hasLoose(html, "(man && man.fs_name) || 'index.pck'"),
+		'the manifest can name the file the pack is mounted as (fs_name)');
+}
+
 console.log('\nevery inline script still parses');
 {
 	const re = /<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi;

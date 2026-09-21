@@ -20,9 +20,11 @@ What it writes, for a desktop pack:
     index.wasm.0.bin … index.wasm.M.bin     same scheme, if index.wasm is present
     virtual-files.json                      untouched — copy the existing one
 
-`--lite` writes the `index.pck.lite.*` family instead, which is the pack phones and the iOS app
-download. **For the iOS app that is usually the one that matters** — `realm/index.html` picks the
-lite pack on a phone.
+`--lite` writes the `index.pck.lite.*` family, the smaller pack phones download. `--ios` writes
+the `index.pck.ios.*` family, which **only the native app loads** — that is how the app gets a pack
+with no shop, no wallet button and no chat box while the website keeps the one it has. Combine
+them: `--ios --lite` writes `index.pck.ios.lite.*`, which is the one a phone in the app actually
+mounts, so it is usually the pair you want.
 
 `v` is the build stamp the loader puts on every chunk URL so a browser can never mix chunks from
 two builds. It is the first ten hex characters of the pack's sha256, so the same pack always
@@ -50,11 +52,29 @@ def sha256_of(path: Path) -> str:
 	return h.hexdigest()
 
 
+def pack_format(src: Path) -> str:
+	"""GDPC or zip — the loader mounts them under different names and Godot cares.
+
+	Godot's ZIP pack source keys off the FILE EXTENSION, not the magic bytes: a zip mounted as
+	`index.pck` is refused with "Cannot open resource pack", while the same bytes mounted as
+	`index.pcz` load. That is why the shipped lite manifest carries `fs_name`, and why dropping
+	it produces a pack that downloads perfectly and then will not open.
+	"""
+	with src.open("rb") as f:
+		magic = f.read(4)
+	if magic == b"GDPC":
+		return "pck"
+	if magic[:2] == b"PK":
+		return "zip"
+	raise SystemExit(f"error: {src} is neither a GDPC pack nor a zip (magic {magic!r})")
+
+
 def split(src: Path, out_dir: Path, stem: str, stamp: str | None) -> dict:
 	"""Write <stem>.N.bin pieces plus <stem>.manifest.json. Returns the manifest."""
 	total = src.stat().st_size
 	digest = sha256_of(src)
 	v = stamp or digest[:10]
+	fmt = pack_format(src)
 
 	for stale in out_dir.glob(f"{stem}.*.bin"):
 		stale.unlink()
@@ -72,8 +92,14 @@ def split(src: Path, out_dir: Path, stem: str, stamp: str | None) -> dict:
 			i += 1
 
 	manifest = {"total": total, "chunks": names, "v": v}
+	if fmt == "zip":
+		# Matches the shipped lite manifest exactly: realm/index.html reads fs_name and mounts
+		# the pack under it, and Godot only recognises a zip pack by that extension.
+		manifest["format"] = "zip"
+		manifest["fs_name"] = "index.pcz"
+		manifest["sha256"] = digest
 	(out_dir / f"{stem}.manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
-	return manifest | {"sha256": digest}
+	return manifest | {"sha256": digest, "format": fmt}
 
 
 def verify(out_dir: Path, stem: str, expect_sha: str, expect_total: int) -> bool:
@@ -94,6 +120,7 @@ def verify(out_dir: Path, stem: str, expect_sha: str, expect_total: int) -> bool
 def main() -> int:
 	args = [a for a in sys.argv[1:] if not a.startswith("--")]
 	lite = "--lite" in sys.argv
+	ios = "--ios" in sys.argv
 	if len(args) != 2:
 		print(__doc__)
 		return 2
@@ -107,17 +134,20 @@ def main() -> int:
 		print(f"error: no index.pck in {src_dir} — point this at a Godot web export")
 		return 1
 
-	pck_stem = "index.pck.lite" if lite else "index.pck"
+	# index.pck | index.pck.lite | index.pck.ios | index.pck.ios.lite — realm/index.html tries the
+	# .ios families first when the native app is running, and falls through to the website's.
+	pck_stem = "index.pck" + (".ios" if ios else "") + (".lite" if lite else "")
 	print(f"{pck.name} -> {pck_stem}.*.bin")
 	m = split(pck, out_dir, pck_stem, None)
 	ok = verify(out_dir, pck_stem, m["sha256"], m["total"])
+	print(f"  format = {m['format']}" + (f", mounted as {m['fs_name']}" if m["format"] == "zip" else ""))
 	print(f"  build stamp v = {m['v']}")
 
 	if wasm.is_file():
 		# The engine is shared: both packs mount against the same index.wasm, so it is only
 		# rewritten for the desktop family. A --lite run leaves whatever is already there.
-		if lite:
-			print("index.wasm: skipped (--lite); the engine is shared with the desktop family")
+		if lite or ios:
+			print("index.wasm: skipped; the engine is shared by every pack family")
 		else:
 			print(f"{wasm.name} -> index.wasm.*.bin")
 			mw = split(wasm, out_dir, "index.wasm", m["v"])

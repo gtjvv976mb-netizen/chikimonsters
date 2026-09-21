@@ -17,7 +17,7 @@ app now refuses every chat route. See §2.)
 | **No build exists** | The Swift in `ios/` has never been compiled. Submission needs an archive uploaded from Xcode on a Mac. | You, with a Mac |
 | **The backend has no `/link/*` routes** | Pairing calls `/link/redeem`, which 404s. **A reviewer cannot get past the first screen.** | Backend work — see `IOS-APP.md` |
 | **No screenshots or preview video** | Both must be captured from the running app. They cannot be drawn, and faking them is a rejection *and* a guideline violation. | You, once a build runs |
-| **The app still shows a shop** | Until the pack is rebuilt: a player can walk to the Trading Post and open a marketplace with a `🪄 Magic Eden` tab, the welcome screen's main button is *Connect Phantom Wallet*, and the Chikiseum says *"champions win real SOL"*. Every button refuses — but 3.1.1 is about what an app **presents**. | **Ready to clear:** rebuild the pack with `godot-patch/apply-ios-pack-patch.py` — see below |
+| **The app still shows a shop** | Until the iOS pack is published: a player can walk to the Trading Post and open a marketplace with a `🪄 Magic Eden` tab, the welcome screen's main button is *Connect Phantom Wallet*, and the Chikiseum says *"champions win real SOL"*. Every button refuses — but 3.1.1 is about what an app **presents**. | **Built and verified** — publish `index.pck.ios.lite.*` to `realm/`. The website's packs are untouched. |
 
 Two product decisions are also unmade and are yours: **the 500k $CHIKI gate** (`IOS-APP.md`) and **what account deletion does** on a wallet-backed account.
 
@@ -74,14 +74,30 @@ which were never in a pack — Godot ships imported textures, not source art. Th
 402 masks recover byte-identical. Get those files when you can; they restore exact provenance and
 make the plugin bless the build again. **They are not a prerequisite for shipping one.**
 
-So the recommended path is now just:
+### And the app gets its own pack — the website keeps the one it has
 
-1. **Rebuild the pack with the patch and ship it.** The editor is a download, the template is a
-   12-minute compile, the export works, and the patch is 19 changes, parse-clean and verified on
-   screen. `RECOVERY.md` has every command.
-2. If you would rather not rebuild yet, you *can* submit as is and argue it — the app genuinely
-   cannot transact, and since this pass it cannot list, bid or sell either. But the shop is on
-   screen, and that is a real 3.1.1 risk that may cost a rejection cycle.
+The rebuilt pack is **not** published over the website's. `realm/index.html` now tries an
+`index.pck.ios[.lite]` family first, and only when `window.CHIK_IOS_APP` is set.
+
+That pack is not a separate build of the game either. `godot-patch/build-ios-pack.py` takes the
+**shipped** pack and swaps in only the compiled scripts the patch changed — **8 files out of
+5,459**. Same textures, same scenes, same card art, same engine binary. Worth doing that way for a
+measured reason: compiling the recovered project produces 17 different scripts out of 91, but only
+6 were patched — the other 11 differ purely because decompiling and recompiling GDScript does not
+round-trip byte-exactly. Swapping only the patched files keeps those 11 out of the app entirely.
+
+Verified by booting it both ways against the real loader:
+
+| | mounts | `CHIK_NO_CRYPTO` |
+|---|---|---|
+| native app (iPhone UA + `CHIK_IOS_APP`) | `ios-lite` | `true` |
+| plain mobile browser | the website's `lite` | `false` |
+
+and the website's 24 pack files came out **byte-identical**. In both cases the shipped engine
+(`4.6.stable.custom_build.89cea1439`, Emscripten 4.0.11) loaded and the island built.
+
+So the remaining step is to publish `index.pck.ios.lite.*` into `realm/` — seven chunks and a
+manifest, about 175 MB, alongside the packs already there. Nothing the website serves changes.
 
 ---
 

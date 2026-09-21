@@ -50,6 +50,7 @@ The version-stamped files that **must** go up together, and all of them:
 |---|---|---|
 | desktop pack | `index.pck.0.bin` … `index.pck.12.bin` | **13** |
 | mobile/lite pack | `index.pck.lite.0.bin` … `index.pck.lite.6.bin` | **7** |
+| **iOS app pack** (once built) | `index.pck.ios.lite.0.bin` … `.6.bin` + its manifest | **7** |
 | engine | `index.wasm.0.bin`, `index.wasm.1.bin` | 2 |
 | manifests | `index.pck.manifest.json`, `index.pck.lite.manifest.json`, `virtual-files.json` | 3 |
 | loader + engine glue | `index.html`, `index.js`, `chiki-ios.js`, `coi-serviceworker.min.js`, `index.audio.worklet.js`, `index.audio.position.worklet.js`, `solana-web3.js` | 7 |
@@ -77,6 +78,25 @@ ls -p realm/ | grep -v /           | wc -l   # 42 files, + reborn-art/
 and the Cloudflare COOP/COEP rule that decides that is **path-scoped to `/realm/*`** — a copy
 anywhere else reports a false failure. It is also inside the app's navigation allowlist for the
 same reason.
+
+### The iOS app has its own pack, and the website must not get it
+
+`index.pck.ios[.lite].*` is a **fourth family**, loaded only when `window.CHIK_IOS_APP` is set.
+It exists because `chiki-ios.js` can stop the app reaching a marketplace but cannot stop the pack
+from **drawing** one — the Trading Post, the "Connect Phantom Wallet" button, the Cup's SOL copy
+and the chat box are GDScript building its own UI, and the website must keep all of them.
+
+It is not a separate build of the game. `godot-patch/build-ios-pack.py` takes the **shipped** pack
+and swaps in only the compiled scripts the iOS patch changed — eight files out of 5,459. Same
+textures, same scenes, same card art, same engine. Verified by booting both ways: the app mounts
+`ios-lite`, a plain mobile browser mounts the website's `lite`, and the website's 24 pack files
+stay byte-identical.
+
+**The iOS pack is a ZIP, and Godot recognises a zip pack only by its file extension.** Its manifest
+carries `"format": "zip"` and `"fs_name": "index.pcz"`, and `realm/index.html` mounts it under that
+name. Drop those fields and the pack downloads perfectly and then fails with *"Cannot open resource
+pack"*. `godot-patch/chunk-pack.py` writes them automatically — use it rather than splitting by
+hand.
 
 **`chiki-ios.js` is not optional.** It is the first script `index.html` loads, and it is the only
 thing that takes the wallet, the marketplace and off-origin requests away from the native iOS

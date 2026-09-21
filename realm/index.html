@@ -1942,20 +1942,46 @@ const engine = new Engine(GODOT_CONFIG);
 		// layer cannot see RAM). Desktop and iPad are unchanged: CHIK_PHONE is false for both.
 		const hdAllowed = !!window.CHIK_HD;
 		const wantLite = oomN >= 1 || metered || (!!window.CHIK_PHONE && !hdAllowed);
+
+		// THE NATIVE APP LOADS ITS OWN PACK, AND THE WEBSITE KEEPS THE ONE IT HAS.
+		//
+		// chiki-ios.js can stop the app from reaching a marketplace; it cannot stop the pack from
+		// DRAWING one, because that is GDScript building its own UI. Taking the Trading Post, the
+		// "Connect Phantom Wallet" button, the Cup's SOL copy and the chat box off the screen needs
+		// a different pack — and the website must keep showing all of them.
+		//
+		// So the app prefers an `index.pck.ios[.lite]` family, built by
+		// godot-patch/build-ios-pack.py: the SHIPPED pack with only the handful of compiled scripts
+		// the patch changed swapped in. Same textures, same scenes, same engine, same card art.
+		//
+		// Each entry is tried in order and a 404 falls straight through, so this degrades rather
+		// than breaks: before the iOS family is published the app still boots on the website's
+		// packs (with the shop visible), and after it is published the website is unaffected.
+		const candidates = [];
+		if (isIOSApp && wantLite) { candidates.push(['index.pck.ios.lite.manifest.json', true, true]); }
+		if (isIOSApp) { candidates.push(['index.pck.ios.manifest.json', false, true]); }
+		if (wantLite) { candidates.push(['index.pck.lite.manifest.json', true, false]); }
+
 		let man = null;
 		let usedLite = false;
-		if (wantLite) {
+		let usedIOS = false;
+		for (const [name, lite, ios] of candidates) {
 			try {
-				man = await fetchJSON('index.pck.lite.manifest.json', 4);   // 404 falls through instantly; network errors retry
-				usedLite = true;
-				say('Building the pocket realm…');
+				man = await fetchJSON(name, 4);   // 404 falls through instantly; network errors retry
+				usedLite = lite;
+				usedIOS = ios;
+				break;
 			} catch (e) { man = null; }
 		}
-		if (!man) { man = await fetchJSON('index.pck.manifest.json', 4); }
+		// Left unguarded on purpose: if the desktop manifest is the one that is missing, that is a
+		// broken deploy and the loader should say so rather than quietly mount nothing.
+		if (!man) { man = await fetchJSON('index.pck.manifest.json', 4); usedLite = false; usedIOS = false; }
+		if (usedLite) { say('Building the pocket realm…'); }
 		// Runtime layout follows the pack that actually mounted, not a fallible device/UA guess.
 		window.CHIK_LITE = usedLite;
+		window.CHIK_PACK = usedIOS ? (usedLite ? 'ios-lite' : 'ios') : (usedLite ? 'lite' : 'desktop');
 		const pckChunks = await streamParts(man.chunks, man.total, 0.12, 0.82, man.v || '',
-			chunkCache, usedLite && !CDN_HAS_LITE);
+			chunkCache, (usedLite || usedIOS) && !CDN_HAS_LITE);
 		// Now that every family's stamp is known, drop other builds. Deferred to here on purpose:
 		// evicting at open time is what made the cache delete entries it was about to need.
 		evictOtherBuilds(chunkCache, [vt && vt.v, man && man.v]).then(function (dropped) {
