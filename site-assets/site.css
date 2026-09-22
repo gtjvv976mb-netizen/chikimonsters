@@ -206,7 +206,7 @@ em {
       rgba(10, 7, 25, 0.12) 54%,
       rgba(14, 8, 33, 0.35)
     ),
-    url("/site-assets/scene-chikoria-cast.webp") center 53% / cover no-repeat;
+    url("/site-assets/scene-chikoria-cast-v2.webp") center 53% / cover no-repeat;
   transform: scale(1.025);
 }
 .hero-haze {
@@ -1394,7 +1394,7 @@ h3 {
 }
 .journey-scene.is-camera-active,
 .journey-scene.is-camera-next { will-change: transform, opacity; }
-.journey-scene-realm { background-image: url("/site-assets/scene-chikoria-cast.webp"); --scene-opacity: 1; transform-origin: 58% 56%; }
+.journey-scene-realm { background-image: url("/site-assets/scene-chikoria-cast-v2.webp"); --scene-opacity: 1; transform-origin: 58% 56%; }
 .journey-scene-gathering { background-image: url("/site-assets/scene-gathering-cast.webp"); transform-origin: 54% 56%; }
 .journey-scene-temple { background-image: url("/site-assets/scene-temple-cast.webp"); transform-origin: 51% 49%; }
 .journey-scene-arena { background-image: url("/site-assets/scene-arena-cast.webp"); transform-origin: 50% 54%; }
@@ -1645,7 +1645,7 @@ html:not(.has-js) .journey-beat {
   background-size: cover;
 }
 html.scene-static .journey-beat:nth-child(1),
-html:not(.has-js) .journey-beat:nth-child(1) { background-image: linear-gradient(90deg, rgba(7, 5, 18, .82), rgba(7, 5, 18, .38)), url("/site-assets/scene-chikoria-cast.webp"); }
+html:not(.has-js) .journey-beat:nth-child(1) { background-image: linear-gradient(90deg, rgba(7, 5, 18, .82), rgba(7, 5, 18, .38)), url("/site-assets/scene-chikoria-cast-v2.webp"); }
 html.scene-static .journey-beat:nth-child(2),
 html:not(.has-js) .journey-beat:nth-child(2) { background-image: linear-gradient(90deg, rgba(7, 5, 18, .82), rgba(7, 5, 18, .38)), url("/site-assets/scene-gathering-cast.webp"); }
 html.scene-static .journey-beat:nth-child(3),
@@ -1660,7 +1660,7 @@ html:not(.has-js) .journey-beat:nth-child(4) { background-image: linear-gradient
   .hero-land {
     background-image:
       linear-gradient(110deg, rgba(10, 7, 25, .72), rgba(10, 7, 25, .24) 62%, rgba(14, 8, 33, .2)),
-      url("/site-assets/scene-chikoria-mobile-cast.webp?v=2");
+      url("/site-assets/scene-chikoria-mobile-cast-v2.webp");
     background-position: center 80%;
     transform-origin: 50% 54%;
   }
@@ -1669,7 +1669,7 @@ html:not(.has-js) .journey-beat:nth-child(4) { background-image: linear-gradient
       linear-gradient(180deg, rgba(11, 7, 29, .52), rgba(10, 7, 28, .35) 46%, rgba(10, 7, 28, .12) 70%, rgba(16, 11, 34, .54) 100%),
       linear-gradient(90deg, rgba(11, 7, 29, .38), transparent);
   }
-  .journey-scene-realm { background-image: url("/site-assets/scene-chikoria-mobile-cast.webp?v=2"); }
+  .journey-scene-realm { background-image: url("/site-assets/scene-chikoria-mobile-cast-v2.webp"); }
   .journey-scene-gathering { background-image: url("/site-assets/scene-gathering-mobile-cast.webp"); }
   .journey-scene-temple { background-image: url("/site-assets/scene-temple-mobile-cast.webp"); }
   .journey-scene-arena { background-image: url("/site-assets/scene-arena-mobile-cast.webp"); }
@@ -1680,7 +1680,7 @@ html:not(.has-js) .journey-beat:nth-child(4) { background-image: linear-gradient
   html:not(.has-js) .journey-beat { background-position: center 80%; }
   .journey-vignette { background: linear-gradient(180deg, rgba(7, 5, 18, .78), rgba(9, 7, 25, .42) 45%, transparent 74%); }
   html.scene-static .journey-beat:nth-child(1),
-  html:not(.has-js) .journey-beat:nth-child(1) { background-image: linear-gradient(180deg, rgba(7, 5, 18, .78), rgba(7, 5, 18, .16) 65%), url("/site-assets/scene-chikoria-mobile-cast.webp?v=2"); }
+  html:not(.has-js) .journey-beat:nth-child(1) { background-image: linear-gradient(180deg, rgba(7, 5, 18, .78), rgba(7, 5, 18, .16) 65%), url("/site-assets/scene-chikoria-mobile-cast-v2.webp"); }
   html.scene-static .journey-beat:nth-child(2),
   html:not(.has-js) .journey-beat:nth-child(2) { background-image: linear-gradient(180deg, rgba(7, 5, 18, .78), rgba(7, 5, 18, .16) 65%), url("/site-assets/scene-gathering-mobile-cast.webp"); }
   html.scene-static .journey-beat:nth-child(3),
