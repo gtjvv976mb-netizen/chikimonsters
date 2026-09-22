@@ -228,38 +228,154 @@
     scheduleScroll();
   });
 
-  // The extended 2D roster is a native scroll-snap strip. Buttons are a
-  // desktop enhancement; swiping and keyboard scrolling work without JS.
-  const roster = document.getElementById("roster-track");
-  const rosterControls = document.querySelector(".roster-controls");
-  if (roster && rosterControls) {
-    const previous = rosterControls.querySelector('[data-roster-dir="-1"]');
-    const next = rosterControls.querySelector('[data-roster-dir="1"]');
-    function moveRoster(direction) {
-      roster.scrollBy({
-        left: direction * roster.clientWidth * .82,
-        behavior: motionEnabled() ? "smooth" : "auto",
-      });
+  // The codex: three tabs (Chikimons, Avatars, Chikimounts) and one dialog that
+  // opens a Chikimon as a 3D turntable, or an avatar or mount as its artwork,
+  // with its legend from legends.js. The <model-viewer> element is fetched the
+  // first time a Chikimon is opened, never on page load.
+  const codexTabs = [...document.querySelectorAll(".codex-tab")];
+  function selectTab(tab, focus) {
+    for (const other of codexTabs) {
+      const on = other === tab;
+      other.setAttribute("aria-selected", String(on));
+      other.tabIndex = on ? 0 : -1;
+      document.getElementById(other.getAttribute("aria-controls")).hidden = !on;
     }
-    function updateRosterControls() {
-      const maxScroll = Math.max(0, roster.scrollWidth - roster.clientWidth);
-      rosterControls.hidden = maxScroll < 2;
-      previous.disabled = roster.scrollLeft < 3;
-      next.disabled = roster.scrollLeft > maxScroll - 3;
-    }
-    for (const button of [previous, next]) {
-      button.addEventListener("click", () => moveRoster(Number(button.dataset.rosterDir)));
-    }
-    roster.addEventListener("keydown", (event) => {
-      if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
+    if (focus) tab.focus();
+    measureRail(); // the page changed height under the pinned stage
+  }
+  for (const tab of codexTabs) {
+    tab.addEventListener("click", () => selectTab(tab, false));
+    tab.addEventListener("keydown", (event) => {
+      const index = codexTabs.indexOf(tab);
+      let target = null;
+      if (event.key === "ArrowRight") target = codexTabs[(index + 1) % codexTabs.length];
+      else if (event.key === "ArrowLeft") target = codexTabs[(index + codexTabs.length - 1) % codexTabs.length];
+      else if (event.key === "Home") target = codexTabs[0];
+      else if (event.key === "End") target = codexTabs[codexTabs.length - 1];
+      if (target) {
         event.preventDefault();
-        moveRoster(event.key === "ArrowRight" ? 1 : -1);
+        selectTab(target, true);
       }
     });
-    roster.addEventListener("scroll", updateRosterControls, { passive: true });
-    window.addEventListener("resize", updateRosterControls, { passive: true });
-    requestAnimationFrame(updateRosterControls);
   }
+
+  const codexDialog = document.getElementById("codex-dialog");
+  const codexStill = codexDialog.querySelector(".codex-still");
+  const codexSlot = codexDialog.querySelector(".codex-viewer-slot");
+  const codexHint = codexDialog.querySelector(".codex-hint");
+  const codexKicker = codexDialog.querySelector(".codex-kicker");
+  const codexTitle = codexDialog.querySelector("#codex-title");
+  const codexSubtitle = codexDialog.querySelector(".codex-subtitle");
+  const codexLegend = codexDialog.querySelector(".codex-legend");
+  const codexHome = codexDialog.querySelector(".codex-home");
+  const ELEMENT_GLOW = {
+    fire: "rgba(255, 137, 53, 0.5)",
+    water: "rgba(93, 204, 244, 0.46)",
+    light: "rgba(255, 204, 83, 0.5)",
+    storm: "rgba(190, 120, 255, 0.48)",
+    beast: "rgba(120, 220, 150, 0.46)",
+  };
+  let viewerReady = null;
+  let codexOpener = null;
+  let codexCurrent = null;
+  function loadViewer() {
+    if (!viewerReady) {
+      viewerReady = new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.type = "module";
+        script.src = "/site-assets/model-viewer.min.js?v=4.0.0";
+        script.onload = () => customElements.whenDefined("model-viewer").then(resolve, reject);
+        script.onerror = reject;
+        document.head.appendChild(script);
+      });
+      viewerReady.catch(() => { viewerReady = null; });
+    }
+    return viewerReady;
+  }
+  function paragraph(text) {
+    const p = document.createElement("p");
+    p.textContent = text;
+    return p;
+  }
+  function openCodex(ref, opener) {
+    const codex = window.CHIKORIA_CODEX;
+    const [kind, key] = ref.split(":");
+    const entry = codex && codex[kind] && codex[kind][key];
+    if (!entry) return;
+    codexOpener = opener;
+    codexCurrent = ref;
+    codexDialog.style.setProperty("--codex-glow", ELEMENT_GLOW[String(entry.element || "").toLowerCase()] || "rgba(144, 121, 218, 0.4)");
+    codexKicker.textContent = kind === "chikimon"
+      ? `${entry.element} · ${entry.cls === "legendary" ? "Legendary" : "Chikimon"}`
+      : entry.kicker || "";
+    codexTitle.textContent = entry.name;
+    codexSubtitle.textContent = entry.title || "";
+    codexSubtitle.hidden = !entry.title;
+    codexLegend.replaceChildren(...entry.legend.map(paragraph));
+    codexHome.hidden = !entry.home;
+    if (entry.home) {
+      const strong = document.createElement("strong");
+      strong.textContent = entry.home;
+      codexHome.replaceChildren("Found in ", strong);
+    }
+    codexStill.src = entry.art;
+    codexStill.alt = `${entry.name} artwork`;
+    codexStill.classList.toggle("is-scene", kind === "mount");
+    codexStill.hidden = false;
+    codexSlot.replaceChildren();
+    codexHint.hidden = true;
+    if (!codexDialog.open) codexDialog.showModal();
+    codexDialog.querySelector(".codex-copy").scrollTop = 0;
+    if (kind !== "chikimon" || !entry.model || saveData) return;
+    loadViewer().then(() => {
+      if (codexCurrent !== ref || !codexDialog.open) return;
+      const viewer = document.createElement("model-viewer");
+      viewer.setAttribute("src", entry.model);
+      viewer.setAttribute("alt", `${entry.name} as a 3D model you can turn`);
+      viewer.setAttribute("camera-controls", "");
+      viewer.setAttribute("touch-action", "pan-y");
+      viewer.setAttribute("interaction-prompt", "none");
+      viewer.setAttribute("shadow-intensity", "0.7");
+      viewer.setAttribute("exposure", "1.05");
+      viewer.setAttribute("camera-orbit", "30deg 78deg auto");
+      viewer.setAttribute("loading", "eager");
+      if (motionEnabled()) {
+        viewer.setAttribute("auto-rotate", "");
+        viewer.setAttribute("rotation-per-second", "22deg");
+      }
+      viewer.addEventListener("load", () => {
+        codexStill.hidden = true;
+        codexHint.hidden = false;
+      }, { once: true });
+      viewer.addEventListener("error", () => {
+        viewer.remove(); // the artwork underneath stays
+        codexStill.hidden = false;
+      }, { once: true });
+      codexSlot.replaceChildren(viewer);
+    }).catch(() => {
+      /* No viewer: the artwork is already showing. */
+    });
+  }
+  function closeCodex() {
+    if (codexDialog.open) codexDialog.close();
+  }
+  codexDialog.addEventListener("close", () => {
+    codexSlot.replaceChildren();
+    codexCurrent = null;
+    if (codexOpener && codexOpener.isConnected) codexOpener.focus();
+  });
+  document.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-codex]");
+    if (button) openCodex(button.dataset.codex, button);
+  });
+  codexDialog.querySelector(".codex-close").addEventListener("click", closeCodex);
+  codexDialog.addEventListener("click", (event) => {
+    if (event.target === codexDialog) closeCodex();
+  });
+  codexDialog.addEventListener("cancel", (event) => {
+    event.preventDefault();
+    closeCodex();
+  });
 
   // Gameplay footage is intentionally not wired yet. The four static preview
   // cards in index.html carry data-video-slot IDs (exploration, gathering,
