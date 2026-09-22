@@ -63,6 +63,12 @@
   function startAmbient(video) {
     if (!video || !canPlayAmbient() || video.dataset.failed || video.dataset.blocked) return;
     activeAmbient = video;
+    // A finished one-take clip is never replayed: play() on an ended video
+    // would restart it from its first frame, snapping the world back.
+    if (video.ended) {
+      video.classList.add("is-active");
+      return;
+    }
     if (!video.hasAttribute("src")) {
       video.src = video.dataset.src;
       video.load();
