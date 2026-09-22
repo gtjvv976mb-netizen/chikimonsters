@@ -38,7 +38,63 @@ Earning here, selling there. One account, one inventory, two different surfaces.
 
 ---
 
-## How the account gets there: Realm Link
+## Two ways in, and a one-way door between them
+
+The app has no wallet and never will. That used to mean there was exactly one way to have an
+account — pair one you already owned — and it made the app's first screen an instruction to go and
+get a crypto wallet somewhere else. Almost nobody who downloads a monster-collecting game from the
+App Store owns one, and asking them to is both a dead end for the player and a guideline 3.1.1
+problem for the build.
+
+So there are two, and the 500,000 $CHIKI entry gate is off in the app for both.
+
+| | **Create** | **Pair** |
+| --- | --- | --- |
+| Who it is for | a player with no wallet, which is most of them | a player who already plays on the website |
+| Where it happens | on the phone, one tap, nothing else needed | website mints a code, player types it in the app |
+| The account's address | off-curve — see below | their real Phantom wallet |
+| Can play, gather, hatch, save, PvP | yes | yes |
+| Can sell | **no, and cannot be made to** | not from the app; on the website, yes |
+| Route | `POST /account/new` | `POST /link/new` → `POST /link/redeem` |
+
+**Bind** is the door between them, and it only opens one way: the app mints a claim code
+(`POST /account/claim`), the player types it on `chikimonsters.com/link/` while signed in with
+Phantom, and `POST /link/bind` moves the account — profile, creatures, quest pouch, device
+credentials — onto that wallet. That is the only way an app-made account ever gains the ability to
+sell, which is exactly the rule: **play on an app account, sell with Phantom.**
+
+### What an app-made account's address actually is
+
+Every table, map, socket, cloud save and compiled-GDScript call site in this game is keyed by a
+base58 Solana address, and `/verify` refuses anything `new PublicKey()` will not parse. The pack is
+compiled bytecode that cannot be rebuilt from source here, so "give app accounts a different kind of
+id" was never an option.
+
+So an app-made account **is** given an address: 32 random bytes that land **off** the Ed25519 curve.
+
+* It parses as a `PublicKey`, so every one of those call sites works unchanged.
+* **No private key for it can exist.** Not lost, not escrowed, not "discarded by the server" —
+  mathematically absent, the same reason a PDA cannot sign.
+* So the server can tell an app account from a real wallet **from the address alone**. No database
+  lookup, no flag to fall out of sync, nothing a stale token or a dropped row can defeat. Every
+  wallet a player can actually sign with is on-curve — measured, 1000 out of 1000 generated
+  keypairs — so there are no false positives.
+
+That is what `isWalletless()` in `server.js` is, and it is why "this account cannot sell" is a proof
+rather than a promise.
+
+**The price, stated plainly:** an app-made account cannot receive anything on-chain, because nobody
+— including us — can ever spend from it. Sending it SOL or minting it an NFT would destroy the
+asset. `unpayable()` guards all four paths that broadcast a transaction naming a player's address
+(`/claim`, `sendChikiRaw`, `nftCoreCreate`, and the quest and winner payouts), and
+`NO_WALLET_DENY_PATH` refuses the routes that compose them. A quest reward earned before there was a
+wallet is **held**, not cleared, and the bind carries it across.
+
+**And the other price:** the credential on the phone is the only way into an app-made account. There
+is no email, no password and no recovery — lose the phone and it is gone. Binding a wallet is the
+recovery story, and the app says so where it matters.
+
+## How a paired account gets there: Realm Link
 
 The app has no wallet, so identity is moved off the device.
 

@@ -89,6 +89,24 @@
       it cannot sign, spend, trade or move anything on-chain. Revoke it below at any time.</p>
   </section>
 
+  <!-- 2b — the other direction: an account made in the app, claimed by this wallet -->
+  <section class="card" id="cClaim" hidden>
+    <h2>Connect an app account</h2>
+    <p class="muted">Made your account inside the Chikoria app and want to trade what you have found?
+      In the app open <b>Account → Connect a wallet</b>, then type the code it shows here. Your
+      island, your creatures and everything you have earned move onto this wallet.</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:12px">
+      <input id="claimCode" maxlength="9" placeholder="ABCD1234" autocomplete="off" spellcheck="false"
+             style="font:700 24px/1.2 ui-monospace,Menlo,monospace;letter-spacing:6px;text-transform:uppercase;
+                    padding:12px 14px;border-radius:12px;border:1px solid #2a3550;background:#0c1220;color:#ffd166;width:220px">
+      <button id="bClaim">Connect this wallet</button>
+    </div>
+    <p class="muted" id="claimNote" style="margin-top:12px">This is one-way: the app account becomes
+      this wallet. It only works on a wallet that has not played Chikoria before — connecting one
+      that already has progress would mean merging two save files, and that always loses one of
+      them.</p>
+  </section>
+
   <!-- 3 — what is linked -->
   <section class="card" id="cDevices" hidden>
     <div class="between" style="margin-bottom:12px"><h2 style="margin:0">Your linked devices</h2>
@@ -240,9 +258,57 @@ $("bConnect").onclick = async () => {
     $("who").innerHTML = `signed in as <b>${shortW(wallet)}</b>`;
     $("bConnect").textContent = "Signed in";
     $("cCode").hidden = false;
+    $("cClaim").hidden = false;
     $("cDevices").hidden = false;
     await Promise.all([newCode(), loadDevices()]);
   }catch(e){ showErr(e.message || String(e)); $("bConnect").disabled = false; }
+};
+
+/* ------------------------------------------------- connecting an app account to this wallet
+ *
+ * The opposite direction to the pairing code above, and the two must never be confused: there,
+ * this wallet invites a device; here, a device offers its account and this wallet accepts it.
+ * The server keeps the two kinds of code in separate pools for exactly that reason — typing
+ * somebody's claim code into the pairing box must not hand over their account.
+ *
+ * A SIGNATURE, not the market token. This is the one action that decides where a player's future
+ * on-chain value lands, so it takes the strongest proof there is. */
+$("bClaim").onclick = async () => {
+  clearErr();
+  const el = $("claimCode");
+  const code = String(el.value || "").toUpperCase().replace(/[^0-9A-Z]/g, "");
+  if (code.length !== 8) { showErr("That code should be eight characters."); return; }
+  if (!auth) { showErr("Sign in with your wallet first."); return; }
+
+  const btn = $("bClaim");
+  btn.disabled = true;
+  const was = btn.textContent;
+  btn.textContent = "Connecting…";
+  try {
+    const r = await api("/link/bind", {
+      wallet: auth.wallet, authMsg: auth.authMsg, authSig: auth.authSig, code,
+    });
+    const m = r.moved || {};
+    const parts = [];
+    if (m.assets) parts.push(`${m.assets} creature${m.assets === 1 ? "" : "s"}`);
+    if (m.profile) parts.push("your island and progress");
+    if (m.questPouch) parts.push("your quest rewards");
+    $("claimNote").innerHTML =
+      `<b style="color:#8ef5a0">Connected.</b> This wallet now holds that account` +
+      (parts.length ? `, including ${parts.join(", ")}` : "") +
+      `. The app is already signed in to it — nothing to re-pair. You can trade from the website now.`;
+    el.value = "";
+    btn.textContent = "Connected";
+    await loadDevices();
+  } catch (e) {
+    // WALLET_IN_USE is the one refusal worth explaining rather than restating, because it is the
+    // one the player can do something about.
+    showErr(e.code === "WALLET_IN_USE"
+      ? "This wallet already has a Chikoria account with progress on it. Connecting the app account here would have to merge two save files and one would be lost, so nothing was changed. Sign in with a wallet that has not played, or email support@chikimonsters.com and we will move it by hand."
+      : (e.message || String(e)));
+    btn.disabled = false;
+    btn.textContent = was;
+  }
 };
 
 // ---------------------------------------------------------------- the code

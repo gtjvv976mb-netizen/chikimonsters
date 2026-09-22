@@ -104,9 +104,25 @@ struct PairingView: View {
     @ObservedObject var model: ShellModel
     let reason: String?
 
+    init(model: ShellModel, reason: String?) {
+        self.model = model
+        self.reason = reason
+        _hasCode = State(initialValue: reason != nil)
+    }
+
     @State private var code = ""
     @State private var busy = false
     @State private var error: String?
+    /// false: the welcome screen, whose primary action makes an account. true: the code box, for a
+    /// player who already has one. Starts false — the player who needs nothing is the common case,
+    /// and the one this screen used to have no path for at all.
+    ///
+    /// EXCEPT WHEN WE ARRIVED HERE WITH A REASON. A reason means a credential was rejected: the
+    /// player HAD an account a moment ago. Opening on "Create an account" would invite them to tap
+    /// it, and that would mint a second, empty, unrecoverable account while the first one sat
+    /// there — the worst outcome on this screen. So a reason opens the code box instead, where the
+    /// player can get back to the account they already have.
+    @State private var hasCode: Bool
     @FocusState private var focused: Bool
 
     /// `chiki-ios.js` uppercases the code and strips everything that is not 0-9 or A-Z, then
@@ -120,13 +136,9 @@ struct PairingView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
-                Text("Link your account")
+                Text(hasCode ? "Link your account" : "Welcome to Chikoria")
                     .font(.system(size: 30, weight: .heavy))
                     .foregroundStyle(Ink.text)
-
-                Text("Chikoria on this iPhone plays the account you already have. "
-                     + "Everything you own comes with you, and everything you gather here is waiting when you get back.")
-                    .foregroundStyle(Ink.dim)
 
                 if let reason {
                     Label(reason, systemImage: "exclamationmark.triangle.fill")
@@ -135,6 +147,63 @@ struct PairingView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .background(Ink.panel, in: RoundedRectangle(cornerRadius: 12))
                 }
+
+                // THE DEFAULT PATH IS THE ONE THAT NEEDS NOTHING.
+                //
+                // This screen used to open straight onto a code box, and the code could only come
+                // from a website that required a crypto wallet. For a player who had just
+                // downloaded the app and owned no wallet — which is almost all of them — the first
+                // screen of the game was an instruction to go and get one somewhere else. That is a
+                // dead end for the player and a guideline 3.1.1 problem for the build.
+                //
+                // So: make an account, here, in one tap. Pairing is still offered, underneath, for
+                // the players who do have an account already and came looking for it.
+                if !hasCode {
+                    Text("Start playing straight away. Your island, your creatures and everything you "
+                         + "gather are saved to your account and waiting whenever you come back.")
+                        .foregroundStyle(Ink.dim)
+
+                    if let error {
+                        Text(error).foregroundStyle(Ink.bad).font(.callout)
+                    }
+
+                    Button(action: create) {
+                        HStack {
+                            if busy { ProgressView().tint(.black) }
+                            Text(busy ? "Creating…" : "Create an account").fontWeight(.heavy)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 15)
+                    }
+                    .background(busy ? Ink.gold.opacity(0.4) : Ink.gold, in: RoundedRectangle(cornerRadius: 12))
+                    .foregroundStyle(.black)
+                    .disabled(busy)
+
+                    Text("No wallet, no email, no password — the account belongs to this app. "
+                         + "You can connect a crypto wallet to it later from Account, and you will "
+                         + "need to if you ever want to trade what you find.")
+                        .font(.footnote)
+                        .foregroundStyle(Ink.dim)
+
+                    Divider().overlay(Ink.line).padding(.vertical, 4)
+
+                    Button("I already have a Chikoria account") { withAnimation { hasCode = true } }
+                        .font(.callout.weight(.semibold))
+                        .foregroundStyle(Ink.gold)
+
+                    if !model.policyIsLive {
+                        Label("Still connecting to the realm…", systemImage: "antenna.radiowaves.left.and.right")
+                            .font(.footnote)
+                            .foregroundStyle(Ink.dim)
+                    }
+
+                    Spacer(minLength: 0)
+                }
+
+                if hasCode {
+                Text("Chikoria on this iPhone plays the account you already have. "
+                     + "Everything you own comes with you, and everything you gather here is waiting when you get back.")
+                    .foregroundStyle(Ink.dim)
 
                 VStack(alignment: .leading, spacing: 10) {
                     Text("1 · On a computer or tablet, open **chikimonsters.com/link**")
@@ -190,11 +259,32 @@ struct PairingView: View {
                         .font(.footnote)
                         .foregroundStyle(Ink.dim)
                 }
+
+                Button("Back") { withAnimation { hasCode = false; error = nil } }
+                    .font(.callout.weight(.semibold))
+                    .foregroundStyle(Ink.dim)
+                }
             }
             .padding(24)
         }
         .background(Ink.bg)
-        .onAppear { focused = true }
+        // The single-parameter form on purpose: the two-parameter onChange is iOS 17, and this
+        // target is 16.0. Focusing the field only when the code box is the thing on screen —
+        // opening the keyboard over the welcome screen would cover its primary button.
+        .onChange(of: hasCode) { now in focused = now }
+    }
+
+    private func create() {
+        busy = true
+        error = nil
+        Task {
+            do {
+                _ = try await model.createAccount()
+            } catch {
+                self.error = error.localizedDescription
+            }
+            busy = false
+        }
     }
 
     private func submit() {
@@ -217,6 +307,12 @@ struct AccountView: View {
     @ObservedObject var model: ShellModel
     @Environment(\.dismiss) private var dismiss
     @State private var confirmDelete = false
+    @State private var confirmUnlink = false
+    @State private var deleteNote: String?
+    @State private var claim: String?
+    @State private var claimSeconds = 0
+    @State private var claimBusy = false
+    @State private var claimError: String?
 
     var body: some View {
         NavigationStack {
@@ -243,28 +339,86 @@ struct AccountView: View {
                     }
                 }
 
+                // ONLY FOR AN ACCOUNT THE APP MADE. A player who paired already has a wallet, and
+                // offering to connect one would be nonsense; the policy layer answers `walletless`
+                // from what it wrote down when it created the account.
+                if model.activeIsWalletless {
+                    Section {
+                        if let claim {
+                            VStack(alignment: .leading, spacing: 10) {
+                                Text(claim).font(.system(size: 30, weight: .bold, design: .monospaced))
+                                    .kerning(6).frame(maxWidth: .infinity).foregroundStyle(Ink.gold)
+                                Text("1 · On the device that has your wallet, open **chikimonsters.com/link**\n"
+                                     + "2 · Sign in with your wallet\n"
+                                     + "3 · Enter this code under **Connect an app account**")
+                                    .font(.callout).foregroundStyle(.secondary)
+                                // A code that has quietly expired looks exactly like a live one,
+                                // and the failure it causes appears on the OTHER device — so say
+                                // how long it has, and offer a fresh one rather than making the
+                                // player work out that that is what they need.
+                                Text("This code lasts about \(max(1, claimSeconds / 60)) minutes and works once.")
+                                    .font(.footnote).foregroundStyle(.secondary)
+                                HStack(spacing: 16) {
+                                    Button("Copy code") { UIPasteboard.general.string = claim }
+                                    Button("New code") { claim = nil; connect() }
+                                }
+                            }
+                            .padding(.vertical, 4)
+                        } else {
+                            Button(claimBusy ? "Getting a code…" : "Connect a wallet") { connect() }
+                                .disabled(claimBusy)
+                        }
+                        if let claimError {
+                            Text(claimError).foregroundStyle(Ink.bad).font(.callout)
+                        }
+                    } header: {
+                        Text("Trading")
+                    } footer: {
+                        // Says what it costs and what it buys, and points at no destination the
+                        // player has not already got. The app never opens this link itself.
+                        Text("Your account was made here, so nothing can sign for it — which is why "
+                             + "trading is not available in the app. Connecting a crypto wallet moves "
+                             + "this account, and everything on it, onto that wallet. It is a one-way "
+                             + "change, and it is also how you keep your account if you lose this "
+                             + "iPhone.")
+                    }
+                }
+
                 Section {
-                    Button("Link another account") {
-                        model.forgetAll()   // returns to pairing; the realm reloads unlinked
-                        dismiss()
-                    }
-                    Button("Unlink this iPhone", role: .destructive) {
-                        model.forgetAll()
-                        dismiss()
-                    }
+                    Button("Link another account") { confirmUnlink = true }
+                    Button("Unlink this iPhone", role: .destructive) { confirmUnlink = true }
                 } footer: {
-                    Text("Unlinking removes this device’s access. Your account and everything on it "
-                         + "are untouched, and you can link again with a new code.")
+                    // THE FOOTER IS NOT THE SAME SENTENCE FOR BOTH KINDS OF ACCOUNT, because the
+                    // button does not do the same thing. Unlinking a PAIRED device removes this
+                    // phone's access and nothing else — the account is a wallet and the wallet
+                    // still exists. Unlinking an account the APP made destroys it: the credential
+                    // on this device is the only way into it that will ever exist, nothing can
+                    // sign for its address, and there is no code to link again with. The old copy
+                    // promised the reassuring version to both.
+                    Text(model.activeIsWalletless
+                         ? "This account was made on this iPhone and the only key to it is here. "
+                           + "Unlinking loses it for good. Connect a wallet first if you want to keep it."
+                         : "Unlinking removes this device’s access. Your account and everything on it "
+                           + "are untouched, and you can link again with a new code.")
                 }
 
                 Section {
                     Button("Delete my account…", role: .destructive) { confirmDelete = true }
+                    if let deleteNote {
+                        Text(deleteNote).font(.callout).foregroundStyle(.secondary)
+                    }
                 } footer: {
                     // App Review requires an in-app deletion path for any app with accounts.
-                    // A Chikoria account IS a wallet, which this app cannot prove ownership of —
-                    // so deletion is a request the server honours, not something the device does.
-                    Text("Deleting removes your Chikoria progress from our servers. Assets held "
-                         + "on-chain belong to your wallet and are not affected.")
+                    // The sentence differs by account kind and the difference is not cosmetic: an
+                    // account the app made has no wallet and cannot hold anything on-chain, so
+                    // promising that its on-chain assets are safe describes assets that do not
+                    // exist and quietly implies its progress might survive somewhere. It does not.
+                    Text(model.activeIsWalletless
+                         ? "This account was made in the app and has no wallet behind it, so "
+                           + "deleting it removes everything on it. There is nothing held on-chain "
+                           + "to keep."
+                         : "Deleting removes your Chikoria progress from our servers. Assets held "
+                           + "on-chain belong to your wallet and are not affected.")
                 }
 
                 Section("Support") {
@@ -278,13 +432,59 @@ struct AccountView: View {
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
             .alert("Delete your Chikoria account?", isPresented: $confirmDelete) {
                 Button("Cancel", role: .cancel) {}
-                Button("Delete", role: .destructive) { model.requestAccountDeletion() }
+                Button("Delete", role: .destructive) {
+                    Task {
+                        do {
+                            _ = try await model.requestAccountDeletion()
+                            deleteNote = "Your account is scheduled for deletion. Signing in again "
+                                + "before it completes cancels it."
+                            dismiss()
+                        } catch {
+                            // Say so. The old code signed the device out whatever the server
+                            // answered, which showed a deletion that had not happened.
+                            deleteNote = error.localizedDescription
+                        }
+                    }
+                }
             } message: {
-                Text("This asks us to delete your Chikoria progress permanently. It cannot be undone. "
-                     + "Assets held on-chain stay in your wallet.")
+                Text(model.activeIsWalletless
+                     ? "This asks us to delete this account and everything on it, permanently. "
+                       + "It was made in the app, so there is nothing kept anywhere else."
+                     : "This asks us to delete your Chikoria progress permanently. It cannot be undone. "
+                       + "Assets held on-chain stay in your wallet.")
+            }
+            .alert(model.activeIsWalletless ? "Lose this account?" : "Unlink this iPhone?",
+                   isPresented: $confirmUnlink) {
+                Button("Cancel", role: .cancel) {}
+                Button(model.activeIsWalletless ? "Lose it" : "Unlink", role: .destructive) {
+                    model.forgetAll()
+                    dismiss()
+                }
+            } message: {
+                Text(model.activeIsWalletless
+                     ? "This account was made on this iPhone and the key to it is only here. "
+                       + "Unlinking loses it permanently — there is no code that can bring it back. "
+                       + "If you want to keep it, connect a wallet first."
+                     : "This removes this device’s access. Your account is untouched and you can "
+                       + "link again with a new code from the website.")
             }
         }
         .preferredColorScheme(.dark)
+    }
+
+    private func connect() {
+        claimBusy = true
+        claimError = nil
+        Task {
+            do {
+                let got = try await model.connectWallet()
+                claim = got.code
+                claimSeconds = got.seconds
+            } catch {
+                claimError = error.localizedDescription
+            }
+            claimBusy = false
+        }
     }
 
     private func short(_ s: String) -> String {

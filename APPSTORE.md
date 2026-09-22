@@ -19,7 +19,40 @@ app now refuses every chat route. See §2.)
 | **No screenshots or preview video** | Both must be captured from the running app. They cannot be drawn, and faking them is a rejection *and* a guideline violation. | You, once a build runs |
 | **The app still shows a shop** | Until the iOS pack is published: a player can walk to the Trading Post and open a marketplace with a `🪄 Magic Eden` tab, the welcome screen's main button is *Connect Phantom Wallet*, and the Chikiseum says *"champions win real SOL"*. Every button refuses — but 3.1.1 is about what an app **presents**. | **Built and verified** — publish `index.pck.ios.lite.*` to `realm/`. The website's packs are untouched. |
 
-Two product decisions are also unmade and are yours: **the 500k $CHIKI gate** (`IOS-APP.md`) and **what account deletion does** on a wallet-backed account.
+One product decision is still yours: **what account deletion does** on a wallet-backed account. (An
+account the *app* made now deletes cleanly — there is no wallet behind it and nothing on-chain to
+orphan, so 5.1.1(v) is satisfied for that kind outright.)
+
+**The 500,000 $CHIKI gate is settled and gone from the app** (owner, 2026-09-22). An App Store build
+may not ask a player to go and acquire half a million of a token somewhere else before it will let
+them play. A player now either creates an account in the app — no wallet, no email, no password — or
+pairs the Phantom wallet they already have; either way the gate is waived for app sessions. **The
+website is unchanged** and still enforces the hold, and there is a test that fails if that stops
+being true.
+
+Note the shape, because the obvious version of this change is a trap twice over:
+
+* Setting `MIN_HOLD=0` would also have opened `/claim`, `/chat/send` and the ten 1,000,000 $CHIKI
+  quest winner slots, which re-read the hold for themselves. The waiver is scoped to *entry*.
+* Setting `/verify`'s `eligible` alone would have done nothing. The compiled pack does not read
+  `eligible` — `Onboarding` recomputes the gate from the balance against its own hardcoded 500,000
+  and only a `gateWaived` flag overrides it. Verified by decoding the shipped bytecode:
+  `Onboarding.gdc`'s identifier table contains `gateWaived` and `waived`, and does not contain
+  `eligible`. So the gate opens **with no pack rebuild**.
+
+### Two pack surfaces that are still unpatched
+
+Found by reading the compiled bytecode, and **not** caused by the account work. Both are 3.1.1
+risks, because 3.1.1 is about what an app *presents*, and both are drawn before any refusal happens:
+
+| Surface | Where | Status |
+| --- | --- | --- |
+| The **WALLET tab** in the info bar | `InfoBar._build_bar()` places it unconditionally; its popup `_build_wallet_new()` has no `ChikFeat` guard | **Not patched.** The welcome panel's wallet button *is*; this tab is a separate surface that was missed. |
+| The **Magic Eden sell rail** | `PlayerPanel.gd` — a marketplace tab and a full listing flow | **Not patched.** `PlayerPanel` is not in `OVERLAY_FILES` at all, so it is carried into the iOS pack unchanged. |
+
+Both need the recovered Godot project and a pack rebuild (`godot-patch/RECOVERY.md`), not a web
+deploy. Neither can be *used* — the network guard refuses every route behind them — but a reviewer
+who opens either one sees a wallet connect and a marketplace.
 
 ### The Godot problem, restated — the project is no longer missing
 
@@ -459,10 +492,11 @@ Nothing below can move ahead of the thing above it.
       node godot-patch/verify/loader-policy.test.mjs
       ```
       Expect `CHIKISEUM_CARD_EXPORT_REJECTED` at step 3 — it is a provenance gate, not a failure.
-- [ ] **Decide:** does an app player need the 500k $CHIKI hold
-- [ ] **Decide:** what account deletion does
+- [x] **Decided:** an app player does **not** need the 500k $CHIKI hold — the gate is waived for app sessions and unchanged on the website
 - [x] Backend: `/link/new`, `/link/redeem`, `linkToken` on `/verify`, `/link/devices`, `/link/revoke`, `/link/delete_account` — written and tested (50 checks against the real server), **awaiting merge + deploy**
-- [ ] **Decide** what account deletion actually removes. The request/grace/cancel flow is live; the execution step is deliberately unwired (`realmLink.due()` lists what is past its grace)
+- [x] Backend: `/account/new`, `/account/claim`, `/link/bind` — app-native accounts and connecting a wallet to one, tested against the real server
+- [ ] **Patch the pack's WALLET tab and `PlayerPanel`'s Magic Eden rail** (see above) — needs the recovered Godot project and a pack rebuild
+- [ ] **Decide** what account deletion actually removes **for a wallet-backed account**. The request/grace/cancel flow is live; the execution step is deliberately unwired (`realmLink.due()` lists what is past its grace). An app-made account has no such question — nothing of it lives anywhere but our database
 - [ ] Publish `link/` and `privacy/` (they are on the branch, not on `main`)
 - [x] Support page — `support/` is written
 - [ ] Create `support@chikimonsters.com` and `privacy@chikimonsters.com` (forwarding is fine) — both pages name them

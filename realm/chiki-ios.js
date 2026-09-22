@@ -96,6 +96,26 @@
 			ja: 'アプリではウォレット接続は使用しません。すでにご自身のアカウントでプレイ中です。',
 			zh: '应用内不使用钱包登录。你当前已在自己的账号中游玩。',
 		},
+		accountFail: {
+			en: 'Your account could not be created. Check your connection and try again.',
+			ja: 'アカウントを作成できませんでした。通信状況を確認して、もう一度お試しください。',
+			zh: '无法创建账号。请检查网络连接后重试。',
+		},
+		claimFail: {
+			en: 'That code could not be issued right now. Try again in a moment.',
+			ja: 'コードを発行できませんでした。少し時間をおいてお試しください。',
+			zh: '暂时无法生成代码，请稍后再试。',
+		},
+		notLinked: {
+			en: 'Create an account first.',
+			ja: 'まずアカウントを作成してください。',
+			zh: '请先创建账号。',
+		},
+		deleteFail: {
+			en: 'That request could not be sent. Check your connection and try again.',
+			ja: 'リクエストを送信できませんでした。通信状況を確認して、もう一度お試しください。',
+			zh: '无法发送该请求。请检查网络连接后重试。',
+		},
 	};
 
 	function T(key) {
@@ -124,6 +144,18 @@
 			platform: locked ? 'ios-app' : 'web',
 			account: locked ? 'link' : 'wallet',    // how the player signs in
 			pvp_mode: locked ? 'season' : 'wager',  // stake-free server-hosted, or SOL wagers
+
+			// HOW AN ACCOUNT COMES INTO EXISTENCE, which is the thing the app had no answer to.
+			// Pairing assumes the player already owns a wallet; most App Store players do not and
+			// should not have to. So the app can make one outright, and can later offer to put it
+			// on a real wallet. Both are false on the web, where connecting a wallet IS signing in.
+			//
+			// Every key here must exist in BOTH branches. ChikFeat.on() treats an unknown key as
+			// TRUE, so a key present in one branch and missing from the other does not read as
+			// false — it reads as "on", which for anything below would be exactly backwards.
+			account_create: !!locked,   // "Create an account" with no wallet anywhere in the flow
+			wallet_bind: !!locked,      // "Connect a wallet" — mints a claim code, typed on the site
+			can_sell: !locked,          // whether THIS client can turn anything back into money
 
 			// the gameplay the app ships — the whole point of the build
 			gathering: true,
@@ -160,7 +192,12 @@
 			marketplace: !locked,     // Magic Eden — SELLING, not earning
 			wagers: !locked,          // SOL stakes on a PvP match
 			token_purchase: !locked,
-			token_gate: !locked,      // holding 500k $CHIKI is not how you get into the app
+			// THE 500,000 $CHIKI ENTRY GATE IS OFF IN THE APP, and as of the /verify change it is
+			// off on the server too, not merely undrawn here: an app session comes back `eligible`
+			// whatever it holds. An App Store build may not ask a player to go and acquire half a
+			// million of a token somewhere else before it will let them play. The website is
+			// unchanged — this is an app policy, not a change to the game's economy.
+			token_gate: !locked,
 			story_payouts: !locked,   // chapters still pay; the $CHIKI is claimed on the website
 			asset_rewards: true,      // gathering, hatching, the temple and the arena all pay out
 			coin_pouch: true,         // in-game coins are not currency; they stay
@@ -798,8 +835,15 @@
 				kind: 'persist',
 				deviceId: deviceId(),
 				active: memActive,
+				// Listed field by field on purpose — this is what reaches the Keychain, and a blind
+				// spread would carry anything a future edit happened to hang on the object. Which
+				// is exactly why `appMade` has to be named here: it decides whether the shell
+				// offers "Connect a wallet", and an account that lost the flag on its way through
+				// this function would come back from a cold launch looking like a paired one.
 				accounts: (memAccounts || []).map(function (a) {
-					return { wallet: a.wallet, token: a.token, label: a.label || '', linkedAt: a.linkedAt || 0 };
+					var out = { wallet: a.wallet, token: a.token, label: a.label || '', linkedAt: a.linkedAt || 0 };
+					if (a.appMade) { out.appMade = true; }
+					return out;
 				}),
 			});
 		} catch (e) {}
@@ -815,7 +859,11 @@
 				memAccounts = seed.accounts
 					.filter(function (a) { return a && a.wallet && a.token; })
 					.map(function (a) {
-						return { wallet: String(a.wallet), token: String(a.token), label: String(a.label || ''), linkedAt: a.linkedAt || 0 };
+						var out = { wallet: String(a.wallet), token: String(a.token), label: String(a.label || ''), linkedAt: a.linkedAt || 0 };
+						// The other half of the round trip — see persistToShell. Dropping it here
+						// would lose the flag on every cold launch instead of every save.
+						if (a.appMade) { out.appMade = true; }
+						return out;
 					});
 				memActive = String(seed.active || (memAccounts[0] && memAccounts[0].wallet) || '');
 			} else if (seed.linkToken && seed.wallet) {
@@ -899,11 +947,42 @@
 				if (dead) { return linkRejected('rejected'); }
 				if (!res.ok) { return; }                       // 5xx: the server is unwell, not the token
 				res.clone().json().then(function (j) {
-					if (j && j.signedIn !== true) { linkRejected(String(j && j.code || 'rejected')); }
+					if (j && j.signedIn !== true) { linkRejected(String(j && j.code || 'rejected')); return; }
+					// THE ACCOUNT MOVED WHILE THIS DEVICE WAS ASLEEP. Connecting a wallet on the
+					// website retires the app-native address and puts the account on the real one;
+					// the server signed us in at the new address and said where it came from. Catch
+					// up quietly — the credential is the same one and still valid, so there is
+					// nothing for the player to do and nothing to tell them.
+					if (j && j.movedFrom && j.wallet && j.movedFrom !== j.wallet) {
+						rewriteWallet(String(j.movedFrom), String(j.wallet));
+					}
 				}).catch(function () {});
 			}).catch(function () { /* offline: not the token's fault, keep it */ });
 		} catch (e) {}
 		return promise;
+	}
+
+	/* Move a stored account from one address to another, keeping its credential.
+	 *
+	 * This is a RENAME, not a re-pair: the device token is unchanged and still works — the server
+	 * moved it with the account. So the entry keeps its token and loses `appMade`, which is what
+	 * stops the app going on offering "connect a wallet" for an account that now has one. */
+	function rewriteWallet(from, to) {
+		var list = loadAccounts();
+		var moved = false;
+		for (var i = 0; i < list.length; i++) {
+			if (list[i].wallet !== from) { continue; }
+			list[i].wallet = to;
+			delete list[i].appMade;
+			moved = true;
+		}
+		if (!moved) { return false; }
+		if (shellHolds) { memAccounts = list; memActive = to; persistToShell(); }
+		else { saveAccounts(list); setActive(to); }
+		// The shell keeps its own copy in the Keychain, keyed by wallet — it has to hear about this
+		// or the next cold launch hands back the retired address.
+		announce('rebound', { from: from, wallet: to });
+		return true;
 	}
 
 	var rejectedOnce = false;
@@ -1050,18 +1129,87 @@
 		return 'https://api.chikimonsters.com';
 	}
 
+	/* An app-native account's address is OFF the Ed25519 curve, which is what makes it impossible to
+	 * sign for and therefore impossible to sell from. The server decides that and says so
+	 * (`walletless` on the /verify envelope); this is a local, offline echo of the same fact so the
+	 * shell can draw the right screen before any request has come back.
+	 *
+	 * It is a HEURISTIC HERE and nothing gates on it. Checking a curve point needs the Ed25519 field
+	 * arithmetic, which is not worth shipping to a loading screen — so this leans on the one thing
+	 * that is true of every address this app ever mints and knowable without it: the app was the
+	 * thing that created it, so the app wrote it down. The server's answer always wins. */
+	function looksWalletless(wallet) {
+		var w = String(wallet || '');
+		if (!w) { return false; }
+		var hit = loadAccounts().filter(function (a) { return a.wallet === w; })[0];
+		return !!(hit && hit.appMade);
+	}
+
 	window.CHIK_LINK = {
-		/** {linked, wallet, accounts:[{wallet,label,linkedAt}], deviceId} — never the token. */
+		/** {linked, wallet, walletless, accounts:[{wallet,label,linkedAt}], deviceId} — never the token. */
 		status: function () {
 			var a = activeAccount();
 			return {
 				linked: !!a,
 				wallet: a ? a.wallet : '',
+				walletless: a ? looksWalletless(a.wallet) : false,
 				deviceId: deviceId(),
 				accounts: loadAccounts().map(function (x) {
-					return { wallet: x.wallet, label: x.label || '', linkedAt: x.linkedAt || 0 };
+					return { wallet: x.wallet, label: x.label || '', linkedAt: x.linkedAt || 0, appMade: !!x.appMade };
 				}),
 			};
+		},
+
+		/* Make an account, here, now, with no wallet and no website.
+		 *
+		 * This is the route that makes the App Store build usable by someone who has never held a
+		 * token, and it is why the 500,000 $CHIKI entry gate could be turned off for the app at all:
+		 * a gate you cannot ask an App Store player to pass is not a gate, it is a wall. Everything
+		 * earned on the account is real and stays on the server; what it cannot do is sell, because
+		 * there is no key in the world that can sign for its address. Connecting a wallet later is
+		 * `claim()` below, and it is the ONLY way this account ever gains that. */
+		create: function () {
+			return realFetch(apiBase() + '/account/new', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					device_id: deviceId(),
+					device_name: (window.CHIK_IOS_APP && window.CHIK_IOS_APP.deviceName) || 'iPhone',
+					client: 'ios-app',
+				}),
+			}).then(function (r) {
+				return r.json().catch(function () { return {}; }).then(function (j) {
+					if (!r.ok || !j.linkToken || !j.wallet) { throw new Error(j.error || T('accountFail')); }
+					var list = adopt(String(j.wallet), String(j.linkToken), String(j.label || ''));
+					// Remember that WE made this one. It is what looksWalletless reads, and it is
+					// what stops the app offering "connect a wallet" on a paired account.
+					for (var i = 0; i < list.length; i++) { if (list[i].wallet === j.wallet) { list[i].appMade = true; } }
+					if (shellHolds) { persistToShell(); } else { saveAccounts(list); }
+					announce('linked', { wallet: j.wallet, walletless: true });
+					return { wallet: String(j.wallet), walletless: true };
+				});
+			});
+		},
+
+		/* Ask for a code to type on the website, which is how an app account gains a real wallet.
+		 *
+		 * The direction is the opposite of redeem() and that is the whole point: there, the wallet
+		 * invites a device; here, the device offers its account. The server keeps the two kinds of
+		 * code in separate pools so that one can never be used as the other — typing somebody's
+		 * claim code into the pairing box must not hand over their account. */
+		claim: function () {
+			var a = activeAccount();
+			if (!a) { return Promise.reject(new Error(T('notLinked'))); }
+			return realFetch(apiBase() + '/account/claim', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ linkToken: a.token, device_id: deviceId() }),
+			}).then(function (r) {
+				return r.json().catch(function () { return {}; }).then(function (j) {
+					if (!r.ok || !j.code) { throw new Error(j.error || T('claimFail')); }
+					return { code: String(j.code), expiresIn: Number(j.expires_in) || 600 };
+				});
+			});
 		},
 
 		/** Redeem a code minted on chikimonsters.com/link/. Resolves to {wallet}. */
@@ -1085,6 +1233,29 @@
 					adopt(String(j.wallet), String(j.linkToken), String(j.label || ''));
 					announce('linked', { wallet: j.wallet });
 					return { wallet: String(j.wallet) };
+				});
+			});
+		},
+
+		/* App Store 5.1.1(v): ask the server to delete this account.
+		 *
+		 * IT LIVES HERE RATHER THAN IN THE SHELL because the request has to carry the device
+		 * credential, and the credential is the one thing this layer never hands out — not to the
+		 * shell's JavaScript, not to the pack, not to status(). The shell used to build this call
+		 * itself out of what status() gives it, which is a wallet and a device id and no proof of
+		 * anything: the server answered 401, the shell forgot the account anyway, and the player
+		 * was shown a deletion that had not happened. */
+		deleteAccount: function () {
+			var a = activeAccount();
+			if (!a) { return Promise.reject(new Error(T('notLinked'))); }
+			return realFetch(apiBase() + '/link/delete_account', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ linkToken: a.token, device_id: deviceId(), client: 'ios-app' }),
+			}).then(function (r) {
+				return r.json().catch(function () { return {}; }).then(function (j) {
+					if (!r.ok || j.accepted !== true) { throw new Error(j.error || T('deleteFail')); }
+					return { acceptedAt: String(j.completes_at || ''), graceDays: Number(j.grace_days) || 0 };
 				});
 			});
 		},

@@ -20,6 +20,14 @@ struct LinkRecord: Codable, Equatable {
         var token: String
         var label: String
         var linkedAt: Double
+        /// True when the app made this account itself, rather than pairing to a wallet the player
+        /// already had. It is what decides whether Account offers "Connect a wallet" — pairing
+        /// means they have one already, and offering again would be nonsense.
+        ///
+        /// Optional with a default so a record written by an earlier build still decodes: a
+        /// Keychain item survives app updates, and a non-optional new field would have made every
+        /// existing install fail to load and look like being signed out.
+        var appMade: Bool? = nil
     }
 
     var deviceId: String
@@ -47,7 +55,8 @@ struct LinkRecord: Codable, Equatable {
             "deviceId": deviceId,
             "active": active,
             "accounts": accounts.map {
-                ["wallet": $0.wallet, "token": $0.token, "label": $0.label, "linkedAt": $0.linkedAt]
+                ["wallet": $0.wallet, "token": $0.token, "label": $0.label, "linkedAt": $0.linkedAt,
+                 "appMade": $0.appMade ?? false]
             },
         ]
     }

@@ -99,6 +99,9 @@ final class ShellModel: NSObject, ObservableObject {
 
     var isLinked: Bool { record.isLinked }
     var activeWallet: String { record.activeAccount?.wallet ?? "" }
+    /// Whether the account being played is one the app made (so it has no wallet behind it and
+    /// cannot trade) rather than one paired to a wallet the player already had.
+    var activeIsWalletless: Bool { record.activeAccount?.appMade == true }
 
     // MARK: - Constants
 
@@ -291,21 +294,17 @@ final class ShellModel: NSObject, ObservableObject {
         // arrives as an opaque WKError and the player would see nothing useful.
         // Built by concatenation rather than String(format:) — a stray % in a future edit of this
         // script would be read as a format specifier and corrupt the call.
+        // An async function BODY for callAsyncJavaScript — no IIFE, and `code` arrives as a real
+        // argument rather than being interpolated into source, so a stray quote in it is data.
         let js = """
-        (async function () {
-          try {
-            var r = await window.CHIK_LINK.redeem(
+        try {
+          var r = await window.CHIK_LINK.redeem(code);
+          return { ok: true, wallet: r.wallet };
+        } catch (e) {
+          return { ok: false, error: String((e && e.message) || e) };
+        }
         """
-            + Self.jsString(code)
-            + """
-        );
-            return { ok: true, wallet: r.wallet };
-          } catch (e) {
-            return { ok: false, error: String((e && e.message) || e) };
-          }
-        })()
-        """
-        let result = try await evaluate(js)
+        let result = try await evaluate(js, ["code": code])
 
         guard let dict = result as? [String: Any] else {
             throw ShellError.message("The app could not reach the game. Try again.")
@@ -318,6 +317,58 @@ final class ShellModel: NSObject, ObservableObject {
             return wallet
         }
         throw ShellError.message(dict["error"] as? String ?? "That code did not work.")
+    }
+
+    /// Make an account here and now, with no wallet and no website.
+    ///
+    /// This is the path most App Store players will take, and the reason the realm's 500,000
+    /// $CHIKI entry gate is off in the app: a gate that can only be passed by acquiring a token
+    /// somewhere else is not a gate an App Store build may have. What this account cannot do is
+    /// sell — nothing can sign for its address, by construction — and `connectWallet` below is how
+    /// a player who wants that changes it.
+    func createAccount() async throws -> String {
+        let js = """
+        try {
+          var r = await window.CHIK_LINK.create();
+          return { ok: true, wallet: r.wallet };
+        } catch (e) {
+          return { ok: false, error: String((e && e.message) || e) };
+        }
+        """
+        let result = try await evaluate(js)
+        guard let dict = result as? [String: Any] else {
+            throw ShellError.message("The app could not reach the game. Try again.")
+        }
+        if dict["ok"] as? Bool == true, let wallet = dict["wallet"] as? String {
+            phase = .booting
+            webView.reload()
+            return wallet
+        }
+        throw ShellError.message(dict["error"] as? String ?? "Your account could not be created.")
+    }
+
+    /// Ask for the code the player types on the website to put this account on a real wallet.
+    ///
+    /// Deliberately returns a code to READ OUT rather than a link to tap. The app does not send
+    /// anyone anywhere; the player goes to the website themselves, on whatever device holds their
+    /// wallet, because that is the only device that can sign.
+    func connectWallet() async throws -> (code: String, seconds: Int) {
+        let js = """
+        try {
+          var r = await window.CHIK_LINK.claim();
+          return { ok: true, code: r.code, seconds: r.expiresIn };
+        } catch (e) {
+          return { ok: false, error: String((e && e.message) || e) };
+        }
+        """
+        let result = try await evaluate(js)
+        guard let dict = result as? [String: Any] else {
+            throw ShellError.message("The app could not reach the game. Try again.")
+        }
+        if dict["ok"] as? Bool == true, let code = dict["code"] as? String {
+            return (code, dict["seconds"] as? Int ?? 600)
+        }
+        throw ShellError.message(dict["error"] as? String ?? "That code could not be issued.")
     }
 
     /// Switch account. The page calls `location.reload()` itself, so do NOT await a reply — the
@@ -358,35 +409,60 @@ final class ShellModel: NSObject, ObservableObject {
     /// that is the whole design. So the device cannot authorise a destructive account action by
     /// itself: it asks, holding a link token that authorises play and nothing more, and the server
     /// decides. The route does not exist yet; IOS-APP.md carries the contract it needs.
-    func requestAccountDeletion() {
+    /// App Store 5.1.1(v). Returns when the SERVER has accepted the request, and throws when it
+    /// has not.
+    ///
+    /// It used to build the request here, out of `CHIK_LINK.status()` — a wallet and a device id,
+    /// and no proof of anything. `/link/delete_account` wants the device credential, which this
+    /// side is never given, so the server answered 401 every time; the old code ignored the result
+    /// and signed the device out regardless, which showed the player a deletion that had not
+    /// happened and left the account untouched on the server. Worse than not offering it.
+    ///
+    /// So the policy layer makes the call (it holds the credential) and this waits for the answer.
+    /// The device is only forgotten once the server has said yes.
+    func requestAccountDeletion() async throws -> String {
         let js = """
-        (async function () {
-          try {
-            var s = window.CHIK_LINK.status();
-            var r = await fetch('https://api.chikimonsters.com/link/delete_account', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ wallet: s.wallet, device_id: s.deviceId, client: 'ios-app' })
-            });
-            return { ok: r.ok, status: r.status };
-          } catch (e) { return { ok: false, error: String(e) }; }
-        })()
-        """
-        webView.evaluateJavaScript(js) { [weak self] _, _ in
-            Task { @MainActor in
-                // Whatever the server does with the request, this device is done with the account.
-                self?.forgetAll()
-            }
+        try {
+          var r = await window.CHIK_LINK.deleteAccount();
+          return { ok: true, completes: r.acceptedAt, days: r.graceDays };
+        } catch (e) {
+          return { ok: false, error: String((e && e.message) || e) };
         }
+        """
+        let result = try await evaluate(js)
+        guard let dict = result as? [String: Any] else {
+            throw ShellError.message("The app could not reach the game. Try again.")
+        }
+        guard dict["ok"] as? Bool == true else {
+            throw ShellError.message(dict["error"] as? String ?? "That request could not be sent.")
+        }
+        forgetAll()
+        return dict["completes"] as? String ?? ""
     }
 
     /// Every JavaScript body ends in a value. `evaluateJavaScript` on a body that returns
     /// `undefined` is reported as an error on some releases, which reads as a failure that is not.
-    private func evaluate(_ js: String) async throws -> Any {
+    /// Run an async JavaScript body in the page and wait for what it RESOLVES to.
+    ///
+    /// `callAsyncJavaScript`, not `evaluateJavaScript`, and the difference is not a style choice.
+    /// `evaluateJavaScript` hands back whatever the script evaluates to and makes no attempt to
+    /// await it: given an async function it gets a Promise, which is not a type WebKit can
+    /// serialise across to Swift, so the completion fires with nil or a WKError and the value the
+    /// script eventually produced is dropped on the floor. Every call here is a network round trip
+    /// whose answer is the entire point — a redeemed code, a new account, a claim code — so each
+    /// one silently returned "the app could not reach the game" no matter how well it went.
+    ///
+    /// `callAsyncJavaScript` treats the string as an async function BODY: `await` and `return`
+    /// work directly, there is no IIFE to wrap, and the returned promise is awaited before the
+    /// completion handler runs. `.page` world so the script sees `window.CHIK_LINK`, which
+    /// chiki-ios.js defines in the page's own world.
+    private func evaluate(_ js: String, _ args: [String: Any] = [:]) async throws -> Any {
         try await withCheckedThrowingContinuation { continuation in
-            webView.evaluateJavaScript(js) { value, error in
-                if let error { continuation.resume(throwing: error) }
-                else { continuation.resume(returning: value ?? NSNull()) }
+            webView.callAsyncJavaScript(js, arguments: args, in: nil, in: .page) { result in
+                switch result {
+                case .success(let value): continuation.resume(returning: value ?? NSNull())
+                case .failure(let error): continuation.resume(throwing: error)
+                }
             }
         }
     }
@@ -425,6 +501,15 @@ final class ShellModel: NSObject, ObservableObject {
         case "unlinked":
             record = LinkKeychain.load() ?? record
             if !record.isLinked { phase = .pairing(nil) }
+
+        case "rebound":
+            // The account moved onto a real wallet while this device was away — connecting a
+            // wallet on the website does that. The credential is unchanged and still works, so
+            // there is nothing to do but let the persist that came with it stand: the address is
+            // new and `appMade` is gone, which is what stops Account offering to connect a wallet
+            // to an account that now has one. Nothing is said to the player; from their side this
+            // is the thing they just asked for, already done.
+            record = LinkKeychain.load() ?? record
 
         case "link-rejected":
             // The token is dead server-side. Clear it and send the player back to pairing with a
@@ -468,7 +553,8 @@ final class ShellModel: NSObject, ObservableObject {
                 wallet: wallet,
                 token: token,
                 label: entry["label"] as? String ?? "",
-                linkedAt: (entry["linkedAt"] as? Double) ?? 0
+                linkedAt: (entry["linkedAt"] as? Double) ?? 0,
+                appMade: entry["appMade"] as? Bool
             )
         }
 
