@@ -1405,6 +1405,18 @@ h3 {
   mask-image: linear-gradient(to bottom, #000 0%, #000 42%, transparent 65%);
   --ambient-opacity: .19;
 }
+/* The Chikoria clip is a camera move, not an ambient loop: its first frame IS
+   the painted still, and the camera then walks forward. Blending it at 19%
+   over that still showed every island twice — once in the painting and once
+   drifting in the clip. Here the clip is the scene: opaque, unmasked, full
+   frame. The painting remains underneath for phones and for the load. */
+.journey-scene-realm .scene-motion {
+  clip-path: none;
+  -webkit-mask-image: none;
+  mask-image: none;
+  mix-blend-mode: normal;
+  --ambient-opacity: 1;
+}
 .journey-scene-gathering .scene-motion {
   /* Only the open center of the river; companions stand at its edges. */
   clip-path: ellipse(26% 17% at 62% 47%);

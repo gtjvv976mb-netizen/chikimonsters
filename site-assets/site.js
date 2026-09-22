@@ -43,6 +43,17 @@
       video.classList.add("is-active");
     });
     video.addEventListener("pause", () => video.classList.remove("is-active"));
+    // A clip without `loop` is a one-way camera move. Snapping from its last
+    // frame back to its first would be a cut, so it fades to the painted still
+    // (which is its first frame) and walks again from there.
+    video.addEventListener("ended", () => {
+      video.classList.remove("is-active");
+      setTimeout(() => {
+        if (activeAmbient !== video || !canPlayAmbient()) return;
+        video.currentTime = 0;
+        video.play().catch(() => {});
+      }, 900);
+    });
     video.addEventListener("error", () => {
       video.dataset.failed = "1";
       video.dataset.requested = "";
