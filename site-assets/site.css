@@ -105,12 +105,14 @@ em {
     box-shadow 0.25s;
   border-bottom: 1px solid transparent;
 }
+/* No backdrop blur here on purpose. The header sits over the moving world
+   stage, and an 18px backdrop blur is re-rendered for every frame that stage
+   moves — every scroll step. At 95% opacity the blur was invisible anyway. */
 .site-header.is-scrolled,
 .site-header.menu-open {
-  background: rgba(15, 10, 34, 0.92);
+  background: rgba(15, 10, 34, 0.95);
   border-color: var(--line);
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.22);
-  backdrop-filter: blur(18px);
 }
 .nav-shell {
   height: 100%;
@@ -1348,7 +1350,6 @@ h3 {
   pointer-events: none;
   opacity: 0;
   mix-blend-mode: screen;
-  filter: saturate(1.04);
   transition: opacity .45s ease;
 }
 .ambient-motion.is-ready.is-active { opacity: var(--ambient-opacity, .2); }

@@ -180,10 +180,14 @@
   let scrollFrame = 0;
   let beatTops = [];
   let trackEnd = 0;
+  // These clips are scrubbed by scroll position, not played. Every seek decodes
+  // from the previous keyframe, so they are encoded with a keyframe every four
+  // frames; the standard encode (one every 29) made each scroll step a 29-frame
+  // decode and was the main source of stutter through the doorways.
   const transitionClips = [
-    "/site-assets/world-travel-realm-gathering.mp4",
-    "/site-assets/world-travel-gathering-temple.mp4",
-    "/site-assets/world-travel-temple-arena.mp4",
+    "/site-assets/world-travel-realm-gathering-seek.mp4",
+    "/site-assets/world-travel-gathering-temple-seek.mp4",
+    "/site-assets/world-travel-temple-arena-seek.mp4",
   ];
   let travelIndex = -1;
   const failedTravel = new Set();
@@ -201,7 +205,14 @@
     scheduleScroll();
   }
 
+  // Style writes are skipped when nothing changed: the three idle scenes are
+  // reset every frame, and rewriting five custom properties on each of them
+  // forced a style recalculation of the whole stage on every scroll step.
+  const cameraMemo = new WeakMap();
   function setCamera(scene, opacity, scale, x, y, tilt, activeClass = "") {
+    const key = `${opacity.toFixed(3)}|${scale.toFixed(4)}|${x.toFixed(1)}|${y.toFixed(1)}|${tilt.toFixed(2)}|${activeClass}`;
+    if (cameraMemo.get(scene) === key) return;
+    cameraMemo.set(scene, key);
     scene.style.setProperty("--scene-opacity", opacity.toFixed(3));
     scene.style.setProperty("--camera-scale", scale.toFixed(4));
     scene.style.setProperty("--camera-x", `${x.toFixed(1)}px`);
@@ -228,7 +239,10 @@
     }
     const duration = Number.isFinite(travelVideo.duration) ? travelVideo.duration : 5;
     const targetTime = clamp(progress) * Math.max(0, duration - 0.04);
-    if (Math.abs(travelVideo.currentTime - targetTime) > 0.055) travelVideo.currentTime = targetTime;
+    // One seek in flight at a time. Piling a new seek onto every frame while the
+    // decoder was still on the last one is what made the doorway clips judder;
+    // the "seeked" listener above schedules the catch-up frame.
+    if (!travelVideo.seeking && Math.abs(travelVideo.currentTime - targetTime) > 0.055) travelVideo.currentTime = targetTime;
     const fade = Math.min(smoothstep(progress / .075), smoothstep((1 - progress) / .075));
     worldStage.style.setProperty("--travel-opacity", fade.toFixed(3));
     return true;
@@ -280,12 +294,15 @@
       const move = wide ? 1 : .48;
       const forward = smoothstep(t);
       const switchScene = t < .5 ? 0 : 1;
+      // No tilt on phones: a rotateX of even a fraction of a degree is a
+      // perspective transform, and a full-screen 3x-density scene under one is
+      // re-rasterised on every scroll step instead of just moved by the GPU.
       setCamera(outgoing, 1 - switchScene, 1.17 + forward * (wide ? .62 : .26),
         -forward * width * .07 * move, -forward * viewport * .055 * move,
-        forward * (wide ? 2.8 : .9), "active");
+        wide ? forward * 2.8 : 0, "active");
       setCamera(incoming, switchScene, (wide ? 1.31 : 1.13) - forward * (wide ? .22 : .09),
         (1 - forward) * width * .045 * move, (1 - forward) * viewport * .035 * move,
-        -(1 - forward) * (wide ? 1.8 : .6), "next");
+        wide ? -(1 - forward) * 1.8 : 0, "next");
       const clipVisible = syncTravel(transitionIndex, t);
       const distanceFromMiddle = 1 - Math.abs(t * 2 - 1);
       const threshold = clipVisible ? .12 * smoothstep(distanceFromMiddle) : smoothstep(distanceFromMiddle);
@@ -301,7 +318,7 @@
       const travel = smoothstep(local);
       setCamera(scenes[sceneIndex], 1, 1.045 + travel * (wide ? .125 : .055),
         -travel * width * (wide ? .034 : .012), -travel * viewport * (wide ? .028 : .012),
-        travel * (wide ? 1.1 : .3), "active");
+        wide ? travel * 1.1 : 0, "active");
       const stageVisible = y + viewport > beatTops[0] && y < trackEnd - viewport * .25;
       useAmbient(canPlayAmbient() && stageVisible ? sceneAmbients[sceneIndex] : null);
       if (sceneIndex < scenes.length - 1 && y > segmentEnd - viewport * .5) prepareTravel(sceneIndex);
@@ -314,6 +331,7 @@
   }
   function clearSceneTransforms() {
     for (const scene of scenes) {
+      cameraMemo.delete(scene);
       for (const property of ["--scene-opacity", "--camera-scale", "--camera-x", "--camera-y", "--camera-tilt"]) scene.style.removeProperty(property);
       scene.classList.remove("is-camera-active", "is-camera-next");
     }
