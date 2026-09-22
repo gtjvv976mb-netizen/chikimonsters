@@ -35,8 +35,10 @@
       as="image"
       fetchpriority="high"
     />
-    <link rel="stylesheet" href="/site-assets/site.css?v=journey-20260922" />
-    <script src="/site-assets/site.js?v=journey-20260922" defer></script>
+    <link rel="stylesheet" href="/site-assets/site.css?v=codex-20260922" />
+    <script src="/site-assets/site.js?v=codex-20260922" defer></script>
+    <script src="/site-assets/legends.js?v=codex-20260922" defer></script>
+      <noscript><style>.codex-panel[hidden] { display: block; } .codex-tabs { display: none; }</style></noscript>
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
@@ -215,95 +217,229 @@
             <p class="kicker">01 / THE CREATURES</p>
             <h2 id="chikimons-title">Meet the <em>Chikimons</em></h2>
             <p>
-              No two adventures feel the same when every companion brings its
-              own personality to the world.
+              Every companion carries one of Chikoria's five hearths. Open any
+              card to turn it in 3D and read its legend.
             </p>
           </div>
-          <div class="creature-grid">
-            <article class="creature-card creature-card-fire reveal">
-              <div class="creature-card-glow" aria-hidden="true"></div>
-              <div class="creature-card-art">
-                <img
-                  class="creature-dex"
-                  src="/site-assets/dex-firix.webp"
-                  width="540"
-                  height="540"
-                  alt="Firix, a fiery Chikimon"
-                  loading="lazy"
-                  decoding="async"
-                />
-              </div>
-              <div class="creature-card-copy">
-                <span class="creature-number">01 / FIRE</span>
-                <h3 id="firix-card-name">Firix</h3>
-                <p>A little spark with a fearless heart.</p>
-              </div>
-            </article>
-            <article class="creature-card creature-card-dragon reveal">
-              <div class="creature-card-glow" aria-hidden="true"></div>
-              <div class="creature-card-art">
-                <img
-                  class="creature-dex"
-                  src="/site-assets/dex-dragonos.webp"
-                  width="540"
-                  height="540"
-                  alt="Dragonos, a dragon Chikimon"
-                  loading="lazy"
-                  decoding="async"
-                />
-              </div>
-              <div class="creature-card-copy">
-                <span class="creature-number">02 / DRAGON</span>
-                <h3 id="dragonos-card-name">Dragonos</h3>
-                <p>Power, pride, and a sky full of possibility.</p>
-              </div>
-            </article>
-            <article class="creature-card creature-card-gold reveal">
-              <div class="creature-card-glow" aria-hidden="true"></div>
-              <div class="creature-card-art">
-                <img
-                  class="creature-dex"
-                  src="/site-assets/dex-galador.webp"
-                  width="540"
-                  height="540"
-                  alt="Galador, a blue legendary Chikimon"
-                  loading="lazy"
-                  decoding="async"
-                />
-              </div>
-              <div class="creature-card-copy">
-                <span class="creature-number">03 / LEGENDARY</span>
-                <h3 id="galador-card-name">Galador</h3>
-                <p>A guardian born to make its mark.</p>
-              </div>
-            </article>
+          <div class="codex-tabs" role="tablist" aria-label="Chikoria codex">
+            <button class="codex-tab" type="button" role="tab" id="tab-chikimon" aria-controls="panel-chikimon" aria-selected="true">Chikimons <span class="codex-tab-count">15</span></button>
+            <button class="codex-tab" type="button" role="tab" id="tab-avatar" aria-controls="panel-avatar" aria-selected="false" tabindex="-1">Avatars <span class="codex-tab-count">10</span></button>
+            <button class="codex-tab" type="button" role="tab" id="tab-mount" aria-controls="panel-mount" aria-selected="false" tabindex="-1">Chikimounts <span class="codex-tab-count">12</span></button>
           </div>
-          <div class="roster-section" aria-labelledby="roster-title">
-            <div class="roster-head">
-              <div>
-                <p class="kicker">MORE TO MEET IN CHIKORIA</p>
-                <h3 id="roster-title">Who will you <em>find next?</em></h3>
-              </div>
-              <div class="roster-controls" hidden>
-                <button class="roster-arrow" type="button" data-roster-dir="-1" aria-label="Previous Chikimons">←</button>
-                <button class="roster-arrow" type="button" data-roster-dir="1" aria-label="Next Chikimons">→</button>
-              </div>
+          <div class="codex-panel" id="panel-chikimon" role="tabpanel" aria-labelledby="tab-chikimon" tabindex="0">
+            <div class="creature-grid">
+              <article class="creature-card reveal" data-element="fire">
+                <div class="creature-card-glow" aria-hidden="true"></div>
+                <div class="creature-card-art">
+                  <img class="creature-dex" src="/site-assets/dex-firix.webp" width="720" height="720" alt="Firix, a fire Chikimon" loading="lazy" decoding="async" />
+                </div>
+                <div class="creature-card-copy">
+                  <span class="creature-number">01 / FIRE</span>
+                  <h3 id="firix-card-name">Firix</h3>
+                  <p>A little spark with a fearless heart.</p>
+                </div>
+                <button class="card-open" type="button" data-codex="chikimon:firix" aria-labelledby="firix-card-name" aria-haspopup="dialog">Open</button>
+              </article>
+              <article class="creature-card reveal" data-element="fire">
+                <div class="creature-card-glow" aria-hidden="true"></div>
+                <div class="creature-card-art">
+                  <img class="creature-dex" src="/site-assets/dex-dragonos.webp" width="720" height="720" alt="Dragonos, a fire Chikimon" loading="lazy" decoding="async" />
+                </div>
+                <div class="creature-card-copy">
+                  <span class="creature-number">02 / FIRE · LEGENDARY</span>
+                  <h3 id="dragonos-card-name">Dragonos</h3>
+                  <p>Warden of the Ember Ridge.</p>
+                </div>
+                <button class="card-open" type="button" data-codex="chikimon:dragonos" aria-labelledby="dragonos-card-name" aria-haspopup="dialog">Open</button>
+              </article>
+              <article class="creature-card reveal" data-element="water">
+                <div class="creature-card-glow" aria-hidden="true"></div>
+                <div class="creature-card-art">
+                  <img class="creature-dex" src="/site-assets/dex-galador.webp" width="720" height="720" alt="Galador, a water Chikimon" loading="lazy" decoding="async" />
+                </div>
+                <div class="creature-card-copy">
+                  <span class="creature-number">03 / WATER · LEGENDARY</span>
+                  <h3 id="galador-card-name">Galador</h3>
+                  <p>Guardian of the Chikoria River.</p>
+                </div>
+                <button class="card-open" type="button" data-codex="chikimon:galador" aria-labelledby="galador-card-name" aria-haspopup="dialog">Open</button>
+              </article>
+              <article class="creature-card reveal" data-element="light">
+                <div class="creature-card-glow" aria-hidden="true"></div>
+                <div class="creature-card-art">
+                  <img class="creature-dex" src="/site-assets/dex-adalor.webp" width="720" height="720" alt="Adalor, a light Chikimon" loading="lazy" decoding="async" />
+                </div>
+                <div class="creature-card-copy">
+                  <span class="creature-number">04 / LIGHT · LEGENDARY</span>
+                  <h3 id="adalor-card-name">Adalor</h3>
+                  <p>The Dawn Herald.</p>
+                </div>
+                <button class="card-open" type="button" data-codex="chikimon:adalor" aria-labelledby="adalor-card-name" aria-haspopup="dialog">Open</button>
+              </article>
+              <article class="creature-card reveal" data-element="light">
+                <div class="creature-card-glow" aria-hidden="true"></div>
+                <div class="creature-card-art">
+                  <img class="creature-dex" src="/site-assets/dex-astraya.webp" width="720" height="720" alt="Astraya, a light Chikimon" loading="lazy" decoding="async" />
+                </div>
+                <div class="creature-card-copy">
+                  <span class="creature-number">05 / LIGHT · LEGENDARY</span>
+                  <h3 id="astraya-card-name">Astraya</h3>
+                  <p>The wishing star.</p>
+                </div>
+                <button class="card-open" type="button" data-codex="chikimon:astraya" aria-labelledby="astraya-card-name" aria-haspopup="dialog">Open</button>
+              </article>
+              <article class="creature-card reveal" data-element="light">
+                <div class="creature-card-glow" aria-hidden="true"></div>
+                <div class="creature-card-art">
+                  <img class="creature-dex" src="/site-assets/dex-vesperos.webp" width="720" height="720" alt="Vesperos, a light Chikimon" loading="lazy" decoding="async" />
+                </div>
+                <div class="creature-card-copy">
+                  <span class="creature-number">06 / LIGHT · LEGENDARY</span>
+                  <h3 id="vesperos-card-name">Vesperos</h3>
+                  <p>The evening watch.</p>
+                </div>
+                <button class="card-open" type="button" data-codex="chikimon:vesperos" aria-labelledby="vesperos-card-name" aria-haspopup="dialog">Open</button>
+              </article>
+              <article class="creature-card reveal" data-element="fire">
+                <div class="creature-card-glow" aria-hidden="true"></div>
+                <div class="creature-card-art">
+                  <img class="creature-dex" src="/site-assets/dex-solvarex.webp" width="720" height="720" alt="Solvarex, a fire Chikimon" loading="lazy" decoding="async" />
+                </div>
+                <div class="creature-card-copy">
+                  <span class="creature-number">07 / FIRE · LEGENDARY</span>
+                  <h3 id="solvarex-card-name">Solvarex</h3>
+                  <p>The noon lion.</p>
+                </div>
+                <button class="card-open" type="button" data-codex="chikimon:solvarex" aria-labelledby="solvarex-card-name" aria-haspopup="dialog">Open</button>
+              </article>
+              <article class="creature-card reveal" data-element="water">
+                <div class="creature-card-glow" aria-hidden="true"></div>
+                <div class="creature-card-art">
+                  <img class="creature-dex" src="/site-assets/dex-borealon.webp" width="720" height="720" alt="Borealon, a water Chikimon" loading="lazy" decoding="async" />
+                </div>
+                <div class="creature-card-copy">
+                  <span class="creature-number">08 / WATER · LEGENDARY</span>
+                  <h3 id="borealon-card-name">Borealon</h3>
+                  <p>The frozen tide.</p>
+                </div>
+                <button class="card-open" type="button" data-codex="chikimon:borealon" aria-labelledby="borealon-card-name" aria-haspopup="dialog">Open</button>
+              </article>
+              <article class="creature-card reveal" data-element="water">
+                <div class="creature-card-glow" aria-hidden="true"></div>
+                <div class="creature-card-art">
+                  <img class="creature-dex" src="/site-assets/dex-crysalune.webp" width="720" height="720" alt="Crysalune, a water Chikimon" loading="lazy" decoding="async" />
+                </div>
+                <div class="creature-card-copy">
+                  <span class="creature-number">09 / WATER · LEGENDARY</span>
+                  <h3 id="crysalune-card-name">Crysalune</h3>
+                  <p>The moon moth.</p>
+                </div>
+                <button class="card-open" type="button" data-codex="chikimon:crysalune" aria-labelledby="crysalune-card-name" aria-haspopup="dialog">Open</button>
+              </article>
+              <article class="creature-card reveal" data-element="water">
+                <div class="creature-card-glow" aria-hidden="true"></div>
+                <div class="creature-card-art">
+                  <img class="creature-dex" src="/site-assets/dex-rivaros.webp" width="720" height="720" alt="Rivaros, a water Chikimon" loading="lazy" decoding="async" />
+                </div>
+                <div class="creature-card-copy">
+                  <span class="creature-number">10 / WATER · LEGENDARY</span>
+                  <h3 id="rivaros-card-name">Rivaros</h3>
+                  <p>Warden of the gathering banks.</p>
+                </div>
+                <button class="card-open" type="button" data-codex="chikimon:rivaros" aria-labelledby="rivaros-card-name" aria-haspopup="dialog">Open</button>
+              </article>
+              <article class="creature-card reveal" data-element="storm">
+                <div class="creature-card-glow" aria-hidden="true"></div>
+                <div class="creature-card-art">
+                  <img class="creature-dex" src="/site-assets/dex-grovador.webp" width="720" height="720" alt="Grovador, a storm Chikimon" loading="lazy" decoding="async" />
+                </div>
+                <div class="creature-card-copy">
+                  <span class="creature-number">11 / STORM · LEGENDARY</span>
+                  <h3 id="grovador-card-name">Grovador</h3>
+                  <p>The thunder grove.</p>
+                </div>
+                <button class="card-open" type="button" data-codex="chikimon:grovador" aria-labelledby="grovador-card-name" aria-haspopup="dialog">Open</button>
+              </article>
+              <article class="creature-card reveal" data-element="storm">
+                <div class="creature-card-glow" aria-hidden="true"></div>
+                <div class="creature-card-art">
+                  <img class="creature-dex" src="/site-assets/dex-horoxyn.webp" width="720" height="720" alt="Horoxyn, a storm Chikimon" loading="lazy" decoding="async" />
+                </div>
+                <div class="creature-card-copy">
+                  <span class="creature-number">12 / STORM · LEGENDARY</span>
+                  <h3 id="horoxyn-card-name">Horoxyn</h3>
+                  <p>Keeper of the hours.</p>
+                </div>
+                <button class="card-open" type="button" data-codex="chikimon:horoxyn" aria-labelledby="horoxyn-card-name" aria-haspopup="dialog">Open</button>
+              </article>
+              <article class="creature-card reveal" data-element="beast">
+                <div class="creature-card-glow" aria-hidden="true"></div>
+                <div class="creature-card-art">
+                  <img class="creature-dex" src="/site-assets/dex-tyrannos.webp" width="720" height="720" alt="Tyrannos, a beast Chikimon" loading="lazy" decoding="async" />
+                </div>
+                <div class="creature-card-copy">
+                  <span class="creature-number">13 / BEAST · LEGENDARY</span>
+                  <h3 id="tyrannos-card-name">Tyrannos</h3>
+                  <p>King of the Wildwood.</p>
+                </div>
+                <button class="card-open" type="button" data-codex="chikimon:tyrannos" aria-labelledby="tyrannos-card-name" aria-haspopup="dialog">Open</button>
+              </article>
+              <article class="creature-card reveal" data-element="beast">
+                <div class="creature-card-glow" aria-hidden="true"></div>
+                <div class="creature-card-art">
+                  <img class="creature-dex" src="/site-assets/dex-bamboran.webp" width="720" height="720" alt="Bamboran, a beast Chikimon" loading="lazy" decoding="async" />
+                </div>
+                <div class="creature-card-copy">
+                  <span class="creature-number">14 / BEAST · LEGENDARY</span>
+                  <h3 id="bamboran-card-name">Bamboran</h3>
+                  <p>Keeper of the Wildwood gate.</p>
+                </div>
+                <button class="card-open" type="button" data-codex="chikimon:bamboran" aria-labelledby="bamboran-card-name" aria-haspopup="dialog">Open</button>
+              </article>
+              <article class="creature-card reveal" data-element="beast">
+                <div class="creature-card-glow" aria-hidden="true"></div>
+                <div class="creature-card-art">
+                  <img class="creature-dex" src="/site-assets/dex-astragor.webp" width="720" height="720" alt="Astragor, a beast Chikimon" loading="lazy" decoding="async" />
+                </div>
+                <div class="creature-card-copy">
+                  <span class="creature-number">15 / BEAST · LEGENDARY</span>
+                  <h3 id="astragor-card-name">Astragor</h3>
+                  <p>The night titan.</p>
+                </div>
+                <button class="card-open" type="button" data-codex="chikimon:astragor" aria-labelledby="astragor-card-name" aria-haspopup="dialog">Open</button>
+              </article>
             </div>
-            <p class="roster-swipe-hint" aria-hidden="true">Swipe to discover →</p>
-            <p class="sr-only" id="roster-hint">Scroll horizontally to see more Chikimon portraits.</p>
-            <div class="roster-track" id="roster-track" role="region" tabindex="0" aria-label="More Chikimons" aria-describedby="roster-hint">
-              <article class="roster-card"><div class="roster-art"><img src="/site-assets/dex-astraya.webp" width="360" height="360" alt="Astraya Chikimon portrait" loading="lazy" decoding="async" /></div><div class="roster-label"><h4>Astraya</h4><span aria-hidden="true">✦</span></div></article>
-              <article class="roster-card"><div class="roster-art"><img src="/site-assets/dex-bamboran.webp" width="360" height="360" alt="Bamboran Chikimon portrait" loading="lazy" decoding="async" /></div><div class="roster-label"><h4>Bamboran</h4><span aria-hidden="true">✦</span></div></article>
-              <article class="roster-card"><div class="roster-art"><img src="/site-assets/dex-borealon.webp" width="360" height="360" alt="Borealon Chikimon portrait" loading="lazy" decoding="async" /></div><div class="roster-label"><h4>Borealon</h4><span aria-hidden="true">✦</span></div></article>
-              <article class="roster-card"><div class="roster-art"><img src="/site-assets/dex-solvarex.webp" width="360" height="360" alt="Solvarex Chikimon portrait" loading="lazy" decoding="async" /></div><div class="roster-label"><h4>Solvarex</h4><span aria-hidden="true">✦</span></div></article>
-              <article class="roster-card"><div class="roster-art"><img src="/site-assets/dex-crysalune.webp" width="360" height="360" alt="Crysalune Chikimon portrait" loading="lazy" decoding="async" /></div><div class="roster-label"><h4>Crysalune</h4><span aria-hidden="true">✦</span></div></article>
-              <article class="roster-card"><div class="roster-art"><img src="/site-assets/dex-vesperos.webp" width="360" height="360" alt="Vesperos Chikimon portrait" loading="lazy" decoding="async" /></div><div class="roster-label"><h4>Vesperos</h4><span aria-hidden="true">✦</span></div></article>
-              <article class="roster-card"><div class="roster-art"><img src="/site-assets/dex-adalor.webp" width="360" height="360" alt="Adalor Chikimon portrait" loading="lazy" decoding="async" /></div><div class="roster-label"><h4>Adalor</h4><span aria-hidden="true">✦</span></div></article>
-              <article class="roster-card"><div class="roster-art"><img src="/site-assets/dex-tyrannos.webp" width="360" height="360" alt="Tyrannos Chikimon portrait" loading="lazy" decoding="async" /></div><div class="roster-label"><h4>Tyrannos</h4><span aria-hidden="true">✦</span></div></article>
-              <article class="roster-card"><div class="roster-art"><img src="/site-assets/dex-grovador.webp" width="360" height="360" alt="Grovador Chikimon portrait" loading="lazy" decoding="async" /></div><div class="roster-label"><h4>Grovador</h4><span aria-hidden="true">✦</span></div></article>
-              <article class="roster-card"><div class="roster-art"><img src="/site-assets/dex-horoxyn.webp" width="360" height="360" alt="Horoxyn Chikimon portrait" loading="lazy" decoding="async" /></div><div class="roster-label"><h4>Horoxyn</h4><span aria-hidden="true">✦</span></div></article>
-              <article class="roster-card"><div class="roster-art"><img src="/site-assets/dex-rivaros.webp" width="360" height="360" alt="Rivaros Chikimon portrait" loading="lazy" decoding="async" /></div><div class="roster-label"><h4>Rivaros</h4><span aria-hidden="true">✦</span></div></article>
-              <article class="roster-card"><div class="roster-art"><img src="/site-assets/dex-astragor.webp" width="360" height="360" alt="Astragor Chikimon portrait" loading="lazy" decoding="async" /></div><div class="roster-label"><h4>Astragor</h4><span aria-hidden="true">✦</span></div></article>
+          </div>
+          <div class="codex-panel" id="panel-avatar" role="tabpanel" aria-labelledby="tab-avatar" tabindex="0" hidden>
+            <p class="codex-panel-lead">Avatars are the trainers of Chikoria: the face you wear in the Realm and the sworn calling that comes with it.</p>
+            <div class="codex-grid codex-grid-avatar">
+              <article class="codex-card reveal"><div class="codex-card-art"><img src="/nft/avatar/Knight.png" width="1086" height="1448" alt="The Knight avatar in a display case" loading="lazy" decoding="async" /></div><div class="codex-card-label"><h3 id="avatar-Knight-name">The Knight</h3><span>Royal guard</span></div><button class="card-open" type="button" data-codex="avatar:Knight" aria-labelledby="avatar-Knight-name" aria-haspopup="dialog">Open</button></article>
+              <article class="codex-card reveal"><div class="codex-card-art"><img src="/nft/avatar/Mystic.png" width="1086" height="1448" alt="The Mystic avatar in a display case" loading="lazy" decoding="async" /></div><div class="codex-card-label"><h3 id="avatar-Mystic-name">The Mystic</h3><span>Crystal scholar</span></div><button class="card-open" type="button" data-codex="avatar:Mystic" aria-labelledby="avatar-Mystic-name" aria-haspopup="dialog">Open</button></article>
+              <article class="codex-card reveal"><div class="codex-card-art"><img src="/nft/avatar/Navigator.png" width="1086" height="1448" alt="The Navigator avatar in a display case" loading="lazy" decoding="async" /></div><div class="codex-card-label"><h3 id="avatar-Navigator-name">The Navigator</h3><span>Island charter</span></div><button class="card-open" type="button" data-codex="avatar:Navigator" aria-labelledby="avatar-Navigator-name" aria-haspopup="dialog">Open</button></article>
+              <article class="codex-card reveal"><div class="codex-card-art"><img src="/nft/avatar/Star.png" width="1086" height="1448" alt="The Star avatar in a display case" loading="lazy" decoding="async" /></div><div class="codex-card-label"><h3 id="avatar-Star-name">The Star</h3><span>Chikiseum favourite</span></div><button class="card-open" type="button" data-codex="avatar:Star" aria-labelledby="avatar-Star-name" aria-haspopup="dialog">Open</button></article>
+              <article class="codex-card reveal"><div class="codex-card-art"><img src="/nft/avatar/chemist.png" width="1086" height="1448" alt="The Chemist avatar in a display case" loading="lazy" decoding="async" /></div><div class="codex-card-label"><h3 id="avatar-chemist-name">The Chemist</h3><span>Ember alchemist</span></div><button class="card-open" type="button" data-codex="avatar:chemist" aria-labelledby="avatar-chemist-name" aria-haspopup="dialog">Open</button></article>
+              <article class="codex-card reveal"><div class="codex-card-art"><img src="/nft/avatar/classic.png" width="1086" height="1448" alt="The Classic avatar in a display case" loading="lazy" decoding="async" /></div><div class="codex-card-label"><h3 id="avatar-classic-name">The Classic</h3><span>River-valley trainer</span></div><button class="card-open" type="button" data-codex="avatar:classic" aria-labelledby="avatar-classic-name" aria-haspopup="dialog">Open</button></article>
+              <article class="codex-card reveal"><div class="codex-card-art"><img src="/nft/avatar/electro.png" width="1086" height="1448" alt="The Electro avatar in a display case" loading="lazy" decoding="async" /></div><div class="codex-card-label"><h3 id="avatar-electro-name">The Electro</h3><span>Storm Peaks runner</span></div><button class="card-open" type="button" data-codex="avatar:electro" aria-labelledby="avatar-electro-name" aria-haspopup="dialog">Open</button></article>
+              <article class="codex-card reveal"><div class="codex-card-art"><img src="/nft/avatar/fire.png" width="1086" height="1448" alt="The Blaze avatar in a display case" loading="lazy" decoding="async" /></div><div class="codex-card-label"><h3 id="avatar-fire-name">The Blaze</h3><span>Ember Ridge climber</span></div><button class="card-open" type="button" data-codex="avatar:fire" aria-labelledby="avatar-fire-name" aria-haspopup="dialog">Open</button></article>
+              <article class="codex-card reveal"><div class="codex-card-art"><img src="/nft/avatar/night.png" width="1086" height="1448" alt="The Night avatar in a display case" loading="lazy" decoding="async" /></div><div class="codex-card-label"><h3 id="avatar-night-name">The Night</h3><span>Evening watch</span></div><button class="card-open" type="button" data-codex="avatar:night" aria-labelledby="avatar-night-name" aria-haspopup="dialog">Open</button></article>
+              <article class="codex-card reveal"><div class="codex-card-art"><img src="/nft/avatar/sailor.png" width="1086" height="1448" alt="The Sailor avatar in a display case" loading="lazy" decoding="async" /></div><div class="codex-card-label"><h3 id="avatar-sailor-name">The Sailor</h3><span>Coast fisher</span></div><button class="card-open" type="button" data-codex="avatar:sailor" aria-labelledby="avatar-sailor-name" aria-haspopup="dialog">Open</button></article>
+            </div>
+          </div>
+          <div class="codex-panel" id="panel-mount" role="tabpanel" aria-labelledby="tab-mount" tabindex="0" hidden>
+            <p class="codex-panel-lead">Chikimounts hatch from mount eggs and carry trainers across the islands, from the northern ice to the Chikiseum gate.</p>
+            <div class="codex-grid codex-grid-mount">
+              <article class="codex-card reveal"><div class="codex-card-art codex-card-art-scene"><img src="/nft/mount/boar.png" width="1254" height="1254" alt="Boar, a Chikimount, with its rider" loading="lazy" decoding="async" /></div><div class="codex-card-label"><h3 id="mount-boar-name">Boar</h3><span>Wildwood</span></div><button class="card-open" type="button" data-codex="mount:boar" aria-labelledby="mount-boar-name" aria-haspopup="dialog">Open</button></article>
+              <article class="codex-card reveal"><div class="codex-card-art codex-card-art-scene"><img src="/nft/mount/chicken.png" width="1254" height="1254" alt="Chicken, a Chikimount, with its rider" loading="lazy" decoding="async" /></div><div class="codex-card-label"><h3 id="mount-chicken-name">Chicken</h3><span>Farmstead</span></div><button class="card-open" type="button" data-codex="mount:chicken" aria-labelledby="mount-chicken-name" aria-haspopup="dialog">Open</button></article>
+              <article class="codex-card reveal"><div class="codex-card-art codex-card-art-scene"><img src="/nft/mount/emmanuel.png" width="1254" height="1254" alt="Emmanuel, a Chikimount, with its rider" loading="lazy" decoding="async" /></div><div class="codex-card-label"><h3 id="mount-emmanuel-name">Emmanuel</h3><span>Farmstead</span></div><button class="card-open" type="button" data-codex="mount:emmanuel" aria-labelledby="mount-emmanuel-name" aria-haspopup="dialog">Open</button></article>
+              <article class="codex-card reveal"><div class="codex-card-art codex-card-art-scene"><img src="/nft/mount/gator.png" width="1254" height="1254" alt="Gator, a Chikimount, with its rider" loading="lazy" decoding="async" /></div><div class="codex-card-label"><h3 id="mount-gator-name">Gator</h3><span>River marsh</span></div><button class="card-open" type="button" data-codex="mount:gator" aria-labelledby="mount-gator-name" aria-haspopup="dialog">Open</button></article>
+              <article class="codex-card reveal"><div class="codex-card-art codex-card-art-scene"><img src="/nft/mount/griffin.png" width="1254" height="1254" alt="Griffin, a Chikimount, with its rider" loading="lazy" decoding="async" /></div><div class="codex-card-label"><h3 id="mount-griffin-name">Griffin</h3><span>Dawn Spire</span></div><button class="card-open" type="button" data-codex="mount:griffin" aria-labelledby="mount-griffin-name" aria-haspopup="dialog">Open</button></article>
+              <article class="codex-card reveal"><div class="codex-card-art codex-card-art-scene"><img src="/nft/mount/horse.png" width="1254" height="1254" alt="Royal Horse, a Chikimount, with its rider" loading="lazy" decoding="async" /></div><div class="codex-card-label"><h3 id="mount-horse-name">Royal Horse</h3><span>Castle stables</span></div><button class="card-open" type="button" data-codex="mount:horse" aria-labelledby="mount-horse-name" aria-haspopup="dialog">Open</button></article>
+              <article class="codex-card reveal"><div class="codex-card-art codex-card-art-scene"><img src="/nft/mount/momota.png" width="1254" height="1254" alt="Momota, a Chikimount, with its rider" loading="lazy" decoding="async" /></div><div class="codex-card-label"><h3 id="mount-momota-name">Momota</h3><span>Northern ice</span></div><button class="card-open" type="button" data-codex="mount:momota" aria-labelledby="mount-momota-name" aria-haspopup="dialog">Open</button></article>
+              <article class="codex-card reveal"><div class="codex-card-art codex-card-art-scene"><img src="/nft/mount/pesto.png" width="1254" height="1254" alt="Pesto, a Chikimount, with its rider" loading="lazy" decoding="async" /></div><div class="codex-card-label"><h3 id="mount-pesto-name">Pesto</h3><span>Northern ice</span></div><button class="card-open" type="button" data-codex="mount:pesto" aria-labelledby="mount-pesto-name" aria-haspopup="dialog">Open</button></article>
+              <article class="codex-card reveal"><div class="codex-card-art codex-card-art-scene"><img src="/nft/mount/snowball.png" width="1254" height="1254" alt="Snowball, a Chikimount, with its rider" loading="lazy" decoding="async" /></div><div class="codex-card-label"><h3 id="mount-snowball-name">Snowball</h3><span>Chikiseum</span></div><button class="card-open" type="button" data-codex="mount:snowball" aria-labelledby="mount-snowball-name" aria-haspopup="dialog">Open</button></article>
+              <article class="codex-card reveal"><div class="codex-card-art codex-card-art-scene"><img src="/nft/mount/tillman.png" width="1254" height="1254" alt="Tillman, a Chikimount, with its rider" loading="lazy" decoding="async" /></div><div class="codex-card-label"><h3 id="mount-tillman-name">Tillman</h3><span>The coast</span></div><button class="card-open" type="button" data-codex="mount:tillman" aria-labelledby="mount-tillman-name" aria-haspopup="dialog">Open</button></article>
+              <article class="codex-card reveal"><div class="codex-card-art codex-card-art-scene"><img src="/nft/mount/wolf.png" width="1254" height="1254" alt="Night Wolf, a Chikimount, with its rider" loading="lazy" decoding="async" /></div><div class="codex-card-label"><h3 id="mount-wolf-name">Night Wolf</h3><span>Storm Peaks</span></div><button class="card-open" type="button" data-codex="mount:wolf" aria-labelledby="mount-wolf-name" aria-haspopup="dialog">Open</button></article>
+              <article class="codex-card reveal"><div class="codex-card-art codex-card-art-scene"><img src="/nft/mount/wrinkle.png" width="1254" height="1254" alt="Wrinkle, a Chikimount, with its rider" loading="lazy" decoding="async" /></div><div class="codex-card-label"><h3 id="mount-wrinkle-name">Wrinkle</h3><span>Chikoria Cup</span></div><button class="card-open" type="button" data-codex="mount:wrinkle" aria-labelledby="mount-wrinkle-name" aria-haspopup="dialog">Open</button></article>
             </div>
           </div>
           <p class="section-after reveal">
@@ -511,6 +647,25 @@
           >Enter the Realm <span aria-hidden="true">↗</span></a
         >
       </p>
+    </dialog>
+    <dialog class="codex-dialog" id="codex-dialog" aria-labelledby="codex-title">
+      <div class="codex-dialog-inner">
+        <button type="button" class="intro-close codex-close" aria-label="Close">×</button>
+        <div class="codex-stage">
+          <div class="codex-stage-glow" aria-hidden="true"></div>
+          <img class="codex-still" alt="" decoding="async" />
+          <div class="codex-viewer-slot"></div>
+          <p class="codex-hint" hidden>Drag to turn · scroll or pinch to zoom</p>
+        </div>
+        <div class="codex-copy">
+          <p class="kicker codex-kicker"></p>
+          <h2 id="codex-title"></h2>
+          <p class="codex-subtitle"></p>
+          <div class="codex-legend"></div>
+          <p class="codex-home"></p>
+          <a class="text-link enter-game" href="/realm/">Meet them in the Realm <span aria-hidden="true">↗</span></a>
+        </div>
+      </div>
     </dialog>
   </body>
 </html>
