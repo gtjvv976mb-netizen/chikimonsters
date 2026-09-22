@@ -12,7 +12,6 @@
   const journey = document.querySelector(".journey");
   const worldTrack = document.querySelector(".world-track");
   const worldStage = document.querySelector(".world-stage");
-  const travelVideo = worldStage.querySelector(".world-travel");
   const motionToggle = document.getElementById("motion-toggle");
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   const wideScreen = window.matchMedia("(min-width: 761px)");
@@ -25,84 +24,9 @@
     const t = clamp(value);
     return t * t * (3 - 2 * t);
   };
-  const scenes = Array.from(worldStage.querySelectorAll(".journey-scene"));
   const beats = [hero, ...journey.querySelectorAll(".journey-beat")];
-  const sceneAmbients = scenes.map((scene) => scene.querySelector(".scene-motion"));
-  const allAmbients = sceneAmbients;
-  const canPlayAmbient = () => wideScreen.matches && canMoveScene();
-  let activeAmbient = null;
-  let pendingAmbient = null;
-  let ambientTimer = 0;
-
-  // Sources stay in data-src until the visitor reaches that scene. A failed or
-  // blocked clip simply leaves the complete painted scene in place.
-  for (const video of allAmbients) {
-    video.addEventListener("loadeddata", () => video.classList.add("is-ready"));
-    video.addEventListener("playing", () => {
-      video.dataset.requested = "";
-      video.classList.add("is-active");
-    });
-    // A clip without `loop` is one take of a camera move: it plays once and
-    // then HOLDS on its last frame. The browser fires "pause" at the end too,
-    // and hiding the clip there would snap the world back to its first frame,
-    // which is the cut the take exists to avoid.
-    video.addEventListener("pause", () => {
-      if (!video.ended) video.classList.remove("is-active");
-    });
-    video.addEventListener("error", () => {
-      video.dataset.failed = "1";
-      video.dataset.requested = "";
-      video.classList.remove("is-ready", "is-active");
-      video.pause();
-      video.removeAttribute("src");
-      if (activeAmbient === video) activeAmbient = null;
-      if (pendingAmbient === video) pendingAmbient = null;
-    });
-  }
-
-  function startAmbient(video) {
-    if (!video || !canPlayAmbient() || video.dataset.failed || video.dataset.blocked) return;
-    activeAmbient = video;
-    // A finished one-take clip is never replayed: play() on an ended video
-    // would restart it from its first frame, snapping the world back.
-    if (video.ended) {
-      video.classList.add("is-active");
-      return;
-    }
-    if (!video.hasAttribute("src")) {
-      video.src = video.dataset.src;
-      video.load();
-    }
-    if (video.paused && !video.dataset.requested) {
-      video.dataset.requested = "1";
-      video.play().catch(() => {
-        video.dataset.requested = "";
-        video.dataset.blocked = "1";
-        video.classList.remove("is-active");
-      });
-    }
-  }
-
-  function useAmbient(next) {
-    if (!canPlayAmbient()) next = null;
-    if (next && (next.dataset.failed || next.dataset.blocked)) next = null;
-    if (pendingAmbient === next) {
-      if (next && activeAmbient === next && next.paused) startAmbient(next);
-      return;
-    }
-    clearTimeout(ambientTimer);
-    pendingAmbient = next;
-    if (activeAmbient && activeAmbient !== next) {
-      activeAmbient.pause();
-      activeAmbient.classList.remove("is-active");
-      activeAmbient.dataset.requested = "";
-      activeAmbient = null;
-    }
-    // A visitor flying past a chapter never starts downloading its clip.
-    if (next) ambientTimer = setTimeout(() => {
-      if (pendingAmbient === next) startAmbient(next);
-    }, 240);
-  }
+  const journeyVideo = worldStage.querySelector(".world-journey");
+  const journeyPoster = worldStage.querySelector(".world-poster");
 
   function syncSceneMode() {
     document.documentElement.classList.toggle("scene-static", !motionEnabled() || saveData);
@@ -186,29 +110,54 @@
     document.querySelectorAll(".reveal").forEach((element) => reveals.observe(element));
   }
 
-  // One camera rail runs behind the hero and every chapter. The creature,
-  // contact shadow, and ground stay on the same painted plane. At a doorway,
-  // an opaque threshold hides the scene swap instead of ghosting two casts.
+  // ONE video, ONE world. The whole page is a single 45-second first-person walk
+  // through Chikoria (vista -> river -> Wicked Temple -> Chikiseum), and the scroll
+  // position is the playhead: the top of the page is the first frame, the end of
+  // the last chapter is the last frame. There are no per-chapter scenes and no
+  // doorway clips any more — those morphed one painting into the next, and the
+  // morph is where islands, creatures and terrain used to appear and vanish.
+  //
+  // The clip is encoded with a keyframe every six frames so a seek decodes at
+  // most six frames, and one seek is in flight at a time.
   let scrollFrame = 0;
   let beatTops = [];
   let trackEnd = 0;
-  // These clips are scrubbed by scroll position, not played. Every seek decodes
-  // from the previous keyframe, so they are encoded with a keyframe every four
-  // frames; the standard encode (one every 29) made each scroll step a 29-frame
-  // decode and was the main source of stutter through the doorways.
-  const transitionClips = [
-    "/site-assets/world-travel-realm-gathering-seek.mp4",
-    "/site-assets/world-travel-gathering-temple-seek.mp4",
-    "/site-assets/world-travel-temple-arena-seek.mp4",
-  ];
-  let travelIndex = -1;
-  const failedTravel = new Set();
-  travelVideo.addEventListener("loadeddata", scheduleScroll);
-  travelVideo.addEventListener("seeked", scheduleScroll);
-  travelVideo.addEventListener("error", () => {
-    if (travelIndex >= 0) failedTravel.add(travelIndex);
-    worldStage.style.setProperty("--travel-opacity", "0");
+  let journeyReady = false;
+  let journeyPrimed = false;
+  const JOURNEY_LENGTH = 45;
+  // Scroll anchors -> seconds. The stage is pinned until chapter 04's heading
+  // reaches the top of the viewport, so that is where the walk arrives at the
+  // Chikiseum gate; 02 (riverside) opens on the descent to the river and 03 on
+  // the temple steps. The hero and chapter 01 share the first shot.
+  const SHOT_TIMES = [0, 15, 30, JOURNEY_LENGTH];
+
+  function journeySource() {
+    return wideScreen.matches ? journeyVideo.dataset.src : (journeyVideo.dataset.srcPhone || journeyVideo.dataset.src);
+  }
+  function loadJourney() {
+    if (!canMoveScene() || journeyVideo.hasAttribute("src")) return;
+    journeyVideo.src = journeySource();
+    journeyVideo.load();
+  }
+  journeyVideo.addEventListener("loadedmetadata", () => {
+    // iOS decodes a paused video's frames only after it has been "played" once.
+    // A muted, inline play() is allowed without a gesture; it is paused at once.
+    if (!journeyPrimed) {
+      journeyPrimed = true;
+      const p = journeyVideo.play();
+      if (p && p.then) p.then(() => journeyVideo.pause()).catch(() => {});
+    }
     scheduleScroll();
+  });
+  journeyVideo.addEventListener("loadeddata", () => {
+    journeyReady = true;
+    worldStage.classList.add("is-journey-ready");
+    scheduleScroll();
+  });
+  journeyVideo.addEventListener("seeked", scheduleScroll);
+  journeyVideo.addEventListener("error", () => {
+    journeyReady = false;
+    worldStage.classList.remove("is-journey-ready");   // the poster (first frame) stays
   });
 
   function measureRail() {
@@ -217,123 +166,33 @@
     scheduleScroll();
   }
 
-  // Style writes are skipped when nothing changed: the three idle scenes are
-  // reset every frame, and rewriting five custom properties on each of them
-  // forced a style recalculation of the whole stage on every scroll step.
-  const cameraMemo = new WeakMap();
-  function setCamera(scene, opacity, scale, x, y, tilt, activeClass = "") {
-    const key = `${opacity.toFixed(3)}|${scale.toFixed(4)}|${x.toFixed(1)}|${y.toFixed(1)}|${tilt.toFixed(2)}|${activeClass}`;
-    if (cameraMemo.get(scene) === key) return;
-    cameraMemo.set(scene, key);
-    scene.style.setProperty("--scene-opacity", opacity.toFixed(3));
-    scene.style.setProperty("--camera-scale", scale.toFixed(4));
-    scene.style.setProperty("--camera-x", `${x.toFixed(1)}px`);
-    scene.style.setProperty("--camera-y", `${y.toFixed(1)}px`);
-    scene.style.setProperty("--camera-tilt", `${tilt.toFixed(2)}deg`);
-    scene.classList.toggle("is-camera-active", activeClass === "active");
-    scene.classList.toggle("is-camera-next", activeClass === "next");
-  }
-
-  function syncTravel(index, progress) {
-    const source = transitionClips[index];
-    if (!source || failedTravel.has(index) || !canPlayAmbient()) {
-      worldStage.style.setProperty("--travel-opacity", "0");
-      return false;
+  // Piecewise-linear map from scroll position to seconds through the anchors.
+  function journeyTime(y) {
+    const viewport = window.innerHeight;
+    const anchors = [0, beatTops[2], beatTops[3], Math.min(beatTops[4], trackEnd - viewport)].map((v, i, arr) =>
+      Math.max(v || 0, i ? arr[i - 1] + 1 : 0));
+    if (y <= anchors[0]) return SHOT_TIMES[0];
+    for (let i = 1; i < anchors.length; i += 1) {
+      if (y <= anchors[i]) {
+        const f = (y - anchors[i - 1]) / Math.max(1, anchors[i] - anchors[i - 1]);
+        return SHOT_TIMES[i - 1] + f * (SHOT_TIMES[i] - SHOT_TIMES[i - 1]);
+      }
     }
-    if (travelIndex !== index) {
-      travelIndex = index;
-      travelVideo.src = source;
-      travelVideo.load();
-    }
-    if (travelVideo.readyState < 2) {
-      worldStage.style.setProperty("--travel-opacity", "0");
-      return false;
-    }
-    const duration = Number.isFinite(travelVideo.duration) ? travelVideo.duration : 5;
-    const targetTime = clamp(progress) * Math.max(0, duration - 0.04);
-    // One seek in flight at a time. Piling a new seek onto every frame while the
-    // decoder was still on the last one is what made the doorway clips judder;
-    // the "seeked" listener above schedules the catch-up frame.
-    if (!travelVideo.seeking && Math.abs(travelVideo.currentTime - targetTime) > 0.055) travelVideo.currentTime = targetTime;
-    const fade = Math.min(smoothstep(progress / .075), smoothstep((1 - progress) / .075));
-    worldStage.style.setProperty("--travel-opacity", fade.toFixed(3));
-    return true;
-  }
-
-  function prepareTravel(index) {
-    const source = transitionClips[index];
-    if (!source || failedTravel.has(index) || !canPlayAmbient() || travelIndex === index) return;
-    travelIndex = index;
-    travelVideo.src = source;
-    travelVideo.load();
+    return JOURNEY_LENGTH;
   }
 
   function renderScroll() {
     scrollFrame = 0;
-    header.classList.toggle("is-scrolled", window.scrollY > 30);
-    if (!canMoveScene() || window.scrollY + window.innerHeight < beatTops[0] || window.scrollY > trackEnd) {
-      useAmbient(null);
-      worldStage.style.setProperty("--travel-opacity", "0");
-      return;
-    }
-
     const y = window.scrollY;
     const viewport = window.innerHeight;
-    const width = window.innerWidth;
-    const wide = wideScreen.matches;
-    const lead = wide ? .76 : .68;
-    const tail = wide ? .24 : .20;
-    let sceneIndex = 0;
-    let transitionIndex = -1;
-    let transitionProgress = 0;
-    for (let index = 0; index < scenes.length - 1; index += 1) {
-      const boundary = beatTops[index + 2];
-      const start = boundary - viewport * lead;
-      const end = boundary - viewport * tail;
-      if (y >= start && y <= end) {
-        transitionIndex = index;
-        transitionProgress = smoothstep((y - start) / Math.max(1, end - start));
-        break;
-      }
-      if (y > end) sceneIndex = index + 1;
-    }
-
-    for (const scene of scenes) setCamera(scene, 0, 1.045, 0, 0, 0);
-    if (transitionIndex >= 0) {
-      const t = transitionProgress;
-      const outgoing = scenes[transitionIndex];
-      const incoming = scenes[transitionIndex + 1];
-      const move = wide ? 1 : .48;
-      const forward = smoothstep(t);
-      const switchScene = t < .5 ? 0 : 1;
-      // No tilt on phones: a rotateX of even a fraction of a degree is a
-      // perspective transform, and a full-screen 3x-density scene under one is
-      // re-rasterised on every scroll step instead of just moved by the GPU.
-      setCamera(outgoing, 1 - switchScene, 1.17 + forward * (wide ? .62 : .26),
-        -forward * width * .07 * move, -forward * viewport * .055 * move,
-        wide ? forward * 2.8 : 0, "active");
-      setCamera(incoming, switchScene, (wide ? 1.31 : 1.13) - forward * (wide ? .22 : .09),
-        (1 - forward) * width * .045 * move, (1 - forward) * viewport * .035 * move,
-        wide ? -(1 - forward) * 1.8 : 0, "next");
-      const clipVisible = syncTravel(transitionIndex, t);
-      const distanceFromMiddle = 1 - Math.abs(t * 2 - 1);
-      const threshold = clipVisible ? .12 * smoothstep(distanceFromMiddle) : smoothstep(distanceFromMiddle);
-      worldStage.style.setProperty("--threshold-opacity", threshold.toFixed(3));
-      useAmbient(null);
-      sceneIndex = t < .5 ? transitionIndex : transitionIndex + 1;
-    } else {
-      worldStage.style.setProperty("--travel-opacity", "0");
-      worldStage.style.setProperty("--threshold-opacity", "0");
-      const segmentStart = sceneIndex === 0 ? beatTops[0] : beatTops[sceneIndex + 1] - viewport * tail;
-      const segmentEnd = sceneIndex === scenes.length - 1 ? trackEnd - viewport : beatTops[sceneIndex + 2] - viewport * lead;
-      const local = clamp((y - segmentStart) / Math.max(1, segmentEnd - segmentStart));
-      const travel = smoothstep(local);
-      setCamera(scenes[sceneIndex], 1, 1.045 + travel * (wide ? .125 : .055),
-        -travel * width * (wide ? .034 : .012), -travel * viewport * (wide ? .028 : .012),
-        wide ? travel * 1.1 : 0, "active");
-      const stageVisible = y + viewport > beatTops[0] && y < trackEnd - viewport * .25;
-      useAmbient(canPlayAmbient() && stageVisible ? sceneAmbients[sceneIndex] : null);
-      if (sceneIndex < scenes.length - 1 && y > segmentEnd - viewport * .5) prepareTravel(sceneIndex);
+    header.classList.toggle("is-scrolled", y > 30);
+    if (!canMoveScene()) return;
+    loadJourney();
+    if (y > trackEnd) return;                   // the stage has scrolled away
+    const duration = Number.isFinite(journeyVideo.duration) && journeyVideo.duration > 1 ? journeyVideo.duration : JOURNEY_LENGTH;
+    const target = Math.min(duration - 0.05, journeyTime(y) * (duration / JOURNEY_LENGTH));
+    if (journeyVideo.readyState >= 1 && !journeyVideo.seeking && Math.abs(journeyVideo.currentTime - target) > 1 / 48) {
+      journeyVideo.currentTime = target;
     }
     const progress = clamp((y - beatTops[1]) / Math.max(1, trackEnd - viewport - beatTops[1]));
     worldStage.style.setProperty("--journey-progress", `${(progress * 100).toFixed(1)}%`);
@@ -342,14 +201,7 @@
     if (!scrollFrame) scrollFrame = requestAnimationFrame(renderScroll);
   }
   function clearSceneTransforms() {
-    for (const scene of scenes) {
-      cameraMemo.delete(scene);
-      for (const property of ["--scene-opacity", "--camera-scale", "--camera-x", "--camera-y", "--camera-tilt"]) scene.style.removeProperty(property);
-      scene.classList.remove("is-camera-active", "is-camera-next");
-    }
-    worldStage.style.removeProperty("--threshold-opacity");
     worldStage.style.removeProperty("--journey-progress");
-    worldStage.style.removeProperty("--travel-opacity");
   }
   motionToggle.addEventListener("click", () => {
     motionOptIn = !motionOptIn;
@@ -366,6 +218,7 @@
   window.addEventListener("resize", measureRail, { passive: true });
   if ("ResizeObserver" in window) new ResizeObserver(measureRail).observe(worldTrack);
   if (document.fonts?.ready) document.fonts.ready.then(measureRail);
+  document.addEventListener("visibilitychange", scheduleScroll);
   reduceMotion.addEventListener("change", () => {
     motionOptIn = false;
     document.documentElement.classList.remove("motion-opt-in");
