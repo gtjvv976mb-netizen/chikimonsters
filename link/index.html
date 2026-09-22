@@ -303,8 +303,11 @@ $("bClaim").onclick = async () => {
   } catch (e) {
     // WALLET_IN_USE is the one refusal worth explaining rather than restating, because it is the
     // one the player can do something about.
+    // For the likeliest person to hit this there is a right answer, and it is not "contact
+    // support": a wallet that already plays does not want an app account moved onto it — they
+    // want their phone paired to the account they already have, which is the card above.
     showErr(e.code === "WALLET_IN_USE"
-      ? "This wallet already has a Chikoria account with progress on it. Connecting the app account here would have to merge two save files and one would be lost, so nothing was changed. Sign in with a wallet that has not played, or email support@chikimonsters.com and we will move it by hand."
+      ? "This wallet already plays Chikoria. Connecting the app account here would have to merge two save files and one would be lost, so nothing was changed. If you just want this phone on the account you already play, use “New code” above and type that into the app instead. If you really did mean to move the app account, use a wallet that has not played, or email support@chikimonsters.com and we will do it by hand."
       : (e.message || String(e)));
     btn.disabled = false;
     btn.textContent = was;

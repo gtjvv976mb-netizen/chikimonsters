@@ -340,6 +340,39 @@ WELCOME_BTN_NEW = '''	if ChikFeat.on("crypto"):
 		cb.pressed.connect(open_wallet_pop)
 		v.add_child(cb)'''
 
+# ---------------------------------------------------------------------------------------------
+# KNOWN UNPATCHED SURFACES — three of them, all found by decoding the shipped bytecode rather than
+# by reading source, and none of them fixable from the web layer. They are listed here, in the file
+# that would fix them, rather than only in a document.
+#
+# They are NOT written as EDITS entries because the decompiled project is not on this machine (and
+# must never be committed here — see RECOVERY.md), so their anchors cannot be verified. A guessed
+# anchor would fail `--check` for the wrong reason and teach whoever runs it to ignore failures.
+#
+#   1. InfoBar._build_bar() places a WALLET tab unconditionally, and its popup
+#      _build_wallet_new() has no ChikFeat guard: "Connect with Phantom", "Sign in with Phantom",
+#      a phantom.app link, "View on Solscan ↗", and in the non-web branch an "Open browser
+#      version ↗" that shells out to the website. The welcome panel's wallet button IS patched
+#      (WELCOME_BTN_*); this tab is a separate surface that was missed.
+#
+#   2. PlayerPanel.gd is not in build-ios-pack.py's OVERLAY_FILES at all, so it is carried into
+#      the iOS pack byte-for-byte — including a Magic Eden rail tab and a full listing flow. It is
+#      the pack's actual SELL surface.
+#
+#   3. Onboarding._show_gate()'s `elif waived and bal < MIN_HOLD:` branch — the Open Gates card:
+#         "🌟 Open Gates — the realm is free to enter%s!"
+#         "The 500,000 $CHIKI gate is open to every wallet — no 500,000 $CHIKI hold needed.
+#          Sign in below to begin."
+#      Reachable in the app as of 2026-09-22, because turning the 500k gate off for app sessions
+#      is done by setting /verify's `gateWaived`, and that is the only lever the pack offers: the
+#      sole gate identifiers in the shipped Onboarding.gdc are gateWaived, gateWaivedEnds,
+#      gateWaivedUntil, gate_waived and event_open_gates. Guard it on ChikFeat.on("crypto") the
+#      way GATE_HOLD_NEW guards the refusal card, with an else branch that welcomes the player
+#      without naming a token.
+#
+# Fixing any of these means a pack rebuild (RECOVERY.md), not a deploy.
+# ---------------------------------------------------------------------------------------------
+
 EDITS = [
 	("GameHUD.gd", MARKET_OLD, MARKET_NEW, "the Trading Post refuses when trading is off"),
 	("Chikiseum.gd", TABS_OLD, TABS_NEW, "the Chikoria Cup tab is not built"),

@@ -47,12 +47,40 @@ risks, because 3.1.1 is about what an app *presents*, and both are drawn before 
 
 | Surface | Where | Status |
 | --- | --- | --- |
-| The **WALLET tab** in the info bar | `InfoBar._build_bar()` places it unconditionally; its popup `_build_wallet_new()` has no `ChikFeat` guard | **Not patched.** The welcome panel's wallet button *is*; this tab is a separate surface that was missed. |
+| The **WALLET tab** in the info bar | `InfoBar._build_bar()` places it unconditionally; its popup `_build_wallet_new()` has no `ChikFeat` guard. Draws *"Connect with Phantom"*, *"Sign in with Phantom"*, a `phantom.app` link, *"View on Solscan ↗"*, and in its non-web branch an *"Open browser version ↗"* that shells out to the website | **Not patched.** The welcome panel's wallet button *is*; this tab is a separate surface that was missed. |
 | The **Magic Eden sell rail** | `PlayerPanel.gd` — a marketplace tab and a full listing flow | **Not patched.** `PlayerPanel` is not in `OVERLAY_FILES` at all, so it is carried into the iOS pack unchanged. |
+| The **Open Gates card** | `Onboarding._show_gate()`, the `elif waived and bal < MIN_HOLD:` branch | **Not patched — and the gate change above is what makes it reachable.** See below. |
 
-Both need the recovered Godot project and a pack rebuild (`godot-patch/RECOVERY.md`), not a web
-deploy. Neither can be *used* — the network guard refuses every route behind them — but a reviewer
-who opens either one sees a wallet connect and a marketplace.
+Both of the first two need the recovered Godot project and a pack rebuild
+(`godot-patch/RECOVERY.md`), not a web deploy. Neither can be *used* — the network guard refuses
+every route behind them — but a reviewer who opens either one sees a wallet connect and a
+marketplace.
+
+#### The Open Gates card, and why it is the price of the gate change
+
+Turning the gate off for app sessions means setting `gateWaived`, and `gateWaived` is the only lever
+the compiled pack offers — there is no `free_play` flag or second route to reach the same place.
+Confirmed by extracting the identifier table from the shipped `Onboarding.gdc`: the only gate
+identifiers in it are `gateWaived`, `gateWaivedEnds`, `gateWaivedUntil`, `gate_waived` and
+`event_open_gates`.
+
+So an app player now walks the `elif waived and bal < MIN_HOLD:` branch, which draws, with **no
+`ChikFeat` guard** (strings read out of the shipped pack):
+
+> 🌟 **Open Gates — the realm is free to enter!**
+> The 500,000 $CHIKI gate is open to every wallet — no 500,000 $CHIKI hold needed. Sign in below to begin.
+
+**This is still a net improvement on where the build was.** Without the change the app player hit
+the gate's refusal card and *could not play at all*, and that card is the one that reads *"Hold
+500,000 $CHIKI to enter"* — an instruction to go and acquire a token elsewhere, which is the actual
+3.1.1 problem. The card they get instead says entry is free. But it names the token and the amount,
+and it says progress is "saved to your wallet" to a player who does not have one, so it belongs on
+the patch list with the other two.
+
+**The edit, for whoever rebuilds the pack:** guard that branch on `ChikFeat.on("crypto")` exactly as
+`GATE_HOLD_NEW` guards the refusal card, with an else branch that welcomes the player without naming
+a token. The anchor is not written into `apply-ios-pack-patch.py` yet because the decompiled source
+is not on this machine and a guessed anchor would fail the `--check` run for the wrong reason.
 
 ### The Godot problem, restated — the project is no longer missing
 
