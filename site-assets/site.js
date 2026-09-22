@@ -266,9 +266,7 @@
   // wicked-temple, chikiseum). When verified footage is available, add a
   // poster and a click-to-play video for each matching slot; never autoplay.
   document.addEventListener("visibilitychange", () => {
-    if (document.hidden) {
-      introVideo.pause();
-      useAmbient(null);
-    } else scheduleScroll();
+    if (document.hidden) introVideo.pause();
+    else scheduleScroll();
   });
 })();
