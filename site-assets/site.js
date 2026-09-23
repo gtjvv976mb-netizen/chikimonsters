@@ -113,13 +113,13 @@
   let journeyPrimed = false;
   let journeyRetries = 0;
   let seekStartedAt = 0;
-  const JOURNEY_LENGTH = 54.54;
+  const JOURNEY_LENGTH = 53.92;
   // Scroll anchors -> seconds, one stretch of the walk per stretch of page. Each
   // chapter's heading reaches the top of the viewport as the walk arrives at its
   // place: the hero and 01 walk past the Chikimons as they turn to watch, 02 lands
-  // at the bridge (14.9 s), 03 at the foot of the Wicked Temple (29.8 s), and the
+  // at the river (14.8 s), 03 at the foot of the Wicked Temple (29.5 s), and the
   // road climbs past the Chikiseum to its gate, reached as 04 lands.
-  const SHOT_TIMES = [0, 6, 14.94, 29.77, JOURNEY_LENGTH];
+  const SHOT_TIMES = [0, 6, 14.83, 29.46, JOURNEY_LENGTH];
 
   function journeySource() {
     return wideScreen.matches ? journeyVideo.dataset.src : (journeyVideo.dataset.srcPhone || journeyVideo.dataset.src);
