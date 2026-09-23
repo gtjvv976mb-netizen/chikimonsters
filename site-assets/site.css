@@ -206,7 +206,7 @@ em {
       rgba(10, 7, 25, 0.12) 54%,
       rgba(14, 8, 33, 0.35)
     ),
-    url("/site-assets/scene-chikoria-cast-v6.webp") center 53% / cover no-repeat;
+    url("/site-assets/scene-chikoria-cast-v7.webp") center 53% / cover no-repeat;
   transform: scale(1.025);
 }
 .hero-haze {
@@ -1353,10 +1353,10 @@ html:not(.has-js) .journey-beat {
   background-position: center;
   background-size: cover;
 }
-html:not(.has-js) .journey-beat:nth-child(1) { background-image: linear-gradient(90deg, rgba(7, 5, 18, .82), rgba(7, 5, 18, .38)), url("/site-assets/scene-chikoria-cast-v6.webp"); }
-html:not(.has-js) .journey-beat:nth-child(2) { background-image: linear-gradient(90deg, rgba(7, 5, 18, .82), rgba(7, 5, 18, .38)), url("/site-assets/chapter-02-v2.webp"); }
-html:not(.has-js) .journey-beat:nth-child(3) { background-image: linear-gradient(90deg, rgba(7, 5, 18, .82), rgba(7, 5, 18, .38)), url("/site-assets/chapter-03-v2.webp"); }
-html:not(.has-js) .journey-beat:nth-child(4) { background-image: linear-gradient(90deg, rgba(7, 5, 18, .82), rgba(7, 5, 18, .38)), url("/site-assets/chapter-04-v2.webp"); }
+html:not(.has-js) .journey-beat:nth-child(1) { background-image: linear-gradient(90deg, rgba(7, 5, 18, .82), rgba(7, 5, 18, .38)), url("/site-assets/scene-chikoria-cast-v7.webp"); }
+html:not(.has-js) .journey-beat:nth-child(2) { background-image: linear-gradient(90deg, rgba(7, 5, 18, .82), rgba(7, 5, 18, .38)), url("/site-assets/chapter-02-v3.webp"); }
+html:not(.has-js) .journey-beat:nth-child(3) { background-image: linear-gradient(90deg, rgba(7, 5, 18, .82), rgba(7, 5, 18, .38)), url("/site-assets/chapter-03-v3.webp"); }
+html:not(.has-js) .journey-beat:nth-child(4) { background-image: linear-gradient(90deg, rgba(7, 5, 18, .82), rgba(7, 5, 18, .38)), url("/site-assets/chapter-04-v3.webp"); }
 
 /* Portrait compositions keep every visible Chikimon inside the phone frame. */
 @media (max-width: 760px) {
@@ -1365,7 +1365,7 @@ html:not(.has-js) .journey-beat:nth-child(4) { background-image: linear-gradient
   .hero-land {
     background-image:
       linear-gradient(110deg, rgba(10, 7, 25, .72), rgba(10, 7, 25, .24) 62%, rgba(14, 8, 33, .2)),
-      url("/site-assets/scene-chikoria-mobile-cast-v6.webp");
+      url("/site-assets/scene-chikoria-mobile-cast-v7.webp");
     background-position: center 80%;
     transform-origin: 50% 54%;
   }
@@ -1377,10 +1377,10 @@ html:not(.has-js) .journey-beat:nth-child(4) { background-image: linear-gradient
   .hero-land { background-position: center bottom; }
   html:not(.has-js) .journey-beat { background-position: center 80%; }
   .journey-vignette { background: linear-gradient(180deg, rgba(7, 5, 18, .78), rgba(9, 7, 25, .42) 45%, transparent 74%); }
-  html:not(.has-js) .journey-beat:nth-child(1) { background-image: linear-gradient(180deg, rgba(7, 5, 18, .78), rgba(7, 5, 18, .16) 65%), url("/site-assets/scene-chikoria-mobile-cast-v6.webp"); }
-  html:not(.has-js) .journey-beat:nth-child(2) { background-image: linear-gradient(180deg, rgba(7, 5, 18, .78), rgba(7, 5, 18, .16) 65%), url("/site-assets/chapter-02-v2-mobile.webp"); }
-  html:not(.has-js) .journey-beat:nth-child(3) { background-image: linear-gradient(180deg, rgba(7, 5, 18, .78), rgba(7, 5, 18, .16) 65%), url("/site-assets/chapter-03-v2-mobile.webp"); }
-  html:not(.has-js) .journey-beat:nth-child(4) { background-image: linear-gradient(180deg, rgba(7, 5, 18, .78), rgba(7, 5, 18, .16) 65%), url("/site-assets/chapter-04-v2-mobile.webp"); }
+  html:not(.has-js) .journey-beat:nth-child(1) { background-image: linear-gradient(180deg, rgba(7, 5, 18, .78), rgba(7, 5, 18, .16) 65%), url("/site-assets/scene-chikoria-mobile-cast-v7.webp"); }
+  html:not(.has-js) .journey-beat:nth-child(2) { background-image: linear-gradient(180deg, rgba(7, 5, 18, .78), rgba(7, 5, 18, .16) 65%), url("/site-assets/chapter-02-v3-mobile.webp"); }
+  html:not(.has-js) .journey-beat:nth-child(3) { background-image: linear-gradient(180deg, rgba(7, 5, 18, .78), rgba(7, 5, 18, .16) 65%), url("/site-assets/chapter-03-v3-mobile.webp"); }
+  html:not(.has-js) .journey-beat:nth-child(4) { background-image: linear-gradient(180deg, rgba(7, 5, 18, .78), rgba(7, 5, 18, .16) 65%), url("/site-assets/chapter-04-v3-mobile.webp"); }
 }
 
 /* ---- The codex: one uniform creature grid, three tabs, one legend dialog ---- */

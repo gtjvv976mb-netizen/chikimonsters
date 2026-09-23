@@ -97,12 +97,12 @@
     }
   }
 
-  // ONE video, ONE world. The whole page is a single 45-second first-person walk
-  // through Chikoria (vista -> river -> Wicked Temple -> Chikiseum), and the scroll
-  // position is the playhead: the top of the page is the first frame, the end of
-  // the last chapter is the last frame. There are no per-chapter scenes and no
-  // doorway clips any more — those morphed one painting into the next, and the
-  // morph is where islands, creatures and terrain used to appear and vanish.
+  // ONE picture, ONE video. The whole page is a single first-person walk through
+  // one master painting of Chikoria (vista -> bridge -> Wicked Temple -> Chikiseum
+  // gate), and the scroll position is the playhead: the top of the page is the
+  // first frame, the end of the last chapter is the last frame. Every shot of the
+  // walk starts and ends on a crop of that same painting, so the camera moves
+  // into the scene and nothing in it can morph, appear or vanish.
   //
   // The clip is encoded with a keyframe every six frames so a seek decodes at
   // most six frames, and one seek is in flight at a time.
@@ -113,12 +113,13 @@
   let journeyPrimed = false;
   let journeyRetries = 0;
   let seekStartedAt = 0;
-  const JOURNEY_LENGTH = 75;
-  // Scroll anchors -> seconds, one stretch of the walk per stretch of page. Each chapter's
-  // heading reaches the top of the viewport as the walk arrives at its place:
-  // the hero plays the vista walk, 01 the descent to the river, 02 the bridge
-  // and temple road, 03 the ridge to the Chikiseum gate, reached as 04 lands.
-  const SHOT_TIMES = [0, 10, 20, 45, JOURNEY_LENGTH];
+  const JOURNEY_LENGTH = 54.54;
+  // Scroll anchors -> seconds, one stretch of the walk per stretch of page. Each
+  // chapter's heading reaches the top of the viewport as the walk arrives at its
+  // place: the hero and 01 walk past the Chikimons as they turn to watch, 02 lands
+  // at the bridge (14.9 s), 03 at the foot of the Wicked Temple (29.8 s), and the
+  // road climbs past the Chikiseum to its gate, reached as 04 lands.
+  const SHOT_TIMES = [0, 6, 14.94, 29.77, JOURNEY_LENGTH];
 
   function journeySource() {
     return wideScreen.matches ? journeyVideo.dataset.src : (journeyVideo.dataset.srcPhone || journeyVideo.dataset.src);
