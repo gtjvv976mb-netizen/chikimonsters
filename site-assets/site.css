@@ -364,28 +364,6 @@ h3 {
   font-size: 12px;
   letter-spacing: 0.055em;
 }
-.cinematic-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  min-height: 42px;
-  margin-top: 8px;
-  padding: 8px 4px;
-  border: 0;
-  border-bottom: 1px solid rgba(255, 222, 152, .56);
-  background: transparent;
-  color: #fff1d2;
-  font: 800 12px/1.3 "Baloo 2", sans-serif;
-  letter-spacing: .035em;
-  cursor: pointer;
-  text-shadow: 0 2px 8px #160d24;
-}
-.cinematic-toggle[hidden] { display: none; }
-.cinematic-toggle:hover { color: #fff; border-bottom-color: #fff; }
-.cinematic-toggle:focus-visible { outline: 2px solid #ffe09a; outline-offset: 5px; border-radius: 3px; }
-.cinematic-toggle-icon { color: #ffdd83; }
-.cinematic-toggle-state { color: #cbbdd6; }
-.cinematic-toggle[aria-pressed="true"] .cinematic-toggle-state { color: #aaf3d4; }
 .scroll-cue {
   position: absolute;
   z-index: 5;
@@ -1152,23 +1130,6 @@ h3 {
     width: 100%;
   }
 }
-@media (prefers-reduced-motion: reduce) {
-  html:not(.motion-opt-in) {
-    scroll-behavior: auto;
-  }
-  html:not(.motion-opt-in) *,
-  html:not(.motion-opt-in) *::before,
-  html:not(.motion-opt-in) *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-  html.motion-ready:not(.motion-opt-in) .reveal {
-    opacity: 1;
-    transform: none;
-  }
-}
-
 /* One painted stage persists behind the hero and all four chapter beats. */
 .world-track { position: relative; isolation: isolate; background: #100b22; }
 .world-stage {
@@ -1382,27 +1343,19 @@ h3 {
   .gameplay-caption h3 { font-size: 31px; }
   /* A slim frame-edge teaser invites a swipe without cutting a creature in half. */
 }
-/* Static chapter cards remain meaningful without JS, or when the visitor
-   requests reduced motion / data saving. Their art matches the moving stage. */
-html.scene-static .hero-land,
+/* Static chapter cards remain meaningful without JS. Their art matches the
+   moving stage. */
 html:not(.has-js) .hero-land { display: block; transform: none; will-change: auto; }
-html.scene-static .world-stage,
 html:not(.has-js) .world-stage { display: none; }
-html.scene-static .journey-beats,
 html:not(.has-js) .journey-beats { margin-top: 0; }
-html.scene-static .journey-beat,
 html:not(.has-js) .journey-beat {
   min-height: max(570px, 100svh);
   background-position: center;
   background-size: cover;
 }
-html.scene-static .journey-beat:nth-child(1),
 html:not(.has-js) .journey-beat:nth-child(1) { background-image: linear-gradient(90deg, rgba(7, 5, 18, .82), rgba(7, 5, 18, .38)), url("/site-assets/scene-chikoria-cast-v5.webp"); }
-html.scene-static .journey-beat:nth-child(2),
 html:not(.has-js) .journey-beat:nth-child(2) { background-image: linear-gradient(90deg, rgba(7, 5, 18, .82), rgba(7, 5, 18, .38)), url("/site-assets/chapter-02.webp"); }
-html.scene-static .journey-beat:nth-child(3),
 html:not(.has-js) .journey-beat:nth-child(3) { background-image: linear-gradient(90deg, rgba(7, 5, 18, .82), rgba(7, 5, 18, .38)), url("/site-assets/chapter-03.webp"); }
-html.scene-static .journey-beat:nth-child(4),
 html:not(.has-js) .journey-beat:nth-child(4) { background-image: linear-gradient(90deg, rgba(7, 5, 18, .82), rgba(7, 5, 18, .38)), url("/site-assets/chapter-04.webp"); }
 
 /* Portrait compositions keep every visible Chikimon inside the phone frame. */
@@ -1422,16 +1375,11 @@ html:not(.has-js) .journey-beat:nth-child(4) { background-image: linear-gradient
       linear-gradient(90deg, rgba(11, 7, 29, .38), transparent);
   }
   .hero-land { background-position: center bottom; }
-  html.scene-static .journey-beat,
   html:not(.has-js) .journey-beat { background-position: center 80%; }
   .journey-vignette { background: linear-gradient(180deg, rgba(7, 5, 18, .78), rgba(9, 7, 25, .42) 45%, transparent 74%); }
-  html.scene-static .journey-beat:nth-child(1),
   html:not(.has-js) .journey-beat:nth-child(1) { background-image: linear-gradient(180deg, rgba(7, 5, 18, .78), rgba(7, 5, 18, .16) 65%), url("/site-assets/scene-chikoria-mobile-cast-v5.webp"); }
-  html.scene-static .journey-beat:nth-child(2),
   html:not(.has-js) .journey-beat:nth-child(2) { background-image: linear-gradient(180deg, rgba(7, 5, 18, .78), rgba(7, 5, 18, .16) 65%), url("/site-assets/chapter-02-mobile.webp"); }
-  html.scene-static .journey-beat:nth-child(3),
   html:not(.has-js) .journey-beat:nth-child(3) { background-image: linear-gradient(180deg, rgba(7, 5, 18, .78), rgba(7, 5, 18, .16) 65%), url("/site-assets/chapter-03-mobile.webp"); }
-  html.scene-static .journey-beat:nth-child(4),
   html:not(.has-js) .journey-beat:nth-child(4) { background-image: linear-gradient(180deg, rgba(7, 5, 18, .78), rgba(7, 5, 18, .16) 65%), url("/site-assets/chapter-04-mobile.webp"); }
 }
 
