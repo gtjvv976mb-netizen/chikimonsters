@@ -113,12 +113,12 @@
   let journeyPrimed = false;
   let journeyRetries = 0;
   let seekStartedAt = 0;
-  const JOURNEY_LENGTH = 45;
-  // Scroll anchors -> seconds. The stage is pinned until chapter 04's heading
-  // reaches the top of the viewport, so that is where the walk arrives at the
-  // Chikiseum gate; 02 (riverside) opens on the descent to the river and 03 on
-  // the temple steps. The hero and chapter 01 share the first shot.
-  const SHOT_TIMES = [0, 15, 30, JOURNEY_LENGTH];
+  const JOURNEY_LENGTH = 75;
+  // Scroll anchors -> seconds, one stretch of the walk per stretch of page. Each chapter's
+  // heading reaches the top of the viewport as the walk arrives at its place:
+  // the hero plays the vista walk, 01 the descent to the river, 02 the bridge
+  // and temple road, 03 the ridge to the Chikiseum gate, reached as 04 lands.
+  const SHOT_TIMES = [0, 10, 20, 45, JOURNEY_LENGTH];
 
   function journeySource() {
     return wideScreen.matches ? journeyVideo.dataset.src : (journeyVideo.dataset.srcPhone || journeyVideo.dataset.src);
@@ -197,7 +197,7 @@
   // Piecewise-linear map from scroll position to seconds through the anchors.
   function journeyTime(y) {
     const viewport = window.innerHeight;
-    const anchors = [0, beatTops[2], beatTops[3], Math.min(beatTops[4], trackEnd - viewport)].map((v, i, arr) =>
+    const anchors = [0, beatTops[1], beatTops[2], beatTops[3], Math.min(beatTops[4], trackEnd - viewport)].map((v, i, arr) =>
       Math.max(v || 0, i ? arr[i - 1] + 1 : 0));
     if (y <= anchors[0]) return SHOT_TIMES[0];
     for (let i = 1; i < anchors.length; i += 1) {
