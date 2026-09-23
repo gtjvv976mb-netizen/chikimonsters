@@ -78,21 +78,23 @@
     if (event.target === dialog) closeIntro();
   });
 
-  // Enhancement only: all sections remain readable without JS.
-  if ("IntersectionObserver" in window) {
-    document.documentElement.classList.add("motion-ready");
-    const reveals = new IntersectionObserver(
-      (entries, observer) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("is-visible");
-            observer.unobserve(entry.target);
-          }
-        }
-      },
-      { threshold: 0.08, rootMargin: "0px 0px -30px 0px" },
-    );
-    document.querySelectorAll(".reveal").forEach((element) => reveals.observe(element));
+  // Reveals run on the same scroll frame as the journey, so they can never lag
+  // behind it or miss their cue: on every frame, anything whose top has entered
+  // the lower 94% of the viewport is revealed, once. (An IntersectionObserver
+  // used to do this asynchronously, and could fire late or not at all for
+  // content that moved under a tab switch or a resize.)
+  document.documentElement.classList.add("motion-ready");
+  const reveals = [...document.querySelectorAll(".reveal")];
+  function revealInView() {
+    if (!reveals.length) return;
+    const limit = window.innerHeight * 0.94;
+    for (let i = reveals.length - 1; i >= 0; i -= 1) {
+      const rect = reveals[i].getBoundingClientRect();
+      if (rect.top < limit && rect.bottom > 0) {
+        reveals[i].classList.add("is-visible");
+        reveals.splice(i, 1);
+      }
+    }
   }
 
   // ONE video, ONE world. The whole page is a single 45-second first-person walk
@@ -109,6 +111,8 @@
   let trackEnd = 0;
   let journeyReady = false;
   let journeyPrimed = false;
+  let journeyRetries = 0;
+  let seekStartedAt = 0;
   const JOURNEY_LENGTH = 45;
   // Scroll anchors -> seconds. The stage is pinned until chapter 04's heading
   // reaches the top of the viewport, so that is where the walk arrives at the
@@ -124,25 +128,64 @@
     journeyVideo.src = journeySource();
     journeyVideo.load();
   }
-  journeyVideo.addEventListener("loadedmetadata", () => {
-    // iOS decodes a paused video's frames only after it has been "played" once.
-    // A muted, inline play() is allowed without a gesture; it is paused at once.
-    if (!journeyPrimed) {
+  // iOS (and some Android browsers) decode a paused video's frames only after
+  // it has been "played" once. A muted, inline play() is allowed without a
+  // gesture and is paused at once. If the browser refuses (Low Power Mode, a
+  // strict autoplay policy), the same priming is retried on the first
+  // interaction of any kind, so the walk is never left unplayed.
+  function primeJourney() {
+    if (journeyPrimed || journeyVideo.readyState < 1) return;
+    const p = journeyVideo.play();
+    if (p && p.then) {
+      p.then(() => {
+        journeyPrimed = true;
+        journeyVideo.pause();
+        scheduleScroll();
+      }).catch(() => {
+        /* Retried on the next interaction. */
+      });
+    } else {
       journeyPrimed = true;
-      const p = journeyVideo.play();
-      if (p && p.then) p.then(() => journeyVideo.pause()).catch(() => {});
+      journeyVideo.pause();
+    }
+  }
+  for (const type of ["pointerdown", "touchstart", "keydown", "wheel", "scroll"]) {
+    window.addEventListener(type, primeJourney, { passive: true });
+  }
+  // The stage is revealed as soon as a frame can be shown, whichever event says
+  // so first: some browsers fire canplay or seeked before loadeddata.
+  function markJourneyReady() {
+    if (!journeyReady && journeyVideo.readyState >= 2) {
+      journeyReady = true;
+      worldStage.classList.add("is-journey-ready");
     }
     scheduleScroll();
-  });
-  journeyVideo.addEventListener("loadeddata", () => {
-    journeyReady = true;
-    worldStage.classList.add("is-journey-ready");
+  }
+  journeyVideo.addEventListener("loadedmetadata", () => {
+    primeJourney();
     scheduleScroll();
   });
-  journeyVideo.addEventListener("seeked", scheduleScroll);
+  journeyVideo.addEventListener("loadeddata", markJourneyReady);
+  journeyVideo.addEventListener("canplay", markJourneyReady);
+  journeyVideo.addEventListener("seeking", () => {
+    seekStartedAt = performance.now();
+  });
+  journeyVideo.addEventListener("seeked", () => {
+    seekStartedAt = 0;
+    markJourneyReady();
+  });
   journeyVideo.addEventListener("error", () => {
     journeyReady = false;
+    journeyPrimed = false;
     worldStage.classList.remove("is-journey-ready");   // the poster (first frame) stays
+    // A dropped connection mid-load is retried twice before the poster is final.
+    if (journeyRetries < 2) {
+      journeyRetries += 1;
+      setTimeout(() => {
+        journeyVideo.src = journeySource();
+        journeyVideo.load();
+      }, 1500 * journeyRetries);
+    }
   });
 
   function measureRail() {
@@ -171,12 +214,18 @@
     const y = window.scrollY;
     const viewport = window.innerHeight;
     header.classList.toggle("is-scrolled", y > 30);
+    revealInView();
     if (!canMoveScene()) return;
     loadJourney();
     if (y > trackEnd) return;                   // the stage has scrolled away
     const duration = Number.isFinite(journeyVideo.duration) && journeyVideo.duration > 1 ? journeyVideo.duration : JOURNEY_LENGTH;
     const target = Math.min(duration - 0.05, journeyTime(y) * (duration / JOURNEY_LENGTH));
-    if (journeyVideo.readyState >= 1 && !journeyVideo.seeking && Math.abs(journeyVideo.currentTime - target) > 1 / 48) {
+    // One seek in flight at a time; a seek that has not completed in 400 ms is
+    // treated as dropped and re-issued, so a fast flick can never leave the
+    // playhead stranded on an old frame.
+    const seekStuck = journeyVideo.seeking && seekStartedAt && performance.now() - seekStartedAt > 400;
+    if (journeyVideo.readyState >= 1 && (!journeyVideo.seeking || seekStuck) && Math.abs(journeyVideo.currentTime - target) > 1 / 48) {
+      seekStartedAt = performance.now();
       journeyVideo.currentTime = target;
     }
     const progress = clamp((y - beatTops[1]) / Math.max(1, trackEnd - viewport - beatTops[1]));
