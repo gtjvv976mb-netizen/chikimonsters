@@ -6,18 +6,55 @@ Everything for App Store Connect that does not require a build. Copy the fields 
 
 ---
 
-## Can this be submitted today? No — and here is exactly why
+## Can this be submitted today? Not from this repo — here is exactly what is left
 
-Four things block submission, and none of them can be fixed by writing more code in this repo.
-(A fifth — chat with no report or block mechanism — **was** a blocker and has been closed: the
-app now refuses every chat route. See §2.)
+Everything that can be done without a Mac is done and **live** (checked 2026-09-23):
+
+| Done | Evidence |
+|---|---|
+| Backend `/link/*` and `/account/*` routes deployed | `api.chikimonsters.com/link/new` → 401, `/link/redeem` → 400 (the routes exist and validate); `/health` reports `main` |
+| iOS pack published | `chikimonsters.com/realm/index.pck.ios.lite.manifest.json` → 200, seven chunks beside it |
+| `/link/`, `/privacy/`, `/support/` published | all 200 |
+| Cross-origin isolation on `/realm/` | `cross-origin-opener-policy: same-origin`, `cross-origin-embedder-policy: require-corp` served live |
+| Chat refused in the app | §2; 17 tests |
+| Xcode project generated and consistent | `python3 ios/make-xcodeproj.py --check` passes |
+
+What remains needs a Mac, an Apple Developer account, or a decision. None of it can be done from
+this repository, and the runbook right after this table is the whole of it.
 
 | Blocker | Why it blocks | Who can clear it |
 |---|---|---|
-| **No build exists** | The Swift in `ios/` has never been compiled. Submission needs an archive uploaded from Xcode on a Mac. | You, with a Mac |
-| **The backend `/link/*` routes are not deployed** | Written, tested and pushed (`gtjvv976mb-netizen/backend`, branch `claude/vigilant-clarke-bpkqwt`) — but until that branch is merged and Render redeploys, `/link/redeem` still 404s and **a reviewer cannot get past the first screen.** | Merge + deploy the backend branch |
+| **No build exists** | The Swift in `ios/` has never been compiled. Submission needs an archive uploaded from Xcode on a Mac, signed by the Apple Developer account. | You, with a Mac |
 | **No screenshots or preview video** | Both must be captured from the running app. They cannot be drawn, and faking them is a rejection *and* a guideline violation. | You, once a build runs |
-| **The app still shows a shop** | Until the iOS pack is published: a player can walk to the Trading Post and open a marketplace with a `🪄 Magic Eden` tab, the welcome screen's main button is *Connect Phantom Wallet*, and the Chikiseum says *"champions win real SOL"*. Every button refuses — but 3.1.1 is about what an app **presents**. | **Built and verified** — publish `index.pck.ios.lite.*` to `realm/`. The website's packs are untouched. |
+| **Three pack surfaces still draw wallet or marketplace UI** | The WALLET tab, `PlayerPanel`'s Magic Eden rail and the Open Gates card (below). Every button behind them refuses, but 3.1.1 is about what an app **presents**. | A pack rebuild from the recovered project (`godot-patch/RECOVERY.md`), or accept the risk and say so in the review notes |
+| **Mailboxes** | `/support/` and `/privacy/` name `support@` and `privacy@chikimonsters.com`. A reviewer may write to them. | Create the two mailboxes (forwarding is fine) |
+
+### From a Mac: the submission, in order
+
+Budget an afternoon. Nothing here is subtle; the order matters.
+
+1. **Prerequisites.** A Mac with the current Xcode, an Apple Developer Program membership that is
+   already approved (individual: about a day; organisation: needs a D-U-N-S number), a real iPhone,
+   and this repository cloned.
+2. **Open the project.** `open ios/Chikoria.xcodeproj`. Target → *Signing & Capabilities* → tick
+   *Automatically manage signing* and pick your Team. Target → *General* → Version `1.0`, Build `1`.
+   Supported Destinations: iPhone only unless you will also capture iPad screenshots.
+3. **Run on the iPhone.** The four Swift files were written without a Mac; fix whatever Xcode
+   flags first. Then, inside the app, open `https://chikimonsters.com/realm/selftest.html`: both
+   answers must read yes. Pair: on a computer sign in at `chikimonsters.com/link/`, press *New
+   code*, type it into the app.
+4. **Walk the app as a reviewer.** No Trading Post, no *Connect Phantom Wallet* button, no chat
+   box (the iOS pack). Note the three surfaces in the table above; either rebuild the pack or write
+   them into the review notes exactly as they are.
+5. **Capture** the six screenshots and the preview video from §5, on the device, in landscape.
+6. **App Store Connect.** *My Apps → + → New App*: iOS, name `Chikoria`, bundle id
+   `com.chikimonsters.Chikoria`, SKU `chikoria-ios-001`. Fill §1 (information), §2 (age rating),
+   §3 (privacy), §4 (review notes, with the test account and the pairing recording attached).
+7. **Archive and upload.** Xcode: *Product → Archive → Distribute App → App Store Connect →
+   Upload*. Processing takes about ten minutes; then pick the build on the version page.
+8. **TestFlight** on two phones, including the oldest you intend to support. Confirm pairing, the
+   world booting, Airplane Mode showing the native offline screen, and no chat box anywhere.
+9. **Submit for Review.** First responses usually arrive within one to two days.
 
 One product decision is still yours: **what account deletion does** on a wallet-backed account. (An
 account the *app* made now deletes cleanly — there is no wallet behind it and nothing on-chain to
@@ -501,8 +538,8 @@ None of these are optional if a first submission gets rejected under 4.2 — the
 
 Nothing below can move ahead of the thing above it.
 
-- [ ] **Rebuild the pack** — this is what takes the shop, the wallet button and the chat box off
-      the screen, and every piece of it is ready and verified (`godot-patch/RECOVERY.md`):
+- [x] **The iOS pack is published** — `realm/index.pck.ios.lite.*` is live, and the app's loader takes it. The shop, the welcome-screen wallet button, the Chikiseum SOL copy and the chat box are off the screen.
+- [ ] **Rebuild the pack once more** for the three surfaces still unpatched (WALLET tab, Magic Eden rail, Open Gates card). Every piece of the recipe is ready and verified (`godot-patch/RECOVERY.md`):
       ```sh
       # 1. recover the project from the pack this repo publishes   (~40s)
       cat realm/index.pck.[0-9].bin realm/index.pck.1[0-2].bin > index.pck
@@ -521,11 +558,11 @@ Nothing below can move ahead of the thing above it.
       ```
       Expect `CHIKISEUM_CARD_EXPORT_REJECTED` at step 3 — it is a provenance gate, not a failure.
 - [x] **Decided:** an app player does **not** need the 500k $CHIKI hold — the gate is waived for app sessions and unchanged on the website
-- [x] Backend: `/link/new`, `/link/redeem`, `linkToken` on `/verify`, `/link/devices`, `/link/revoke`, `/link/delete_account` — written and tested (50 checks against the real server), **awaiting merge + deploy**
+- [x] Backend: `/link/new`, `/link/redeem`, `linkToken` on `/verify`, `/link/devices`, `/link/revoke`, `/link/delete_account` — written, tested (50 checks against the real server), **merged and live on `api.chikimonsters.com`**
 - [x] Backend: `/account/new`, `/account/claim`, `/link/bind` — app-native accounts and connecting a wallet to one, tested against the real server
 - [ ] **Patch the pack's WALLET tab and `PlayerPanel`'s Magic Eden rail** (see above) — needs the recovered Godot project and a pack rebuild
 - [ ] **Decide** what account deletion actually removes **for a wallet-backed account**. The request/grace/cancel flow is live; the execution step is deliberately unwired (`realmLink.due()` lists what is past its grace). An app-made account has no such question — nothing of it lives anywhere but our database
-- [ ] Publish `link/` and `privacy/` (they are on the branch, not on `main`)
+- [x] Publish `link/` and `privacy/` — live
 - [x] Support page — `support/` is written
 - [ ] Create `support@chikimonsters.com` and `privacy@chikimonsters.com` (forwarding is fine) — both pages name them
 - [ ] Apple Developer Program enrolment, if not already done
