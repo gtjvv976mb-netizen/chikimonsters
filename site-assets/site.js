@@ -12,13 +12,11 @@
   const journey = document.querySelector(".journey");
   const worldTrack = document.querySelector(".world-track");
   const worldStage = document.querySelector(".world-stage");
-  const motionToggle = document.getElementById("motion-toggle");
-  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   const wideScreen = window.matchMedia("(min-width: 761px)");
-  const saveData = Boolean(navigator.connection && navigator.connection.saveData);
-  let motionOptIn = false;
-  const motionEnabled = () => !reduceMotion.matches || motionOptIn;
-  const canMoveScene = () => motionEnabled() && !saveData && !document.hidden;
+  // The cinematic scroll motion is the page. It is always on: there is no
+  // toggle, and neither reduced-motion nor data-saver settings switch it off.
+  const motionEnabled = () => true;
+  const canMoveScene = () => !document.hidden;
   const clamp = (value, low = 0, high = 1) => Math.max(low, Math.min(high, value));
   const smoothstep = (value) => {
     const t = clamp(value);
@@ -27,19 +25,6 @@
   const beats = [hero, ...journey.querySelectorAll(".journey-beat")];
   const journeyVideo = worldStage.querySelector(".world-journey");
   const journeyPoster = worldStage.querySelector(".world-poster");
-
-  function syncSceneMode() {
-    document.documentElement.classList.toggle("scene-static", !motionEnabled() || saveData);
-  }
-
-  function syncMotionToggle() {
-    motionToggle.hidden = !reduceMotion.matches || saveData;
-    motionToggle.setAttribute("aria-pressed", String(motionOptIn));
-    motionToggle.setAttribute("aria-label", `${motionOptIn ? "Turn off" : "Turn on"} cinematic scroll motion`);
-    motionToggle.querySelector(".cinematic-toggle-state").textContent = motionOptIn ? "On" : "Off";
-  }
-  syncMotionToggle();
-  syncSceneMode();
 
   document.getElementById("year").textContent = String(new Date().getFullYear());
 
@@ -93,8 +78,8 @@
     if (event.target === dialog) closeIntro();
   });
 
-  // Enhancement only: all sections remain readable without JS or motion support.
-  if ("IntersectionObserver" in window && !reduceMotion.matches) {
+  // Enhancement only: all sections remain readable without JS.
+  if ("IntersectionObserver" in window) {
     document.documentElement.classList.add("motion-ready");
     const reveals = new IntersectionObserver(
       (entries, observer) => {
@@ -200,18 +185,6 @@
   function scheduleScroll() {
     if (!scrollFrame) scrollFrame = requestAnimationFrame(renderScroll);
   }
-  function clearSceneTransforms() {
-    worldStage.style.removeProperty("--journey-progress");
-  }
-  motionToggle.addEventListener("click", () => {
-    motionOptIn = !motionOptIn;
-    document.documentElement.classList.toggle("motion-opt-in", motionOptIn);
-    syncMotionToggle();
-    syncSceneMode();
-    if (!motionEnabled()) clearSceneTransforms();
-    // The control is in the hero, so the stage can switch before the next paint.
-    renderScroll();
-  });
   measureRail();
   renderScroll();
   window.addEventListener("scroll", scheduleScroll, { passive: true });
@@ -219,14 +192,6 @@
   if ("ResizeObserver" in window) new ResizeObserver(measureRail).observe(worldTrack);
   if (document.fonts?.ready) document.fonts.ready.then(measureRail);
   document.addEventListener("visibilitychange", scheduleScroll);
-  reduceMotion.addEventListener("change", () => {
-    motionOptIn = false;
-    document.documentElement.classList.remove("motion-opt-in");
-    syncMotionToggle();
-    syncSceneMode();
-    if (!motionEnabled()) clearSceneTransforms();
-    scheduleScroll();
-  });
 
   // The codex: three tabs (Chikimons, Avatars, Chikimounts) and one dialog that
   // opens a Chikimon as a 3D turntable, or an avatar or mount as its artwork,
@@ -326,7 +291,7 @@
     codexHint.hidden = true;
     if (!codexDialog.open) codexDialog.showModal();
     codexDialog.querySelector(".codex-copy").scrollTop = 0;
-    if (kind !== "chikimon" || !entry.model || saveData) return;
+    if (kind !== "chikimon" || !entry.model) return;
     loadViewer().then(() => {
       if (codexCurrent !== ref || !codexDialog.open) return;
       const viewer = document.createElement("model-viewer");
@@ -339,10 +304,8 @@
       viewer.setAttribute("exposure", "1.05");
       viewer.setAttribute("camera-orbit", "30deg 78deg auto");
       viewer.setAttribute("loading", "eager");
-      if (motionEnabled()) {
-        viewer.setAttribute("auto-rotate", "");
-        viewer.setAttribute("rotation-per-second", "22deg");
-      }
+      viewer.setAttribute("auto-rotate", "");
+      viewer.setAttribute("rotation-per-second", "22deg");
       viewer.addEventListener("load", () => {
         codexStill.hidden = true;
         codexHint.hidden = false;
