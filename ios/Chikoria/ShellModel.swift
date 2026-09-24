@@ -124,9 +124,38 @@ final class ShellModel: NSObject, ObservableObject {
     }
 
     static var deviceCanHoldHDPack: Bool {
-        // An iPad reports a desktop-class user agent, so the loader already gives it the HD pack
-        // and this flag is not consulted for it.
-        ProcessInfo.processInfo.physicalMemory >= hdMinimumPhysicalMemory
+        // OFF, FOR EVERY PHONE, until a real device proves otherwise. The memory threshold above
+        // was never measured, and on TestFlight a phone that passed it loaded the 313 MB pack and
+        // was killed and reloaded in a loop. The lite pack is the one built for phones.
+        // (An iPad reports a desktop-class user agent, so the loader gives it the HD pack without
+        // consulting this; `crashes` below is what drops it to lite after a kill.)
+        false
+    }
+
+    // MARK: - Crash memory
+
+    /// Web content process deaths in the last day, kept across launches.
+    ///
+    /// The loader has its own out-of-memory net, but it only sees a kill that lands after it has
+    /// stamped `realm-loading`, which is just before the engine starts — a phone killed while the
+    /// pack is still downloading and being reassembled (the other peak) came back on the same
+    /// pack and died again. The shell sees EVERY kill, so it tells the page: `crashes` ≥ 1 in the
+    /// injection makes the loader take the lite pack and the smaller thread pool.
+    private static let crashesKey = "chikWebCrashes"
+    private static let crashWindow: TimeInterval = 24 * 60 * 60
+
+    static var recentCrashes: Int {
+        let now = Date().timeIntervalSince1970
+        let times = UserDefaults.standard.array(forKey: crashesKey) as? [Double] ?? []
+        return times.filter { now - $0 < crashWindow }.count
+    }
+
+    static func recordCrash() {
+        let now = Date().timeIntervalSince1970
+        var times = (UserDefaults.standard.array(forKey: crashesKey) as? [Double] ?? [])
+            .filter { now - $0 < crashWindow }
+        times.append(now)
+        UserDefaults.standard.set(Array(times.suffix(10)), forKey: crashesKey)
     }
 
     var isLinked: Bool { record.isLinked }
@@ -283,6 +312,8 @@ final class ShellModel: NSObject, ObservableObject {
         // Nor can it see how much memory this phone has — WebKit implements no
         // navigator.deviceMemory. See `deviceCanHoldHDPack`.
         payload["hd"] = Self.deviceCanHoldHDPack
+        // How often the page has been killed lately — see `recentCrashes`.
+        payload["crashes"] = Self.recentCrashes
         // The realm ships in English, Japanese and Chinese. The in-game switcher lives inside the
         // compiled pack, so the policy layer — which runs before the game — has no way to read it
         // and uses this instead. The device language is what the player has already told iOS.
@@ -799,6 +830,10 @@ extension ShellModel: WKNavigationDelegate {
     nonisolated func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
         Task { @MainActor in
             self.restarts += 1
+            // Before the reload, and into the injection it will run: the next load must already
+            // know this one was killed.
+            Self.recordCrash()
+            self.installInjection()
             // Not forever. A phone that cannot hold the realm would otherwise reload, die and
             // reload behind the cover for as long as the app is open.
             guard self.restarts <= Self.maxAutoRestarts else {
