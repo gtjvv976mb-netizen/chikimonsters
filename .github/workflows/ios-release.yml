@@ -1,0 +1,136 @@
+# Archives the iOS app on a GitHub-hosted Mac, signs it for the App Store and uploads it to App
+# Store Connect (it appears under TestFlight a few minutes later, ready to submit for review).
+#
+# Run it from the Actions tab → "iOS release" → Run workflow. Nothing runs it automatically.
+#
+# ONE-TIME SETUP (APPSTORE.md, "Uploading from GitHub"):
+#   1. App Store Connect → Apps → + → New App, bundle id com.chikimonsters.Chikoria
+#   2. App Store Connect → Users and Access → Integrations → App Store Connect API → Team Keys →
+#      generate a key with the ADMIN role (Admin is what lets Xcode create the distribution
+#      certificate for you). Download the .p8 — Apple only offers it once.
+#   3. GitHub → this repo → Settings → Secrets and variables → Actions → New repository secret, four
+#      times:
+#        APPLE_TEAM_ID              the 10-character Team ID (developer.apple.com → Membership)
+#        ASC_KEY_ID                 the key's Key ID
+#        ASC_ISSUER_ID              the Issuer ID shown above the keys list
+#        ASC_PRIVATE_KEY            the whole contents of the .p8 file, BEGIN/END lines included
+#
+# Signing is Xcode's cloud-managed automatic signing, authorised by that API key: no certificate or
+# provisioning profile is stored in this repository or in GitHub. The build number is the workflow
+# run number, so every upload is accepted as a new build.
+name: iOS release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Marketing version shown on the App Store (e.g. 1.0)'
+        required: true
+        default: '1.0'
+
+jobs:
+  release:
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - name: The four secrets are set
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+        run: |
+          missing=""
+          for s in APPLE_TEAM_ID ASC_KEY_ID ASC_ISSUER_ID ASC_PRIVATE_KEY; do
+            [ -n "${!s}" ] || missing="$missing $s"
+          done
+          if [ -n "$missing" ]; then
+            echo "::error::Missing repository secrets:$missing — see the setup notes at the top of .github/workflows/ios-release.yml"
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: ios
+
+      - name: Toolchain
+        run: xcodebuild -version
+
+      - name: API key on disk (runner-local, deleted with the runner)
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/asc"
+          printf '%s\n' "$ASC_PRIVATE_KEY" > "$RUNNER_TEMP/asc/AuthKey_${ASC_KEY_ID}.p8"
+          chmod 600 "$RUNNER_TEMP/asc/AuthKey_${ASC_KEY_ID}.p8"
+
+      - name: Archive (signed for distribution)
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -o pipefail
+          xcodebuild archive \
+            -project ios/Chikoria.xcodeproj \
+            -scheme Chikoria \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/Chikoria.xcarchive" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/asc/AuthKey_${ASC_KEY_ID}.p8" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
+            CODE_SIGN_STYLE=Automatic \
+            MARKETING_VERSION="$VERSION" \
+            CURRENT_PROJECT_VERSION="${{ github.run_number }}" \
+            | tee archive.log
+
+      - name: Export and upload to App Store Connect
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+        run: |
+          set -o pipefail
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>destination</key><string>upload</string>
+            <key>teamID</key><string>${APPLE_TEAM_ID}</string>
+            <key>signingStyle</key><string>automatic</string>
+            <key>uploadSymbols</key><true/>
+            <key>manageAppVersionAndBuildNumber</key><false/>
+          </dict>
+          </plist>
+          PLIST
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/Chikoria.xcarchive" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
+            -exportPath "$RUNNER_TEMP/export" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/asc/AuthKey_${ASC_KEY_ID}.p8" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            | tee export.log
+          echo "Uploaded build ${{ github.run_number }} (version ${{ inputs.version }}). It appears in App Store Connect → TestFlight after Apple finishes processing it."
+
+      - name: Remove the key
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/asc"
+
+      - name: Keep the logs if it failed
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-logs
+          path: |
+            archive.log
+            export.log
+          if-no-files-found: ignore
