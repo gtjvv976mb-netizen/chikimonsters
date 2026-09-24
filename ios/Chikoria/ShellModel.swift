@@ -285,38 +285,28 @@ final class ShellModel: NSObject, ObservableObject {
         }
     }
 
-    // MARK: - Calling into the page
+    // MARK: - Signing in (native, not through the page)
 
-    /// Redeem a pairing code. The page posts `persist` before this resolves, so the Keychain is
-    /// already written by the time we reload.
+    /// The backend the pairing screen talks to — the same host `chiki-ios.js` defaults to.
+    static let apiBase = URL(string: "https://api.chikimonsters.com")!
+
+    /// Redeem a pairing code minted on chikimonsters.com/link.
     func redeem(code: String) async throws -> String {
-        // The rejection is caught INSIDE JavaScript. A promise that rejects across the bridge
-        // arrives as an opaque WKError and the player would see nothing useful.
-        // Built by concatenation rather than String(format:) — a stray % in a future edit of this
-        // script would be read as a format specifier and corrupt the call.
-        // An async function BODY for callAsyncJavaScript — no IIFE, and `code` arrives as a real
-        // argument rather than being interpolated into source, so a stray quote in it is data.
-        let js = """
-        try {
-          var r = await window.CHIK_LINK.redeem(code);
-          return { ok: true, wallet: r.wallet };
-        } catch (e) {
-          return { ok: false, error: String((e && e.message) || e) };
+        // The same cleaning chiki-ios.js did: uppercase, 0-9 and A-Z only, at least six.
+        let clean = String(code.uppercased().filter { $0.isASCII && ($0.isNumber || $0.isLetter) })
+        guard clean.count >= 6 else { throw ShellError.message("That code looks too short.") }
+        let j = try await post("link/redeem", [
+            "code": clean,
+            "device_id": record.deviceId,
+            "device_name": UIDevice.current.model,
+            "client": "ios-app",
+        ], fallback: "That code is not valid any more. Mint a new one on the website.")
+        guard let wallet = j["wallet"] as? String, !wallet.isEmpty,
+              let token = j["linkToken"] as? String, !token.isEmpty else {
+            throw ShellError.message("That code is not valid any more. Mint a new one on the website.")
         }
-        """
-        let result = try await evaluate(js, ["code": code])
-
-        guard let dict = result as? [String: Any] else {
-            throw ShellError.message("The app could not reach the game. Try again.")
-        }
-        if dict["ok"] as? Bool == true, let wallet = dict["wallet"] as? String {
-            // Reload so the realm signs in as the account we just linked. The injection has
-            // already been rebuilt by the `persist` message.
-            phase = .booting
-            webView.reload()
-            return wallet
-        }
-        throw ShellError.message(dict["error"] as? String ?? "That code did not work.")
+        adopt(wallet: wallet, token: token, label: j["label"] as? String ?? "", appMade: false)
+        return wallet
     }
 
     /// Make an account here and now, with no wallet and no website.
@@ -327,25 +317,83 @@ final class ShellModel: NSObject, ObservableObject {
     /// sell — nothing can sign for its address, by construction — and `connectWallet` below is how
     /// a player who wants that changes it.
     func createAccount() async throws -> String {
-        let js = """
-        try {
-          var r = await window.CHIK_LINK.create();
-          return { ok: true, wallet: r.wallet };
-        } catch (e) {
-          return { ok: false, error: String((e && e.message) || e) };
+        let j = try await post("account/new", [
+            "device_id": record.deviceId,
+            "device_name": UIDevice.current.model,
+            "client": "ios-app",
+        ], fallback: "Your account could not be created. Check your connection and try again.")
+        guard let wallet = j["wallet"] as? String, !wallet.isEmpty,
+              let token = j["linkToken"] as? String, !token.isEmpty else {
+            throw ShellError.message("Your account could not be created. Check your connection and try again.")
         }
-        """
-        let result = try await evaluate(js)
-        guard let dict = result as? [String: Any] else {
-            throw ShellError.message("The app could not reach the game. Try again.")
-        }
-        if dict["ok"] as? Bool == true, let wallet = dict["wallet"] as? String {
-            phase = .booting
-            webView.reload()
-            return wallet
-        }
-        throw ShellError.message(dict["error"] as? String ?? "Your account could not be created.")
+        adopt(wallet: wallet, token: token, label: j["label"] as? String ?? "", appMade: true)
+        return wallet
     }
+
+    /// WHY THESE TWO CALLS ARE NATIVE. They used to run inside the page, through
+    /// `window.CHIK_LINK`, and on a real iPhone that page is busy: while the pairing screen is up
+    /// it is downloading and compiling the whole realm — a ~170 MB pack and a large wasm module,
+    /// often blocking the page's main thread for seconds at a time, and on a phone near its memory
+    /// ceiling getting its content process killed and reloaded. A tap that lands before the page
+    /// is ready, while it is blocked, or across a reload fails, and the player cannot create an
+    /// account at all. Neither call needs the page: the server hands back the credential, the shell
+    /// stores it (it is the Keychain owner anyway), and the page picks it up from the injection
+    /// on the reload that follows — exactly how a cold launch of a linked device works.
+    private func post(_ path: String, _ body: [String: Any], fallback: String) async throws -> [String: Any] {
+        var req = URLRequest(url: Self.apiBase.appendingPathComponent(path), timeoutInterval: 20)
+        req.httpMethod = "POST"
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        let result: (Data, URLResponse)
+        do {
+            result = try await URLSession.shared.data(for: req)
+        } catch {
+            throw ShellError.message("Chiki Monsters could not reach its server. Check your connection and try again.")
+        }
+        let (data, response) = result
+        let json = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] ?? [:]
+        guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
+            // The server's own words when it gave some ("too many accounts from this device — try
+            // again later"), capitalised; otherwise the caller's.
+            if let said = json["error"] as? String, !said.isEmpty {
+                throw ShellError.message(said.prefix(1).uppercased() + said.dropFirst())
+            }
+            throw ShellError.message(fallback)
+        }
+        return json
+    }
+
+    /// Make `wallet` this device's active account, store it, and restart the realm signed in as it.
+    ///
+    /// The same shape chiki-ios.js's `adopt` produced: newest first, replacing any older entry for
+    /// the same address. The injection is rebuilt BEFORE the reload so the page that comes back is
+    /// the signed-in one.
+    private func adopt(wallet: String, token: String, label: String, appMade: Bool) {
+        var next = record
+        next.accounts.removeAll { $0.wallet == wallet }
+        next.accounts.insert(LinkRecord.Account(
+            wallet: wallet,
+            token: token,
+            label: label,
+            linkedAt: (Date().timeIntervalSince1970 * 1000).rounded(),
+            appMade: appMade ? true : nil
+        ), at: 0)
+        next.active = wallet
+        record = next
+        if !LinkKeychain.save(next) {
+            NSLog("[chikoria] keychain write failed after sign-in; the account holds for this session only")
+        }
+        installInjection()
+        phase = .booting
+        if webView.url == nil {
+            webView.load(URLRequest(url: Self.realmURL))
+        } else {
+            webView.reload()
+        }
+    }
+
+    // MARK: - Calling into the page
 
     /// Ask for the code the player types on the website to put this account on a real wallet.
     ///
@@ -449,8 +497,8 @@ final class ShellModel: NSObject, ObservableObject {
     /// await it: given an async function it gets a Promise, which is not a type WebKit can
     /// serialise across to Swift, so the completion fires with nil or a WKError and the value the
     /// script eventually produced is dropped on the floor. Every call here is a network round trip
-    /// whose answer is the entire point — a redeemed code, a new account, a claim code — so each
-    /// one silently returned "the app could not reach the game" no matter how well it went.
+    /// whose answer is the entire point — a claim code, a deletion receipt — so each one silently
+    /// returned "the app could not reach the game" no matter how well it went.
     ///
     /// `callAsyncJavaScript` treats the string as an async function BODY: `await` and `return`
     /// work directly, there is no IIFE to wrap, and the returned promise is awaited before the
