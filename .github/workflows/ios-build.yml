@@ -24,8 +24,15 @@ jobs:
         with:
           sparse-checkout: ios
 
-      - name: Toolchain
-        run: xcodebuild -version
+      # Same toolchain as the App Store upload (ios-release.yml): Xcode 26+, the iOS 26 SDK.
+      - name: Toolchain (Xcode 26 or later)
+        run: |
+          XC=$(ls -d /Applications/Xcode_2[6-9]*.app 2>/dev/null | grep -v -i beta | sort -V | tail -1)
+          if [ -z "$XC" ]; then
+            echo "::error::No Xcode 26+ on this runner. Installed:"; ls -d /Applications/Xcode*.app; exit 1
+          fi
+          sudo xcode-select -s "$XC/Contents/Developer"
+          xcodebuild -version
 
       - name: The project file matches its generator
         run: python3 ios/make-xcodeproj.py --check
