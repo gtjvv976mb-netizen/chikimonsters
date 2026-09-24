@@ -310,7 +310,7 @@ object**, so the pack cannot simply read the global. Setting `keychain: true` wi
 | call | returns |
 |---|---|
 | `CHIK_LINK.status()` | `{linked, wallet, deviceId, accounts:[{wallet,label,linkedAt}]}` — never a token |
-| `CHIK_LINK.redeem(code)` | Promise → `{wallet}`; rejects with a message worth showing |
+| `CHIK_LINK.redeem(code)` / `create()` | Promise → `{wallet}`; rejects with a message worth showing. **The shipped shell does not use these** — it calls `/link/redeem` and `/account/new` natively (URLSession), writes the Keychain, rebuilds the injection and reloads, because the page is mid-boot while the pairing screen is up and a call routed through it can fail. |
 | `CHIK_LINK.use(wallet)` | switch account (reloads); `false` if not linked |
 | `CHIK_LINK.forget(wallet)` / `forgetAll()` | unlink here and revoke server-side |
 | `CHIK_LINK.setToken(wallet, token, label)` | late restore, if the Keychain read missed injection |
