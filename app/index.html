@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Chikoria for iPhone</title>
+<meta name="description" content="Chikoria on iPhone: explore a living voxel island, hatch and raise creatures, clear the Wicked Temple and duel other trainers. Free, with no purchases in the app.">
+<meta name="theme-color" content="#0d0920">
+<meta property="og:title" content="Chikoria for iPhone">
+<meta property="og:description" content="A living voxel world you can carry with you. One account, on your phone and on the web.">
+<meta property="og:image" content="https://chikimonsters.com/site-assets/hero-chikoria.webp">
+<meta property="og:url" content="https://chikimonsters.com/app/">
+<link rel="icon" type="image/png" href="/realm/index.icon.png">
+<link rel="apple-touch-icon" href="/realm/index.apple-touch-icon.png">
+<!--
+  THE APP'S OWN PAGE, and its Marketing URL in App Store Connect (APPSTORE.md §1).
+
+  Two rules this page keeps, because App Review reads it:
+    * It describes only what the APP does. The website's economy is not the app's, and a page that
+      advertised it here would contradict the review notes.
+    * Nothing on it is a purchase path, and it names no marketplace, token or wallet.
+
+  When the app is live, replace the "Coming soon" pill with Apple's official "Download on the App
+  Store" badge (developer.apple.com/app-store/marketing/guidelines — Apple's artwork only, never
+  redrawn) and add, in <head>:
+      <meta name="apple-itunes-app" content="app-id=YOUR_APP_ID">
+  so Safari offers the app to iPhone visitors.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --night:#0d0920; --night2:#17102f; --panel:#1b1436; --ink:#f8f5ed; --muted:#b9b3ca;
+    --gold:#ffd36a; --gold-deep:#d38c32; --cyan:#75e6ef; --violet:#a475eb;
+    --line:rgba(255,224,164,.18); --wrap:1120px; color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--night);color:var(--ink);overflow-x:hidden;
+    font:500 16px/1.6 "Nunito",system-ui,-apple-system,"Segoe UI",sans-serif}
+  a{color:inherit} img{display:block;max-width:100%}
+  h1,h2,h3{font-family:"Baloo 2","Nunito",sans-serif;line-height:1.1;margin:0}
+  .wrap{max-width:var(--wrap);margin:0 auto;padding:0 max(18px,env(safe-area-inset-left))}
+
+  /* nav */
+  nav{position:sticky;top:0;z-index:10;background:linear-gradient(180deg,rgba(13,9,32,.92),rgba(13,9,32,.6));
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  nav .wrap{display:flex;align-items:center;gap:18px;height:64px}
+  nav .brand img{height:38px;width:auto}
+  nav .links{margin-left:auto;display:flex;gap:18px;font-weight:700;font-size:15px;color:var(--muted)}
+  nav .links a{text-decoration:none} nav .links a:hover{color:var(--gold)}
+
+  /* hero */
+  .hero{position:relative;padding:64px 0 40px;isolation:isolate}
+  .hero::before{content:"";position:absolute;inset:0;z-index:-2;
+    background:url(/site-assets/scene-chikoria.webp) center/cover no-repeat;opacity:.22;filter:saturate(1.1)}
+  .hero::after{content:"";position:absolute;inset:0;z-index:-1;
+    background:radial-gradient(ellipse at 70% 40%,rgba(164,117,235,.25),transparent 60%),
+               linear-gradient(180deg,rgba(13,9,32,.2),var(--night) 92%)}
+  .hero .wrap{display:grid;grid-template-columns:1fr 1.15fr;gap:48px;align-items:center}
+  .eyebrow{display:inline-flex;gap:8px;align-items:center;font-weight:800;font-size:13px;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--cyan)}
+  .hero h1{font-size:clamp(40px,6vw,68px);margin:12px 0 16px}
+  .hero h1 em{font-style:normal;color:var(--gold)}
+  .lead{font-size:clamp(17px,2vw,20px);color:var(--muted);max-width:520px;margin:0 0 26px}
+  .ctas{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+  .pill{display:inline-flex;align-items:center;gap:10px;padding:13px 20px;border-radius:14px;font-weight:800}
+  .pill.soon{background:#000;border:1px solid rgba(255,255,255,.28);color:#fff}
+  .pill.soon small{display:block;font-size:11px;font-weight:700;opacity:.75;letter-spacing:.02em}
+  .pill.soon b{display:block;font-size:18px;line-height:1.05}
+  .pill.ghost{border:1px solid var(--line);color:var(--gold);text-decoration:none}
+  .pill.ghost:hover{background:rgba(255,211,106,.08)}
+  .note{margin-top:14px;font-size:14px;color:var(--muted)}
+
+  /* phone (landscape: the realm is landscape-only) */
+  .phone{position:relative;aspect-ratio:2.16/1;border-radius:44px;padding:12px;
+    background:linear-gradient(145deg,#3a3350,#15111f 55%,#2c2640);
+    box-shadow:0 40px 80px rgba(0,0,0,.55),inset 0 0 0 2px rgba(255,255,255,.08);transform:rotate(-2deg)}
+  .phone .screen{position:relative;width:100%;height:100%;border-radius:34px;overflow:hidden;background:#000}
+  .phone .screen img{width:100%;height:100%;object-fit:cover}
+  .phone .island{position:absolute;left:14px;top:50%;width:16px;height:64px;margin-top:-32px;border-radius:10px;
+    background:#000;box-shadow:0 0 0 1px rgba(255,255,255,.06)}
+  .phone .hud{position:absolute;left:36px;bottom:16px;right:16px;display:flex;gap:8px;flex-wrap:wrap}
+  .phone .hud span{background:rgba(13,9,32,.72);border:1px solid var(--line);border-radius:10px;padding:4px 10px;
+    font-size:12px;font-weight:800;color:var(--ink)}
+
+  /* sections */
+  section{padding:64px 0}
+  .kicker{color:var(--gold);font-weight:800;text-transform:uppercase;letter-spacing:.08em;font-size:13px}
+  h2{font-size:clamp(30px,4vw,44px);margin:8px 0 14px}
+  .intro{color:var(--muted);max-width:660px;font-size:18px;margin:0}
+
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;margin-top:34px}
+  .card{background:linear-gradient(180deg,var(--panel),var(--night2));border:1px solid var(--line);
+    border-radius:22px;overflow:hidden}
+  .card img{width:100%;height:auto;aspect-ratio:16/9;object-fit:cover}
+  .card .body{padding:18px 20px 22px}
+  .card h3{font-size:24px;margin-bottom:6px}
+  .card p{margin:0;color:var(--muted)}
+
+  .sync{display:grid;grid-template-columns:1fr 1fr;gap:34px;align-items:center}
+  .steps{display:grid;gap:14px;margin:0;padding:0;list-style:none;counter-reset:s}
+  .steps li{counter-increment:s;background:var(--panel);border:1px solid var(--line);border-radius:18px;
+    padding:16px 18px 16px 64px;position:relative}
+  .steps li::before{content:counter(s);position:absolute;left:18px;top:16px;width:32px;height:32px;border-radius:50%;
+    display:grid;place-items:center;background:var(--gold);color:#241a05;font-weight:900}
+  .steps b{display:block;font-size:17px}
+  .steps span{color:var(--muted);font-size:15px}
+  .devices{position:relative;aspect-ratio:16/11;align-self:center}
+  .devices .laptop{position:absolute;right:0;top:0;width:88%;border-radius:14px;overflow:hidden;
+    border:10px solid #211a33;border-bottom-width:22px;box-shadow:0 30px 60px rgba(0,0,0,.5)}
+  .devices .mini{position:absolute;left:0;bottom:0;width:52%;border-radius:22px;overflow:hidden;
+    border:8px solid #15111f;box-shadow:0 24px 50px rgba(0,0,0,.6);aspect-ratio:2.16/1}
+  .devices img{width:100%;height:100%;object-fit:cover}
+  .devices .link{position:absolute;left:48%;top:46%;background:var(--gold);color:#241a05;font-weight:900;
+    border-radius:999px;padding:6px 12px;font-size:13px;box-shadow:0 8px 20px rgba(0,0,0,.4)}
+
+  .native{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:30px}
+  .native>div{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px}
+  .native .ico{font-size:26px}
+  .native h3{font-size:19px;margin:6px 0 4px}
+  .native p{margin:0;color:var(--muted);font-size:15px}
+
+  .cast{display:flex;gap:14px;overflow-x:auto;padding:6px 2px 14px;margin-top:26px;scrollbar-width:thin}
+  .cast figure{margin:0;flex:0 0 150px;text-align:center}
+  .cast img{width:150px;height:150px;object-fit:cover;border-radius:20px;border:1px solid var(--line);background:var(--night2)}
+  .cast figcaption{margin-top:6px;font-weight:800}
+
+  details{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px 18px;margin:10px 0}
+  summary{cursor:pointer;font-weight:800;font-size:17px;list-style:none}
+  summary::-webkit-details-marker{display:none}
+  summary::after{content:"+";float:right;color:var(--gold);font-weight:900}
+  details[open] summary::after{content:"–"}
+  details p{color:var(--muted);margin:10px 0 2px}
+  details a{color:var(--gold)}
+
+  footer{border-top:1px solid var(--line);padding:30px 0 max(30px,env(safe-area-inset-bottom));color:var(--muted);font-size:14px}
+  footer .wrap{display:flex;flex-wrap:wrap;gap:16px;align-items:center}
+  footer .links{margin-left:auto;display:flex;gap:18px}
+  footer a{text-decoration:none} footer a:hover{color:var(--gold)}
+
+  @media (max-width:880px){
+    .hero .wrap,.sync{grid-template-columns:1fr}
+    .hero{padding-top:36px}
+    .phone{transform:none;border-radius:32px;padding:9px}
+    .phone .screen{border-radius:24px}
+    .grid,.native{grid-template-columns:1fr}
+    nav .links a.opt{display:none}
+  }
+  @media (prefers-reduced-motion:no-preference){
+    .phone{animation:float 7s ease-in-out infinite}
+    @keyframes float{50%{transform:rotate(-2deg) translateY(-8px)}}
+  }
+  @media (max-width:880px) and (prefers-reduced-motion:no-preference){
+    @keyframes float{50%{transform:translateY(-6px)}}
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a class="brand" href="/" aria-label="Chiki Monsters home"><img src="/site-assets/logo.webp" alt="Chiki Monsters" width="64" height="38"></a>
+    <div class="links">
+      <a class="opt" href="#features">The game</a>
+      <a class="opt" href="#account">Your account</a>
+      <a href="#faq">FAQ</a>
+      <a href="/support/">Support</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <div>
+      <span class="eyebrow">📱 Chikoria for iPhone</span>
+      <h1>A living world you can <em>carry with you.</em></h1>
+      <p class="lead">Explore a hand-built voxel island, hatch and raise a team of creatures, clear the
+        Wicked Temple and duel other trainers — on your iPhone, with the same account you play everywhere.</p>
+      <div class="ctas">
+        <span class="pill soon" aria-label="Coming soon on the App Store">
+          <svg width="22" height="26" viewBox="0 0 17 20" fill="#fff" aria-hidden="true"><path d="M14.1 10.6c0-2.6 2.1-3.8 2.2-3.9-1.2-1.8-3.1-2-3.7-2-1.6-.2-3.1.9-3.9.9-.8 0-2-.9-3.4-.9C3.6 4.8 2 5.8 1.1 7.4c-1.8 3.2-.5 7.9 1.3 10.5.9 1.3 1.9 2.7 3.2 2.6 1.3-.1 1.8-.8 3.3-.8 1.6 0 2 .8 3.4.8 1.4 0 2.3-1.3 3.1-2.6 1-1.5 1.4-2.9 1.4-3-.1 0-2.7-1-2.7-4.3zM11.6 3c.7-.9 1.2-2 1.1-3.2-1 0-2.3.7-3 1.6-.7.8-1.2 2-1.1 3.1 1.1.1 2.3-.6 3-1.5z"/></svg>
+          <span><small>Coming soon on the</small><b>App Store</b></span>
+        </span>
+        <a class="pill ghost" href="/link/">Already playing? Pair your account →</a>
+      </div>
+      <p class="note">Free to play · no purchases in the app · no wallet needed</p>
+    </div>
+    <div class="phone" role="img" aria-label="Chikoria running on an iPhone in landscape">
+      <div class="screen">
+        <img src="/site-assets/hero-chikoria.webp" alt="" width="1344" height="752" fetchpriority="high">
+        <div class="island"></div>
+        <div class="hud"><span>🏝️ Chikoria</span><span>🌾 Gathering</span><span>🥚 3 eggs warming</span></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section id="features">
+  <div class="wrap">
+    <span class="kicker">The game</span>
+    <h2>Everything the island has, in your hand.</h2>
+    <p class="intro">Chikoria on iPhone is the full game world — not a companion app. The same island,
+      the same creatures and the same adventures, tuned for a phone.</p>
+    <div class="grid">
+      <article class="card">
+        <img src="/site-assets/scene-gathering.webp" alt="A trainer gathering resources on the island" loading="lazy" width="1344" height="752">
+        <div class="body"><h3>Gather, craft, cook, fish</h3>
+          <p>14 resources, 130 recipes and ten levels of tools. Fish the coasts for eight species and four sea
+            legends. Everything is gathered and crafted by hand.</p></div>
+      </article>
+      <article class="card">
+        <img src="/site-assets/wicked-temple.webp" alt="The Wicked Temple" loading="lazy" width="1344" height="752">
+        <div class="body"><h3>Clear the Wicked Temple</h3>
+          <p>Take one creature into five escalating sanctums against the corrupted horde. Your deck is the
+            creature's own ability cards. Clear all five and the vault opens.</p></div>
+      </article>
+      <article class="card">
+        <img src="/site-assets/chikiseum.webp" alt="The Chikiseum arena" loading="lazy" width="1599" height="900">
+        <div class="body"><h3>Duel in the Chikiseum</h3>
+          <p>Take a creature you raised into real-time duels against other trainers. The server runs every
+            match — nothing is staked and nothing is wagered, it's just you and your team.</p></div>
+      </article>
+      <article class="card">
+        <img src="/site-assets/scene-chikoria.webp" alt="Creatures across the island of Chikoria" loading="lazy" width="1344" height="752">
+        <div class="body"><h3>Hatch and raise a team</h3>
+          <p>Twenty-one species across ten elemental lines and five ancient legendaries. Every creature
+            levels to 50, learns up to twelve ability cards and grows a personality from how you play.</p></div>
+      </article>
+    </div>
+
+    <div class="cast" aria-label="Some of the creatures you can raise">
+      <figure><img src="/site-assets/dex-firix.webp" alt="" loading="lazy"><figcaption>Firix</figcaption></figure>
+      <figure><img src="/site-assets/dex-bamboran.webp" alt="" loading="lazy"><figcaption>Bamboran</figcaption></figure>
+      <figure><img src="/site-assets/dex-rivaros.webp" alt="" loading="lazy"><figcaption>Rivaros</figcaption></figure>
+      <figure><img src="/site-assets/dex-crysalune.webp" alt="" loading="lazy"><figcaption>Crysalune</figcaption></figure>
+      <figure><img src="/site-assets/dex-borealon.webp" alt="" loading="lazy"><figcaption>Borealon</figcaption></figure>
+      <figure><img src="/site-assets/dex-dragonos.webp" alt="" loading="lazy"><figcaption>Dragonos</figcaption></figure>
+      <figure><img src="/site-assets/dex-galador.webp" alt="" loading="lazy"><figcaption>Galador</figcaption></figure>
+      <figure><img src="/site-assets/dex-tyrannos.webp" alt="" loading="lazy"><figcaption>Tyrannos</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<section id="account">
+  <div class="wrap sync">
+    <div>
+      <span class="kicker">One account, everywhere</span>
+      <h2>Play on your phone. Pick up on the web.</h2>
+      <p class="intro">Everything you earn in the app — creatures, eggs, fish, resources, quest progress — is
+        saved to your Chikoria account, and it's all there the next time you play on chikimonsters.com.</p>
+      <ol class="steps" style="margin-top:24px">
+        <li><b>New here? Just tap “Create an account”.</b><span>No email, no password, no wallet. You're on the
+          island in one tap.</span></li>
+        <li><b>Already play on the web? Pair it.</b><span>Sign in at chikimonsters.com/link, press
+          “New code”, and type the code into the app. Your whole account comes with you.</span></li>
+        <li><b>Keep it safe.</b><span>An account made on your iPhone can be backed up to your
+          chikimonsters.com account from the app, so you never lose it with the phone.</span></li>
+      </ol>
+    </div>
+    <div class="devices" aria-hidden="true">
+      <div class="laptop"><img src="/site-assets/scene-gathering.webp" alt="" loading="lazy"></div>
+      <div class="mini"><img src="/site-assets/hero-chikoria.webp" alt="" loading="lazy"></div>
+      <span class="link">🔗 same account</span>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <span class="kicker">Made for iPhone</span>
+    <h2>A real app, not a web page.</h2>
+    <div class="native">
+      <div><div class="ico">🔑</div><h3>Pair in seconds</h3><p>Create or pair an account on a native screen. This iPhone stays signed in.</p></div>
+      <div><div class="ico">👥</div><h3>Switch accounts</h3><p>Link more than one account and switch between them from the Account screen.</p></div>
+      <div><div class="ico">📶</div><h3>Kind to your data plan</h3><p>On mobile data or Low Data Mode the app downloads the lighter world (about 175 MB, once).</p></div>
+      <div><div class="ico">✈️</div><h3>Honest when offline</h3><p>No blank screens: offline, you see your account, when you last played and whether the world is ready.</p></div>
+      <div><div class="ico">🗑️</div><h3>Your data, your call</h3><p>Unlink a device or delete your account right inside the app, whenever you want.</p></div>
+      <div><div class="ico">🛡️</div><h3>No ads, no tracking</h3><p>The app contains no ads, no analytics and no third-party tracking of any kind.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="faq">
+  <div class="wrap">
+    <span class="kicker">Questions</span>
+    <h2>Good to know</h2>
+    <details><summary>Does it cost anything?</summary>
+      <p>No. Chikoria is free to play, and there are no purchases of any kind in the app.</p></details>
+    <details><summary>Do I need a crypto wallet?</summary>
+      <p>No. Tap “Create an account” and play. The app has no wallet in it and never asks for one.</p></details>
+    <details><summary>Is my progress shared with the web version?</summary>
+      <p>Yes. The app plays your Chikoria account, so everything you gather, hatch and win is saved to it and
+        waiting on chikimonsters.com — and the other way round.</p></details>
+    <details><summary>Is there chat?</summary>
+      <p>Not in the app. The app has no player-to-player chat or messages.</p></details>
+    <details><summary>Which iPhones does it run on?</summary>
+      <p>iPhone with iOS 16 or later. The game is a full 3D world, so a recent iPhone gives the smoothest ride.
+        It plays in landscape.</p></details>
+    <details><summary>How big is the download?</summary>
+      <p>The app itself is small. The first time you open it, it downloads the game world — about 175 MB on
+        mobile data, a little more on Wi-Fi — and keeps it, so later launches are quick.</p></details>
+    <details><summary>How do I delete my account?</summary>
+      <p>In the app: Account → <b>Delete my account…</b>. Details are in our <a href="/privacy/">privacy page</a>.</p></details>
+    <details><summary>I need help.</summary>
+      <p>See <a href="/support/">Support</a>, or write to <a href="mailto:support@chikimonsters.com">support@chikimonsters.com</a>.</p></details>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>© 2026 Chikimonsters</span>
+    <div class="links">
+      <a href="/">Home</a>
+      <a href="/privacy/">Privacy</a>
+      <a href="/support/">Support</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

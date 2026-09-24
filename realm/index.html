@@ -1018,6 +1018,15 @@ html.chik-phone #boot { padding-bottom: calc(5px + env(safe-area-inset-bottom, 0
 				if (hint && (hint.textContent || '').indexOf('$CHIKI') >= 0) {
 					hint.innerHTML = '&#128070; Press the coin to play';
 				}
+
+				// 7. The title art. hero.jpg is the website's Meme Dynasty line-up, which includes a
+				//    caricature of a real person (a token-launchpad founder, in a "STOP BEING POOR"
+				//    shirt) and third-party meme characters. The app opens on the Chikoria key art
+				//    instead — the same image as the app icon and the first frame of the cinematic.
+				var heroimg = document.getElementById('heroimg');
+				if (heroimg && /hero\.jpg/.test(heroimg.getAttribute('src') || '')) {
+					heroimg.setAttribute('src', 'loading.png');
+				}
 			} catch (e) { /* copy is not worth a broken loading screen */ }
 		}());
 		</script>
@@ -1966,7 +1975,11 @@ const engine = new Engine(GODOT_CONFIG);
 		if (isIOSApp && wantLite) { candidates.push(['index.pck.ios.lite.manifest.json', true, true]); }
 		if (isIOSApp) { candidates.push(['index.pck.ios.manifest.json', false, true]); }
 		if (isIOSApp && !wantLite) { candidates.push(['index.pck.ios.lite.manifest.json', true, true]); }
-		if (wantLite) { candidates.push(['index.pck.lite.manifest.json', true, false]); }
+		// NEVER a website pack in the app. A network error on the iOS manifest used to fall through
+		// to the website's lite pack — and a flaky connection would then boot the app with the
+		// Trading Post and wallet UI on screen. The app would rather fail and let the native shell
+		// show its retry screen than draw what App Review must not see.
+		if (wantLite && !isIOSApp) { candidates.push(['index.pck.lite.manifest.json', true, false]); }
 
 		let man = null;
 		let usedLite = false;
@@ -1981,6 +1994,7 @@ const engine = new Engine(GODOT_CONFIG);
 		}
 		// Left unguarded on purpose: if the desktop manifest is the one that is missing, that is a
 		// broken deploy and the loader should say so rather than quietly mount nothing.
+		if (!man && isIOSApp) { throw new Error('The app\'s world could not be downloaded. Check your connection and try again.'); }
 		if (!man) { man = await fetchJSON('index.pck.manifest.json', 4); usedLite = false; usedIOS = false; }
 		if (usedLite) { say('Building the pocket realm…'); }
 		// Runtime layout follows the pack that actually mounted, not a fallible device/UA guess.

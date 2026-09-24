@@ -187,6 +187,14 @@ console.log('\nthe app loads its own pack, and the website keeps its own');
 	// is a zip — dropping this line produces a pack that downloads perfectly and never opens.
 	check(hasLoose(html, "(man && man.fs_name) || 'index.pck'"),
 		'the manifest can name the file the pack is mounted as (fs_name)');
+
+	// A network error on the iOS manifest must not fall through to a WEBSITE pack: that boots the
+	// app with the Trading Post and the wallet UI on screen. The app fails instead, and the shell
+	// shows its retry screen.
+	check(hasLoose(html, "if (wantLite && !isIOSApp) { candidates.push(['index.pck.lite.manifest.json', true, false]); }"),
+		'the app never lists the website lite pack as a candidate');
+	check(hasLoose(html, "if (!man && isIOSApp) { throw new Error("),
+		'and never falls back to the website desktop pack either');
 }
 
 console.log('\nevery inline script still parses');

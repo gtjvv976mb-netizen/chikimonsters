@@ -235,6 +235,14 @@ future.
 | **the Trading Post and Magic Eden UI are not drawn at all** | the pack itself must stop drawing them | **yes** |
 | **the Cup stops advertising real SOL** | static labels in `Chikiseum.gd` — *"champions win real SOL"*, *"Pool of 4 SOL"* — drawn regardless of server data | **yes** |
 
+**Update 2026-09-24: both rows are done, and so is everything else the pack drew.** The pack was
+rebuilt: `godot-patch/apply-ios-pack-patch.py` (19 edits) plus `godot-patch/apply-ios-trading-patch.py`
+(165 edits, data in `ios-trading-edits.json`) — the WALLET tab, the Magic Eden rail, NFT minting
+cards, Trading Post prompts and background sale toasts, the Open Gates card, sign-in toasts, and
+$CHIKI/SOL copy across quests, the Temple, the Chikiseum and the help pages. In the app the balance
+is called "coins". Progress is untouched: everything earned in the app is saved to the account and
+can be sold on the website. See `APPSTORE.md`, "The trading sweep".
+
 The last two rows are the outstanding pieces, and they are worse than "not tidy". The pack does
 **not** read `window.CHIK_FEATURES` — confirmed by searching all 128 scripts, which return nothing
 for `CHIK_FEATURES`, `CHIK_NO_CRYPTO`, `CHIK_IOS_APP` or `CHIK_HD`. The only window flag the pack

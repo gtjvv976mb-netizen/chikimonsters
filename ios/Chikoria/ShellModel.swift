@@ -109,8 +109,8 @@ final class ShellModel: NSObject, ObservableObject {
     /// cross-origin isolation is scoped to /realm/*, and /arena/ and /link/ are surfaces this app
     /// must never display (a SOL wager client and a Phantom sign-in respectively).
     static let realmURL = URL(string: "https://chikimonsters.com/realm/")!
-    static let realmHost = "chikimonsters.com"
-    static let realmPathPrefix = "/realm/"
+    nonisolated static let realmHost = "chikimonsters.com"
+    nonisolated static let realmPathPrefix = "/realm/"
 
     /// Links the loading screen legitimately offers. Re-validated HERE and not trusted from the
     /// page: `webkit.messageHandlers.chikiLink` lives in the page world, so any script in the realm

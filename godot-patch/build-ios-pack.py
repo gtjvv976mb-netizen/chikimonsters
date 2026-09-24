@@ -8,9 +8,10 @@ The app must not draw a marketplace, a wallet button or a chat box. The website 
 three. Those are drawn by GDScript inside the pack, so the two cannot share one — but they can
 share almost all of one.
 
-This takes the pack `realm/` already serves and rewrites **eight files**: the six compiled scripts
-`apply-ios-pack-patch.py` changes, the new `ChikFeat.gdc` with its `.remap`, and the global class
-cache that registers `ChikFeat` as a class name. Out of 5,459 files. Textures, scenes, audio, card
+This takes the pack `realm/` already serves and rewrites **twenty-two files**: the nineteen compiled
+scripts `apply-ios-pack-patch.py` and `apply-ios-trading-patch.py` change, the new `ChikFeat.gdc`
+with its `.remap`, and the global class cache that registers `ChikFeat` as a class name. Out of
+5,479 files. Textures, scenes, audio, card
 art and every other script are carried over byte for byte.
 
 WHY SO SMALL A CHANGE, measured rather than assumed. Compiling the *recovered* project and diffing
@@ -45,13 +46,27 @@ from pathlib import Path
 # Every file the iOS patch touches. Explicit rather than "whatever differs", so a regenerated
 # overlay cannot smuggle an unrelated script into the app.
 OVERLAY_FILES = [
-	"ChikFeat.gdc",
-	"ChikFeat.gd.remap",
-	"GameHUD.gdc",
-	"Chikiseum.gdc",
-	"Onboarding.gdc",
+	"Chain.gdc",
 	"Chat.gdc",
+	"ChikFeat.gdc",
+	"Chikiseum.gdc",
+	"ChikiseumArena.gdc",
+	"ChikiseumEntry.gdc",
+	"ChikiseumLiveClient.gdc",
+	"Econ.gdc",
+	"GameHUD.gdc",
 	"InfoBar.gdc",
+	"Main.gdc",
+	"Market.gdc",
+	"Minimap.gdc",
+	"Net.gdc",
+	"Onboarding.gdc",
+	"Player.gdc",
+	"PlayerPanel.gdc",
+	"Profile.gdc",
+	"Temple.gdc",
+	"Title.gdc",
+	"ChikFeat.gd.remap",
 	".godot/global_script_class_cache.cfg",
 ]
 
