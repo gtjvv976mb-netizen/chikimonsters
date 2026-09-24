@@ -9,8 +9,8 @@ meme egg on every run, and the Temple's odds table shows the class badge. In the
 
   * `egg_meme.png`        becomes the Legendary egg, shifted to pink — an egg, no faces
   * `ico_class_meme.png`  becomes the Meme Dynasty gem badge (`ico_meme_dynasty.png`), no faces
-  * `app_title.jpg`       (new) the Chikoria key art `realm/loading.png`, which Title.gd shows in
-                          place of `web_hero.png`, the meme line-up
+  * `app_title.jpg`       (new) `realm/app-title.jpg`, the Chiki Monsters logo over the key art,
+                          which Title.gd shows in place of `web_hero.png`, the meme line-up
 
 The two textures are written as Godot `.ctex` files at the SAME imported paths the pack already
 uses, built from the lite pack's own `.ctex` of the source image, so size and import settings stay
@@ -104,11 +104,9 @@ def main() -> int:
 	canvas.paste(gem, ((old.width - gem.width) // 2, (old.height - gem.height) // 2), gem)
 	blobs[target] = _write_ctex(header, fmt, canvas, lossless)
 
-	# the title art: raw JPEG, loaded by Title.gd with Image.load_from_file
-	key = Image.open(realm / "loading.png").convert("RGB")
-	jpg = io.BytesIO()
-	key.save(jpg, "JPEG", quality=88, optimize=True)
-	blobs["app_title.jpg"] = jpg.getvalue()
+	# the title art: raw JPEG, loaded by Title.gd with Image.load_from_file. realm/app-title.jpg is the
+	# Chiki Monsters logo over the key art — the same image the loader shows and the app icon uses.
+	blobs["app_title.jpg"] = (realm / "app-title.jpg").read_bytes()
 
 	for rel, blob in blobs.items():
 		p = out / rel

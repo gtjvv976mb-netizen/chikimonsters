@@ -395,7 +395,7 @@ final class ShellModel: NSObject, ObservableObject {
     /// What support needs to act on a report: which build, which device, which account. No token.
     var supportBlob: String {
         """
-        Chikoria \(appVersionDisplay)
+        Chiki Monsters \(appVersionDisplay)
         iOS \(UIDevice.current.systemVersion) · \(UIDevice.current.model)
         device: \(record.deviceId)
         account: \(activeWallet.isEmpty ? "not linked" : activeWallet)
@@ -523,7 +523,7 @@ final class ShellModel: NSObject, ObservableObject {
             phase = .staleShell
 
         case "paused":
-            phase = .paused(body["message"] as? String ?? "Chikoria is down for maintenance.")
+            phase = .paused(body["message"] as? String ?? "Chiki Monsters is down for maintenance.")
 
         case "progress":
             progress = body["percent"] as? Int ?? progress
@@ -675,7 +675,7 @@ extension ShellModel: WKNavigationDelegate {
         ].contains(ns.code)
 
         phase = .failed(offline
-            ? "Chikoria needs a connection to load the realm. Check your network and try again."
+            ? "Chiki Monsters needs a connection to load the game. Check your network and try again."
             : "The realm could not be loaded. Try again in a moment.")
     }
 }

@@ -64,9 +64,9 @@
 
 	var STRINGS = {
 		blocked: {
-			en: 'This is not available in the Chikoria app.',
-			ja: 'この機能はチコリアアプリでは利用できません。',
-			zh: '此功能在 Chikoria 应用中不可用。',
+			en: 'This is not available in the Chiki Monsters app.',
+			ja: 'この機能はチキモンスターズのアプリでは利用できません。',
+			zh: '此功能在 Chiki Monsters 应用中不可用。',
 		},
 		// Names no outside destination, in every language — see the note on guideline 3.1.1 below.
 		noTrade: {
@@ -85,9 +85,9 @@
 			zh: '该代码已失效。请在网站上重新生成一个。',
 		},
 		maintenance: {
-			en: 'Chikoria is down for maintenance. Try again shortly.',
-			ja: 'チコリアはメンテナンス中です。しばらくしてからお試しください。',
-			zh: 'Chikoria 正在维护中，请稍后再试。',
+			en: 'Chiki Monsters is down for maintenance. Try again shortly.',
+			ja: 'チキモンスターズはメンテナンス中です。しばらくしてからお試しください。',
+			zh: 'Chiki Monsters 正在维护中，请稍后再试。',
 		},
 		// Replaces whatever the pack says when wallet sign-in finds no provider. Like noTrade, it
 		// states the fact and names no outside destination — see §4.
@@ -356,7 +356,7 @@
 				refuse(url, no);
 				// A rejected promise, not a hang: the game's pollers all have a failure branch and a
 				// spinner that never resolves is the one failure mode a player cannot get out of.
-				return Promise.reject(new Error('This is not available in the Chikoria app.'));
+				return Promise.reject(new Error('This is not available in the Chiki Monsters app.'));
 			}
 			// §6 — wallet-less sign-in rides on the request the game already makes.
 			var rewritten = rewriteVerify(url, input, init);
