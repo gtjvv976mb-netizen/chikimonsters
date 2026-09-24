@@ -1914,6 +1914,11 @@ const engine = new Engine(GODOT_CONFIG);
 					var saved = (localStorage.getItem('realm-oom-app') || '').split(':');
 					if (saved.length === 2 && Date.now() - parseInt(saved[1], 10) < 86400000) { n = parseInt(saved[0], 10) || 0; }
 				}
+				// The shell sees EVERY kill of the web content process — including one during the
+				// pack download, before 'realm-loading' is stamped, which the detector here misses —
+				// and passes how many it saw in the last day. Trust whichever count is higher.
+				var shellSaw = window.CHIK_IOS_APP ? (parseInt(window.CHIK_IOS_APP.crashes, 10) || 0) : 0;
+				if (shellSaw > n) { n = shellSaw; }
 				return n;
 			} catch (e) { return 0; }
 		})();
