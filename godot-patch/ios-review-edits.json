@@ -193,7 +193,7 @@
  },
  {
   "file": "Title.gd",
-  "why": "meme dynasty: the title art is the Chikoria key art, not the meme line-up",
+  "why": "meme dynasty: the title art is the Chiki Monsters logo over the key art, not the meme line-up",
   "old": "\t_hero.texture = _tex(\"res://web_hero.png\")",
   "new": "\t_hero.texture = _tex(\"res://web_hero.png\" if ChikFeat.on(\"meme_dynasty\") else \"res://app_title.jpg\")"
  },
@@ -201,13 +201,13 @@
   "file": "Title.gd",
   "why": "meme dynasty: the play emblem sits on the key art's emblem",
   "old": "\tvar d: = maxf(52.0, 0.102 * drawn.x)",
-  "new": "\tvar app_art: = not ChikFeat.on(\"meme_dynasty\")\n\tvar d: = maxf(52.0, (0.086 if app_art else 0.102) * drawn.x)"
+  "new": "\tvar app_art: = not ChikFeat.on(\"meme_dynasty\")\n\tvar d: = maxf(52.0, (0.10 if app_art else 0.102) * drawn.x)"
  },
  {
   "file": "Title.gd",
   "why": "meme dynasty: emblem position on the key art",
   "old": "\t_coin.position = off + Vector2(SW_X * drawn.x, SW_Y * drawn.y) - _coin.size * 0.5",
-  "new": "\t_coin.position = off + Vector2((0.497 if app_art else SW_X) * drawn.x, (0.542 if app_art else SW_Y) * drawn.y) - _coin.size * 0.5"
+  "new": "\t_coin.position = off + Vector2((0.521 if app_art else SW_X) * drawn.x, (0.672 if app_art else SW_Y) * drawn.y) - _coin.size * 0.5"
  },
  {
   "file": "Chain.gd",

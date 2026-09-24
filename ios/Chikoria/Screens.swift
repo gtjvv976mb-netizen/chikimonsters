@@ -55,14 +55,14 @@ struct RootView: View {
                               action: ("Try again", { model.retry() }))
             case .staleShell:
                 MessageScreen(
-                    title: "Update Chikoria",
+                    title: "Update Chiki Monsters",
                     message: "This version of the app is older than the realm supports. Update from the App Store to keep playing.",
                     action: nil)
             case .lockdown:
                 MessageScreen(
                     title: "Lockdown Mode is on",
-                    message: "Chikoria’s 3D world needs WebAssembly, which Lockdown Mode switches off. "
-                        + "You can allow Chikoria in Settings → Privacy & Security → Lockdown Mode → Configure App Access.",
+                    message: "Chiki Monsters’ 3D world needs WebAssembly, which Lockdown Mode switches off. "
+                        + "You can allow Chiki Monsters in Settings → Privacy & Security → Lockdown Mode → Configure App Access.",
                     action: nil)
             }
         }
@@ -136,7 +136,7 @@ struct PairingView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
-                Text(hasCode ? "Link your account" : "Welcome to Chikoria")
+                Text(hasCode ? "Link your account" : "Welcome to Chiki Monsters")
                     .font(.system(size: 30, weight: .heavy))
                     .foregroundStyle(Ink.text)
 
@@ -187,7 +187,7 @@ struct PairingView: View {
 
                     Divider().overlay(Ink.line).padding(.vertical, 4)
 
-                    Button("I already have a Chikoria account") { withAnimation { hasCode = true } }
+                    Button("I already have a Chiki Monsters account") { withAnimation { hasCode = true } }
                         .font(.callout.weight(.semibold))
                         .foregroundStyle(Ink.gold)
 
@@ -201,7 +201,7 @@ struct PairingView: View {
                 }
 
                 if hasCode {
-                Text("Chikoria on this iPhone plays the account you already have. "
+                Text("Chiki Monsters on this iPhone plays the account you already have. "
                      + "Everything you own comes with you, and everything you gather here is waiting when you get back.")
                     .foregroundStyle(Ink.dim)
 
@@ -414,7 +414,7 @@ struct AccountView: View {
                     Text(model.activeIsWalletless
                          ? "This account was made in the app, so deleting it removes everything on "
                            + "it. Nothing is kept anywhere else."
-                         : "Deleting removes your Chikoria progress from our servers.")
+                         : "Deleting removes your Chiki Monsters progress from our servers.")
                 }
 
                 Section("Support") {
@@ -426,7 +426,7 @@ struct AccountView: View {
             .navigationTitle("Account")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
-            .alert("Delete your Chikoria account?", isPresented: $confirmDelete) {
+            .alert("Delete your Chiki Monsters account?", isPresented: $confirmDelete) {
                 Button("Cancel", role: .cancel) {}
                 Button("Delete", role: .destructive) {
                     Task {
@@ -446,7 +446,7 @@ struct AccountView: View {
                 Text(model.activeIsWalletless
                      ? "This asks us to delete this account and everything on it, permanently. "
                        + "It was made in the app, so there is nothing kept anywhere else."
-                     : "This asks us to delete your Chikoria progress permanently. It cannot be undone.")
+                     : "This asks us to delete your Chiki Monsters progress permanently. It cannot be undone.")
             }
             .alert(model.activeIsWalletless ? "Lose this account?" : "Unlink this iPhone?",
                    isPresented: $confirmUnlink) {
@@ -556,7 +556,7 @@ struct OfflineScreen: View {
             .foregroundStyle(.black)
             .padding(.top, 20)
 
-            Text("Chikoria needs a connection to sign in to your account.")
+            Text("Chiki Monsters needs a connection to sign in to your account.")
                 .font(.footnote)
                 .foregroundStyle(Ink.dim)
                 .padding(.top, 12)

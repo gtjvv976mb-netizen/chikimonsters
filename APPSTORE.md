@@ -22,7 +22,7 @@ Updated 2026-09-24. What is done and verified:
 | A Mac compiles it on every change | `.github/workflows/ios-build.yml` builds the Xcode project for the simulator on a GitHub-hosted Mac whenever `ios/` changes |
 | The app carries every game asset | The lite pack holds the same files as the HD pack except the soundtrack, which streams from `audio/stream-manifest.json`, and the Chikiseum gate crest. The crest was missing from the website's lite export, so `ChikiseumReferenceWorld.gd` failed to parse and the arena world could not load on a phone. `build-ios-pack.py` now adds the crest from the HD pack (`ADDED_FILES`). The *website's* `index.pck.lite.*` still lacks it, so mobile browsers have the same arena bug until that pack is re-exported |
 | The app never boots a website pack | `realm/index.html` no longer falls back to the website's packs for the app, even on a network error; `loader-policy.test.mjs` pins it |
-| The app's title screen shows the Chikoria key art | not the Meme Dynasty line-up (`hero.jpg`), which includes a caricature of a real person |
+| The app's title screen shows the Chiki Monsters logo over the key art | not the Meme Dynasty line-up (`hero.jpg`), which includes a caricature of a real person |
 | Swift compile errors found by review are fixed | `Button(action.1)`, the shadowed `claim = nil`, and an iOS 17-only `Text.foregroundStyle` in a 16.0 target; `nonisolated` constants for the navigation delegate |
 | iPhone-only, `LSRequiresIPhoneOS` | `TARGETED_DEVICE_FAMILY = 1`; no iPad screenshots needed for 1.0 |
 | No trading language on any native screen | Pairing and Account talk about *backing up* an app-made account, not trading |
@@ -57,7 +57,7 @@ Risks that remain, for you to decide on:
 
 `.github/workflows/ios-release.yml` archives, signs and uploads the app to App Store Connect on a GitHub-hosted Mac. The build then shows up under TestFlight, ready to submit. Set it up once:
 
-1. **Create the app record.** App Store Connect → Apps → **+** → New App. Choose iOS, name `Chikoria`, bundle id `com.chikimonsters.Chikoria`, and enter any SKU. If that bundle id isn't in the list, register it first: developer.apple.com → Certificates, IDs & Profiles → Identifiers → **+** → App IDs.
+1. **Create the app record.** App Store Connect → Apps → **+** → New App. Choose iOS, name `Chiki Monsters`, bundle id `com.chikimonsters.Chikoria`, and enter any SKU. If that bundle id isn't in the list, register it first: developer.apple.com → Certificates, IDs & Profiles → Identifiers → **+** → App IDs.
 2. **Make an API key.** App Store Connect → Users and Access → Integrations → App Store Connect API → Team Keys → **+**. Choose the **Admin** role, which is what lets Xcode create the distribution certificate for you. Download the `.p8` file straight away, because Apple only offers it once. Note the **Key ID** and the **Issuer ID** shown above the list.
 3. **Add four repository secrets.** GitHub → this repo → Settings → Secrets and variables → Actions → New repository secret:
    - `APPLE_TEAM_ID`: the 10-character Team ID from developer.apple.com → Membership
@@ -87,8 +87,8 @@ Budget an afternoon. Nothing here is subtle; the order matters.
    or a marketplace is a bug in `godot-patch/ios-trading-edits.json` — note where and it is one
    more edit.
 5. **Capture** the six screenshots and the preview video from §5, on the device, in landscape.
-6. **App Store Connect.** *My Apps → + → New App*: iOS, name `Chikoria`, bundle id
-   `com.chikimonsters.Chikoria`, SKU `chikoria-ios-001`. Fill §1 (information), §2 (age rating),
+6. **App Store Connect.** *My Apps → + → New App*: iOS, name `Chiki Monsters`, bundle id
+   `com.chikimonsters.Chikoria`, SKU `chikimonsters-ios-001`. Fill §1 (information), §2 (age rating),
    §3 (privacy), §4 (review notes, with the test account and the pairing recording attached).
 7. **Archive and upload.** Xcode: *Product → Archive → Distribute App → App Store Connect →
    Upload*. Processing takes about ten minutes; then pick the build on the version page.
@@ -240,7 +240,8 @@ manifest, about 175 MB, alongside the packs already there. Nothing the website s
 
 | Field | Value | Limit |
 |---|---|---|
-| **App name** | `Chikoria` | 30 |
+| **App name** | `Chiki Monsters` | 30 |
+| | *App Store names are unique. If `Chiki Monsters` is taken, App Store Connect says so when you create the app; `Chiki Monsters: Chikoria` fits in 30 characters as a fallback.* | |
 | **Subtitle** | `Gather, hatch, and battle` | 30 |
 | **Primary category** | Games → Role Playing | |
 | **Secondary category** | Games → Adventure | |
@@ -254,7 +255,7 @@ manifest, about 175 MB, alongside the packs already there. Nothing the website s
 ### Promotional text (170 chars, editable without review)
 
 ```
-Your Chikoria account, in your pocket. Gather across the island, clear the Wicked Temple, and raise a team that grows with you.
+Your Chiki Monsters account, in your pocket. Gather across the island, clear the Wicked Temple, and raise a team that grows with you.
 ```
 
 ### Description (4000 chars)
@@ -262,12 +263,12 @@ Your Chikoria account, in your pocket. Gather across the island, clear the Wicke
 **Written to lead with what is native**, because guideline 4.2 rejects apps that read as a repackaged website. See §6 — this is not decoration, it is the defence.
 
 ```
-Chikoria is a living voxel world you can carry with you.
+Chiki Monsters is a living voxel world you can carry with you: the island of Chikoria.
 
 Explore a hand-built island, gather and craft, fish the coasts, clear the Wicked Temple, and raise a team of creatures that grows with how you play.
 
 ONE ACCOUNT, TWO PLACES
-Pair the app once and it plays the Chikoria account you already have. Every creature, egg, fish and resource is there, and everything you gather here is waiting next time you play on the web. No passwords to remember — pairing is a code you type once, and this device stays signed in.
+Pair the app once and it plays the Chiki Monsters account you already have. Every creature, egg, fish and resource is there, and everything you gather here is waiting next time you play on the web. No passwords to remember — pairing is a code you type once, and this device stays signed in.
 
 BUILT FOR THE PHONE
 · Pair and manage your account without ever leaving the app
@@ -284,7 +285,7 @@ Take one creature into five escalating sanctums against the corrupted horde. You
 A TEAM THAT KNOWS YOU
 Twenty-four species: ten elemental chikimon and fourteen legendaries. Every creature levels to 50, learns up to twelve ability cards, and grows a personality shaped by how you treat it.
 
-Chikoria is free to play. There are no purchases in the app.
+Chiki Monsters is free to play. There are no purchases in the app.
 ```
 
 > That text makes no PvP claim, so it is safe as it stands. **PvP can now ship** (the Chikiseum is
@@ -437,7 +438,7 @@ Paste into the "Notes" field. A reviewer who cannot sign in rejects the app, so 
 ```
 HOW TO SIGN IN (please read — the app cannot be tested without this)
 
-Chikoria accounts are created on our website, and the app pairs to one with a
+Chiki Monsters accounts are created on our website, and the app pairs to one with a
 short code. We have created a test account for review:
 
   1. On a computer, open https://chikimonsters.com/link/
@@ -449,14 +450,14 @@ The code lasts 10 minutes. If it expires, press "New code" again.
 
 THERE IS NO CHAT IN THIS APP
 
-The browser version of Chikoria has player chat. The app does not: every chat
+The browser version of Chiki Monsters has player chat. The app does not: every chat
 route is refused at the network layer, so no message can be sent or received
 and no chat content is displayed. This is why the age rating questionnaire
 answers "no" to messaging.
 
 ABOUT THE TECHNOLOGY
 
-Chikoria is tied to a blockchain-based game economy on the website. The app is
+Chiki Monsters is tied to a blockchain-based game economy on the website. The app is
 deliberately NOT part of that:
 
 · The app contains no wallet. It cannot create, sign or send a transaction,
@@ -547,7 +548,7 @@ A 25-second cut that works:
 | 4–10s | Gathering, then the satchel filling |
 | 10–18s | Wicked Temple: a card cast, an enemy going down |
 | 18–22s | A hatch, or the vault reward reveal |
-| 22–25s | Title card: Chikoria |
+| 22–25s | Title card: Chiki Monsters |
 
 **Show only what is in the app.** No website footage, no wallet, no trading, no token. A preview containing the Trading Post would contradict the review notes above and undo the whole argument.
 
@@ -559,7 +560,7 @@ A `WKWebView` pointed at a website is the textbook 4.2 rejection, and that is st
 
 **The test reviewers actually run is Airplane Mode.** Turn the network off and open the app. A blank web view or a browser error is what flags it as a repackaged website.
 
-What the app does today: a native screen saying *"Chikoria needs a connection to load the realm"* with a Try Again button. **That is necessary but thin** — it is an error, not usefulness.
+What the app does today: a native screen saying *"Chiki Monsters needs a connection to load the game"* with a Try Again button. **That is necessary but thin** — it is an error, not usefulness.
 
 Worth adding before submission, in rough order of value per hour:
 
