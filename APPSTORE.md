@@ -53,6 +53,20 @@ Risks that remain, for you to decide on:
   Account and deletion screens, plus the screenshots in §5, are the evidence that this is an app
   and not a website. Keep them.
 
+### Uploading from GitHub, with no Mac needed
+
+`.github/workflows/ios-release.yml` archives, signs and uploads the app to App Store Connect on a GitHub-hosted Mac. The build then shows up under TestFlight, ready to submit. Set it up once:
+
+1. **Create the app record.** App Store Connect → Apps → **+** → New App. Choose iOS, name `Chikoria`, bundle id `com.chikimonsters.Chikoria`, and enter any SKU. If that bundle id isn't in the list, register it first: developer.apple.com → Certificates, IDs & Profiles → Identifiers → **+** → App IDs.
+2. **Make an API key.** App Store Connect → Users and Access → Integrations → App Store Connect API → Team Keys → **+**. Choose the **Admin** role, which is what lets Xcode create the distribution certificate for you. Download the `.p8` file straight away, because Apple only offers it once. Note the **Key ID** and the **Issuer ID** shown above the list.
+3. **Add four repository secrets.** GitHub → this repo → Settings → Secrets and variables → Actions → New repository secret:
+   - `APPLE_TEAM_ID`: the 10-character Team ID from developer.apple.com → Membership
+   - `ASC_KEY_ID`: the Key ID
+   - `ASC_ISSUER_ID`: the Issuer ID
+   - `ASC_PRIVATE_KEY`: the whole text of the `.p8` file, including the BEGIN and END lines
+
+Then go to Actions → **iOS release** → Run workflow and enter the version, for example `1.0`. Each run uploads a new build, numbered by the run. No certificate or profile is stored anywhere: signing is Xcode's cloud-managed automatic signing, authorised by the key. Then go through steps 5–8 below in App Store Connect.
+
 ### From a Mac: the submission, in order
 
 Budget an afternoon. Nothing here is subtle; the order matters.
