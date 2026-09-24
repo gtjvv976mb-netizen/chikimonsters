@@ -65,6 +65,11 @@ struct RootView: View {
                         + "You can allow Chiki Monsters in Settings → Privacy & Security → Lockdown Mode → Configure App Access.",
                     action: nil)
             }
+
+            // Over the web view until the page proves it is alive — see ShellModel.pageAlive.
+            if model.isLinked && (model.phase == .booting || model.phase == .playing) && !model.pageAlive {
+                BootCover(model: model)
+            }
         }
         .preferredColorScheme(.dark)
         .task { model.start() }
@@ -191,12 +196,6 @@ struct PairingView: View {
                         .font(.callout.weight(.semibold))
                         .foregroundStyle(Ink.gold)
 
-                    if !model.policyIsLive {
-                        Label("Still connecting to the realm…", systemImage: "antenna.radiowaves.left.and.right")
-                            .font(.footnote)
-                            .foregroundStyle(Ink.dim)
-                    }
-
                     Spacer(minLength: 0)
                 }
 
@@ -252,14 +251,8 @@ struct PairingView: View {
                     .font(.footnote)
                     .foregroundStyle(Ink.dim)
 
-                if !model.policyIsLive {
-                    // 'ready' has not arrived. Either the page has not loaded yet, or — the case
-                    // worth surfacing — the injection did not run and the policy layer stood down.
-                    Label("Still connecting to the realm…", systemImage: "antenna.radiowaves.left.and.right")
-                        .font(.footnote)
-                        .foregroundStyle(Ink.dim)
-                }
-
+                // (No "still connecting" note here any more: the realm does not load until there is
+                // an account, and creating or linking one does not need it — see ShellModel.start.)
                 Button("Back") { withAnimation { hasCode = false; error = nil } }
                     .font(.callout.weight(.semibold))
                     .foregroundStyle(Ink.dim)
@@ -618,6 +611,70 @@ struct MeteredBanner: View {
         .background(Ink.panel.opacity(0.95), in: RoundedRectangle(cornerRadius: 12))
         .overlay(RoundedRectangle(cornerRadius: 12).stroke(Ink.line))
         .padding(.horizontal, 16)
+    }
+}
+
+// MARK: - Boot cover
+
+/// What the player sees between "the realm is loading" and the loader drawing its own screen.
+///
+/// It exists because that gap used to be a bare web view, and a WKWebView that has not painted —
+/// or whose content process has died — is plain white. A tester who tapped "Create an account"
+/// saw white and nothing else, with no way to tell a slow network from a crash. This says which
+/// it is, and if the page has still not come alive after a while it shows the details worth
+/// sending to support, and a way to try again.
+struct BootCover: View {
+    @ObservedObject var model: ShellModel
+    @State private var slow = false
+
+    var body: some View {
+        VStack(spacing: 16) {
+            Spacer()
+            Text("Chiki Monsters")
+                .font(.system(size: 30, weight: .heavy))
+                .foregroundStyle(Ink.gold)
+            if !model.bootStalled {
+                ProgressView().tint(Ink.gold)
+            }
+            Text(model.bootStage)
+                .foregroundStyle(Ink.text)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: 460)
+
+            if slow || model.bootStalled {
+                // Re-rendered every second so the "waiting" count moves.
+                TimelineView(.periodic(from: .now, by: 1)) { _ in
+                    Text(model.bootDiagnostics)
+                        .font(.caption2.monospaced())
+                        .foregroundStyle(Ink.dim)
+                        .multilineTextAlignment(.leading)
+                        .padding(12)
+                        .background(Ink.panel, in: RoundedRectangle(cornerRadius: 10))
+                        .textSelection(.enabled)
+                }
+                HStack(spacing: 14) {
+                    Button { model.retry() } label: {
+                        Text("Try again").fontWeight(.heavy).padding(.horizontal, 24).padding(.vertical, 11)
+                    }
+                    .background(Ink.gold, in: RoundedRectangle(cornerRadius: 12))
+                    .foregroundStyle(.black)
+                    Button("Copy details") {
+                        UIPasteboard.general.string = model.bootDiagnostics + "\n" + model.supportBlob
+                    }
+                    .foregroundStyle(Ink.gold)
+                }
+            }
+            Spacer()
+        }
+        .padding(24)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Ink.bg.ignoresSafeArea())
+        // Restarts with every new load, so "slow" means slow THIS time.
+        .task(id: model.loadStartedAt) {
+            slow = false
+            try? await Task.sleep(nanoseconds: 30_000_000_000)
+            if !Task.isCancelled { slow = true }
+        }
     }
 }
 

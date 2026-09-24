@@ -35,6 +35,23 @@ final class ShellModel: NSObject, ObservableObject {
     @Published private(set) var progress: Int = 0
     @Published private(set) var progressNote: String = ""
 
+    /// Whether the page has shown it is alive since the last (re)load: the loader's first
+    /// 'progress' message. Until then the native `BootCover` stays up, so the player never looks
+    /// at a blank web view — a WKWebView that has not painted yet, or whose content process has
+    /// just died, is plain WHITE, and that is all a TestFlight tester saw.
+    @Published private(set) var pageAlive = false
+    /// Where the load has got to, in words. Shown on the cover, and the first thing to ask a
+    /// player for when they report a blank screen.
+    @Published private(set) var bootStage = "Opening the realm…"
+    @Published private(set) var loadStartedAt = Date()
+    @Published private(set) var lastLoadError: String?
+    /// Web content process deaths this session — on a phone, almost always the memory ceiling.
+    @Published private(set) var restarts = 0
+    /// Set once the page has died more often than `maxAutoRestarts`; the cover then stops
+    /// reloading on its own and offers "Try again" instead of looping forever.
+    @Published private(set) var bootStalled = false
+    static let maxAutoRestarts = 3
+
     /// What the app can still say when there is no network.
     ///
     /// THIS IS THE GUIDELINE 4.2 SURFACE. Reviewers test for a repackaged website by turning on
@@ -90,6 +107,21 @@ final class ShellModel: NSObject, ObservableObject {
     /// Raise or lower it from real device testing rather than reasoning — and note that
     /// `physicalMemory` is total RAM, not what iOS will actually let one web content process have.
     static let hdMinimumPhysicalMemory: UInt64 = 6 * 1024 * 1024 * 1024
+
+    /// A TestFlight install carries a sandbox receipt; an App Store one does not.
+    static var isTestFlight: Bool {
+        Bundle.main.appStoreReceiptURL?.lastPathComponent == "sandboxReceipt"
+    }
+
+    /// The hardware model ("iPhone14,5"), which is what says how much memory the phone has.
+    /// UIDevice.model only ever answers "iPhone".
+    static var hardwareModel: String {
+        var info = utsname()
+        uname(&info)
+        return withUnsafeBytes(of: &info.machine) { raw in
+            String(decoding: raw.prefix(while: { $0 != 0 }), as: UTF8.self)
+        }
+    }
 
     static var deviceCanHoldHDPack: Bool {
         // An iPad reports a desktop-class user agent, so the loader already gives it the HD pack
@@ -156,7 +188,10 @@ final class ShellModel: NSObject, ObservableObject {
         webView.allowsBackForwardNavigationGestures = false
         webView.scrollView.contentInsetAdjustmentBehavior = .never
         webView.scrollView.bounces = false
-        webView.isOpaque = true
+        // NOT opaque. An opaque WKWebView paints WHITE until the page's first frame and again
+        // whenever its content process dies, whatever backgroundColor says; a clear one shows
+        // the black behind it instead.
+        webView.isOpaque = false
         webView.backgroundColor = .black
         webView.scrollView.backgroundColor = .black
 
@@ -172,6 +207,12 @@ final class ShellModel: NSObject, ObservableObject {
         // `#if DEBUG` is a COMPILE-time flag and says nothing about the OS, so the availability
         // check is still required: isInspectable arrived in iOS 16.4 and this app deploys to 16.0.
         if #available(iOS 16.4, *) {
+            webView.isInspectable = true
+        }
+        #else
+        // TestFlight builds too, so a tester with a Mac can attach Safari's Web Inspector to a
+        // real device. Never an App Store build: those carry a production receipt, not this one.
+        if #available(iOS 16.4, *), Self.isTestFlight {
             webView.isInspectable = true
         }
         #endif
@@ -272,12 +313,25 @@ final class ShellModel: NSObject, ObservableObject {
         }
 
         phase = record.isLinked ? .booting : .pairing(nil)
+        // NOTHING LOADS UNTIL THERE IS AN ACCOUNT TO LOAD IT AS. The realm used to boot behind the
+        // pairing screen, and making the account then reloaded it mid-boot: the new page started
+        // its own peak-memory load (pack + engine + wasm) while the old one's was still being
+        // released, which is the classic way for a phone to be jetsam-killed — and the player saw
+        // a white screen. Creating and redeeming are native now and need no page, so the first
+        // load happens in `adopt`, once, already signed in.
+        guard record.isLinked else { return }
+        beginLoad("Opening the realm…")
         webView.load(URLRequest(url: Self.realmURL))
     }
 
     /// Recovery is always a reload of the same view — never a new one, never a second `load()`.
     func retry() {
         phase = record.isLinked ? .booting : .pairing(nil)
+        guard record.isLinked else { return }   // see start(): no account, nothing to load
+        restarts = 0
+        bootStalled = false
+        lastLoadError = nil
+        beginLoad("Opening the realm…")
         if webView.url == nil {
             webView.load(URLRequest(url: Self.realmURL))
         } else {
@@ -386,11 +440,33 @@ final class ShellModel: NSObject, ObservableObject {
         }
         installInjection()
         phase = .booting
+        beginLoad("Opening your island…")
         if webView.url == nil {
             webView.load(URLRequest(url: Self.realmURL))
         } else {
             webView.reload()
         }
+    }
+
+    /// A (re)load is starting: the cover goes back up until the page proves it is alive again.
+    fileprivate func beginLoad(_ stage: String) {
+        pageAlive = false
+        progress = 0
+        bootStage = stage
+        loadStartedAt = Date()
+    }
+
+    /// Everything worth knowing about a load that has not come alive, in one screenshot.
+    var bootDiagnostics: String {
+        let secs = Int(Date().timeIntervalSince(loadStartedAt))
+        var lines = [
+            "stage: \(bootStage)",
+            "waiting \(secs)s · progress \(progress)% · restarts \(restarts)",
+            "page script: \(policyIsLive ? "running" : "not seen")",
+            "Chiki Monsters \(appVersionDisplay) · iOS \(UIDevice.current.systemVersion) · \(Self.hardwareModel)",
+        ]
+        if let lastLoadError { lines.append("error: \(lastLoadError)") }
+        return lines.joined(separator: "\n")
     }
 
     // MARK: - Calling into the page
@@ -533,6 +609,7 @@ final class ShellModel: NSObject, ObservableObject {
             // run — which in an app-bound-domains misconfiguration means chiki-ios.js stood down
             // and the wallet bridges are active. Fail closed on that, do not assume.
             policyIsLive = true
+            if !pageAlive { bootStage = "Starting the game…" }
             let linked = body["linked"] as? Bool ?? false
             if case .pairing = phase, linked { phase = .booting }
             if !linked { phase = .pairing(nil) }
@@ -574,6 +651,8 @@ final class ShellModel: NSObject, ObservableObject {
             phase = .paused(body["message"] as? String ?? "Chiki Monsters is down for maintenance.")
 
         case "progress":
+            // The loader is running and drawing its own screen: the cover can come down.
+            pageAlive = true
             progress = body["percent"] as? Int ?? progress
             progressNote = body["note"] as? String ?? progressNote
 
@@ -669,8 +748,23 @@ extension ShellModel: WKNavigationDelegate {
         decisionHandler(ok ? .allow : .cancel)
     }
 
+    /// The page's own reloads (switching account, the isolation retry) put the cover back up too,
+    /// until the new page proves it is alive.
+    nonisolated func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
+        // Only when the page had come alive: a load the shell started itself has already said so,
+        // and overwriting its words would lose "restarting (2 of 3)" from the cover.
+        Task { @MainActor in if self.pageAlive { self.beginLoad("Reloading the realm…") } }
+    }
+
+    nonisolated func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
+        Task { @MainActor in if !self.pageAlive { self.bootStage = "Loading the realm…" } }
+    }
+
     nonisolated func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         Task { @MainActor in
+            if !self.pageAlive {
+                self.bootStage = "Page loaded — waiting for the game to start…"
+            }
             if case .booting = self.phase, self.record.isLinked {
                 self.phase = .playing
                 // Remember enough that an offline launch has something true to show.
@@ -704,7 +798,19 @@ extension ShellModel: WKNavigationDelegate {
     /// never fire, and the phone would retry the heavy pack and die again, forever.
     nonisolated func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
         Task { @MainActor in
+            self.restarts += 1
+            // Not forever. A phone that cannot hold the realm would otherwise reload, die and
+            // reload behind the cover for as long as the app is open.
+            guard self.restarts <= Self.maxAutoRestarts else {
+                NSLog("[chikoria] web content process terminated again — stopping after \(self.restarts)")
+                self.pageAlive = false
+                self.bootStalled = true
+                self.bootStage = "The game keeps closing on this iPhone — usually it ran out of memory. "
+                    + "Close other apps and try again."
+                return
+            }
             NSLog("[chikoria] web content process terminated — reloading the same view")
+            self.beginLoad("The game closed unexpectedly — restarting (\(self.restarts) of \(Self.maxAutoRestarts))…")
             webView.reload()
         }
     }
@@ -713,6 +819,7 @@ extension ShellModel: WKNavigationDelegate {
     private func fail(_ error: Error) {
         let ns = error as NSError
         if ns.domain == NSURLErrorDomain && ns.code == NSURLErrorCancelled { return }
+        lastLoadError = "\(ns.domain) \(ns.code): \(ns.localizedDescription)"
 
         let offline = ns.domain == NSURLErrorDomain && [
             NSURLErrorNotConnectedToInternet,
