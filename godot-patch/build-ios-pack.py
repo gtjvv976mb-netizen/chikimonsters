@@ -70,6 +70,17 @@ OVERLAY_FILES = [
 	".godot/global_script_class_cache.cfg",
 ]
 
+# Files the lite base is MISSING and the app needs, copied out of the HD pack. The lite family was
+# exported without the Chikiseum gate crest, and `ChikiseumReferenceWorld.gd` preloads it — so in a
+# lite pack that script fails to parse ("Preload file ... does not exist") and the Chikiseum arena
+# world never loads on a phone. The imported scene is self-contained (no textures of its own).
+# Extract them with:
+#   gdre_tools --headless --extract=index.pck --include=res://<path> --output=godot-patch/ios-overlay
+ADDED_FILES = [
+	"assets/glb/chikiseum_higgsfield_crest.glb.import",
+	".godot/imported/chikiseum_higgsfield_crest.glb-d1be0047d91385f697321cfa785cd320.scn",
+]
+
 
 def join_chunks(base: Path) -> bytes | None:
 	"""Reassemble a chunked family exactly as realm/index.html does, if one is there."""
@@ -132,7 +143,7 @@ def main() -> int:
 	if not overlay.is_dir():
 		print(f"error: {overlay} is not a directory")
 		return 1
-	missing = [f for f in OVERLAY_FILES if not (overlay / f).is_file()]
+	missing = [f for f in OVERLAY_FILES + ADDED_FILES if not (overlay / f).is_file()]
 	if missing:
 		print("error: the overlay is incomplete:")
 		for f in missing:
@@ -149,6 +160,10 @@ def main() -> int:
 		return 1
 
 	replaced = added = unchanged = 0
+	for rel in ADDED_FILES:
+		if rel not in files:
+			files[rel] = (overlay / rel).read_bytes()
+			added += 1
 	for rel in OVERLAY_FILES:
 		blob = (overlay / rel).read_bytes()
 		if rel in files:

@@ -14,7 +14,8 @@ Updated 2026-09-24. What is done and verified:
 |---|---|
 | Backend `/link/*` and `/account/*` routes deployed | `api.chikimonsters.com/link/new` → 401, `/link/redeem` → 400 (the routes exist and validate); backend `npm run test:link` passes |
 | **Every trading surface is out of the iOS pack** | `godot-patch/apply-ios-trading-patch.py` — 165 more edits on top of the first 19, across 20 scripts, all gated on `ChikFeat` so the website is unchanged. See "The trading sweep" below |
-| The rebuilt iOS pack is in `realm/` | `index.pck.ios.lite.*`, build `f5236e2efb`, booted under the app policy in Chromium |
+| The rebuilt iOS pack is in `realm/` | `index.pck.ios.lite.*`, build `4b7c77a6aa`, booted under the app policy in Chromium |
+| The app carries every game asset | The lite pack holds the same files as the HD pack except the soundtrack, which streams from `audio/stream-manifest.json`, and the Chikiseum gate crest. The crest was missing from the website's lite export, so `ChikiseumReferenceWorld.gd` failed to parse and the arena world could not load on a phone. `build-ios-pack.py` now adds the crest from the HD pack (`ADDED_FILES`). The *website's* `index.pck.lite.*` still lacks it, so mobile browsers have the same arena bug until that pack is re-exported |
 | The app never boots a website pack | `realm/index.html` no longer falls back to the website's packs for the app, even on a network error; `loader-policy.test.mjs` pins it |
 | The app's title screen shows the Chikoria key art | not the Meme Dynasty line-up (`hero.jpg`), which includes a caricature of a real person |
 | Swift compile errors found by review are fixed | `Button(action.1)`, the shadowed `claim = nil`, and an iOS 17-only `Text.foregroundStyle` in a 16.0 target; `nonisolated` constants for the navigation delegate |
