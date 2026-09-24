@@ -128,6 +128,8 @@ console.log('\nweb mode — the site is untouched');
 	const { win } = boot();
 	check(win.CHIK_NO_CRYPTO === false, 'CHIK_NO_CRYPTO is false');
 	check(win.CHIK_FEATURES.crypto === true, 'crypto stays on');
+	check(win.CHIK_FEATURES.quests === true, 'quests stay on');
+	check(win.CHIK_FEATURES.meme_dynasty === true, 'the Meme Dynasty stays on');
 	check(win.CHIK_FEATURES.trading_post === true, 'the Trading Post stays on');
 	check(win.CHIK_FEATURES.pvp_mode === 'wager', 'PvP keeps SOL wagers');
 	check(win.CHIK_LINK === undefined, 'no Realm Link object is installed');
@@ -147,6 +149,8 @@ console.log('\napp mode — the feature policy');
 	check(f.gathering && f.wicked_temple && f.chikiseum_pvp && f.hatching && f.fishing,
 		'gathering, the temple, PvP, hatching and fishing are all on');
 	check(f.cloud_sync === true, 'the cloud save is on — this is the same account as the website');
+	check(f.quests === false, 'quests are website-only');
+	check(f.meme_dynasty === false && Array.isArray(f.meme_allow), 'the Meme Dynasty is off, with a per-species allow list');
 	// Earning is not switched off: the app pays out the REAL assets onto the linked account.
 	// Only selling and trading are website-only, which is what trading_post/marketplace cover.
 	check(f.asset_rewards === true, 'EARNING real assets stays on — only selling is website-only');

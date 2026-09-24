@@ -10,12 +10,15 @@
       no third-party framework of any kind. If telemetry is ever added, it has to be declared here
       AND in the App Privacy answers in App Store Connect, and the two must agree.
 
-    * NSPrivacyCollectedDataTypes is EMPTY. The app itself collects nothing: the link token and the
-      device id live in the Keychain on the device, and the wallet address is the player's own
-      account identifier held by the game server, which the player created on the website — not
-      something this app gathers. If you disagree with that reading, the conservative answer is to
-      declare the wallet address as "Other User Content" or a user ID linked to the player; it
-      costs nothing to over-declare and a mis-declaration is what gets an app pulled.
+    * NSPrivacyCollectedDataTypes lists what leaves the phone and is kept by the game server, all
+      of it linked to the player, none of it used for tracking, all of it for App Functionality:
+        - User ID: the app can CREATE an account (/account/new), and the account id travels with
+          every save.
+        - Device ID: a random id generated on first launch (LinkKeychain.swift), sent with the
+          link token so a device can be listed and revoked. Not the IDFA, not identifierForVendor.
+        - Gameplay Content: the save — creatures, items, progress — syncs to the account so the
+          same player can continue on the website.
+      These must match the App Privacy answers in App Store Connect (APPSTORE.md §3).
 
   REQUIRED-REASON APIS: the app links UserDefaults through Foundation (SwiftUI and WKWebView both
   touch it), which is a required-reason API even when your own code never calls it directly. CA92.1
@@ -32,7 +35,44 @@
 	<array/>
 
 	<key>NSPrivacyCollectedDataTypes</key>
-	<array/>
+	<array>
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypeUserID</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<true/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+			</array>
+		</dict>
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypeDeviceID</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<true/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+			</array>
+		</dict>
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypeGameplayContent</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<true/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+			</array>
+		</dict>
+	</array>
 
 	<key>NSPrivacyAccessedAPITypes</key>
 	<array>

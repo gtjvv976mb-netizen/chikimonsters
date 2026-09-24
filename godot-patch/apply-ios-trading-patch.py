@@ -45,7 +45,8 @@ Known limit, left for the owner to decide (not something a patch should invent):
 "Open for Business", REQUIRES listing an item on the Trading Post. The app shows it as "Trading
 isn't part of the app" and an app-only player's main story waits there until the account lists
 something on the website. Making that chapter optional, or giving the app a different objective for
-it, is a game-design change.
+it, is a game-design change. (Since then quests are out of the app altogether —
+apply-ios-review-patch.py — so no app player is ever asked to do it.)
 
 Afterwards: `godot --headless --path <project> --import`, then `--check-only` each changed script,
 then compile the changed scripts (`gdre_tools --compile=… --bytecode=4.6.0`) into
@@ -65,18 +66,9 @@ _spec.loader.exec_module(_first)
 _find = _first._find
 
 
-def main() -> int:
-	args = [a for a in sys.argv[1:] if not a.startswith("--")]
-	check = "--check" in sys.argv
-	if len(args) != 1:
-		print(__doc__)
-		return 2
-	root = Path(args[0])
-	if not (root / "ChikFeat.gd").is_file():
-		print("error: ChikFeat.gd is missing — run apply-ios-pack-patch.py first")
-		return 1
-
-	edits = json.loads((HERE / "ios-trading-edits.json").read_text(encoding="utf-8"))
+def apply_edits(root: Path, edits_path: Path, check: bool) -> int:
+	"""Apply one edits file to the project at `root`. Shared with apply-ios-review-patch.py."""
+	edits = json.loads(edits_path.read_text(encoding="utf-8"))
 	texts: dict[str, str] = {}
 	done = todo = 0
 	failed = []
@@ -114,6 +106,19 @@ def main() -> int:
 	print(f"\n{todo} change(s) applied, {done} already present, across {len(texts)} file(s).")
 	print("Now re-import, check-only each file, and compile the overlay (see this file's docstring).")
 	return 0
+
+
+def main() -> int:
+	args = [a for a in sys.argv[1:] if not a.startswith("--")]
+	check = "--check" in sys.argv
+	if len(args) != 1:
+		print(__doc__)
+		return 2
+	root = Path(args[0])
+	if not (root / "ChikFeat.gd").is_file():
+		print("error: ChikFeat.gd is missing — run apply-ios-pack-patch.py first")
+		return 1
+	return apply_edits(root, HERE / "ios-trading-edits.json", check)
 
 
 if __name__ == "__main__":

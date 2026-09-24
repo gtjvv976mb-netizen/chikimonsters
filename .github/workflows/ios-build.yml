@@ -1,0 +1,50 @@
+# Compiles the iOS app on a GitHub-hosted Mac, so a Swift error shows up on the PR instead of on
+# the owner's MacBook. It builds for the simulator with signing off: it proves the code compiles and
+# the project is consistent. It does NOT produce an App Store build — that still happens in Xcode on
+# the owner's Mac (Product → Archive), where the Apple Developer team signs it.
+#
+# Runs only when ios/ (or this file) changes: macOS runner minutes count ten times against the
+# account's Actions allowance, and nothing outside ios/ can break this build.
+name: iOS build
+
+on:
+  push:
+    paths: ['ios/**', '.github/workflows/ios-build.yml']
+  pull_request:
+    paths: ['ios/**', '.github/workflows/ios-build.yml']
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      # Only ios/ — the rest of the repo is ~0.5 GB of game pack chunks this job never reads.
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: ios
+
+      - name: Toolchain
+        run: xcodebuild -version
+
+      - name: The project file matches its generator
+        run: python3 ios/make-xcodeproj.py --check
+
+      - name: Build for the iOS simulator (unsigned)
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project ios/Chikoria.xcodeproj \
+            -scheme Chikoria \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO \
+            build | tee build.log
+
+      - name: Keep the log if it failed
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xcodebuild-log
+          path: build.log
