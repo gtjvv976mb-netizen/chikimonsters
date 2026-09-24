@@ -14,7 +14,12 @@ Updated 2026-09-24. What is done and verified:
 |---|---|
 | Backend `/link/*` and `/account/*` routes deployed | `api.chikimonsters.com/link/new` → 401, `/link/redeem` → 400 (the routes exist and validate); backend `npm run test:link` passes |
 | **Every trading surface is out of the iOS pack** | `godot-patch/apply-ios-trading-patch.py` — 165 more edits on top of the first 19, across 20 scripts, all gated on `ChikFeat` so the website is unchanged. See "The trading sweep" below |
-| The rebuilt iOS pack is in `realm/` | `index.pck.ios.lite.*`, build `4b7c77a6aa`, booted under the app policy in Chromium |
+| The rebuilt iOS pack is in `realm/` | `index.pck.ios.lite.*`, build `03a188af60`; every changed script loads from the built pack |
+| **Quests are out of the app** | No Quests tab, no pinned story objective, no quest help topic or tutorial copy (`godot-patch/apply-ios-review-patch.py`, flag `quests`). Progress still counts and syncs, so the website's story is where the player left it. An app-only player is therefore never stuck at Chapter 36, "Open for Business", which requires a Trading Post listing |
+| **The Meme Dynasty is out of the app, per species** | Pepe, Doge, Grumpy Cat and the rest are never drawn: not in the Chikidex, hatching, Mithra's shop, the world or the title art. A player who owns one keeps it, because the app sets it aside for the session and puts it back on every save (`verify/meme-stash.gd`: 17 checks, save signature unchanged). To bring one back, add its key to `meme_allow` in `realm/chiki-ios.js`, e.g. `meme_allow: ['doge']`. No app update is needed |
+| **Account deletion is carried out** | Backend branch `claude/app-account-deletion`: an hourly sweep erases every app-made account whose deletion request is past its 24-hour undo window. That covers its save, rows, creatures and device credentials. `app-account-deletion.test.mjs` runs it end to end. It takes effect once that backend PR is merged and deployed |
+| Privacy manifest matches what the app does | User ID, Device ID and Gameplay Content are declared as collected, linked to the player, for App Functionality only, and not used for tracking. §3 has the matching App Store Connect answers |
+| A Mac compiles it on every change | `.github/workflows/ios-build.yml` builds the Xcode project for the simulator on a GitHub-hosted Mac whenever `ios/` changes |
 | The app carries every game asset | The lite pack holds the same files as the HD pack except the soundtrack, which streams from `audio/stream-manifest.json`, and the Chikiseum gate crest. The crest was missing from the website's lite export, so `ChikiseumReferenceWorld.gd` failed to parse and the arena world could not load on a phone. `build-ios-pack.py` now adds the crest from the HD pack (`ADDED_FILES`). The *website's* `index.pck.lite.*` still lacks it, so mobile browsers have the same arena bug until that pack is re-exported |
 | The app never boots a website pack | `realm/index.html` no longer falls back to the website's packs for the app, even on a network error; `loader-policy.test.mjs` pins it |
 | The app's title screen shows the Chikoria key art | not the Meme Dynasty line-up (`hero.jpg`), which includes a caricature of a real person |
@@ -30,22 +35,23 @@ What remains needs a Mac, an Apple Developer account, or a decision:
 
 | Blocker | Why it blocks | Who can clear it |
 |---|---|---|
-| **No build exists** | The Swift in `ios/` has never been compiled. Review caught three errors; Xcode may find more. | You, with a Mac |
+| **No signed build uploaded** | The CI job proves the code compiles. The App Store build still has to be archived and signed with your team in Xcode (Product → Archive). | You, on the MacBook |
 | **No screenshots or preview video** | Both must be captured from the running app. | You, once a build runs |
 | **Mailboxes** | `/support/` and `/privacy/` name `support@` and `privacy@chikimonsters.com`. The domain has Google MX records; make sure both addresses exist and are read. | You |
 | **Privacy page says "Draft — not yet reviewed by a lawyer"** | A reviewer opens that URL. | Legal review, then remove the banner |
-| **Account deletion is scheduled, never executed** | `/link/delete_account` records the request and `realmLink.due()` lists what is past its grace period, but nothing deletes it. 5.1.1(v) allows a grace period, not a deletion that never happens. | A decision on what deletion removes for a wallet-backed account, then a sweep in the backend |
+| **Merge and deploy the backend deletion PR** | App-made accounts are erased by the new sweep once it is deployed. A *wallet* account (made on the website, or an app account already bound to a wallet) is still only logged: what deleting one means for on-chain assets is your decision. | You |
 
-Two risks worth deciding on before you submit — neither is a trading surface:
+Risks that remain, for you to decide on:
 
-* **Meme Dynasty characters.** Pepe, Chill Guy, Popcat, Doge, Moo Deng and "Alon" (a caricature
-  of a real person) are playable legendaries inside the game. Guideline 5.2.1 needs rights to every
-  character; at least one of those creators has taken action against crypto projects. The app no
-  longer *opens* on them, but they are still in the ChikiDex and the egg pools.
-* **Story Chapter 36, "Open for Business", requires listing an item on the Trading Post.** The app
-  shows it as "Trading isn't part of the app", so an app-only player's main story waits there. A
-  reviewer will not get that far, but players will. Making that chapter optional (or giving the
-  app a different objective for it) is a game-design change the patch deliberately does not make.
+* **A PvP opponent can still field a Meme Dynasty creature.** The app never shows the player's own
+  creature, but a Chikiseum match against a website player who picked one draws it. It is rare, and
+  a reviewer will not meet it, but it is not zero.
+* **Player names are user-generated content** (guideline 1.2). Chat is off in the app, but other
+  players' handles still show above their heads. Apple can ask for a way to report or block an
+  offensive name; the backend has a word filter but no report route.
+* **Guideline 4.2 (minimum functionality).** The game runs in a WebKit view. The native Pairing,
+  Account and deletion screens, plus the screenshots in §5, are the evidence that this is an app
+  and not a website. Keep them.
 
 ### From a Mac: the submission, in order
 
@@ -129,9 +135,12 @@ scripts round-trip through GDRE's decompiler; the rebuilt pack boots in Chromium
 policy (cross-origin isolated, `CHIK_FEATURES.crypto === false`). **Only a walk-through on a real
 device proves nothing was missed** — step 4 above.
 
-To rebuild after the website's pack changes: recover (`RECOVERY.md`), run both patchers, re-import,
-`--check-only` each changed script, compile them with `gdre_tools --compile=<file> --bytecode=4.6.0`
-into `godot-patch/ios-overlay/`, then `build-ios-pack.py` and `chunk-pack.py --ios --lite`.
+To rebuild after the website's pack changes: recover (`RECOVERY.md`), run all three patchers in
+order (`apply-ios-pack-patch.py`, `apply-ios-trading-patch.py`, `apply-ios-review-patch.py`),
+re-import, `--check-only` each changed script, compile them with
+`gdre_tools --compile=<file> --bytecode=4.6.0` into `godot-patch/ios-overlay/`, run
+`ios-app-art.py realm/ godot-patch/ios-overlay/app-art`, then `build-ios-pack.py` and
+`chunk-pack.py --ios --lite`. `verify/meme-stash.gd` is the tripwire for the Meme Dynasty set-aside.
 
 ### The Godot problem, restated — the project is no longer missing
 
@@ -259,7 +268,7 @@ THE WICKED TEMPLE
 Take one creature into five escalating sanctums against the corrupted horde. Your deck is the creature's own ability cards. Clear all five and the vault opens.
 
 A TEAM THAT KNOWS YOU
-Twenty-one species across ten elemental lines, five ancient legendaries and the Meme Dynasty. Every creature levels to 50, learns up to twelve ability cards, and grows a personality shaped by how you treat it.
+Twenty-four species: ten elemental chikimon and fourteen legendaries. Every creature levels to 50, learns up to twelve ability cards, and grows a personality shaped by how you treat it.
 
 Chikoria is free to play. There are no purchases in the app.
 ```
@@ -392,17 +401,18 @@ of the two surfaces, which is worth fixing at the source when the project is rec
 
 ## 3. App Privacy ("nutrition label")
 
-These must agree with `ios/Chikoria/PrivacyInfo.xcprivacy`, which declares no collected data and no tracking.
+These must agree with `ios/Chikoria/PrivacyInfo.xcprivacy`. The app can now create its own account and syncs the save to it, so it **does** collect data. It is all linked to the player, used only for App Functionality, and never used for tracking.
 
 | Question | Answer |
 |---|---|
-| Does this app collect data? | **No** |
+| Does this app collect data? | **Yes** |
+| Identifiers → **User ID** | Collected, linked to the user, App Functionality, not tracking. This is the account id: the app can create one, and it travels with every save. |
+| Identifiers → **Device ID** | Collected, linked, App Functionality, not tracking. This is a random id made on first launch (`LinkKeychain.swift`) so a device can be listed and revoked. It is not the IDFA. |
+| Other Data → **Gameplay Content** | Collected, linked, App Functionality, not tracking. This is the save: creatures, items and progress, synced so the player can continue on the website. |
 | Does this app use data for tracking? | **No** |
-| Third-party SDKs | **None** — the app links no analytics, ads or attribution framework |
+| Third-party SDKs | **None**: the app links no analytics, ads or attribution framework. |
 
-**This answer is only true because the app has no telemetry.** The moment anything is added — crash reporting included — both this and the manifest must change. The audit flagged that the app currently has *no* field signal at all; adding it is a reasonable decision, but it is a privacy-declaration decision too, so make it before submitting rather than after.
-
-The wallet address is the player's own account identifier, created by them on the website and held by the game server. It is not gathered by this app. If your legal review disagrees, declare it as an identifier linked to the user — over-declaring costs nothing and mis-declaring is what gets apps pulled.
+**Adding telemetry changes these answers.** If anything is added later, crash reporting included, both this table and the manifest must change.
 
 ---
 
@@ -493,7 +503,7 @@ The first two are what most people ever see, so they carry the argument.
 1. **The world.** Your creature in the overworld, island and castle visible. Caption: *"A hand-built island to explore"*
 2. **The Wicked Temple mid-fight.** Cards visible in the HUD. Caption: *"Five sanctums. One creature. Your deck."*
 3. **Gathering or crafting.** The satchel or craft shop open. Caption: *"14 resources. 130 recipes. All by hand."*
-4. **The ChikiDex.** Several creatures collected. Caption: *"21 species to raise to level 50"*
+4. **The ChikiDex.** Several creatures collected. Caption: *"24 species to raise to level 50"*
 5. **The native pairing screen.** Caption: *"Pair once. Your account travels with you."*
 6. **The native account screen.** Linked devices visible. Caption: *"Your devices, your control"*
 

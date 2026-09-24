@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Build the iOS app's pack: the SHIPPED pack, with only the patched scripts swapped in.
 
+    python3 godot-patch/ios-app-art.py realm/ godot-patch/ios-overlay/app-art
     python3 godot-patch/build-ios-pack.py realm/ godot-patch/ios-overlay out/index.pck
     python3 godot-patch/chunk-pack.py out/ realm/ --ios --lite
 
@@ -55,6 +56,7 @@ OVERLAY_FILES = [
 	"ChikiseumLiveClient.gdc",
 	"Econ.gdc",
 	"GameHUD.gdc",
+	"Gather.gdc",
 	"InfoBar.gdc",
 	"Main.gdc",
 	"Market.gdc",
@@ -159,7 +161,21 @@ def main() -> int:
 		print("\nIs this the right pack? The overlay targets build 1eb4980816.")
 		return 1
 
+	# ios-app-art.py's output: the faceless meme egg and class badge at the pack's own imported
+	# paths, and the app's title art. Replaced or added as they are.
+	art = overlay / "app-art"
+	art_files = sorted(str(p.relative_to(art)) for p in art.rglob("*") if p.is_file()) if art.is_dir() else []
+	if not art_files:
+		print("error: godot-patch/ios-overlay/app-art is empty — run godot-patch/ios-app-art.py first")
+		return 1
+
 	replaced = added = unchanged = 0
+	for rel in art_files:
+		if rel in files:
+			replaced += 1
+		else:
+			added += 1
+		files[rel] = (art / rel).read_bytes()
 	for rel in ADDED_FILES:
 		if rel not in files:
 			files[rel] = (overlay / rel).read_bytes()

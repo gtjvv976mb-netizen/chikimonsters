@@ -167,7 +167,17 @@
 			// The Cup's prize is a SOL pool, so it is a money surface however it is framed. On the
 			// app it stays shut — the season match is the tournament-shaped thing here.
 			chikoria_cup: !locked,
-			quests: true,
+			// Quests are website-only. The app still COUNTS quest progress into the profile (so the
+			// website's story picks up where the player is), but draws no Quests tab, no pinned
+			// objective and no quest copy — see godot-patch/apply-ios-review-patch.py.
+			quests: !locked,
+			// THE MEME DYNASTY IS NOT IN THE APP YET — third-party characters and likenesses (App
+			// Review 5.2). A player who owns one keeps it: the app sets it aside for the session and
+			// puts it back on every save, so the account and the website never lose it.
+			// They come back ONE AT A TIME: add a species key here, e.g. meme_allow: ['doge'], and the
+			// app shows that one again on its next launch. No app update, no pack rebuild.
+			meme_dynasty: !locked,
+			meme_allow: [],
 			cloud_sync: true,
 
 			// Chat is OFF in the app, and it is the one flag here that is a child-safety decision

@@ -1,0 +1,218 @@
+[
+ {
+  "file": "PlayerPanel.gd",
+  "why": "quests: no Quests tab on the menu rail in the app",
+  "old": "\tvar tabs: Array = TABS.duplicate()",
+  "new": "\tvar tabs: Array = TABS.duplicate()\n\tif not ChikFeat.on(\"quests\"):\n\t\ttabs = tabs.filter(func(t): return String(t[0]) != \"quests\")"
+ },
+ {
+  "file": "GameHUD.gd",
+  "why": "quests: hide the pinned story objective on the left dock",
+  "old": "\t_dock_quest_fill = _dock_bar(r3, Color(0.55, 0.75, 1.0))",
+  "new": "\t_dock_quest_fill = _dock_bar(r3, Color(0.55, 0.75, 1.0))\n\tr3.visible = ChikFeat.on(\"quests\")"
+ },
+ {
+  "file": "GameHUD.gd",
+  "why": "quests: Mithra's greeting no longer announces Chapter One",
+  "old": "Find me at my forge — Chapter One begins.\\\"\" % String(_profile.d.get(\"handle\", \"Avatar\"))",
+  "new": "%s\\\"\" % [String(_profile.d.get(\"handle\", \"Avatar\")), \"Find me at my forge — Chapter One begins.\" if ChikFeat.on(\"quests\") else \"Find me at my forge.\"]"
+ },
+ {
+  "file": "InfoBar.gd",
+  "why": "quests: drop the Quest line from 'What you can do'",
+  "old": "\t\tloop = loop.filter(func(x): return String(x[0]) != \"🏪  Trade\")",
+  "new": "\t\tloop = loop.filter(func(x): return String(x[0]) != \"🏪  Trade\")\n\tif not ChikFeat.on(\"quests\"):\n\t\tloop = loop.filter(func(x): return String(x[0]) != \"📜  Quest\")"
+ },
+ {
+  "file": "InfoBar.gd",
+  "why": "quests: drop the Quests & Story how-to topic",
+  "old": "\t\tif not String(_t.get(\"k\", \"\")) in [\"chiki\", \"trade\"]:",
+  "new": "\t\tif not String(_t.get(\"k\", \"\")) in [\"chiki\", \"trade\"] and (ChikFeat.on(\"quests\") or String(_t.get(\"k\", \"\")) != \"quests\"):"
+ },
+ {
+  "file": "Onboarding.gd",
+  "why": "quests: tutorial step 3 no longer points at a Quests tab",
+  "old": "\"📜 Tutorial 3/4 — Tap a right-edge plaque to open your menu (quests · bag · team)\" if touch\\\n\t\t\telse \"📜 Tutorial 3/4 — Press P to open your menu (quests · bag · team)\")",
+  "new": "(\"📜 Tutorial 3/4 — Tap a right-edge plaque to open your menu (quests · bag · team)\" if ChikFeat.on(\"quests\") else \"📜 Tutorial 3/4 — Tap a right-edge plaque to open your menu (bag · team)\") if touch\\\n\t\t\telse (\"📜 Tutorial 3/4 — Press P to open your menu (quests · bag · team)\" if ChikFeat.on(\"quests\") else \"📜 Tutorial 3/4 — Press P to open your menu (bag · team)\"))"
+ },
+ {
+  "file": "Onboarding.gd",
+  "why": "quests: no 'open Quests ▸ Side' toast after the first egg",
+  "old": "\t_profile.toast.emit(\"📖 Your Lessons await — open Quests ▸ Side to master gathering, fishing, crafting, earning and chikimon care.\", UISkin.GOLD)",
+  "new": "\tif ChikFeat.on(\"quests\"):\n\t\t_profile.toast.emit(\"📖 Your Lessons await — open Quests ▸ Side to master gathering, fishing, crafting, earning and chikimon care.\", UISkin.GOLD)"
+ },
+ {
+  "file": "Profile.gd",
+  "why": "quests: the empty-chest message no longer sends the player to quests",
+  "old": "toast.emit(\"No chests — quests award them\", ",
+  "new": "toast.emit(\"No chests — quests award them\" if ChikFeat.on(\"quests\") else \"No chests yet\", "
+ },
+ {
+  "file": "ChikFeat.gd",
+  "why": "meme dynasty: per-species switch the app reads (CHIK_FEATURES.meme_allow)",
+  "old": "static func on(key: String) -> bool:\n\treturn bool(_all().get(key, true))",
+  "new": "static func on(key: String) -> bool:\n\treturn bool(_all().get(key, true))\n\n\n## The Meme Dynasty is not in the app yet. It comes back ONE SPECIES AT A TIME: add a species key to\n## `meme_allow` in realm/chiki-ios.js and the app shows that one again — no app update needed.\n## On the website `meme_dynasty` is true and every species is shown.\nstatic func dynasty_shown(sp: String) -> bool:\n\tif on(\"meme_dynasty\"):\n\t\treturn true\n\tvar allow: Variant = _all().get(\"meme_allow\", [])\n\treturn allow is Array and (allow as Array).has(sp)\n\n\nstatic func any_dynasty() -> bool:\n\tif on(\"meme_dynasty\"):\n\t\treturn true\n\tvar allow: Variant = _all().get(\"meme_allow\", [])\n\treturn allow is Array and not (allow as Array).is_empty()"
+ },
+ {
+  "file": "Econ.gd",
+  "why": "meme dynasty: one test every call site uses",
+  "old": "\t\"thisisfine\", \"babygoat\", \"triplet\", \"stonks\", \"nervousmonkey\"]",
+  "new": "\t\"thisisfine\", \"babygoat\", \"triplet\", \"stonks\", \"nervousmonkey\"]\n\n## True for a Meme Dynasty species the app is not showing (see ChikFeat.dynasty_shown).\nstatic func app_hides(sp: String) -> bool:\n\treturn DYNASTY.has(sp) and not ChikFeat.dynasty_shown(sp)"
+ },
+ {
+  "file": "Profile.gd",
+  "why": "meme dynasty: set aside / put back (the only place the profile changes)",
+  "old": "func _real_species(sp: String) -> bool:",
+  "new": "## THE MEME DYNASTY IS NOT IN THE APP. A Meme Dynasty chikimon the account owns (hatched or bought on\n## the website) is SET ASIDE for the session: taken out of `units`, the party and the bench so that no\n## screen, fight or companion ever sees it, and PUT BACK exactly where it was every time the profile is\n## saved or sent to the server — the account, its save signature and the website never lose one.\n## Meme eggs are set aside the same way while no species is allowed. Hidden only after `_load` has\n## verified the save, because the signature covers units and eggs.\nvar _meme_stash: Dictionary = {}\nvar _meme_ready: = false\n\n\nfunc _meme_hide() -> void :\n\tif not _meme_ready or ChikFeat.on(\"meme_dynasty\"):\n\t\treturn\n\tvar units: Dictionary = d.get(\"units\", {})\n\tvar hid: = {}\n\tfor uid in units.keys():\n\t\tif typeof(units[uid]) == TYPE_DICTIONARY and Econ.app_hides(String((units[uid] as Dictionary).get(\"species\", \"\"))):\n\t\t\thid[String(uid)] = units[uid]\n\tvar eggs_hid: Array = []\n\tif not ChikFeat.any_dynasty():\n\t\tfor e in d.get(\"eggs\", []):\n\t\t\tif typeof(e) == TYPE_DICTIONARY and String((e as Dictionary).get(\"kind\", \"\")) == \"meme\":\n\t\t\t\teggs_hid.append(e)\n\tif hid.is_empty() and eggs_hid.is_empty():\n\t\treturn\n\tif _meme_stash.is_empty():\n\t\t_meme_stash = {\"units\": {}, \"eggs\": [], \"party\": (d.get(\"party\", []) as Array).duplicate(), \n\t\t\t\"bench\": (d.get(\"bench\", []) as Array).duplicate(), \"lead\": int(d.get(\"lead\", 0)), \n\t\t\t\"companion\": (d.get(\"companion\", {}) as Dictionary).duplicate(true), \"extra\": false}\n\telse:\n\t\t_meme_stash[\"extra\"] = true\n\tvar party: Array = d.get(\"party\", [])\n\tvar lead_uid: = \"\"\n\tif not party.is_empty():\n\t\tlead_uid = String(party[clampi(int(d.get(\"lead\", 0)), 0, party.size() - 1)])\n\tfor uid in hid:\n\t\t(_meme_stash[\"units\"] as Dictionary)[uid] = hid[uid]\n\t\tunits.erase(uid)\n\td[\"party\"] = party.filter(func(u): return not hid.has(String(u)))\n\td[\"bench\"] = (d.get(\"bench\", []) as Array).filter(func(u): return not hid.has(String(u)))\n\td[\"lead\"] = maxi(0, (d[\"party\"] as Array).find(lead_uid))\n\tif not eggs_hid.is_empty():\n\t\t(_meme_stash[\"eggs\"] as Array).append_array(eggs_hid)\n\t\td[\"eggs\"] = (d[\"eggs\"] as Array).filter(func(e): return not (typeof(e) == TYPE_DICTIONARY and String((e as Dictionary).get(\"kind\", \"\")) == \"meme\"))\n\t_meme_stash[\"vis_party\"] = (d[\"party\"] as Array).duplicate()\n\t_meme_stash[\"vis_bench\"] = (d[\"bench\"] as Array).duplicate()\n\t_meme_stash[\"vis_lead\"] = int(d[\"lead\"])\n\t_sync_companion()\n\n\nfunc _meme_unhide() -> void :\n\tif _meme_stash.is_empty():\n\t\treturn\n\tvar st: = _meme_stash\n\t_meme_stash = {}\n\tvar units: Dictionary = d.get(\"units\", {})\n\tvar back: Dictionary = st[\"units\"]\n\tfor uid in back:\n\t\tunits[uid] = back[uid]\n\td[\"units\"] = units\n\tif not bool(st[\"extra\"]) and d.get(\"party\", []) == st[\"vis_party\"] and d.get(\"bench\", []) == st[\"vis_bench\"]\\\n\tand int(d.get(\"lead\", 0)) == int(st[\"vis_lead\"]):\n\t\td[\"party\"] = st[\"party\"]\n\t\td[\"bench\"] = st[\"bench\"]\n\t\td[\"lead\"] = st[\"lead\"]\n\t\td[\"companion\"] = st[\"companion\"]\n\telse:\n\t\tvar party: Array = (d.get(\"party\", []) as Array).duplicate()\n\t\tvar bench: Array = (d.get(\"bench\", []) as Array).duplicate()\n\t\tvar lead_uid: = \"\"\n\t\tif not party.is_empty():\n\t\t\tlead_uid = String(party[clampi(int(d.get(\"lead\", 0)), 0, party.size() - 1)])\n\t\tvar old_party: Array = st[\"party\"]\n\t\tfor i in range(old_party.size()):\n\t\t\tvar u: = String(old_party[i])\n\t\t\tif back.has(u) and not party.has(u) and not bench.has(u):\n\t\t\t\tif party.size() < Econ.PARTY_MAX:\n\t\t\t\t\tparty.insert(mini(i, party.size()), u)\n\t\t\t\telse:\n\t\t\t\t\tbench.append(u)\n\t\tfor u in back:\n\t\t\tif not party.has(u) and not bench.has(u):\n\t\t\t\tbench.append(u)\n\t\td[\"party\"] = party\n\t\td[\"bench\"] = bench\n\t\td[\"lead\"] = maxi(0, party.find(lead_uid))\n\t\t_sync_companion()\n\tif not (st[\"eggs\"] as Array).is_empty():\n\t\teggs().append_array(st[\"eggs\"])\n\n\nfunc meme_stash_asset_ids() -> Array:\n\tvar out: Array = []\n\tfor uid in _meme_stash.get(\"units\", {}):\n\t\tvar a: = String((_meme_stash[\"units\"][uid] as Dictionary).get(\"asset_id\", \"\"))\n\t\tif a != \"\":\n\t\t\tout.append(a)\n\tfor e in _meme_stash.get(\"eggs\", []):\n\t\tvar ea: = String((e as Dictionary).get(\"asset_id\", \"\"))\n\t\tif ea != \"\":\n\t\t\tout.append(ea)\n\treturn out\n\n\nfunc _meme_stash_has(sp: String) -> bool:\n\tfor uid in _meme_stash.get(\"units\", {}):\n\t\tif String((_meme_stash[\"units\"][uid] as Dictionary).get(\"species\", \"\")) == sp:\n\t\t\treturn true\n\treturn false\n\n\nfunc _real_species(sp: String) -> bool:"
+ },
+ {
+  "file": "Profile.gd",
+  "why": "meme dynasty: hide once the save has been verified",
+  "old": "\t\t\tprint(\"Profile: %d sold creature(s) removed on load by the NFT hand-off record\" % _gone_n)",
+  "new": "\t\t\tprint(\"Profile: %d sold creature(s) removed on load by the NFT hand-off record\" % _gone_n)\n\t_meme_ready = true\n\t_meme_hide()"
+ },
+ {
+  "file": "Profile.gd",
+  "why": "meme dynasty: the save file always carries every creature",
+  "old": "func save_now() -> void :\n\tif demo or frozen:\n\t\t_dirty = false\n\t\treturn",
+  "new": "func save_now() -> void :\n\tif demo or frozen:\n\t\t_dirty = false\n\t\treturn\n\t_meme_unhide()"
+ },
+ {
+  "file": "Profile.gd",
+  "why": "meme dynasty: hide again after writing",
+  "old": "\t\tf.store_string(JSON.stringify(d))\n\t\tf.close()\n\t_dirty = false",
+  "new": "\t\tf.store_string(JSON.stringify(d))\n\t\tf.close()\n\t_dirty = false\n\t_meme_hide()"
+ },
+ {
+  "file": "Profile.gd",
+  "why": "meme dynasty: the cloud copy always carries every creature",
+  "old": "func export_server() -> Dictionary:\n\tvar out: = d.duplicate(true)",
+  "new": "func export_server() -> Dictionary:\n\t_meme_unhide()\n\tvar out: = d.duplicate(true)\n\t_meme_hide()"
+ },
+ {
+  "file": "Profile.gd",
+  "why": "meme dynasty: a newer cloud save replaces the old stash",
+  "old": "\td = sv.duplicate(true)",
+  "new": "\td = sv.duplicate(true)\n\t_meme_stash = {}"
+ },
+ {
+  "file": "Profile.gd",
+  "why": "meme dynasty: the NFT hand-off sees every creature",
+  "old": "func nft_scrub() -> int:\n\tvar n: = 0",
+  "new": "func nft_scrub() -> int:\n\t_meme_unhide()\n\tvar n: = 0"
+ },
+ {
+  "file": "Profile.gd",
+  "why": "meme dynasty: and hides them again",
+  "old": "\t\t\tn += 1\n\treturn n",
+  "new": "\t\t\tn += 1\n\t_meme_hide()\n\treturn n"
+ },
+ {
+  "file": "Profile.gd",
+  "why": "meme dynasty: anything new (a Temple meme egg) is set aside at once",
+  "old": "func _mark() -> void :\n\t_dirty = true",
+  "new": "func _mark() -> void :\n\t_dirty = true\n\t_meme_hide()"
+ },
+ {
+  "file": "Profile.gd",
+  "why": "meme dynasty: a set-aside creature is still owned — never mint a second",
+  "old": "func own_chiki(sp: String, why: String = \"\", level: int = 1) -> void :",
+  "new": "func own_chiki(sp: String, why: String = \"\", level: int = 1) -> void :\n\tif _meme_stash_has(sp):\n\t\treturn"
+ },
+ {
+  "file": "Profile.gd",
+  "why": "meme dynasty: hatch checks skip species the app is not showing",
+  "old": "\t\t\tif (kind == \"meme\") != Econ.DYNASTY.has(s2): continue",
+  "new": "\t\t\tif (kind == \"meme\") != Econ.DYNASTY.has(s2): continue\n\t\t\tif Econ.app_hides(s2): continue"
+ },
+ {
+  "file": "Profile.gd",
+  "why": "meme dynasty: a meme egg never hatches a species the app is not showing",
+  "old": "\t\t\tif (kind == \"meme\") != is_meme:\n\t\t\t\tcontinue",
+  "new": "\t\t\tif (kind == \"meme\") != is_meme:\n\t\t\t\tcontinue\n\t\t\tif Econ.app_hides(s2):\n\t\t\t\tcontinue"
+ },
+ {
+  "file": "Onboarding.gd",
+  "why": "meme dynasty: a first-hatch meme egg picks from the species the app shows",
+  "old": "\t\tpool = (Econ.DYNASTY if _hatch_force_kind == \"meme\" else ORIGINAL_LEGENDS)",
+  "new": "\t\tpool = (Econ.DYNASTY.filter(func(s): return not Econ.app_hides(String(s))) if _hatch_force_kind == \"meme\" else ORIGINAL_LEGENDS)\n\t\tif pool.is_empty():\n\t\t\tpool = ORIGINAL_LEGENDS"
+ },
+ {
+  "file": "InfoBar.gd",
+  "why": "meme dynasty: the Chikidex lists only the species the app shows",
+  "old": "\tvar all: Array = _dex_legendaries() + Econ.DYNASTY.duplicate()",
+  "new": "\tvar all: Array = _dex_legendaries() + Econ.DYNASTY.filter(func(s): return not Econ.app_hides(String(s)))"
+ },
+ {
+  "file": "InfoBar.gd",
+  "why": "meme dynasty: and so do the dex sections",
+  "old": "\tvar secs: Array = [_dex_legendaries(), Econ.DYNASTY.duplicate(), Econ.NORMALS.keys()]",
+  "new": "\tvar secs: Array = [_dex_legendaries(), Econ.DYNASTY.filter(func(s): return not Econ.app_hides(String(s))), Econ.NORMALS.keys()]"
+ },
+ {
+  "file": "InfoBar.gd",
+  "why": "meme dynasty: the news item that names them",
+  "old": "\t\t\t[\"🧬 The Meme Dynasty arrives\", \"Pepe, Popcat, Moo Deng, Doge, Chill Guy & Alon join the Chikidex as collectible cases.\"], ",
+  "new": "\t\t\t([\"🧬 The Meme Dynasty arrives\", \"Pepe, Popcat, Moo Deng, Doge, Chill Guy & Alon join the Chikidex as collectible cases.\"] if ChikFeat.on(\"meme_dynasty\") else [\"🐣 More chikimon on the way\", \"New chikimon join Chikoria over time — keep an eye on the Chikidex.\"]), "
+ },
+ {
+  "file": "InfoBar.gd",
+  "why": "meme dynasty: the Collectibles how-to",
+  "old": "\"Avatars and the Meme Dynasty — display-only, and proudly so.\"),",
+  "new": "(\"Avatars and the Meme Dynasty — display-only, and proudly so.\" if ChikFeat.any_dynasty() else \"Avatars — display-only, and proudly so.\")),"
+ },
+ {
+  "file": "InfoBar.gd",
+  "why": "meme dynasty: the Collectibles how-to numbers",
+  "old": "\"num\": [\"Fixed supply per avatar\", \"Meme Dynasty cases\", \"Display-only: no stat advantage\"]}",
+  "new": "\"num\": ([\"Fixed supply per avatar\", \"Meme Dynasty cases\", \"Display-only: no stat advantage\"] if ChikFeat.any_dynasty() else [\"Fixed supply per avatar\", \"Display-only: no stat advantage\"])}"
+ },
+ {
+  "file": "PlayerPanel.gd",
+  "why": "meme dynasty: the egg belt lists only species the app shows",
+  "old": "\t\t\tif (kind == \"meme\") == Econ.DYNASTY.has(s):\n\t\t\t\tout.append(s)",
+  "new": "\t\t\tif (kind == \"meme\") == Econ.DYNASTY.has(s) and not Econ.app_hides(s):\n\t\t\t\tout.append(s)"
+ },
+ {
+  "file": "Net.gd",
+  "why": "meme dynasty: other players' Meme Dynasty companions are not drawn in the app",
+  "old": "\t\tvar cp: = \"res://comp_rig_\" + sp + \".glb\"\n\t\tif not ResourceLoader.exists(cp):\n\t\t\tcontinue",
+  "new": "\t\tvar cp: = \"res://comp_rig_\" + sp + \".glb\"\n\t\tif Econ.app_hides(sp) or not ResourceLoader.exists(cp):\n\t\t\tcontinue"
+ },
+ {
+  "file": "GameHUD.gd",
+  "why": "meme dynasty: no Meme Egg card in Mithra's shop",
+  "old": "\t_egg_card(grid, \"res://egg_meme.png\", ",
+  "new": "\tif ChikFeat.any_dynasty(): _egg_card(grid, \"res://egg_meme.png\", "
+ },
+ {
+  "file": "Gather.gd",
+  "why": "meme dynasty: no meme egg on display by the shop",
+  "old": "\tvar specs: = [[\"eggleg\", -85.0, -316.0, 1.35], [\"mountegg\", -80.0, -315.0, 1.35], [\"eggmeme\", -75.0, -316.0, 1.35]]",
+  "new": "\tvar specs: = [[\"eggleg\", -85.0, -316.0, 1.35], [\"mountegg\", -80.0, -315.0, 1.35], [\"eggmeme\", -75.0, -316.0, 1.35]]\n\tif not ChikFeat.any_dynasty():\n\t\tspecs = specs.filter(func(s): return String(s[0]) != \"eggmeme\")"
+ },
+ {
+  "file": "Title.gd",
+  "why": "meme dynasty: the title art is the Chikoria key art, not the meme line-up",
+  "old": "\t_hero.texture = _tex(\"res://web_hero.png\")",
+  "new": "\t_hero.texture = _tex(\"res://web_hero.png\" if ChikFeat.on(\"meme_dynasty\") else \"res://app_title.jpg\")"
+ },
+ {
+  "file": "Title.gd",
+  "why": "meme dynasty: the play emblem sits on the key art's emblem",
+  "old": "\tvar d: = maxf(52.0, 0.102 * drawn.x)",
+  "new": "\tvar app_art: = not ChikFeat.on(\"meme_dynasty\")\n\tvar d: = maxf(52.0, (0.086 if app_art else 0.102) * drawn.x)"
+ },
+ {
+  "file": "Title.gd",
+  "why": "meme dynasty: emblem position on the key art",
+  "old": "\t_coin.position = off + Vector2(SW_X * drawn.x, SW_Y * drawn.y) - _coin.size * 0.5",
+  "new": "\t_coin.position = off + Vector2((0.497 if app_art else SW_X) * drawn.x, (0.542 if app_art else SW_Y) * drawn.y) - _coin.size * 0.5"
+ },
+ {
+  "file": "Chain.gd",
+  "why": "meme dynasty: set-aside assets still count as held, so none is delivered twice",
+  "old": "\t\tvar a: = String((_profile.d[\"units\"][uid] as Dictionary).get(\"asset_id\", \"\"))\n\t\tif a != \"\":\n\t\t\thave.append(a)",
+  "new": "\t\tvar a: = String((_profile.d[\"units\"][uid] as Dictionary).get(\"asset_id\", \"\"))\n\t\tif a != \"\":\n\t\t\thave.append(a)\n\thave.append_array(_profile.meme_stash_asset_ids())"
+ }
+]
