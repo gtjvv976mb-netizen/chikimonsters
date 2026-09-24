@@ -1027,11 +1027,9 @@ html.chik-phone #boot { padding-bottom: calc(5px + env(safe-area-inset-bottom, 0
 				if (heroimg && /hero\.jpg/.test(heroimg.getAttribute('src') || '')) {
 					heroimg.setAttribute('src', 'app-title.jpg');
 				}
-				// 8. The app is called Chiki Monsters. loading.png, the boot screen's background, is the
-				//    key art with CHIKORIA (the island's name) written across it; app-title.jpg is the same
-				//    art under the Chiki Monsters logo — also the in-game title and the app icon.
-				var boot = document.getElementById('boot');
-				if (boot) boot.style.backgroundImage = 'url("app-title.jpg")';
+				// 8. The boot screen keeps loading.png, the Chikoria loading art (CHIKORIA is the island
+				//    the game is set on). The native shell's cover shows the same picture, so the
+				//    hand-over from the app's cover to this screen does not change the image.
 			} catch (e) { /* copy is not worth a broken loading screen */ }
 		}());
 		</script>

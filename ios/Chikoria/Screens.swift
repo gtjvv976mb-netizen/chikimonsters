@@ -628,45 +628,63 @@ struct BootCover: View {
     @State private var slow = false
 
     var body: some View {
-        VStack(spacing: 16) {
-            Spacer()
-            Text("Chiki Monsters")
-                .font(.system(size: 30, weight: .heavy))
-                .foregroundStyle(Ink.gold)
-            if !model.bootStalled {
-                ProgressView().tint(Ink.gold)
-            }
-            Text(model.bootStage)
-                .foregroundStyle(Ink.text)
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: 460)
+        ZStack(alignment: .bottom) {
+            // The Chikoria loading art — the same picture the realm's own loader draws, so the
+            // hand-over from this cover to the page is seamless. Filled, not fitted: the app is
+            // landscape and wider than the art, so it is cropped top and bottom around the logo.
+            Color.clear
+                .overlay(Image("ChikoriaLoading").resizable().scaledToFill())
+                .clipped()
+                .ignoresSafeArea()
+                .accessibilityHidden(true)
 
-            if slow || model.bootStalled {
-                // Re-rendered every second so the "waiting" count moves.
-                TimelineView(.periodic(from: .now, by: 1)) { _ in
-                    Text(model.bootDiagnostics)
-                        .font(.caption2.monospaced())
-                        .foregroundStyle(Ink.dim)
-                        .multilineTextAlignment(.leading)
-                        .padding(12)
-                        .background(Ink.panel, in: RoundedRectangle(cornerRadius: 10))
-                        .textSelection(.enabled)
-                }
-                HStack(spacing: 14) {
-                    Button { model.retry() } label: {
-                        Text("Try again").fontWeight(.heavy).padding(.horizontal, 24).padding(.vertical, 11)
+            // Enough shade under the words to read them over the meadow.
+            LinearGradient(colors: [.clear, .black.opacity(0.75)], startPoint: .top, endPoint: .bottom)
+                .frame(height: slow || model.bootStalled ? 300 : 120)
+                .frame(maxWidth: .infinity)
+                .ignoresSafeArea()
+                .allowsHitTesting(false)
+
+            VStack(spacing: 12) {
+                if slow || model.bootStalled {
+                    // Re-rendered every second so the "waiting" count moves.
+                    TimelineView(.periodic(from: .now, by: 1)) { _ in
+                        Text(model.bootDiagnostics)
+                            .font(.caption2.monospaced())
+                            .foregroundStyle(Ink.dim)
+                            .multilineTextAlignment(.leading)
+                            .padding(12)
+                            .background(Ink.panel.opacity(0.92), in: RoundedRectangle(cornerRadius: 10))
+                            .textSelection(.enabled)
                     }
-                    .background(Ink.gold, in: RoundedRectangle(cornerRadius: 12))
-                    .foregroundStyle(.black)
-                    Button("Copy details") {
-                        UIPasteboard.general.string = model.bootDiagnostics + "\n" + model.supportBlob
+                    HStack(spacing: 14) {
+                        Button { model.retry() } label: {
+                            Text("Try again").fontWeight(.heavy).padding(.horizontal, 24).padding(.vertical, 11)
+                        }
+                        .background(Ink.gold, in: RoundedRectangle(cornerRadius: 12))
+                        .foregroundStyle(.black)
+                        Button("Copy details") {
+                            UIPasteboard.general.string = model.bootDiagnostics + "\n" + model.supportBlob
+                        }
+                        .fontWeight(.semibold)
+                        .foregroundStyle(Ink.gold)
                     }
-                    .foregroundStyle(Ink.gold)
                 }
+                HStack(spacing: 10) {
+                    if !model.bootStalled {
+                        ProgressView().tint(Ink.gold)
+                    }
+                    Text(model.bootStage)
+                        .font(.callout.weight(.semibold))
+                        .foregroundStyle(Ink.text)
+                        .multilineTextAlignment(.center)
+                        .shadow(color: .black.opacity(0.8), radius: 3, y: 1)
+                }
+                .frame(maxWidth: 520)
             }
-            Spacer()
+            .padding(.horizontal, 24)
+            .padding(.bottom, 18)
         }
-        .padding(24)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Ink.bg.ignoresSafeArea())
         // Restarts with every new load, so "slow" means slow THIS time.
