@@ -179,9 +179,9 @@ struct PairingView: View {
                     .foregroundStyle(.black)
                     .disabled(busy)
 
-                    Text("No wallet, no email, no password — the account belongs to this app. "
-                         + "You can connect a crypto wallet to it later from Account, and you will "
-                         + "need to if you ever want to trade what you find.")
+                    Text("No email, no password — the account lives on this iPhone. You can back it "
+                         + "up to your chikimonsters.com account later from Account, so you keep it "
+                         + "if you ever lose this phone.")
                         .font(.footnote)
                         .foregroundStyle(Ink.dim)
 
@@ -213,7 +213,7 @@ struct PairingView: View {
                 .font(.callout)
                 .foregroundStyle(Ink.dim)
 
-                TextField("", text: $code, prompt: Text("ABCD 1234").foregroundStyle(Ink.dim))
+                TextField("", text: $code, prompt: Text("ABCD 1234").foregroundColor(Ink.dim))
                     .font(.system(size: 30, weight: .bold, design: .monospaced))
                     .kerning(6)
                     .multilineTextAlignment(.center)
@@ -247,7 +247,7 @@ struct PairingView: View {
 
                 // A player who has only a phone cannot mint a code at all: the website needs a
                 // wallet. Saying so here is kinder than letting them hunt for it.
-                Text("The code has to come from the website, where your wallet is. "
+                Text("The code comes from chikimonsters.com, where you sign in. "
                      + "It lasts about ten minutes and works once.")
                     .font(.footnote)
                     .foregroundStyle(Ink.dim)
@@ -348,8 +348,8 @@ struct AccountView: View {
                             VStack(alignment: .leading, spacing: 10) {
                                 Text(claim).font(.system(size: 30, weight: .bold, design: .monospaced))
                                     .kerning(6).frame(maxWidth: .infinity).foregroundStyle(Ink.gold)
-                                Text("1 · On the device that has your wallet, open **chikimonsters.com/link**\n"
-                                     + "2 · Sign in with your wallet\n"
+                                Text("1 · On the device you use for chikimonsters.com, open **chikimonsters.com/link**\n"
+                                     + "2 · Sign in to your account there\n"
                                      + "3 · Enter this code under **Connect an app account**")
                                     .font(.callout).foregroundStyle(.secondary)
                                 // A code that has quietly expired looks exactly like a live one,
@@ -360,27 +360,25 @@ struct AccountView: View {
                                     .font(.footnote).foregroundStyle(.secondary)
                                 HStack(spacing: 16) {
                                     Button("Copy code") { UIPasteboard.general.string = claim }
-                                    Button("New code") { claim = nil; connect() }
+                                    Button("New code") { self.claim = nil; connect() }
                                 }
                             }
                             .padding(.vertical, 4)
                         } else {
-                            Button(claimBusy ? "Getting a code…" : "Connect a wallet") { connect() }
+                            Button(claimBusy ? "Getting a code…" : "Back up this account") { connect() }
                                 .disabled(claimBusy)
                         }
                         if let claimError {
                             Text(claimError).foregroundStyle(Ink.bad).font(.callout)
                         }
                     } header: {
-                        Text("Trading")
+                        Text("Back up")
                     } footer: {
                         // Says what it costs and what it buys, and points at no destination the
                         // player has not already got. The app never opens this link itself.
-                        Text("Your account was made here, so nothing can sign for it — which is why "
-                             + "trading is not available in the app. Connecting a crypto wallet moves "
-                             + "this account, and everything on it, onto that wallet. It is a one-way "
-                             + "change, and it is also how you keep your account if you lose this "
-                             + "iPhone.")
+                        Text("This account was made on this iPhone, and only this iPhone can open it. "
+                             + "Backing it up moves it, and everything on it, onto your chikimonsters.com "
+                             + "account, so you keep it if you lose this phone. It is a one-way change.")
                     }
                 }
 
@@ -397,7 +395,7 @@ struct AccountView: View {
                     // promised the reassuring version to both.
                     Text(model.activeIsWalletless
                          ? "This account was made on this iPhone and the only key to it is here. "
-                           + "Unlinking loses it for good. Connect a wallet first if you want to keep it."
+                           + "Unlinking loses it for good. Back it up first if you want to keep it."
                          : "Unlinking removes this device’s access. Your account and everything on it "
                            + "are untouched, and you can link again with a new code.")
                 }
@@ -414,11 +412,9 @@ struct AccountView: View {
                     // promising that its on-chain assets are safe describes assets that do not
                     // exist and quietly implies its progress might survive somewhere. It does not.
                     Text(model.activeIsWalletless
-                         ? "This account was made in the app and has no wallet behind it, so "
-                           + "deleting it removes everything on it. There is nothing held on-chain "
-                           + "to keep."
-                         : "Deleting removes your Chikoria progress from our servers. Assets held "
-                           + "on-chain belong to your wallet and are not affected.")
+                         ? "This account was made in the app, so deleting it removes everything on "
+                           + "it. Nothing is kept anywhere else."
+                         : "Deleting removes your Chikoria progress from our servers.")
                 }
 
                 Section("Support") {
@@ -450,8 +446,7 @@ struct AccountView: View {
                 Text(model.activeIsWalletless
                      ? "This asks us to delete this account and everything on it, permanently. "
                        + "It was made in the app, so there is nothing kept anywhere else."
-                     : "This asks us to delete your Chikoria progress permanently. It cannot be undone. "
-                       + "Assets held on-chain stay in your wallet.")
+                     : "This asks us to delete your Chikoria progress permanently. It cannot be undone.")
             }
             .alert(model.activeIsWalletless ? "Lose this account?" : "Unlink this iPhone?",
                    isPresented: $confirmUnlink) {
@@ -464,7 +459,7 @@ struct AccountView: View {
                 Text(model.activeIsWalletless
                      ? "This account was made on this iPhone and the key to it is only here. "
                        + "Unlinking loses it permanently — there is no code that can bring it back. "
-                       + "If you want to keep it, connect a wallet first."
+                       + "If you want to keep it, back it up first."
                      : "This removes this device’s access. Your account is untouched and you can "
                        + "link again with a new code from the website.")
             }
@@ -645,7 +640,7 @@ struct MessageScreen: View {
                 .foregroundStyle(Ink.dim)
                 .multilineTextAlignment(.center)
             if let action {
-                Button(action.1) {
+                Button(action: action.1) {
                     Text(action.0).fontWeight(.heavy).padding(.horizontal, 26).padding(.vertical, 13)
                 }
                 .background(Ink.gold, in: RoundedRectangle(cornerRadius: 12))

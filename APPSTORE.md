@@ -6,28 +6,46 @@ Everything for App Store Connect that does not require a build. Copy the fields 
 
 ---
 
-## Can this be submitted today? Not from this repo — here is exactly what is left
+## Can this be submitted today? Everything that can be done without a Mac is done
 
-Everything that can be done without a Mac is done and **live** (checked 2026-09-23):
+Updated 2026-09-24. What is done and verified:
 
 | Done | Evidence |
 |---|---|
-| Backend `/link/*` and `/account/*` routes deployed | `api.chikimonsters.com/link/new` → 401, `/link/redeem` → 400 (the routes exist and validate); `/health` reports `main` |
-| iOS pack published | `chikimonsters.com/realm/index.pck.ios.lite.manifest.json` → 200, seven chunks beside it |
-| `/link/`, `/privacy/`, `/support/` published | all 200 |
-| Cross-origin isolation on `/realm/` | `cross-origin-opener-policy: same-origin`, `cross-origin-embedder-policy: require-corp` served live |
-| Chat refused in the app | §2; 17 tests |
+| Backend `/link/*` and `/account/*` routes deployed | `api.chikimonsters.com/link/new` → 401, `/link/redeem` → 400 (the routes exist and validate); backend `npm run test:link` passes |
+| **Every trading surface is out of the iOS pack** | `godot-patch/apply-ios-trading-patch.py` — 165 more edits on top of the first 19, across 20 scripts, all gated on `ChikFeat` so the website is unchanged. See "The trading sweep" below |
+| The rebuilt iOS pack is in `realm/` | `index.pck.ios.lite.*`, build `4b7c77a6aa`, booted under the app policy in Chromium |
+| The app carries every game asset | The lite pack holds the same files as the HD pack except the soundtrack, which streams from `audio/stream-manifest.json`, and the Chikiseum gate crest. The crest was missing from the website's lite export, so `ChikiseumReferenceWorld.gd` failed to parse and the arena world could not load on a phone. `build-ios-pack.py` now adds the crest from the HD pack (`ADDED_FILES`). The *website's* `index.pck.lite.*` still lacks it, so mobile browsers have the same arena bug until that pack is re-exported |
+| The app never boots a website pack | `realm/index.html` no longer falls back to the website's packs for the app, even on a network error; `loader-policy.test.mjs` pins it |
+| The app's title screen shows the Chikoria key art | not the Meme Dynasty line-up (`hero.jpg`), which includes a caricature of a real person |
+| Swift compile errors found by review are fixed | `Button(action.1)`, the shadowed `claim = nil`, and an iOS 17-only `Text.foregroundStyle` in a 16.0 target; `nonisolated` constants for the navigation delegate |
+| iPhone-only, `LSRequiresIPhoneOS` | `TARGETED_DEVICE_FAMILY = 1`; no iPad screenshots needed for 1.0 |
+| No trading language on any native screen | Pairing and Account talk about *backing up* an app-made account, not trading |
+| The app's own web page | `chikimonsters.com/app/` — use it as the **Marketing URL** (§1) |
+| `/link/`, `/privacy/`, `/support/` published; COOP/COEP on `/realm/` | all 200 |
+| Chat refused in the app | §2; policy tests pass |
 | Xcode project generated and consistent | `python3 ios/make-xcodeproj.py --check` passes |
 
-What remains needs a Mac, an Apple Developer account, or a decision. None of it can be done from
-this repository, and the runbook right after this table is the whole of it.
+What remains needs a Mac, an Apple Developer account, or a decision:
 
 | Blocker | Why it blocks | Who can clear it |
 |---|---|---|
-| **No build exists** | The Swift in `ios/` has never been compiled. Submission needs an archive uploaded from Xcode on a Mac, signed by the Apple Developer account. | You, with a Mac |
-| **No screenshots or preview video** | Both must be captured from the running app. They cannot be drawn, and faking them is a rejection *and* a guideline violation. | You, once a build runs |
-| **Three pack surfaces still draw wallet or marketplace UI** | The WALLET tab, `PlayerPanel`'s Magic Eden rail and the Open Gates card (below). Every button behind them refuses, but 3.1.1 is about what an app **presents**. | A pack rebuild from the recovered project (`godot-patch/RECOVERY.md`), or accept the risk and say so in the review notes |
-| **Mailboxes** | `/support/` and `/privacy/` name `support@` and `privacy@chikimonsters.com`. A reviewer may write to them. | Create the two mailboxes (forwarding is fine) |
+| **No build exists** | The Swift in `ios/` has never been compiled. Review caught three errors; Xcode may find more. | You, with a Mac |
+| **No screenshots or preview video** | Both must be captured from the running app. | You, once a build runs |
+| **Mailboxes** | `/support/` and `/privacy/` name `support@` and `privacy@chikimonsters.com`. The domain has Google MX records; make sure both addresses exist and are read. | You |
+| **Privacy page says "Draft — not yet reviewed by a lawyer"** | A reviewer opens that URL. | Legal review, then remove the banner |
+| **Account deletion is scheduled, never executed** | `/link/delete_account` records the request and `realmLink.due()` lists what is past its grace period, but nothing deletes it. 5.1.1(v) allows a grace period, not a deletion that never happens. | A decision on what deletion removes for a wallet-backed account, then a sweep in the backend |
+
+Two risks worth deciding on before you submit — neither is a trading surface:
+
+* **Meme Dynasty characters.** Pepe, Chill Guy, Popcat, Doge, Moo Deng and "Alon" (a caricature
+  of a real person) are playable legendaries inside the game. Guideline 5.2.1 needs rights to every
+  character; at least one of those creators has taken action against crypto projects. The app no
+  longer *opens* on them, but they are still in the ChikiDex and the egg pools.
+* **Story Chapter 36, "Open for Business", requires listing an item on the Trading Post.** The app
+  shows it as "Trading isn't part of the app", so an app-only player's main story waits there. A
+  reviewer will not get that far, but players will. Making that chapter optional (or giving the
+  app a different objective for it) is a game-design change the patch deliberately does not make.
 
 ### From a Mac: the submission, in order
 
@@ -39,13 +57,15 @@ Budget an afternoon. Nothing here is subtle; the order matters.
 2. **Open the project.** `open ios/Chikoria.xcodeproj`. Target → *Signing & Capabilities* → tick
    *Automatically manage signing* and pick your Team. Target → *General* → Version `1.0`, Build `1`.
    Supported Destinations: iPhone only unless you will also capture iPad screenshots.
-3. **Run on the iPhone.** The four Swift files were written without a Mac; fix whatever Xcode
-   flags first. Then, inside the app, open `https://chikimonsters.com/realm/selftest.html`: both
+3. **Run on the iPhone.** The four Swift files were written without a Mac. Three compile errors
+   found by review are fixed; fix whatever else Xcode flags first. Then, inside the app, open `https://chikimonsters.com/realm/selftest.html`: both
    answers must read yes. Pair: on a computer sign in at `chikimonsters.com/link/`, press *New
    code*, type it into the app.
-4. **Walk the app as a reviewer.** No Trading Post, no *Connect Phantom Wallet* button, no chat
-   box (the iOS pack). Note the three surfaces in the table above; either rebuild the pack or write
-   them into the review notes exactly as they are.
+4. **Walk the app as a reviewer.** No Trading Post, no WALLET tab, no Magic Eden, no chat box, no
+   $CHIKI or SOL anywhere (the balance reads "coins"). Open every tab of the player panel, the
+   Chikiseum, the Temple and the help pages. Anything that still names a wallet, a token, a price
+   or a marketplace is a bug in `godot-patch/ios-trading-edits.json` — note where and it is one
+   more edit.
 5. **Capture** the six screenshots and the preview video from §5, on the device, in landscape.
 6. **App Store Connect.** *My Apps → + → New App*: iOS, name `Chikoria`, bundle id
    `com.chikimonsters.Chikoria`, SKU `chikoria-ios-001`. Fill §1 (information), §2 (age rating),
@@ -77,47 +97,41 @@ Note the shape, because the obvious version of this change is a trap twice over:
   `Onboarding.gdc`'s identifier table contains `gateWaived` and `waived`, and does not contain
   `eligible`. So the gate opens **with no pack rebuild**.
 
-### Two pack surfaces that are still unpatched
+### The trading sweep — how the rest of the pack was cleared
 
-Found by reading the compiled bytecode, and **not** caused by the account work. Both are 3.1.1
-risks, because 3.1.1 is about what an app *presents*, and both are drawn before any refusal happens:
+The first patch (`apply-ios-pack-patch.py`, 19 edits) took the surfaces a reviewer meets first off
+the screen. Three more were then found by reading the compiled bytecode — the WALLET tab, PlayerPanel's
+Magic Eden rail and the Open Gates card — and the owner's decision (2026-09-24) was to rebuild the pack
+and take **every** trading scheme out of the app, with progress still syncing to the account so
+that anything earned in the app can be sold on the website.
 
-| Surface | Where | Status |
-| --- | --- | --- |
-| The **WALLET tab** in the info bar | `InfoBar._build_bar()` places it unconditionally; its popup `_build_wallet_new()` has no `ChikFeat` guard. Draws *"Connect with Phantom"*, *"Sign in with Phantom"*, a `phantom.app` link, *"View on Solscan ↗"*, and in its non-web branch an *"Open browser version ↗"* that shells out to the website | **Not patched.** The welcome panel's wallet button *is*; this tab is a separate surface that was missed. |
-| The **Magic Eden sell rail** | `PlayerPanel.gd` — a marketplace tab and a full listing flow | **Not patched.** `PlayerPanel` is not in `OVERLAY_FILES` at all, so it is carried into the iOS pack unchanged. |
-| The **Open Gates card** | `Onboarding._show_gate()`, the `elif waived and bal < MIN_HOLD:` branch | **Not patched — and the gate change above is what makes it reachable.** See below. |
+`apply-ios-trading-patch.py` is that rebuild. It was made by sweeping every string literal in the
+recovered project for wallet, market, token and SOL wording (about 870 of them in 28 scripts),
+tracing each to what draws it, and gating the entry points rather than the strings where possible:
 
-Both of the first two need the recovered Godot project and a pack rebuild
-(`godot-patch/RECOVERY.md`), not a web deploy. Neither can be *used* — the network guard refuses
-every route behind them — but a reviewer who opens either one sees a wallet connect and a
-marketplace.
+| Surface | Now in the app |
+|---|---|
+| WALLET tab and popup (Phantom connect/sign-in, Solscan, "Open browser version") | not built; the tab art's painted label is covered |
+| Magic Eden rail tab, NFT certificate, minting and listing cards | not built / refuse with a neutral line |
+| Trading Post world prompt, minimap label, `open_market` | gone / refused |
+| Trading Post background toasts ("SOLD to…", "Outbid…", on-chain retries) that fire when a sale happens on the website | silent; the credit still lands |
+| Open Gates card and gate events naming the 500,000 $CHIKI gate | neutral welcome, no token named |
+| Chain.gd sign-in toasts ("verifying your $CHIKI hold…") on every launch | neutral |
+| $CHIKI / SOL lines in quests, the Temple, the Chikiseum, help pages, news and Dispatch | hidden or reworded |
+| The balance itself | named **"coins"** everywhere it is drawn, by a TranslationServer translation `ChikFeat` installs only in the app |
 
-#### The Open Gates card, and why it is the price of the gate change
+Kept on purpose: earning, gathering, hatching, quests, the Temple, PvP, cloud save — and the coin
+pouch's **Collect** button, which is an in-game purse (daily quests will not pay into a full pouch).
 
-Turning the gate off for app sessions means setting `gateWaived`, and `gateWaived` is the only lever
-the compiled pack offers — there is no `free_play` flag or second route to reach the same place.
-Confirmed by extracting the identifier table from the shipped `Onboarding.gdc`: the only gate
-identifiers in it are `gateWaived`, `gateWaivedEnds`, `gateWaivedUntil`, `gate_waived` and
-`event_open_gates`.
+Verification: every script re-parses under the voxel-module editor; the patch reproduces the
+verified source byte-for-byte from a fresh recovery and is a no-op on a second run; the 20 compiled
+scripts round-trip through GDRE's decompiler; the rebuilt pack boots in Chromium under the app
+policy (cross-origin isolated, `CHIK_FEATURES.crypto === false`). **Only a walk-through on a real
+device proves nothing was missed** — step 4 above.
 
-So an app player now walks the `elif waived and bal < MIN_HOLD:` branch, which draws, with **no
-`ChikFeat` guard** (strings read out of the shipped pack):
-
-> 🌟 **Open Gates — the realm is free to enter!**
-> The 500,000 $CHIKI gate is open to every wallet — no 500,000 $CHIKI hold needed. Sign in below to begin.
-
-**This is still a net improvement on where the build was.** Without the change the app player hit
-the gate's refusal card and *could not play at all*, and that card is the one that reads *"Hold
-500,000 $CHIKI to enter"* — an instruction to go and acquire a token elsewhere, which is the actual
-3.1.1 problem. The card they get instead says entry is free. But it names the token and the amount,
-and it says progress is "saved to your wallet" to a player who does not have one, so it belongs on
-the patch list with the other two.
-
-**The edit, for whoever rebuilds the pack:** guard that branch on `ChikFeat.on("crypto")` exactly as
-`GATE_HOLD_NEW` guards the refusal card, with an else branch that welcomes the player without naming
-a token. The anchor is not written into `apply-ios-pack-patch.py` yet because the decompiled source
-is not on this machine and a guessed anchor would fail the `--check` run for the wrong reason.
+To rebuild after the website's pack changes: recover (`RECOVERY.md`), run both patchers, re-import,
+`--check-only` each changed script, compile them with `gdre_tools --compile=<file> --bytecode=4.6.0`
+into `godot-patch/ios-overlay/`, then `build-ios-pack.py` and `chunk-pack.py --ios --lite`.
 
 ### The Godot problem, restated — the project is no longer missing
 
@@ -211,7 +225,7 @@ manifest, about 175 MB, alongside the packs already there. Nothing the website s
 | **SKU** | `chikoria-ios-001` | |
 | **Copyright** | `2026 Chikimonsters` | |
 | **Support URL** | `https://chikimonsters.com/support/` | written, and names `support@chikimonsters.com`. **Create that mailbox and read it before submitting** |
-| **Marketing URL** | `https://chikimonsters.com/` | |
+| **Marketing URL** | `https://chikimonsters.com/app/` | the app's own page — describes only what the app does |
 | **Privacy Policy URL** | `https://chikimonsters.com/privacy/` | drafted, names `privacy@chikimonsters.com`; still needs legal review |
 
 ### Promotional text (170 chars, editable without review)
@@ -539,7 +553,7 @@ None of these are optional if a first submission gets rejected under 4.2 — the
 Nothing below can move ahead of the thing above it.
 
 - [x] **The iOS pack is published** — `realm/index.pck.ios.lite.*` is live, and the app's loader takes it. The shop, the welcome-screen wallet button, the Chikiseum SOL copy and the chat box are off the screen.
-- [ ] **Rebuild the pack once more** for the three surfaces still unpatched (WALLET tab, Magic Eden rail, Open Gates card). Every piece of the recipe is ready and verified (`godot-patch/RECOVERY.md`):
+- [x] **Rebuilt the pack** with every trading surface removed (`apply-ios-trading-patch.py`, 165 edits) — the three surfaces above and everything else the sweep found. Every piece of the recipe is ready and verified (`godot-patch/RECOVERY.md`):
       ```sh
       # 1. recover the project from the pack this repo publishes   (~40s)
       cat realm/index.pck.[0-9].bin realm/index.pck.1[0-2].bin > index.pck
@@ -560,7 +574,7 @@ Nothing below can move ahead of the thing above it.
 - [x] **Decided:** an app player does **not** need the 500k $CHIKI hold — the gate is waived for app sessions and unchanged on the website
 - [x] Backend: `/link/new`, `/link/redeem`, `linkToken` on `/verify`, `/link/devices`, `/link/revoke`, `/link/delete_account` — written, tested (50 checks against the real server), **merged and live on `api.chikimonsters.com`**
 - [x] Backend: `/account/new`, `/account/claim`, `/link/bind` — app-native accounts and connecting a wallet to one, tested against the real server
-- [ ] **Patch the pack's WALLET tab and `PlayerPanel`'s Magic Eden rail** (see above) — needs the recovered Godot project and a pack rebuild
+- [x] **Patched the pack's WALLET tab and `PlayerPanel`'s Magic Eden rail** — in the rebuilt pack
 - [ ] **Decide** what account deletion actually removes **for a wallet-backed account**. The request/grace/cancel flow is live; the execution step is deliberately unwired (`realmLink.due()` lists what is past its grace). An app-made account has no such question — nothing of it lives anywhere but our database
 - [x] Publish `link/` and `privacy/` — live
 - [x] Support page — `support/` is written

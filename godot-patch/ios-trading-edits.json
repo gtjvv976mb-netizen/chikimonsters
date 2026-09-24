@@ -1,0 +1,992 @@
+[
+ {
+  "file": "InfoBar.gd",
+  "why": "The WALLET tab is not placed when crypto is off, and the \"CONNECT WALLET\" words baked into topbar.png are covered by a blank plaque-coloured panel (the tab art is part of the texture, so skipping the button alone would still draw the words).",
+  "old": "\tfor spec in specs:\n\t\t_place_tab(wrap, String(spec[0]), float(spec[1]) * HW, by, BW, BH)",
+  "new": "\tfor spec in specs:\n\t\tif String(spec[0]) == \"wallet\" and not ChikFeat.on(\"crypto\"):\n\t\t\tvar blank: = Panel.new()\n\t\t\tvar blank_sb: = StyleBoxFlat.new()\n\t\t\tblank_sb.bg_color = Color(\"862b00\")\n\t\t\tblank_sb.set_corner_radius_all(4)\n\t\t\tblank.add_theme_stylebox_override(\"panel\", blank_sb)\n\t\t\tblank.mouse_filter = Control.MOUSE_FILTER_IGNORE\n\t\t\tblank.position = Vector2(0.886 * HW, 0.235 * HH)\n\t\t\tblank.size = Vector2(0.063 * HW, 0.315 * HH)\n\t\t\twrap.add_child(blank)\n\t\t\tcontinue\n\t\t_place_tab(wrap, String(spec[0]), float(spec[1]) * HW, by, BW, BH)"
+ },
+ {
+  "file": "InfoBar.gd",
+  "why": "Single entry point for the wallet popup: open_wallet_pop(), toggle_wallet_pop() (both called from GameHUD.gd), _refresh_wallet() and the tab all go through _open_pop(\"wallet\"); refusing here means \"Connect with Phantom\", \"Sign in with Phantom\", the phantom.app link, \"View on Solscan\" and \"Open browser version\" are never drawn.",
+  "old": "func _open_pop(id: String) -> void :\n\t_close_pop()\n\t_which = id",
+  "new": "func _open_pop(id: String) -> void :\n\tif id == \"wallet\" and not ChikFeat.on(\"crypto\"):\n\t\treturn\n\t_close_pop()\n\t_which = id"
+ },
+ {
+  "file": "InfoBar.gd",
+  "why": "The 3D viewer's art/model toggle stops calling the art \"NFT Artwork\".",
+  "old": "\t\tEcon.btn_icon(_mv_toggle, \"🖼 NFT Artwork\" if mode == \"model\" else \"🎠 3D Model\")",
+  "new": "\t\tEcon.btn_icon(_mv_toggle, ((\"🖼 NFT Artwork\" if ChikFeat.on(\"crypto\") else \"🖼 Artwork\") if mode == \"model\" else \"🎠 3D Model\"))"
+ },
+ {
+  "file": "InfoBar.gd",
+  "why": "The CREATOR seal marks a minted creator-edition NFT (Chain.nft_creator_species); it is not drawn on owned collectibles when crypto is off.",
+  "old": "func _seal_if(host: Control, kind_type: String, sp: String) -> void :\n\tif host == null or not ResourceLoader.exists(SEAL_ART):",
+  "new": "func _seal_if(host: Control, kind_type: String, sp: String) -> void :\n\tif not ChikFeat.on(\"crypto\"):\n\t\treturn\n\tif host == null or not ResourceLoader.exists(SEAL_ART):"
+ },
+ {
+  "file": "InfoBar.gd",
+  "why": "The Meme Dynasty note in the Chikidex says \"cannot be bought\", \"minted\" and \"to buy\"; it is not drawn when crypto is off.",
+  "old": "func _meme_hold_note(body: Control) -> void :\n\tvar held: = int(_meme.get(\"founderHeld\", 0))",
+  "new": "func _meme_hold_note(body: Control) -> void :\n\tif not ChikFeat.on(\"crypto\"):\n\t\treturn\n\tvar held: = int(_meme.get(\"founderHeld\", 0))"
+ },
+ {
+  "file": "InfoBar.gd",
+  "why": "The Chikidex intro stops saying \"Hatch eggs & trade to complete it\".",
+  "old": "\t_p(body, \"Your field guide to every chikimon in Chikoria. Hatch eggs & trade to complete it — the live counts below are verified from the world server.\", DIM, 13)",
+  "new": "\t_p(body, \"Your field guide to every chikimon in Chikoria. Hatch eggs & trade to complete it — the live counts below are verified from the world server.\" if ChikFeat.on(\"crypto\") else \"Your field guide to every chikimon in Chikoria. Hatch eggs to complete it — the live counts below are verified from the world server.\", DIM, 13)"
+ },
+ {
+  "file": "InfoBar.gd",
+  "why": "The Chikidex worldwide chip changes from \"meme minted\" to \"meme hatched\". It shows the same number, _meme.hatched.",
+  "old": "\t\t[\"meme minted\", \"%d / %d\" % [mh, mt]],",
+  "new": "\t\t[(\"meme minted\" if ChikFeat.on(\"crypto\") else \"meme hatched\"), \"%d / %d\" % [mh, mt]],"
+ },
+ {
+  "file": "InfoBar.gd",
+  "why": "The Mountdex intro stops saying \"buy a Chikimount Egg\". The egg is bartered at Mithra's for koi-spark, hide and iron (Econ quest s2_eggmount), so \"get\" is accurate.",
+  "old": "\t_p(body, \"Steeds you can ride across Chikoria — buy a Chikimount Egg at Mithra's Mystic Shop and every one of these can hatch from it. Tap a mount for a living 3D look.\", DIM, 13)",
+  "new": "\t_p(body, \"Steeds you can ride across Chikoria — buy a Chikimount Egg at Mithra's Mystic Shop and every one of these can hatch from it. Tap a mount for a living 3D look.\" if ChikFeat.on(\"crypto\") else \"Steeds you can ride across Chikoria — get a Chikimount Egg from Mithra's Mystic Shop and every one of these can hatch from it. Tap a mount for a living 3D look.\", DIM, 13)"
+ },
+ {
+  "file": "InfoBar.gd",
+  "why": "The Avatars intro drops \"Ownership is checked through your verified wallet session.\"",
+  "old": "\t_p(body, \"The %d Avatar collectibles — display cases with a fixed world supply (%d–%d editions each; the smaller the run, the rarer). ✓ owned show your edition; the rest are locked. Ownership is checked through your verified wallet session.\" % [Econ.AVATAR_TITLE.size(), lo, hi], DIM, 13)",
+  "new": "\t_p(body, (\"The %d Avatar collectibles — display cases with a fixed world supply (%d–%d editions each; the smaller the run, the rarer). ✓ owned show your edition; the rest are locked.\" + (\" Ownership is checked through your verified wallet session.\" if ChikFeat.on(\"crypto\") else \"\")) % [Econ.AVATAR_TITLE.size(), lo, hi], DIM, 13)"
+ },
+ {
+  "file": "InfoBar.gd",
+  "why": "With crypto off the LEDGER popup shows one neutral line instead of the Reward Vault, $CHIKI purse and pouch, burned, reward-pool and collected-to-wallet totals, payout history, \"How $CHIKI flows\" and three Solscan links. _ledger_payouts() is only called from here, so it is covered too. The LEDGER plaque is baked into topbar.png, so the tab stays.",
+  "old": "func _build_ledger(body: Control) -> void :\n\tvar d: Dictionary = _profile.d if _profile != null else {}",
+  "new": "func _build_ledger(body: Control) -> void :\n\tif not ChikFeat.on(\"crypto\"):\n\t\t_p(body, \"Trading isn't part of the app. Everything you earn here stays on your account.\", DIM, 13)\n\t\treturn\n\tvar d: Dictionary = _profile.d if _profile != null else {}"
+ },
+ {
+  "file": "InfoBar.gd",
+  "why": "The Devnest intro stops promising \"how the economy works\".",
+  "old": "\t_p(body, \"Everything about Chikoria Realm — how it's built, how the economy works, what you can do, and what's coming next.\", DIM, 13)",
+  "new": "\t_p(body, \"Everything about Chikoria Realm — how it's built, how the economy works, what you can do, and what's coming next.\" if ChikFeat.on(\"crypto\") else \"Everything about Chikoria Realm — how it's built, what you can do, and what's coming next.\", DIM, 13)"
+ },
+ {
+  "file": "InfoBar.gd",
+  "why": "\"What is Chikoria Realm?\" stops saying \"trade with real players\" and \"Your $CHIKI balance ... travel with your wallet\".",
+  "old": "\t_p(c, \"An HD block-voxel MMO you play right in your browser — no download, no install. Explore a hand-built voxel island: gather and craft, raise and battle chikimons, ride mounts, fish the coast, trade with real players, and chase the story. Your $CHIKI balance and your whole roster travel with your wallet, on every device.\", INKB, 13)",
+  "new": "\t_p(c, \"An HD block-voxel MMO you play right in your browser — no download, no install. Explore a hand-built voxel island: gather and craft, raise and battle chikimons, ride mounts, fish the coast, trade with real players, and chase the story. Your $CHIKI balance and your whole roster travel with your wallet, on every device.\" if ChikFeat.on(\"crypto\") else \"An HD block-voxel MMO. Explore a hand-built voxel island: gather and craft, raise and battle chikimons, ride mounts, fish the coast, meet real players, and chase the story. Your whole roster travels with your account, on every device.\", INKB, 13)"
+ },
+ {
+  "file": "InfoBar.gd",
+  "why": "Devnest \"What you can do\": the Trade row (List your surplus for $CHIKI at the Trading Post, prices) is filtered out, Battle drops \"climb the ranked Chikoria Cup\" (the real-SOL tournament), and Quest drops \"for $CHIKI\".",
+  "old": "\t\t[\"⚔  Battle\", \"Duel wild corruptimons and real trainers with unique ability-card decks, and climb the ranked Chikoria Cup.\"],\n\t\t[\"🏪  Trade\", \"List your surplus for $CHIKI at the player-run Trading Post — prices set by supply & demand.\"],\n\t\t[\"📜  Quest\", \"Follow the main story plus 10 side-quest chains for $CHIKI, gear and XP.\"],\n\t]\n\tfor e in loop:",
+  "new": "\t\t[\"⚔  Battle\", \"Duel wild corruptimons and real trainers with unique ability-card decks, and climb the ranked Chikoria Cup.\" if ChikFeat.on(\"chikoria_cup\") else \"Duel wild corruptimons and real trainers with unique ability-card decks.\"],\n\t\t[\"🏪  Trade\", \"List your surplus for $CHIKI at the player-run Trading Post — prices set by supply & demand.\"],\n\t\t[\"📜  Quest\", \"Follow the main story plus 10 side-quest chains for $CHIKI, gear and XP.\" if ChikFeat.on(\"crypto\") else \"Follow the main story plus 10 side-quest chains for gear and XP.\"],\n\t]\n\tif not ChikFeat.on(\"trading_post\") or not ChikFeat.on(\"crypto\"):\n\t\tloop = loop.filter(func(x): return String(x[0]) != \"🏪  Trade\")\n\tfor e in loop:"
+ },
+ {
+  "file": "InfoBar.gd",
+  "why": "The Devnest roadmap stops listing wallet onboarding, Trading Post, NFTs, \"SOL play-and-earn rewards\", \"seasonal Chikoria Cup ladders\" and \"deeper on-chain collectibles\". The app version also leaves out \"Browser MMO\" and \"a native mobile app\", because the player is already in it.",
+  "old": "\t\t[\"✅  Live now\", \"Browser MMO · wallet onboarding · gathering, crafting & cooking · fishing · mounts · living chikimons · Chikiseum card battles · world PvP duels · Trading Post · avatar & Meme Dynasty NFTs · real-time day/night · story + side quests · SOL play-and-earn rewards\"],\n\t\t[\"🔨  In progress\", \"The four legends above · more Meme Dynasty drops · seasonal Chikoria Cup ladders · richer world events\"],\n\t\t[\"🔭  On the horizon\", \"Guild co-op · player housing · deeper on-chain collectibles · a native mobile app\"],",
+  "new": "\t\t[\"✅  Live now\", \"Browser MMO · wallet onboarding · gathering, crafting & cooking · fishing · mounts · living chikimons · Chikiseum card battles · world PvP duels · Trading Post · avatar & Meme Dynasty NFTs · real-time day/night · story + side quests · SOL play-and-earn rewards\" if ChikFeat.on(\"crypto\") else \"Gathering, crafting & cooking · fishing · mounts · living chikimons · Chikiseum card battles · world PvP duels · avatar & Meme Dynasty collectibles · real-time day/night · story + side quests\"],\n\t\t[\"🔨  In progress\", \"The four legends above · more Meme Dynasty drops · seasonal Chikoria Cup ladders · richer world events\" if ChikFeat.on(\"chikoria_cup\") else \"The four legends above · more Meme Dynasty drops · richer world events\"],\n\t\t[\"🔭  On the horizon\", \"Guild co-op · player housing · deeper on-chain collectibles · a native mobile app\" if ChikFeat.on(\"crypto\") else \"Guild co-op · player housing\"],"
+ },
+ {
+  "file": "InfoBar.gd",
+  "why": "Devnest \"Find us & verify\" (the chikimonsters.com link-out, two Solscan links for the token and its holders, and the Solana contract address) is not drawn when crypto is off. \"Made with love\" stays.",
+  "old": "\t_h2(body, \"🔗  Find us & verify\")\n\t_link(body, \"🌐  chikimonsters.com\", \"https://chikimonsters.com\")\n\t_link(body, \"◎  $CHIKI token on Solscan\", \"https://solscan.io/token/\" + MINT)\n\t_link(body, \"💎  $CHIKI holders\", \"https://solscan.io/token/\" + MINT + \"#holders\")\n\t_p(body, \"Contract (Solana):  \" + MINT, DIM, 11)",
+  "new": "\tif ChikFeat.on(\"crypto\"):\n\t\t_h2(body, \"🔗  Find us & verify\")\n\t\t_link(body, \"🌐  chikimonsters.com\", \"https://chikimonsters.com\")\n\t\t_link(body, \"◎  $CHIKI token on Solscan\", \"https://solscan.io/token/\" + MINT)\n\t\t_link(body, \"💎  $CHIKI holders\", \"https://solscan.io/token/\" + MINT + \"#holders\")\n\t\t_p(body, \"Contract (Solana):  \" + MINT, DIM, 11)"
+ },
+ {
+  "file": "InfoBar.gd",
+  "why": "Adds a presentation-only keyword filter (wallet, $CHIKI, SOL, market, NFT, mint, Trading Post, Solscan, price, buy/sell, Cup, auction/bid, and similar) used to hide trading news in Dispatch. Called only behind a crypto check.",
+  "old": "func _build_dispatch(body: Control) -> void :",
+  "new": "var _trade_rx: RegEx = null\nfunc _trade_talk(s: String) -> bool:\n\tif _trade_rx == null:\n\t\t_trade_rx = RegEx.new()\n\t\t_trade_rx.compile(\"(?i)\\\\$chiki|\\\\bsol\\\\b|◎|wallet|phantom|trading post|market|\\\\bnfts?\\\\b|\\\\bmint|solscan|magic eden|escrow|\\\\blist(ed|ing|ings)\\\\b|payout|reward pool|pump\\\\.fun|\\\\bcup\\\\b|\\\\bprices?\\\\b|\\\\bsell|\\\\bsold\\\\b|\\\\bbuy|token|on-chain|\\\\bburn|\\\\bholders\\\\b|auction|\\\\bbid(s|ding)?\\\\b\")\n\treturn _trade_rx.search(s) != null\n\n\nfunc _build_dispatch(body: Control) -> void :"
+ },
+ {
+  "file": "InfoBar.gd",
+  "why": "The Dispatch intro drops \"plus who's earning the most right now\" (the SOL leaderboard is hidden too).",
+  "old": "\t_p(body, \"News from Chikoria — every game update lands here the moment it ships, plus who's earning the most right now.\", DIM, 13)",
+  "new": "\t_p(body, \"News from Chikoria — every game update lands here the moment it ships, plus who's earning the most right now.\" if ChikFeat.on(\"crypto\") else \"News from Chikoria — every game update lands here the moment it ships.\", DIM, 13)"
+ },
+ {
+  "file": "InfoBar.gd",
+  "why": "The Dispatch \"Live events\" Open Gates line stops saying \"Any wallet can sign in\".",
+  "old": "\t\t\t_p(evv, \"🌟 Open Gates — the realm is FREE to enter%s (%s). Any wallet can sign in and play fully; everything you earn stays yours.\" %\\",
+  "new": "\t\t\t_p(evv, (\"🌟 Open Gates — the realm is FREE to enter%s (%s). Any wallet can sign in and play fully; everything you earn stays yours.\" if ChikFeat.on(\"crypto\") else \"🌟 Open Gates — the realm is open to everyone%s (%s). Everything you earn stays on your account.\") %\\"
+ },
+ {
+  "file": "InfoBar.gd",
+  "why": "The Dispatch Mount Drop line says \"players\" instead of \"wallets\".",
+  "old": "\t\t\t_p(evv, \"🐎 Mount Drop: %d of %d claimed — %s of each Viranimal Legacy chikimount, to genuinely active wallets. %s\" %\\",
+  "new": "\t\t\t_p(evv, (\"🐎 Mount Drop: %d of %d claimed — %s of each Viranimal Legacy chikimount, to genuinely active wallets. %s\" if ChikFeat.on(\"crypto\") else \"🐎 Mount Drop: %d of %d claimed — %s of each Viranimal Legacy chikimount, to genuinely active players. %s\") %\\"
+ },
+ {
+  "file": "InfoBar.gd",
+  "why": "The Dispatch Founder Drop line says \"players\" instead of \"wallets\".",
+  "old": "\t\t\t_p(evv, \"🏆 Founder Drop: %d of %d claimed — the first %d genuinely active wallets each receive a special-edition FOUNDER legendary.\" %\\",
+  "new": "\t\t\t_p(evv, (\"🏆 Founder Drop: %d of %d claimed — the first %d genuinely active wallets each receive a special-edition FOUNDER legendary.\" if ChikFeat.on(\"crypto\") else \"🏆 Founder Drop: %d of %d claimed — the first %d genuinely active players each receive a special-edition FOUNDER legendary.\") %\\"
+ },
+ {
+  "file": "InfoBar.gd",
+  "why": "The Dispatch update board skips updates.json entries whose title or body talk about trading. The packed and live board includes \"Collectors' Market polish\" (Mint button, floor price), \"Sharper market art\" (Trading Post escrow), \"The Auction House opens\", NFT and $CHIKI entries. Filtered entries do not count toward the 12 shown.",
+  "old": "\t\tif typeof(e_v) != TYPE_DICTIONARY or shown >= 12:\n\t\t\tcontinue\n\t\tvar e: Dictionary = e_v",
+  "new": "\t\tif typeof(e_v) != TYPE_DICTIONARY or shown >= 12:\n\t\t\tcontinue\n\t\tvar e: Dictionary = e_v\n\t\tif not ChikFeat.on(\"crypto\") and _trade_talk(String(e.get(\"title\", \"\")) + \" \" + String(e.get(\"body\", \"\"))):\n\t\t\tcontinue"
+ },
+ {
+  "file": "InfoBar.gd",
+  "why": "The Dispatch offline fallback news drops \"Avatar NFTs are live\", \"Trading Post open (... for $CHIKI)\" and \"Chikiseum Cup\" (the real-SOL Cup tab is removed in the app). \"The Meme Dynasty arrives\" stays.",
+  "old": "\t\tfor e in news:\n\t\t\tvar cc2: = _card(body)",
+  "new": "\t\tfor e in news:\n\t\t\tif not ChikFeat.on(\"crypto\") and _trade_talk(String(e[0]) + \" \" + String(e[1])):\n\t\t\t\tcontinue\n\t\t\tvar cc2: = _card(body)"
+ },
+ {
+  "file": "InfoBar.gd",
+  "why": "The \"Top earners (live)\" section (SOL earned from the reward pool, in ◎, keyed by wallet) is not drawn when crypto is off.",
+  "old": "\t_h2(body, \"🏆  Top earners (live)\")\n\t_build_leaderboard(body)",
+  "new": "\tif ChikFeat.on(\"crypto\"):\n\t\t_h2(body, \"🏆  Top earners (live)\")\n\t\t_build_leaderboard(body)"
+ },
+ {
+  "file": "InfoBar.gd",
+  "why": "Codex help: with chikoria_cup off, the PvP topic describes world duels only and no longer mentions the Cup.",
+  "old": "\t{\"k\": \"pvp\", \"i\": \"res://ico_boss.png\", \"t\": \"PvP & the Chikoria Cup\",\n\t\t\"b\": \"Duel real trainers in the world, or compete in the Cup at the Chikiseum.\",\n\t\t\"how\": [\"Walk up to another trainer in the world and challenge them.\",\n\t\t\t\"The Chikiseum hosts the Cup — that ladder is Cup-only.\",\n\t\t\t\"Your opponent plays a real hand: they guard your combos and punish greed.\"],\n\t\t\"num\": [\"World duels are open to anyone\", \"Cup runs at the Chikiseum\", \"The AI spends energy like a player, not a stat check\"]},",
+  "new": "\t({\"k\": \"pvp\", \"i\": \"res://ico_boss.png\", \"t\": \"PvP & the Chikoria Cup\",\n\t\t\"b\": \"Duel real trainers in the world, or compete in the Cup at the Chikiseum.\",\n\t\t\"how\": [\"Walk up to another trainer in the world and challenge them.\",\n\t\t\t\"The Chikiseum hosts the Cup — that ladder is Cup-only.\",\n\t\t\t\"Your opponent plays a real hand: they guard your combos and punish greed.\"],\n\t\t\"num\": [\"World duels are open to anyone\", \"Cup runs at the Chikiseum\", \"The AI spends energy like a player, not a stat check\"]} if ChikFeat.on(\"chikoria_cup\") else\n\t{\"k\": \"pvp\", \"i\": \"res://ico_boss.png\", \"t\": \"PvP\",\n\t\t\"b\": \"Duel real trainers in the world.\",\n\t\t\"how\": [\"Walk up to another trainer in the world and challenge them.\",\n\t\t\t\"Your opponent plays a real hand: they guard your combos and punish greed.\"],\n\t\t\"num\": [\"World duels are open to anyone\", \"The AI spends energy like a player, not a stat check\"]}),"
+ },
+ {
+  "file": "InfoBar.gd",
+  "why": "Codex help, Quests & Story: drops \"Story chapters pay REAL $CHIKI on completion.\", \"Rewards land in your Pouch ... or the Reward Vault\" and \"Chapter payouts are server-verified\". No replacement reward is promised.",
+  "old": "\t\t\"how\": [\"Follow the pinned quest on the left dock — it always names your next step.\",\n\t\t\t\"Story chapters pay REAL $CHIKI on completion.\",\n\t\t\t\"Dailies refresh every day; side chains teach a specific skill.\",\n\t\t\t\"Rewards land in your Pouch (side/daily) or the Reward Vault (story).\"],\n\t\t\"num\": [\"63 chapters across Act I\", \"8 Lesson side quests\", \"10 side-quest chains\", \"Chapter payouts are server-verified\"]},",
+  "new": "\t\t\"how\": ([\"Follow the pinned quest on the left dock — it always names your next step.\",\n\t\t\t\"Story chapters pay REAL $CHIKI on completion.\",\n\t\t\t\"Dailies refresh every day; side chains teach a specific skill.\",\n\t\t\t\"Rewards land in your Pouch (side/daily) or the Reward Vault (story).\"] if ChikFeat.on(\"crypto\") else [\"Follow the pinned quest on the left dock — it always names your next step.\",\n\t\t\t\"Dailies refresh every day; side chains teach a specific skill.\"]),\n\t\t\"num\": ([\"63 chapters across Act I\", \"8 Lesson side quests\", \"10 side-quest chains\", \"Chapter payouts are server-verified\"] if ChikFeat.on(\"crypto\") else [\"63 chapters across Act I\", \"8 Lesson side quests\", \"10 side-quest chains\"])},"
+ },
+ {
+  "file": "InfoBar.gd",
+  "why": "Codex help, Collectibles: the blurb (also used as the tile tooltip) says \"Avatars\" instead of \"Avatar NFTs\".",
+  "old": "\t\t\"b\": \"Avatar NFTs and the Meme Dynasty — display-only, and proudly so.\",",
+  "new": "\t\t\"b\": (\"Avatar NFTs and the Meme Dynasty — display-only, and proudly so.\" if ChikFeat.on(\"crypto\") else \"Avatars and the Meme Dynasty — display-only, and proudly so.\"),"
+ },
+ {
+  "file": "InfoBar.gd",
+  "why": "LIVE STATISTICS keeps only the \"Chikorians online\" and \"Active chikimons\" tiles when crypto is off. Hidden: reward pool in ◎, earned by trainers in ◎, $CHIKI burned, circulating supply, $CHIKI holders, earning keepers. The two tiles it keeps stop linking to a blockchain explorer.",
+  "old": "\tfor d in _stat_defs():\n\t\t_kpi_tile(grid, d)",
+  "new": "\tfor d in _stat_defs():\n\t\tif not ChikFeat.on(\"crypto\") and not String(d.get(\"key\", \"\")) in [\"online\", \"chikis\"]:\n\t\t\tcontinue\n\t\tif not ChikFeat.on(\"crypto\"):\n\t\t\td = (d as Dictionary).duplicate()\n\t\t\td[\"url\"] = \"\"\n\t\t_kpi_tile(grid, d)"
+ },
+ {
+  "file": "InfoBar.gd",
+  "why": "The \"verify ↗\" Solscan link under a statistics tile is not drawn when crypto is off. The kept \"Active chikimons\" tile has a Solscan URL.",
+  "old": "\tif String(d.get(\"url\", \"\")) != \"\":",
+  "new": "\tif String(d.get(\"url\", \"\")) != \"\" and ChikFeat.on(\"crypto\"):"
+ },
+ {
+  "file": "InfoBar.gd",
+  "why": "The statistics footer (\"verify the real number on-chain. The game never holds your funds.\") is not drawn when crypto is off.",
+  "old": "\t_p(body, \"Figures marked ↗ are read-only reflections — tap to verify the real number on-chain. The game never holds your funds.\", LABELB, 12)",
+  "new": "\tif ChikFeat.on(\"crypto\"):\n\t\t_p(body, \"Figures marked ↗ are read-only reflections — tap to verify the real number on-chain. The game never holds your funds.\", LABELB, 12)"
+ },
+ {
+  "file": "InfoBar.gd",
+  "why": "Backup guard for the owner's known problem (1). _build_wallet_new draws nothing when crypto is off, even if a future caller skips _open_pop.",
+  "old": "func _build_wallet_new(body: Control) -> void :\n\tvar has_addr: = _chain != null and String(_chain.wallet()) != \"\"",
+  "new": "func _build_wallet_new(body: Control) -> void :\n\tif not ChikFeat.on(\"crypto\"):\n\t\treturn\n\tvar has_addr: = _chain != null and String(_chain.wallet()) != \"\""
+ },
+ {
+  "file": "InfoBar.gd",
+  "why": "The welcome panel's session-restore hint stops saying \"Connect again\" (a wallet action) when crypto is off.",
+  "old": "\t\trl2.text = \"Taking too long? Connect again or play the demo below.\"",
+  "new": "\t\trl2.text = \"Taking too long? Connect again or play the demo below.\" if ChikFeat.on(\"crypto\") else \"Taking too long? Try again or play the demo below.\""
+ },
+ {
+  "file": "InfoBar.gd",
+  "why": "The payout toast (\"🏆 WINNER PRIZE / 🎁 Quest reward — N $CHIKI has LANDED in your wallet!\") is not emitted when crypto is off. rewards_seen is still advanced exactly as before, so the save is unchanged.",
+  "old": "\t\tfor i in range(_payhist.size() - seen):",
+  "new": "\t\tfor i in range((_payhist.size() - seen) if ChikFeat.on(\"crypto\") else 0):"
+ },
+ {
+  "file": "Onboarding.gd",
+  "why": "The gate subtitle \"Sign in with Phantom to load your Chikis and verify your $CHIKI hold.\" is drawn on every _show_gate() pass and was never gated. It now reads without a wallet or token.",
+  "old": "\t_sub(v, \"Sign in with Phantom to load your Chikis and verify your $CHIKI hold.\", Color(\"d9e5f7\"))",
+  "new": "\t_sub(v, \"Sign in with Phantom to load your Chikis and verify your $CHIKI hold.\" if ChikFeat.on(\"crypto\") else \"Load your trainer, your Chikis and your progress.\", Color(\"d9e5f7\"))"
+ },
+ {
+  "file": "Onboarding.gd",
+  "why": "The linked-state notice \"Wallet verified  ABCD…WXYZ · N $CHIKI\" (wallet address plus token balance) becomes \"Signed in\" with no address or amount.",
+  "old": "\t\t_wallet_notice(v, \"Wallet verified\", \"%s…%s   ·   %s $CHIKI\" % [wal.substr(0, 4), wal.substr(maxi(0, wal.length() - 4)), _fmt(bal)], UISkin.MINT, \"res://ico_check.png\")",
+  "new": "\t\tif ChikFeat.on(\"crypto\"):\n\t\t\t_wallet_notice(v, \"Wallet verified\", \"%s…%s   ·   %s $CHIKI\" % [wal.substr(0, 4), wal.substr(maxi(0, wal.length() - 4)), _fmt(bal)], UISkin.MINT, \"res://ico_check.png\")\n\t\telse:\n\t\t\t_wallet_notice(v, \"Signed in\", \"Your trainer and progress are ready.\", UISkin.MINT, \"res://ico_check.png\")"
+ },
+ {
+  "file": "Onboarding.gd",
+  "why": "Owner's known problem (2). In the `elif waived and bal < MIN_HOLD:` branch, the \"Open Gates\" card (500,000 $CHIKI, saved to your wallet, purse mirrors your real hold, 0 $CHIKI) is drawn only when crypto is on. Otherwise a welcome card that names no token is drawn. _gate_event_rows and the Enter button are unchanged.",
+  "old": "\t\t\t\t_wallet_notice(v, \"🌟 Open Gates — the realm is free to enter%s!\" % _og_until_txt(og),\n\t\t\t\t\t\"The 500,000 $CHIKI gate is open to every wallet — step in and play the full realm. Everything you earn and hatch is saved to your wallet forever. Your in-game purse mirrors your real hold, so you'll start at 0 $CHIKI and earn your fortune in-world.\",\n\t\t\t\t\tColor(\"8fd6a8\"), \"res://ico_check.png\")",
+  "new": "\t\t\t\tif ChikFeat.on(\"crypto\"):\n\t\t\t\t\t_wallet_notice(v, \"🌟 Open Gates — the realm is free to enter%s!\" % _og_until_txt(og),\n\t\t\t\t\t\t\"The 500,000 $CHIKI gate is open to every wallet — step in and play the full realm. Everything you earn and hatch is saved to your wallet forever. Your in-game purse mirrors your real hold, so you'll start at 0 $CHIKI and earn your fortune in-world.\",\n\t\t\t\t\t\tColor(\"8fd6a8\"), \"res://ico_check.png\")\n\t\t\t\telse:\n\t\t\t\t\t_wallet_notice(v, \"🌟 Welcome to Chikoria\",\n\t\t\t\t\t\t\"Step in and play the full realm. Everything you earn and hatch is saved to your account.\",\n\t\t\t\t\t\tColor(\"8fd6a8\"), \"res://ico_check.png\")"
+ },
+ {
+  "file": "Onboarding.gd",
+  "why": "The not-linked Open Gates notice (\"Any wallet can sign in ... no 500,000 $CHIKI hold needed. Sign in below\") was not gated. It is drawn only when crypto is on, and the app keeps its existing \"This device is not linked\" notice.",
+  "old": "\t\t\t_wallet_notice(v, \"🌟 Open Gates — the realm is free to enter%s!\" % _og_until_txt(og),\n\t\t\t\t\"Any wallet can sign in and play the full realm while the gates stand open — no 500,000 $CHIKI hold needed. Sign in below to begin.\",\n\t\t\t\tColor(\"8fd6a8\"), \"res://ico_check.png\")",
+  "new": "\t\t\tif ChikFeat.on(\"crypto\"):\n\t\t\t\t_wallet_notice(v, \"🌟 Open Gates — the realm is free to enter%s!\" % _og_until_txt(og),\n\t\t\t\t\t\"Any wallet can sign in and play the full realm while the gates stand open — no 500,000 $CHIKI hold needed. Sign in below to begin.\",\n\t\t\t\t\tColor(\"8fd6a8\"), \"res://ico_check.png\")"
+ },
+ {
+  "file": "Onboarding.gd",
+  "why": "The gate's Founder Drop row says \"genuinely active players\" instead of \"wallets\".",
+  "old": "\t\t\t\"The first %d genuinely active wallets each receive one special-edition FOUNDER legendary — play the world (gather, fish, battle) and the realm does the rest.\" % int(fd.get(\"cap\", 50)),",
+  "new": "\t\t\t(\"The first %d genuinely active wallets each receive one special-edition FOUNDER legendary — play the world (gather, fish, battle) and the realm does the rest.\" if ChikFeat.on(\"crypto\") else \"The first %d genuinely active players each receive one special-edition FOUNDER legendary — play the world (gather, fish, battle) and the realm does the rest.\") % int(fd.get(\"cap\", 50)),"
+ },
+ {
+  "file": "Chat.gd",
+  "why": "The first-run News line \"OPEN GATES EVENT ... No $CHIKI required — sign in with Phantom, hatch a chikimon, and earn.\" now names no token or wallet.",
+  "old": "\t\t_push(\"news\", \"\", \"⚡ OPEN GATES EVENT — Chikoria is free for everyone through %s! No $CHIKI required — sign in with Phantom, hatch a chikimon, and earn.\" % og_label, \"\", false)",
+  "new": "\t\t_push(\"news\", \"\", (\"⚡ OPEN GATES EVENT — Chikoria is free for everyone through %s! No $CHIKI required — sign in with Phantom, hatch a chikimon, and earn.\" if ChikFeat.on(\"crypto\") else \"⚡ OPEN GATES EVENT — Chikoria is open to everyone through %s! Hatch a chikimon and start your adventure.\") % og_label, \"\", false)"
+ },
+ {
+  "file": "Chat.gd",
+  "why": "The News channel's seeded update titles (from updates.json) skip trading titles such as \"Collectors' Market polish\", \"Magic Eden, polished…\" and \"Your marketplace $CHIKI is locked down\". news_seed_n is still set to board.size(), so the save is unchanged.",
+  "old": "\t\tvar title: = String(e.get(\"title\", \"\")).strip_edges()\n\t\tif title == \"\":\n\t\t\tcontinue",
+  "new": "\t\tvar title: = String(e.get(\"title\", \"\")).strip_edges()\n\t\tif title == \"\":\n\t\t\tcontinue\n\t\tif not ChikFeat.on(\"crypto\") and _trade_talk(title):\n\t\t\tcontinue"
+ },
+ {
+  "file": "Chat.gd",
+  "why": "The live feed lines (\"earned N $CHIKI from the questline\", \"won N $CHIKI\", \"claimed N SOL from the reward pool\") are all currency, so none are produced when crypto is off. _seen_feed still advances in _on_feed.",
+  "old": "func _feed_line(e: Dictionary) -> String:\n\tvar who: = String(e.get(\"short\", \"A trainer\"))",
+  "new": "func _feed_line(e: Dictionary) -> String:\n\tif not ChikFeat.on(\"crypto\"):\n\t\treturn \"\"\n\tvar who: = String(e.get(\"short\", \"A trainer\"))"
+ },
+ {
+  "file": "Chat.gd",
+  "why": "News and System are rendered from profile.d.chat_log, which syncs with the website profile. Lines stored there earlier (website feed payouts, the old Open Gates line, $CHIKI toasts copied to System) are skipped at render when crypto is off. Nothing stored is changed.",
+  "old": "\tfor m in _msgs[_active]:\n\t\tvar nm: = String(m[\"name\"])",
+  "new": "\tfor m in _msgs[_active]:\n\t\tif (_active == \"news\" or _active == \"system\") and not ChikFeat.on(\"crypto\") and _trade_talk(String(m.get(\"plain\", m[\"text\"]))):\n\t\t\tcontinue\n\t\tvar nm: = String(m[\"name\"])"
+ },
+ {
+  "file": "Chat.gd",
+  "why": "The same presentation-only trading keyword filter as in InfoBar.gd, kept separate so the files stay independent. Called only behind a crypto check.",
+  "old": "func _esc(s: String) -> String:",
+  "new": "var _trade_rx: RegEx = null\nfunc _trade_talk(s: String) -> bool:\n\tif _trade_rx == null:\n\t\t_trade_rx = RegEx.new()\n\t\t_trade_rx.compile(\"(?i)\\\\$chiki|\\\\bsol\\\\b|◎|wallet|phantom|trading post|market|\\\\bnfts?\\\\b|\\\\bmint|solscan|magic eden|escrow|\\\\blist(ed|ing|ings)\\\\b|payout|reward pool|pump\\\\.fun|\\\\bcup\\\\b|\\\\bprices?\\\\b|\\\\bsell|\\\\bsold\\\\b|\\\\bbuy|token|on-chain|\\\\bburn|\\\\bholders\\\\b|auction|\\\\bbid(s|ding)?\\\\b\")\n\treturn _trade_rx.search(s) != null\n\n\nfunc _esc(s: String) -> String:"
+ },
+ {
+  "file": "Title.gd",
+  "why": "The title screen hint \"Press the $CHIKI token to play\" becomes \"Tap the emblem to play\". The coin art (web_coin.png) is a plain spiral emblem with no token text.",
+  "old": "\t_hint.text = \"[center]\" + Econ.emoji_bb(\"👆 Press the $CHIKI token to play\", 22) + \"[/center]\"",
+  "new": "\t_hint.text = \"[center]\" + Econ.emoji_bb(\"👆 Press the $CHIKI token to play\" if ChikFeat.on(\"crypto\") else \"👆 Tap the emblem to play\", 22) + \"[/center]\""
+ },
+ {
+  "file": "Market.gd",
+  "why": "_process runs _retry_onchain_pending for a purchase started on the website and kept in the synced profile. This hides its 'real $CHIKI went straight to the seller' toast in the app",
+  "old": "\t\t\t_profile.toast.emit(\"✅ Bought %s — real $CHIKI went straight to the seller! See 🧾 Sales for the receipt.\" % _label(l), Color(0.55, 1.0, 0.7))",
+  "new": "\t\t\tif ChikFeat.on(\"trading_post\"):\n\t\t\t\t_profile.toast.emit(\"✅ Bought %s — real $CHIKI went straight to the seller! See 🧾 Sales for the receipt.\" % _label(l), Color(0.55, 1.0, 0.7))"
+ },
+ {
+  "file": "Market.gd",
+  "why": "The on-chain buy retry toast for the paused state is not shown in the app",
+  "old": "\t\t\t\t_profile.toast.emit(\"On-chain buy still confirming — you won't be charged again; the goods land when it clears, or contact support with your 🧾 receipt.\", Color(1.0, 0.6, 0.4))",
+  "new": "\t\t\t\tif ChikFeat.on(\"trading_post\"):\n\t\t\t\t\t_profile.toast.emit(\"On-chain buy still confirming — you won't be charged again; the goods land when it clears, or contact support with your 🧾 receipt.\", Color(1.0, 0.6, 0.4))"
+ },
+ {
+  "file": "Market.gd",
+  "why": "The on-chain buy retry toast after 8+ tries is not shown in the app",
+  "old": "\t\t\t\t_profile.toast.emit(\"On-chain buy still confirming — you won't be charged again; it keeps retrying.\", Color(1.0, 0.7, 0.4))",
+  "new": "\t\t\t\tif ChikFeat.on(\"trading_post\"):\n\t\t\t\t\t_profile.toast.emit(\"On-chain buy still confirming — you won't be charged again; it keeps retrying.\", Color(1.0, 0.7, 0.4))"
+ },
+ {
+  "file": "Market.gd",
+  "why": "Without this, the app would show this retry toast every 15s once the network layer refuses /market/buy-onchain",
+  "old": "\t\t\t\t_profile.toast.emit(\"On-chain buy pending: %s\" % msg, Color(1.0, 0.75, 0.4)))",
+  "new": "\t\t\t\tif ChikFeat.on(\"trading_post\"):\n\t\t\t\t\t_profile.toast.emit(\"On-chain buy pending: %s\" % msg, Color(1.0, 0.75, 0.4)))"
+ },
+ {
+  "file": "Market.gd",
+  "why": "The on-chain buy retry transport-error toast is not shown in the app",
+  "old": "\t\t_profile.toast.emit(\"Couldn't reach the market to confirm — your payment is safe on-chain; retrying…\", Color(1.0, 0.7, 0.3))",
+  "new": "\t\tif ChikFeat.on(\"trading_post\"):\n\t\t\t_profile.toast.emit(\"Couldn't reach the market to confirm — your payment is safe on-chain; retrying…\", Color(1.0, 0.7, 0.3))"
+ },
+ {
+  "file": "Market.gd",
+  "why": "Background _on_sync: the 'delivered your order, open the Trading Post Orders tab to pay N $CHIKI' toast is not shown in the app",
+  "old": "\t\t\t\t\t_profile.toast.emit(\"🚚 %s delivered your order (%s) — open the Trading Post 📥 Orders tab to pay %d $CHIKI.\" % [String(o[\"fillerName\"]) if String(o[\"fillerName\"]) != \"\" else \"A trainer\", _label(o), int(o[\"price\"])], Color(1.0, 0.85, 0.25))",
+  "new": "\t\t\t\t\tif ChikFeat.on(\"trading_post\"):\n\t\t\t\t\t\t_profile.toast.emit(\"🚚 %s delivered your order (%s) — open the Trading Post 📥 Orders tab to pay %d $CHIKI.\" % [String(o[\"fillerName\"]) if String(o[\"fillerName\"]) != \"\" else \"A trainer\", _label(o), int(o[\"price\"])], Color(1.0, 0.85, 0.25))"
+ },
+ {
+  "file": "Market.gd",
+  "why": "Background _on_sync: the delivery-restored / payment-pending toast is not shown in the app",
+  "old": "\t\t\t\t\t_profile.toast.emit(\"🚚 Delivery restored after a hiccup: %d× %s handed over — payment pending.\" % [int(ro[\"qty\"]), _label(ro)], Color(0.8, 0.9, 1.0))",
+  "new": "\t\t\t\t\tif ChikFeat.on(\"trading_post\"):\n\t\t\t\t\t\t_profile.toast.emit(\"🚚 Delivery restored after a hiccup: %d× %s handed over — payment pending.\" % [int(ro[\"qty\"]), _label(ro)], Color(0.8, 0.9, 1.0))"
+ },
+ {
+  "file": "Market.gd",
+  "why": "Background _on_sync: the 'chikimon are NFTs now, cancel the listing' toast is not shown in the app",
+  "old": "\t\t\t\t\t\t_profile.toast.emit(\"🔒 %s can't be re-listed — legendary and Meme Dynasty chikimon are NFTs now. Cancel the listing and it comes straight back to your satchel.\" % Econ.disp(String(ml.get(\"item\", \"\"))), Color(1.0, 0.85, 0.5))",
+  "new": "\t\t\t\t\t\tif ChikFeat.on(\"trading_post\"):\n\t\t\t\t\t\t\t_profile.toast.emit(\"🔒 %s can't be re-listed — legendary and Meme Dynasty chikimon are NFTs now. Cancel the listing and it comes straight back to your satchel.\" % Econ.disp(String(ml.get(\"item\", \"\"))), Color(1.0, 0.85, 0.5))"
+ },
+ {
+  "file": "Market.gd",
+  "why": "Background _on_sales: 'SOLD to X! +N real $CHIKI landed in your wallet' is not shown in the app. Crediting, acks and quest progress still run",
+  "old": "\t\t\t_profile.toast.emit(\"💰 SOLD to %s! +%d real $CHIKI landed in your wallet.\" % [who, int(round(net))], Color(0.55, 1.0, 0.7))",
+  "new": "\t\t\tif ChikFeat.on(\"trading_post\"):\n\t\t\t\t_profile.toast.emit(\"💰 SOLD to %s! +%d real $CHIKI landed in your wallet.\" % [who, int(round(net))], Color(0.55, 1.0, 0.7))"
+ },
+ {
+  "file": "Market.gd",
+  "why": "Background _credit_sale: the 'SOLD ... +N $CHIKI (burned / reward pool)' toast is not shown in the app. The purse is still credited",
+  "old": "\t_profile.toast.emit(\"💰 SOLD to %s! %d× %s → +%d $CHIKI  (%d 🔥 burned · %d → reward pool)\" % [who, qty, iname, int(round(net)), int(round(burn)), int(round(pool))], Color(0.55, 1.0, 0.7))",
+  "new": "\tif ChikFeat.on(\"trading_post\"):\n\t\t_profile.toast.emit(\"💰 SOLD to %s! %d× %s → +%d $CHIKI  (%d 🔥 burned · %d → reward pool)\" % [who, qty, iname, int(round(net)), int(round(burn)), int(round(pool))], Color(0.55, 1.0, 0.7))"
+ },
+ {
+  "file": "Market.gd",
+  "why": "_on_sync re-posts listings in the background, and a 409 from _push_backend 'list' shows this listing/escrow warning. It is not shown in the app",
+  "old": "\t\t\t_profile.toast.emit(\"⚠ \" + msg, Color(1.0, 0.75, 0.4))",
+  "new": "\t\t\tif ChikFeat.on(\"trading_post\"):\n\t\t\t\t_profile.toast.emit(\"⚠ \" + msg, Color(1.0, 0.75, 0.4))"
+ },
+ {
+  "file": "Market.gd",
+  "why": "_hydrate_orders runs from _refs() on the first frame. Its 'Orders now pay REAL $CHIKI' refund toast is not shown in the app; the refund is still applied",
+  "old": "\t\t_profile.toast.emit(\"📥 Orders now pay REAL $CHIKI — your old escrowed %d in-game $CHIKI came back to your purse.\" % int(legacy_refund), Color(0.8, 0.9, 1.0))",
+  "new": "\t\tif ChikFeat.on(\"trading_post\"):\n\t\t\t_profile.toast.emit(\"📥 Orders now pay REAL $CHIKI — your old escrowed %d in-game $CHIKI came back to your purse.\" % int(legacy_refund), Color(0.8, 0.9, 1.0))"
+ },
+ {
+  "file": "Market.gd",
+  "why": "Background _on_fills: the auction no-bids toast is not shown in the app. The unit is still restored",
+  "old": "\t\t\t\t_profile.toast.emit(\"🔨 No bids this time — %s returns to your satchel, memories intact.\" % Econ.disp(item), Color(0.9, 0.8, 0.6))",
+  "new": "\t\t\t\tif ChikFeat.on(\"trading_post\"):\n\t\t\t\t\t_profile.toast.emit(\"🔨 No bids this time — %s returns to your satchel, memories intact.\" % Econ.disp(item), Color(0.9, 0.8, 0.6))"
+ },
+ {
+  "file": "Market.gd",
+  "why": "Background _on_fills: the order/delivery goods-returned toast is not shown in the app. The goods are still granted",
+  "old": "\t\t\t\t_profile.toast.emit(\"↩ Your goods came back — %d× %s returned (%s).\" % [qty, \n\t\t\t\t\t_label({\"kind\": kind, \"item\": item, \"qty\": qty}), why], Color(0.9, 0.8, 0.6))",
+  "new": "\t\t\t\tif ChikFeat.on(\"trading_post\"):\n\t\t\t\t\t_profile.toast.emit(\"↩ Your goods came back — %d× %s returned (%s).\" % [qty, \n\t\t\t\t\t\t_label({\"kind\": kind, \"item\": item, \"qty\": qty}), why], Color(0.9, 0.8, 0.6))"
+ },
+ {
+  "file": "Market.gd",
+  "why": "Background _on_fills: the 'SOLD to YOU! auction won' toast is not shown in the app. The unit is still granted",
+  "old": "\t\t\t\t_profile.toast.emit(\"🔨 SOLD to YOU! %s Lv %d is yours — auction won from %s.\" % [Econ.disp(item), int(f.get(\"lvl\", 1)), String(f.get(\"fillerName\", \"a trainer\"))], Color(1.0, 0.85, 0.25))",
+  "new": "\t\t\t\tif ChikFeat.on(\"trading_post\"):\n\t\t\t\t\t_profile.toast.emit(\"🔨 SOLD to YOU! %s Lv %d is yours — auction won from %s.\" % [Econ.disp(item), int(f.get(\"lvl\", 1)), String(f.get(\"fillerName\", \"a trainer\"))], Color(1.0, 0.85, 0.25))"
+ },
+ {
+  "file": "Market.gd",
+  "why": "Background _on_fills: the 'Your order arrived from X' toast is not shown in the app. The goods are still granted",
+  "old": "\t\t\t\t_profile.toast.emit(\"📦 Your order arrived! %d× %s from %s.\" % [qty, \n\t\t\t\t\t_label({\"kind\": kind, \"item\": item, \"qty\": qty}), filler if filler != \"\" else \"a trainer\"], Color(0.55, 1.0, 0.7))",
+  "new": "\t\t\t\tif ChikFeat.on(\"trading_post\"):\n\t\t\t\t\t_profile.toast.emit(\"📦 Your order arrived! %d× %s from %s.\" % [qty, \n\t\t\t\t\t\t_label({\"kind\": kind, \"item\": item, \"qty\": qty}), filler if filler != \"\" else \"a trainer\"], Color(0.55, 1.0, 0.7))"
+ },
+ {
+  "file": "Market.gd",
+  "why": "Background _on_fills refunds: 'Outbid! Your N $CHIKI escrow returned' is not shown in the app. The refund is still applied",
+  "old": "\t\t\t_profile.toast.emit(\"↩ Outbid! Your %d $CHIKI escrow returned — raise the stakes?\" % int(ramt), Color(0.9, 0.8, 0.6))",
+  "new": "\t\t\tif ChikFeat.on(\"trading_post\"):\n\t\t\t\t_profile.toast.emit(\"↩ Outbid! Your %d $CHIKI escrow returned — raise the stakes?\" % int(ramt), Color(0.9, 0.8, 0.6))"
+ },
+ {
+  "file": "Market.gd",
+  "why": "_process runs _me_retry_pending for a Magic Eden action started on the website and kept in the synced profile. Its Magic Eden done-words toast is not shown in the app",
+  "old": "\t\t\t\t_profile.toast.emit(_me_done_words(String(rec.get(\"action\", \"\")), out), Color(0.55, 1.0, 0.7))",
+  "new": "\t\t\t\tif ChikFeat.on(\"marketplace\"):\n\t\t\t\t\t_profile.toast.emit(_me_done_words(String(rec.get(\"action\", \"\")), out), Color(0.55, 1.0, 0.7))"
+ },
+ {
+  "file": "Market.gd",
+  "why": "The _me_send_confirm toast 'Magic Eden hasn't confirmed yet' is not shown in the app",
+  "old": "\t\t\t\t_profile.toast.emit(\"Magic Eden hasn't confirmed yet — your transaction is safe on-chain and nothing will be charged twice. Check the listing on Magic Eden.\", Color(1.0, 0.7, 0.4))",
+  "new": "\t\t\t\tif ChikFeat.on(\"marketplace\"):\n\t\t\t\t\t_profile.toast.emit(\"Magic Eden hasn't confirmed yet — your transaction is safe on-chain and nothing will be charged twice. Check the listing on Magic Eden.\", Color(1.0, 0.7, 0.4))"
+ },
+ {
+  "file": "Market.gd",
+  "why": "Entry point of the Magic Eden flow, called only from PlayerPanel's ME confirm card. It refuses silently in the app, so no Phantom/Magic Eden/SOL wording is produced even if a PlayerPanel path is missed",
+  "old": "func me_buy(mint: String, max_price_sol: float) -> String:\n\tif not _refs():\n\t\treturn \"\"",
+  "new": "func me_buy(mint: String, max_price_sol: float) -> String:\n\tif not _refs():\n\t\treturn \"\"\n\tif not ChikFeat.on(\"marketplace\"):\n\t\treturn \"\""
+ },
+ {
+  "file": "Market.gd",
+  "why": "Entry point of the Magic Eden list flow (PlayerPanel only). It refuses silently in the app",
+  "old": "func me_list(mint: String, price_sol: float) -> String:\n\tif not _refs():\n\t\treturn \"\"",
+  "new": "func me_list(mint: String, price_sol: float) -> String:\n\tif not _refs():\n\t\treturn \"\"\n\tif not ChikFeat.on(\"marketplace\"):\n\t\treturn \"\""
+ },
+ {
+  "file": "Market.gd",
+  "why": "Entry point of the Magic Eden delist flow (PlayerPanel only). It refuses silently in the app",
+  "old": "func me_delist(mint: String) -> String:\n\tif not _refs():\n\t\treturn \"\"",
+  "new": "func me_delist(mint: String) -> String:\n\tif not _refs():\n\t\treturn \"\"\n\tif not ChikFeat.on(\"marketplace\"):\n\t\treturn \"\""
+ },
+ {
+  "file": "GameHUD.gd",
+  "why": "The Craft Shop subtitle stops naming $CHIKI in the app",
+  "old": "\tvar list: = _shop_frame(_craft_panel, \"🔨  BRAMBLEFORGE'S CRAFT SHOP\", \"Forged from resources + 🌑 Dark Energy — never $CHIKI. Potions? Brew those at Azulon's Wizard Shop.\", Color(\"2e6b26\"), false, \"craft\", TABS, cur, func(t): _shop_tab_set(\"craft\", t);open_craft())",
+  "new": "\tvar list: = _shop_frame(_craft_panel, \"🔨  BRAMBLEFORGE'S CRAFT SHOP\", (\"Forged from resources + 🌑 Dark Energy — never $CHIKI. Potions? Brew those at Azulon's Wizard Shop.\" if ChikFeat.on(\"crypto\") else \"Forged from resources + 🌑 Dark Energy. Potions? Brew those at Azulon's Wizard Shop.\"), Color(\"2e6b26\"), false, \"craft\", TABS, cur, func(t): _shop_tab_set(\"craft\", t);open_craft())"
+ },
+ {
+  "file": "GameHUD.gd",
+  "why": "For an egg listed or selling on the website, the Mystic egg card description and tooltip stop saying escrow, buyer, Magic Eden or 'delist it there' in the app",
+  "old": "func _egg_escrow_desc(why: String) -> String:\n\tif why == \"selling\":\n\t\treturn \"🔒 In escrow — this egg is being handed to its buyer. The nest keeps its place.\"\n\treturn \"🔒 In escrow on Magic Eden — delist it there and it comes straight back to the nest.\"",
+  "new": "func _egg_escrow_desc(why: String) -> String:\n\tif not ChikFeat.on(\"marketplace\"):\n\t\treturn \"🔒 On hold on your account right now — the nest keeps its place.\"\n\tif why == \"selling\":\n\t\treturn \"🔒 In escrow — this egg is being handed to its buyer. The nest keeps its place.\"\n\treturn \"🔒 In escrow on Magic Eden — delist it there and it comes straight back to the nest.\""
+ },
+ {
+  "file": "GameHUD.gd",
+  "why": "The egg card button for a website-listed egg reads 'On Hold' instead of 'In Escrow' in the app",
+  "old": "\t\tEcon.btn_icon(b, \"🔒 In Escrow\");b.disabled = true;UISkin.ghost(b)",
+  "new": "\t\tEcon.btn_icon(b, \"🔒 In Escrow\" if ChikFeat.on(\"marketplace\") else \"🔒 On Hold\");b.disabled = true;UISkin.ghost(b)"
+ },
+ {
+  "file": "GameHUD.gd",
+  "why": "The 'N $CHIKI' token-balance chip in the Mystic and Azulon shop headers is not drawn in the app. Neither shop charges $CHIKI",
+  "old": "\txov.add_child(_x_button( func(): _hide_dialog(panel)))\n\tif show_balance:",
+  "new": "\txov.add_child(_x_button( func(): _hide_dialog(panel)))\n\tif show_balance and ChikFeat.on(\"crypto\"):"
+ },
+ {
+  "file": "GameHUD.gd",
+  "why": "The Avatar Scroll result toast drops '◆ NFT Edition #n/N' in the app. The new look is still granted and announced",
+  "old": "\t\t_profile.toast.emit(\"✨ A NEW LOOK: %s!  ◆ NFT Edition #%d/%d — wear it from the Avatar tab.\" % [Econ.avatar_title(pick), _profile.avatar_edition(pick), Econ.avatar_supply(pick)], Color(1.0, 0.85, 0.25))",
+  "new": "\t\tif ChikFeat.on(\"crypto\"):\n\t\t\t_profile.toast.emit(\"✨ A NEW LOOK: %s!  ◆ NFT Edition #%d/%d — wear it from the Avatar tab.\" % [Econ.avatar_title(pick), _profile.avatar_edition(pick), Econ.avatar_supply(pick)], Color(1.0, 0.85, 0.25))\n\t\telse:\n\t\t\t_profile.toast.emit(\"✨ A NEW LOOK: %s! Wear it from the Avatar tab.\" % Econ.avatar_title(pick), Color(1.0, 0.85, 0.25))"
+ },
+ {
+  "file": "GameHUD.gd",
+  "why": "Entry point to InfoBar's wallet popup (Phantom connect/sign, Solscan, 'Open browser version'), bound to the L key in _unhandled_input. It does nothing in the app",
+  "old": "func toggle_wallet() -> void :\n\tif _intro.visible or not _refs():\n\t\treturn",
+  "new": "func toggle_wallet() -> void :\n\tif _intro.visible or not _refs():\n\t\treturn\n\tif not ChikFeat.on(\"crypto\"):\n\t\treturn"
+ },
+ {
+  "file": "GameHUD.gd",
+  "why": "Second entry point to InfoBar's wallet popup. It does nothing in the app",
+  "old": "func open_wallet() -> void :\n\tif _intro.visible or not _refs():\n\t\treturn",
+  "new": "func open_wallet() -> void :\n\tif _intro.visible or not _refs():\n\t\treturn\n\tif not ChikFeat.on(\"crypto\"):\n\t\treturn"
+ },
+ {
+  "file": "GameHUD.gd",
+  "why": "The creator toolbox status line (creator accounts only) stops showing a $CHIKI amount in the app",
+  "old": "\tstatus.text = \"Lv %d · %d $CHIKI · party %d · avatar %s\" % [\n\t\tint(d.get(\"level\", 1)), int(float(d.get(\"chiki\", 0.0))), \n\t\t(d.get(\"party\", []) as Array).size(), Econ.avatar_title(String(d.get(\"avatar\", \"classic\")))]",
+  "new": "\tif ChikFeat.on(\"crypto\"):\n\t\tstatus.text = \"Lv %d · %d $CHIKI · party %d · avatar %s\" % [\n\t\t\tint(d.get(\"level\", 1)), int(float(d.get(\"chiki\", 0.0))), \n\t\t\t(d.get(\"party\", []) as Array).size(), Econ.avatar_title(String(d.get(\"avatar\", \"classic\")))]\n\telse:\n\t\tstatus.text = \"Lv %d · party %d · avatar %s\" % [int(d.get(\"level\", 1)), (d.get(\"party\", []) as Array).size(), Econ.avatar_title(String(d.get(\"avatar\", \"classic\")))]"
+ },
+ {
+  "file": "GameHUD.gd",
+  "why": "Creator toolbox (creator accounts only): the '💰 ECONOMY' row (+1k/+10k $CHIKI, Fill pouch, Collect) is not built in the app. r1 is not used later",
+  "old": "\t_ct_head(v, \"💰 ECONOMY\")\n\tvar r1: = _ct_row(v)\n\t_ct_btn(r1, \"+1k $CHIKI\", _ct_chiki.bind(1000.0))\n\t_ct_btn(r1, \"+10k $CHIKI\", _ct_chiki.bind(10000.0))\n\t_ct_btn(r1, \"Fill pouch\", _ct_fill_pouch)\n\t_ct_btn(r1, \"Collect\", _ct_collect)",
+  "new": "\tif ChikFeat.on(\"crypto\"):\n\t\t_ct_head(v, \"💰 ECONOMY\")\n\t\tvar r1: = _ct_row(v)\n\t\t_ct_btn(r1, \"+1k $CHIKI\", _ct_chiki.bind(1000.0))\n\t\t_ct_btn(r1, \"+10k $CHIKI\", _ct_chiki.bind(10000.0))\n\t\t_ct_btn(r1, \"Fill pouch\", _ct_fill_pouch)\n\t\t_ct_btn(r1, \"Collect\", _ct_collect)"
+ },
+ {
+  "file": "Player.gd",
+  "why": "Pressing E at the Trading Post building no longer calls GameHUD.open_market() in the app. E falls through to the next interaction, as it does anywhere else",
+  "old": "\n\tif Vector2(global_position.x + 52.0, global_position.z + 120.0).length() < 22.0:\n\t\tvar thud: = get_tree().root.find_child(\"GameHUD\", true, false)",
+  "new": "\n\tif ChikFeat.on(\"trading_post\") and Vector2(global_position.x + 52.0, global_position.z + 120.0).length() < 22.0:\n\t\tvar thud: = get_tree().root.find_child(\"GameHUD\", true, false)"
+ },
+ {
+  "file": "Player.gd",
+  "why": "The world prompt 'Press E — Goldman's Trading Post 🤝' is not shown in the app",
+  "old": "\t\t\telif Vector2(global_position.x + 52.0, global_position.z + 120.0).length() < 22.0:\n\t\t\t\t_hud_set(\"Press E — Goldman's Trading Post 🤝\", _spot_anchor(-52.0, -120.0))",
+  "new": "\t\t\telif ChikFeat.on(\"trading_post\") and Vector2(global_position.x + 52.0, global_position.z + 120.0).length() < 22.0:\n\t\t\t\t_hud_set(\"Press E — Goldman's Trading Post 🤝\", _spot_anchor(-52.0, -120.0))"
+ },
+ {
+  "file": "Minimap.gd",
+  "why": "The 'Trading Post' place label and its dot are not drawn on the minimap or big map in the app. POIS is used only in this draw loop",
+  "old": "\tfor poi in POIS:\n\t\tvar pv: Vector2 = poi[\"p\"]",
+  "new": "\tfor poi in POIS:\n\t\tif String(poi[\"n\"]) == \"Trading Post\" and not ChikFeat.on(\"trading_post\"):\n\t\t\tcontinue\n\t\tvar pv: Vector2 = poi[\"p\"]"
+ },
+ {
+  "file": "Main.gd",
+  "why": "The floating 3D 'TRADING POST' banner over the building (shopbanner_market.png, whose art spells out TRADING POST) is not spawned in the app",
+  "old": "\t\tvar key: = String(b[0])\n\t\tvar tex: = (\"res://chikiseum_banner.png\" if key == \"chikiseum\" else \"res://shopbanner_%s.png\" % key)",
+  "new": "\t\tvar key: = String(b[0])\n\t\tif key == \"market\" and not ChikFeat.on(\"trading_post\"):\n\t\t\tcontinue\n\t\tvar tex: = (\"res://chikiseum_banner.png\" if key == \"chikiseum\" else \"res://shopbanner_%s.png\" % key)"
+ },
+ {
+  "file": "PlayerPanel.gd",
+  "why": "Magic Eden rail tab (tooltip 'Magic Eden — the Chiki Monsters collection', press -> open_me_market) is never visible when marketplace is off. _me_tab_sync is the only visibility toggle, runs right after the tab is built and on every chain state change, and relayouts the rail without it.",
+  "old": "\tvar on: bool = ch != null and ch.has_method(\"nft_market_capable\") and ch.nft_market_capable()\n\tif _me_tab.visible != on:",
+  "new": "\tvar on: bool = ChikFeat.on(\"marketplace\") and ch != null and ch.has_method(\"nft_market_capable\") and ch.nft_market_capable()\n\tif _me_tab.visible != on:"
+ },
+ {
+  "file": "PlayerPanel.gd",
+  "why": "Sole opener of the Magic Eden popup: buy grid, My Collection listing/price boxes, activity feed, confirm and Phantom flow cards, Solscan and Magic Eden links (every _me_*/_mex_* view). Returns early with a neutral toast when marketplace is off.",
+  "old": "func open_me_market(sub: = \"\", focus_mint: = \"\") -> void :\n\t_close_me_pop()",
+  "new": "func open_me_market(sub: = \"\", focus_mint: = \"\") -> void :\n\tif not ChikFeat.on(\"marketplace\"):\n\t\tif _refs():\n\t\t\t_profile.toast.emit(\"Trading isn't part of the app. Everything you earn here stays on your account.\", Color(0.9, 0.8, 0.6))\n\t\treturn\n\t_close_me_pop()"
+ },
+ {
+  "file": "PlayerPanel.gd",
+  "why": "GameHUD._rebuild_market asks me_market_open() whether to add its '🪄 Magic Eden' tab and call me_build_into. It now reports closed when marketplace is off, as a second layer behind GameHUD.open_market's trading_post gate.",
+  "old": "func me_market_open() -> bool:\n\tvar ch: = _chain()",
+  "new": "func me_market_open() -> bool:\n\tif not ChikFeat.on(\"marketplace\"):\n\t\treturn false\n\tvar ch: = _chain()"
+ },
+ {
+  "file": "PlayerPanel.gd",
+  "why": "Trade-capability query used by the ME views; always false when marketplace is off.",
+  "old": "func me_can_trade() -> bool:\n\tvar ch: = _chain()",
+  "new": "func me_can_trade() -> bool:\n\tif not ChikFeat.on(\"marketplace\"):\n\t\treturn false\n\tvar ch: = _chain()"
+ },
+ {
+  "file": "PlayerPanel.gd",
+  "why": "Public builder of the whole Magic Eden body (called by open_me_market and GameHUD's market). When marketplace is off it adds an empty box and returns it (same return type), so no ME view, price, wallet or Phantom string is drawn.",
+  "old": "\t\tbrand: = false) -> Control:\n\t_me_accent = accent",
+  "new": "\t\tbrand: = false) -> Control:\n\tif not ChikFeat.on(\"marketplace\"):\n\t\tvar none: = VBoxContainer.new()\n\t\thost.add_child(none)\n\t\treturn none\n\t_me_accent = accent"
+ },
+ {
+  "file": "PlayerPanel.gd",
+  "why": "_add_nft_button is the only in-panel way to the mint offer / certificate card (2 Team pane layouts, nest eggs, stable hero). With crypto off no button is added. That removes the 'certified — NFT #', 'on Magic Eden at N SOL', 'SOLD', 'burned on-chain', 'Minting…' and 'Mint X — approved in Phantom' tooltips, and the tap into _open_nft_pop.",
+  "old": "\t\tbutton_size: Vector2, icon_size: int) -> void :\n\tvar ch: = _chain()\n\tif ch == null or not ch.has_method(\"nft_capable\") or not ch.nft_capable():\n\t\treturn",
+  "new": "\t\tbutton_size: Vector2, icon_size: int) -> void :\n\tif not ChikFeat.on(\"crypto\"):\n\t\treturn\n\tvar ch: = _chain()\n\tif ch == null or not ch.has_method(\"nft_capable\") or not ch.nft_capable():\n\t\treturn"
+ },
+ {
+  "file": "PlayerPanel.gd",
+  "why": "The only function that creates _nft_body. With it gated, _nft_render (Mint on Solana, SOL cost, royalty/reward pool, Phantom signing, Sell on Magic Eden, Solscan link, the Trading Post/$CHIKI line), _nft_do_mint and _nft_sign_and_confirm can never draw in the app. Also covers the call from _me_mintable_card.",
+  "old": "func _open_nft_pop(kind_type: String, sp: String, rid: String, title: String) -> void :\n\t_close_nft_pop()",
+  "new": "func _open_nft_pop(kind_type: String, sp: String, rid: String, title: String) -> void :\n\tif not ChikFeat.on(\"crypto\"):\n\t\treturn\n\t_close_nft_pop()"
+ },
+ {
+  "file": "PlayerPanel.gd",
+  "why": "The Training subtitle promised 50,000 $CHIKI. The app subtitle drops the currency and promises no reward.",
+  "old": "\t\t_header(\"quests\", \"Training\", \"Finish your training to earn 50,000 $CHIKI.\")",
+  "new": "\t\t_header(\"quests\", \"Training\", \"Finish your training to earn 50,000 $CHIKI.\" if ChikFeat.on(\"crypto\") else \"Finish your training — four quick steps.\")"
+ },
+ {
+  "file": "PlayerPanel.gd",
+  "why": "Drops the '+50,000 $CHIKI' currency part of the training progress line; the progress count stays.",
+  "old": "\t\t_mini(col, \"%d / 4 steps done  ·  +50,000 $CHIKI\" % done_n, 12, DIM)",
+  "new": "\t\t_mini(col, (\"%d / 4 steps done  ·  +50,000 $CHIKI\" if ChikFeat.on(\"crypto\") else \"%d / 4 steps done\") % done_n, 12, DIM)"
+ },
+ {
+  "file": "PlayerPanel.gd",
+  "why": "The Pouch gear tooltip named the token; the app says coins.",
+  "old": "\t\t\"pouch\": return \"%d $CHIKI\" % int(Econ.POUCH_CAP[t])",
+  "new": "\t\t\"pouch\": return (\"%d $CHIKI\" if ChikFeat.on(\"crypto\") else \"%d coins\") % int(Econ.POUCH_CAP[t])"
+ },
+ {
+  "file": "PlayerPanel.gd",
+  "why": "GEAR_DESC is a const, so the Pouch description ('how much loose $CHIKI you can hold') is reworded at its only live use, the _gear_tray tooltip on the Avatar tab.",
+  "old": "\t\tvar tip: = (_gear_item_name(slot, t) + \"  (\" + _gear_effect(slot, t) + \")\\n\" if owned else String(e[2]) + \" — not crafted yet.\\n\") + String(GEAR_DESC.get(slot, \"\"))",
+  "new": "\t\tvar tip: = (_gear_item_name(slot, t) + \"  (\" + _gear_effect(slot, t) + \")\\n\" if owned else String(e[2]) + \" — not crafted yet.\\n\") + (String(GEAR_DESC.get(slot, \"\")) if ChikFeat.on(\"crypto\") else String(GEAR_DESC.get(slot, \"\")).replace(\"$CHIKI\", \"coins\"))"
+ },
+ {
+  "file": "PlayerPanel.gd",
+  "why": "The Avatar tab called the owned look an NFT. The app keeps the tier and edition (display of an owned collectible) without the word NFT.",
+  "old": "\tvar edp: = _mini(_content, \"◆ %s NFT · Edition #%d / %d · display only\" % [Econ.avatar_tier(av), _profile.avatar_edition(av), Econ.avatar_supply(av)], 13, Color(\"b58cff\"), false)",
+  "new": "\tvar edp: = _mini(_content, (\"◆ %s NFT · Edition #%d / %d · display only\" if ChikFeat.on(\"crypto\") else \"◆ %s · Edition #%d / %d\") % [Econ.avatar_tier(av), _profile.avatar_edition(av), Econ.avatar_supply(av)], 13, Color(\"b58cff\"), false)"
+ },
+ {
+  "file": "PlayerPanel.gd",
+  "why": "Arrival/departure notices named the other party by a shortened wallet address; the app says 'another trainer'.",
+  "old": "func _news_who(other: String) -> String:\n\tif other.length() < 10:",
+  "new": "func _news_who(other: String) -> String:\n\tif other.length() < 10 or not ChikFeat.on(\"crypto\"):"
+ },
+ {
+  "file": "PlayerPanel.gd",
+  "why": "The arrival notice (synced from a website purchase) keeps the creature news and drops the NFT marketplace and wallet wording.",
+  "old": "\t\t_news_sec(_news_body, \"It settled on the NFT marketplace and the registry moved it to your wallet. Take it out and let it stretch its legs.\", DIM)",
+  "new": "\t\t_news_sec(_news_body, \"It settled on the NFT marketplace and the registry moved it to your wallet. Take it out and let it stretch its legs.\" if ChikFeat.on(\"crypto\") else \"Take it out and let it stretch its legs.\", DIM)"
+ },
+ {
+  "file": "PlayerPanel.gd",
+  "why": "The departure notice keeps the farewell (the creature really left the account) without 'sold on the NFT marketplace'.",
+  "old": "\t\t_news_sec(_news_body, \"%s was sold on the NFT marketplace. It has said goodbye and gone to its new trainer.\" % nice, INK)",
+  "new": "\t\t_news_sec(_news_body, (\"%s was sold on the NFT marketplace. It has said goodbye and gone to its new trainer.\" if ChikFeat.on(\"crypto\") else \"%s has said goodbye and gone to its new trainer.\") % nice, INK)"
+ },
+ {
+  "file": "PlayerPanel.gd",
+  "why": "Drops the 'settled on-chain — the sale is complete' fact row.",
+  "old": "\t\trows.append([\"Your side of it\", \"settled on-chain — the sale is complete\"])",
+  "new": "\t\tif ChikFeat.on(\"crypto\"):\n\t\t\trows.append([\"Your side of it\", \"settled on-chain — the sale is complete\"])"
+ },
+ {
+  "file": "PlayerPanel.gd",
+  "why": "Drops the NFT 'Certificate' (mint address) fact row from news notices.",
+  "old": "\tif String(n.get(\"mint\", \"\")) != \"\":\n\t\tvar m: = String(n[\"mint\"])",
+  "new": "\tif String(n.get(\"mint\", \"\")) != \"\" and ChikFeat.on(\"crypto\"):\n\t\tvar m: = String(n[\"mint\"])"
+ },
+ {
+  "file": "PlayerPanel.gd",
+  "why": "Eggs held back because they are listed or selling on the website: the nest still says they are away, without escrow, Magic Eden, sold, buyer or delist wording.",
+  "old": "\t\tvar nl: = _mini(_content, \"🔒 \" + note, 12, DIM, true)",
+  "new": "\t\tif not ChikFeat.on(\"crypto\"):\n\t\t\tnote = \"%d %s away from the nest for now.\" % [held, (\"egg is\" if held == 1 else \"eggs are\")]\n\t\tvar nl: = _mini(_content, \"🔒 \" + note, 12, DIM, true)"
+ },
+ {
+  "file": "PlayerPanel.gd",
+  "why": "Eggs that left the account after a website sale: the app keeps 'left your nest for good' and drops 'NFT sold and went with the sale'.",
+  "old": "\t\tvar gn: = _mini(_content, \"📜 %d %s %s left your nest for good — %s NFT sold and went with the sale.\" % [\n\t\t\theld_gone, gw, (\"has\" if held_gone == 1 else \"have\"), (\"its\" if held_gone == 1 else \"their\")],\n\t\t\t12, DIM, true)",
+  "new": "\t\tvar gtxt: String = \"📜 %d %s %s left your nest for good.\" % [held_gone, gw, (\"has\" if held_gone == 1 else \"have\")]\n\t\tif ChikFeat.on(\"crypto\"):\n\t\t\tgtxt = \"📜 %d %s %s left your nest for good — %s NFT sold and went with the sale.\" % [\n\t\t\t\theld_gone, gw, (\"has\" if held_gone == 1 else \"have\"), (\"its\" if held_gone == 1 else \"their\")]\n\t\tvar gn: = _mini(_content, gtxt, 12, DIM, true)"
+ },
+ {
+  "file": "PlayerPanel.gd",
+  "why": "The hatch reveal pointed at the Cup, the real-SOL tournament whose tab the app removes. The app says 'the Chikiseum' instead.",
+  "old": "\t\t_reveal_line(body, \"A %s-element Chikimon — battles in the Chikiseum Cup and follows you in the world.\" % Econ.el_of(id), 14, UISkin.P_INK)",
+  "new": "\t\t_reveal_line(body, (\"A %s-element Chikimon — battles in the Chikiseum Cup and follows you in the world.\" if ChikFeat.on(\"chikoria_cup\") else \"A %s-element Chikimon — battles in the Chikiseum and follows you in the world.\") % Econ.el_of(id), 14, UISkin.P_INK)"
+ },
+ {
+  "file": "PlayerPanel.gd",
+  "why": "Hatch reveal: 'ever minted' becomes 'ever made'. The collectible is still shown.",
+  "old": "\t\t\t_reveal_line(body, \"· Meme Dynasty collectible \\\"%s\\\" — arrives in a display case, %d ever minted.\" % [",
+  "new": "\t\t\t_reveal_line(body, (\"· Meme Dynasty collectible \\\"%s\\\" — arrives in a display case, %d ever minted.\" if ChikFeat.on(\"crypto\") else \"· Meme Dynasty collectible \\\"%s\\\" — arrives in a display case, %d ever made.\") % ["
+ },
+ {
+  "file": "PlayerPanel.gd",
+  "why": "Drops the on-chain provenance line ('written to the asset registry — a permanent, provable record') from the hatch reveal.",
+  "old": "\tif Econ.MOUNTS.has(id) or Econ.LEGENDARIES.has(id):\n\t\t_reveal_line(body, \"Its lineage is written to the asset registry — a permanent, provable record it is yours.\", 12, UISkin.DIM.darkened(0.1))",
+  "new": "\tif ChikFeat.on(\"crypto\") and (Econ.MOUNTS.has(id) or Econ.LEGENDARIES.has(id)):\n\t\t_reveal_line(body, \"Its lineage is written to the asset registry — a permanent, provable record it is yours.\", 12, UISkin.DIM.darkened(0.1))"
+ },
+ {
+  "file": "PlayerPanel.gd",
+  "why": "Creator (admin) tab: 'wallet' becomes 'account'.",
+  "old": "\t\t_note(\"This wallet is not an admin.\", INK)",
+  "new": "\t\t_note(\"This wallet is not an admin.\" if ChikFeat.on(\"crypto\") else \"This account is not an admin.\", INK)"
+ },
+ {
+  "file": "PlayerPanel.gd",
+  "why": "The Creator tab pack summary named the token; the app says coins.",
+  "old": "\t_note(\"Bag %d slots · Pouch %.0f $CHIKI · Satchel %d bench slots\" % [",
+  "new": "\t_note((\"Bag %d slots · Pouch %.0f $CHIKI · Satchel %d bench slots\" if ChikFeat.on(\"crypto\") else \"Bag %d slots · Pouch %.0f coins · Satchel %d bench slots\") % ["
+ },
+ {
+  "file": "PlayerPanel.gd",
+  "why": "The Creator cheat button named the token; same cheat, labelled 'coins'.",
+  "old": "\t\t_cr_btn(r2, \"+100k $CHIKI\", func(): hud._ct_chiki(100000.0))",
+  "new": "\t\t_cr_btn(r2, \"+100k $CHIKI\" if ChikFeat.on(\"crypto\") else \"+100k coins\", func(): hud._ct_chiki(100000.0))"
+ },
+ {
+  "file": "PlayerPanel.gd",
+  "why": "The Creator tab's Trading Post shortcut button is not drawn when trading_post is off.",
+  "old": "\t\t_cr_btn(r4, \"Trading Post\", func(): hud._ct_open_shop(\"market\"))",
+  "new": "\t\tif ChikFeat.on(\"trading_post\"):\n\t\t\t_cr_btn(r4, \"Trading Post\", func(): hud._ct_open_shop(\"market\"))"
+ },
+ {
+  "file": "PlayerPanel.gd",
+  "why": "The Treasure Chest description named the token; the app says coins (same loot).",
+  "old": "\t_icon_tile(grid, \"📦\", \"Treasure Chest\", int(d[\"chests\"]), \"Pops open into a burst of loot — resources, $CHIKI, and sometimes a brand-new egg!\", ( func(): _profile.open_chest();_rebuild()) if int(d[\"chests\"]) > 0 else Callable(), Color(0.98, 0.72, 0.16), \"📦 Open\")",
+  "new": "\t_icon_tile(grid, \"📦\", \"Treasure Chest\", int(d[\"chests\"]), (\"Pops open into a burst of loot — resources, $CHIKI, and sometimes a brand-new egg!\" if ChikFeat.on(\"crypto\") else \"Pops open into a burst of loot — resources, coins, and sometimes a brand-new egg!\"), ( func(): _profile.open_chest();_rebuild()) if int(d[\"chests\"]) > 0 else Callable(), Color(0.98, 0.72, 0.16), \"📦 Open\")"
+ },
+ {
+  "file": "Chain.gd",
+  "why": "signin_error is drawn by Onboarding's gate ('Could not sign in'); in the app it must not name Phantom",
+  "old": "\t\tsignin_error = \"Approve the Phantom sign-in to continue.\"",
+  "new": "\t\tsignin_error = \"Approve the Phantom sign-in to continue.\" if ChikFeat.on(\"crypto\") else \"Sign-in didn't complete. Please try again.\""
+ },
+ {
+  "file": "Chain.gd",
+  "why": "the Realm Link resume runs through _accept_signed_wallet in the app; the refusal must not talk about Solana",
+  "old": "\t\t_profile.toast.emit(\"That doesn't look like a Solana address\", Color(1.0, 0.5, 0.4))",
+  "new": "\t\t_profile.toast.emit(\"That doesn't look like a Solana address\" if ChikFeat.on(\"crypto\") else \"That account couldn't be loaded.\", Color(1.0, 0.5, 0.4))"
+ },
+ {
+  "file": "Chain.gd",
+  "why": "shown in the app when the player switches between linked accounts (Realm Link reload path)",
+  "old": "\t\t_profile.toast.emit(\"Switching trainer — reloading the realm for this wallet…\", Color(0.75, 0.85, 1.0))",
+  "new": "\t\t_profile.toast.emit(\"Switching trainer — reloading the realm for this wallet…\" if ChikFeat.on(\"crypto\") else \"Switching trainer — reloading the realm…\", Color(0.75, 0.85, 1.0))"
+ },
+ {
+  "file": "Chain.gd",
+  "why": "shown on EVERY app launch: _finish_resume (Realm Link's chikResume) calls _accept_signed_wallet, which toasted a wallet signature and a $CHIKI hold check",
+  "old": "\t_profile.toast.emit(\"Wallet signed — verifying your $CHIKI hold…\", Color(0.75, 0.6, 1.0))",
+  "new": "\t_profile.toast.emit(\"Wallet signed — verifying your $CHIKI hold…\" if ChikFeat.on(\"crypto\") else \"Signing in…\", Color(0.75, 0.6, 1.0))"
+ },
+ {
+  "file": "Chain.gd",
+  "why": "fallback signin_error for a rejected /verify (a revoked/expired link token is a documented app path); drawn by Onboarding's gate",
+  "old": "\t\t\tsignin_error = String((failure as Dictionary).get(\"error\", \"Wallet verification failed.\"))",
+  "new": "\t\t\tsignin_error = String((failure as Dictionary).get(\"error\", \"Wallet verification failed.\" if ChikFeat.on(\"crypto\") else \"Sign-in failed.\"))"
+ },
+ {
+  "file": "Chain.gd",
+  "why": "same /verify failure path, non-JSON body",
+  "old": "\t\t\tsignin_error = \"Wallet verification failed. Please try again.\"",
+  "new": "\t\t\tsignin_error = \"Wallet verification failed. Please try again.\" if ChikFeat.on(\"crypto\") else \"Sign-in failed. Please try again.\""
+ },
+ {
+  "file": "Chain.gd",
+  "why": "a 200 /verify without signedIn is exactly what a rejected Realm Link token returns; the gate would have said 'Phantom could not verify this wallet'",
+  "old": "\t\tsignin_error = \"Phantom could not verify this wallet. Please sign in again.\"",
+  "new": "\t\tsignin_error = \"Phantom could not verify this wallet. Please sign in again.\" if ChikFeat.on(\"crypto\") else \"This device's link was not accepted. Please link it again.\""
+ },
+ {
+  "file": "Chain.gd",
+  "why": "shown on every app launch after the Realm Link /verify succeeds",
+  "old": "\t\t_profile.toast.emit(\"✅ Signed in — this wallet is verified as yours\", Color(0.35, 0.9, 0.55))",
+  "new": "\t\t_profile.toast.emit(\"✅ Signed in — this wallet is verified as yours\" if ChikFeat.on(\"crypto\") else \"✅ Signed in\", Color(0.35, 0.9, 0.55))"
+ },
+ {
+  "file": "Chain.gd",
+  "why": "unlink() is the sign-out path (InfoBar account popup); in the app there is no wallet to disconnect",
+  "old": "\t\t_profile.toast.emit(\"Wallet disconnected — your progress is safely stored until you sign back in.\", Color(0.8, 0.9, 1.0))",
+  "new": "\t\t_profile.toast.emit(\"Wallet disconnected — your progress is safely stored until you sign back in.\" if ChikFeat.on(\"crypto\") else \"Signed out — your progress is safely stored until you sign back in.\", Color(0.8, 0.9, 1.0))"
+ },
+ {
+  "file": "Chain.gd",
+  "why": "entry point of the Phantom connect flow: in the app it would toast '👻 Check Phantom — approve the connection…' before the loader's no-wallet error; callers (Onboarding button, InfoBar wallet popup) get nothing instead",
+  "old": "func phantom_signin() -> void :\n\tif _network_blocked():\n\t\treturn",
+  "new": "func phantom_signin() -> void :\n\tif _network_blocked():\n\t\treturn\n\tif not ChikFeat.on(\"wallet_connect\"):\n\t\treturn"
+ },
+ {
+  "file": "Chain.gd",
+  "why": "hatch_registered is the Team-tab HATCH path (PlayerPanel), kept in the app; an egg sold on the website reaches it",
+  "old": "\t\tif gone:\n\t\t\t_profile.toast.emit(\"That egg isn't in your registry any more — if you sold its NFT it went with the sale.\", ",
+  "new": "\t\tif gone:\n\t\t\t_profile.toast.emit(\"That egg isn't in your registry any more — if you sold its NFT it went with the sale.\" if ChikFeat.on(\"crypto\") else \"That egg isn't in your nest any more.\", "
+ },
+ {
+  "file": "Chain.gd",
+  "why": "same hatch path: an egg listed on the website is escrowed; the app must not mention Magic Eden or delisting",
+  "old": "\t\t\t_profile.toast.emit(\"This egg is in escrow on Magic Eden — delist it first and it comes straight back.\", ",
+  "new": "\t\t\t_profile.toast.emit(\"This egg is in escrow on Magic Eden — delist it first and it comes straight back.\" if ChikFeat.on(\"crypto\") else \"This egg isn't available right now — it's safe on your account.\", "
+ },
+ {
+  "file": "Chain.gd",
+  "why": "_hatch_post's 404 branch of the same hatch flow",
+  "old": "\t\tif code == 404:\n\t\t\t_profile.toast.emit(\"That egg isn't in your registry any more — if you sold its NFT it went with the sale.\", ",
+  "new": "\t\tif code == 404:\n\t\t\t_profile.toast.emit(\"That egg isn't in your registry any more — if you sold its NFT it went with the sale.\" if ChikFeat.on(\"crypto\") else \"That egg isn't in your nest any more.\", "
+ },
+ {
+  "file": "Chain.gd",
+  "why": "/quest/complete is not refused in the app (story progress); a 'won' answer would announce a 1,000,000 $CHIKI prize — keep the rank, drop the payout",
+  "old": "\t\t\t\t_profile.toast.emit(\"🏆 CHAMPION #%d! Your 1,000,000 $CHIKI prize is queued in the reward pool!\" % int(jd.get(\"rank\", 0)), Color(1.0, 0.85, 0.25))",
+  "new": "\t\t\t\t_profile.toast.emit((\"🏆 CHAMPION #%d! Your 1,000,000 $CHIKI prize is queued in the reward pool!\" if ChikFeat.on(\"crypto\") else \"🏆 CHAMPION #%d!\") % int(jd.get(\"rank\", 0)), Color(1.0, 0.85, 0.25))"
+ },
+ {
+  "file": "Chain.gd",
+  "why": "/claimable is polled in the app; a first poll that lands before /verify would toast 'Hold verified: KEEPER' (a token-hold tier). Tier effects are unchanged, only the toast is not drawn",
+  "old": "\t\tif tier != old_tier and tier > 0:\n\t\t\t_profile.toast.emit(\"Hold verified: %s — %s\" % [tier_name(), (\"5 task slots + Azulon favors you\" if tier >= 2 else \"4th task slot unlocked\")], Color(1.0, 0.85, 0.25))",
+  "new": "\t\tif tier != old_tier and tier > 0 and ChikFeat.on(\"crypto\"):\n\t\t\t_profile.toast.emit(\"Hold verified: %s — %s\" % [tier_name(), (\"5 task slots + Azulon favors you\" if tier >= 2 else \"4th task slot unlocked\")], Color(1.0, 0.85, 0.25))"
+ },
+ {
+  "file": "Net.gd",
+  "why": "Founder / mount drop event popup (event pill in the HUD) is reachable in the app; drop the wallet wording",
+  "old": "\t_evpop_line(\"A witnessed action is a gather, a catch or a battle the server counted. Awarded automatically — one per wallet, ever.\", 11, mute)",
+  "new": "\t_evpop_line(\"A witnessed action is a gather, a catch or a battle the server counted. Awarded automatically — one per wallet, ever.\" if ChikFeat.on(\"crypto\") else \"A witnessed action is a gather, a catch or a battle the server counted. Awarded automatically — one per player, ever.\", 11, mute)"
+ },
+ {
+  "file": "Net.gd",
+  "why": "PvP stays in the app; the incoming-duel dialog must not name the token",
+  "old": "\t_incoming_dlg.dialog_text = \"%s challenges you to a duel!\\n(The server referees. No $CHIKI, no stakes.)\" % String(c.get(\"fromName\", \"A trainer\"))",
+  "new": "\t_incoming_dlg.dialog_text = (\"%s challenges you to a duel!\\n(The server referees. No $CHIKI, no stakes.)\" if ChikFeat.on(\"crypto\") else \"%s challenges you to a duel!\\n(The server referees. No stakes.)\") % String(c.get(\"fromName\", \"A trainer\"))"
+ },
+ {
+  "file": "Net.gd",
+  "why": "the G-key spar dialog (PvP, kept) must not name the token",
+  "old": "\t_duel_dlg.dialog_text = \"Challenge %s to a duel?\\nThey have to accept, and the server referees the fight.\\n(No $CHIKI, no stakes.)\" % String(r.get(\"handle\", \"a trainer\"))",
+  "new": "\t_duel_dlg.dialog_text = (\"Challenge %s to a duel?\\nThey have to accept, and the server referees the fight.\\n(No $CHIKI, no stakes.)\" if ChikFeat.on(\"crypto\") else \"Challenge %s to a duel?\\nThey have to accept, and the server referees the fight.\\n(No stakes.)\") % String(r.get(\"handle\", \"a trainer\"))"
+ },
+ {
+  "file": "Profile.gd",
+  "why": "apply_server runs on every app launch when the cloud save is newer",
+  "old": "\ttoast.emit(\"☁ Progress restored from your wallet — welcome back!\", Color(0.6, 1.0, 0.7))",
+  "new": "\ttoast.emit(\"☁ Progress restored from your wallet — welcome back!\" if ChikFeat.on(\"crypto\") else \"☁ Progress restored — welcome back!\", Color(0.6, 1.0, 0.7))"
+ },
+ {
+  "file": "Profile.gd",
+  "why": "Play Demo is offered in the app (welcome panel / help); drop 'connect a wallet'",
+  "old": "\ttoast.emit(\"🎒 DEMO — roam the whole island with your trio! Nothing is saved or earned; reload to connect a wallet.\", Color(0.8, 0.9, 1.0))",
+  "new": "\ttoast.emit(\"🎒 DEMO — roam the whole island with your trio! Nothing is saved or earned; reload to connect a wallet.\" if ChikFeat.on(\"crypto\") else \"🎒 DEMO — roam the whole island with your trio! Nothing is saved or earned.\", Color(0.8, 0.9, 1.0))"
+ },
+ {
+  "file": "Profile.gd",
+  "why": "earn() fires on every kill, level-up, chest, daily, side quest, raid and temple purge; the '+N $CHIKI' line is only about currency so it is not drawn, the pouch-full line keeps its gameplay hint without the amount. Earning itself is untouched",
+  "old": "\tif gained < amount - 0.01:\n\t\ttoast.emit(\"Coin pouch FULL — %s $CHIKI lost! Press Collect, or craft a bigger pouch\" % _fmt(amount - gained), Color(1.0, 0.4, 0.4))\n\tif gained > 0.0:\n\t\ttoast.emit(\"+%s $CHIKI ➜ coin pouch  (%s)\" % [_fmt(gained), why], Color(1.0, 0.85, 0.25))",
+  "new": "\tif gained < amount - 0.01:\n\t\tif ChikFeat.on(\"crypto\"):\n\t\t\ttoast.emit(\"Coin pouch FULL — %s $CHIKI lost! Press Collect, or craft a bigger pouch\" % _fmt(amount - gained), Color(1.0, 0.4, 0.4))\n\t\telse:\n\t\t\ttoast.emit(\"Coin pouch FULL! Press Collect, or craft a bigger pouch\", Color(1.0, 0.4, 0.4))\n\tif gained > 0.0 and ChikFeat.on(\"crypto\"):\n\t\ttoast.emit(\"+%s $CHIKI ➜ coin pouch  (%s)\" % [_fmt(gained), why], Color(1.0, 0.85, 0.25))"
+ },
+ {
+  "file": "Profile.gd",
+  "why": "collect_pouch (HUD Collect button / GameHUD): no 'wallet-backed' / $CHIKI",
+  "old": "\tvar gross: = minf(p, headroom / maxf(0.001, 1.0 - Econ.POUCH_TAX))\n\tif gross < 0.01:\n\t\ttoast.emit(\"Your purse is at its wallet-backed ceiling — spend some $CHIKI first\", Color(1.0, 0.75, 0.35))",
+  "new": "\tvar gross: = minf(p, headroom / maxf(0.001, 1.0 - Econ.POUCH_TAX))\n\tif gross < 0.01:\n\t\ttoast.emit(\"Your purse is at its wallet-backed ceiling — spend some $CHIKI first\" if ChikFeat.on(\"crypto\") else \"Your purse is full — spend some before collecting more\", Color(1.0, 0.75, 0.35))"
+ },
+ {
+  "file": "Profile.gd",
+  "why": "collect_pouch result: no $CHIKI amount, no burn",
+  "old": "\ttoast.emit(\"Collected %s $CHIKI  (%s burned 🔥)\" % [_fmt(net), _fmt(tax)], Color(0.6, 1.0, 0.7))",
+  "new": "\ttoast.emit((\"Collected %s $CHIKI  (%s burned 🔥)\" % [_fmt(net), _fmt(tax)]) if ChikFeat.on(\"crypto\") else \"Collected into your purse!\", Color(0.6, 1.0, 0.7))"
+ },
+ {
+  "file": "Profile.gd",
+  "why": "collect_quest_vault: same ceiling line",
+  "old": "\tvar gross: = minf(q, headroom / maxf(0.001, 1.0 - Econ.POUCH_TAX))\n\tif gross < 0.01:\n\t\ttoast.emit(\"Your purse is at its wallet-backed ceiling — spend some $CHIKI first\", Color(1.0, 0.75, 0.35))",
+  "new": "\tvar gross: = minf(q, headroom / maxf(0.001, 1.0 - Econ.POUCH_TAX))\n\tif gross < 0.01:\n\t\ttoast.emit(\"Your purse is at its wallet-backed ceiling — spend some $CHIKI first\" if ChikFeat.on(\"crypto\") else \"Your purse is full — spend some before collecting more\", Color(1.0, 0.75, 0.35))"
+ },
+ {
+  "file": "Profile.gd",
+  "why": "collect_quest_vault result: no $CHIKI amount, no burn",
+  "old": "\ttoast.emit(\"🏆 Collected %s $CHIKI in quest rewards!  (%s burned 🔥)\" % [_fmt(net), _fmt(tax)], Color(0.6, 1.0, 0.7))",
+  "new": "\ttoast.emit((\"🏆 Collected %s $CHIKI in quest rewards!  (%s burned 🔥)\" % [_fmt(net), _fmt(tax)]) if ChikFeat.on(\"crypto\") else \"🏆 Quest rewards collected into your purse!\", Color(0.6, 1.0, 0.7))"
+ },
+ {
+  "file": "Profile.gd",
+  "why": "collect_all (what the HUD Collect button calls): same ceiling line",
+  "old": "\tvar gross: = minf(total, headroom / maxf(0.001, 1.0 - Econ.POUCH_TAX))\n\tif gross < 0.01:\n\t\ttoast.emit(\"Your purse is at its wallet-backed ceiling — spend some $CHIKI first\", Color(1.0, 0.75, 0.35))",
+  "new": "\tvar gross: = minf(total, headroom / maxf(0.001, 1.0 - Econ.POUCH_TAX))\n\tif gross < 0.01:\n\t\ttoast.emit(\"Your purse is at its wallet-backed ceiling — spend some $CHIKI first\" if ChikFeat.on(\"crypto\") else \"Your purse is full — spend some before collecting more\", Color(1.0, 0.75, 0.35))"
+ },
+ {
+  "file": "Profile.gd",
+  "why": "collect_all results: no $CHIKI amount, no burn",
+  "old": "\t\ttoast.emit(\"💰 Collected %s $CHIKI  (%s burned 🔥) — %s waits (ceiling)\" % [_fmt(net), _fmt(tax), _fmt(total - gross)], Color(0.6, 1.0, 0.7))\n\telse:\n\t\ttoast.emit(\"💰 Collected %s $CHIKI  (%s burned 🔥)\" % [_fmt(net), _fmt(tax)], Color(0.6, 1.0, 0.7))",
+  "new": "\t\ttoast.emit((\"💰 Collected %s $CHIKI  (%s burned 🔥) — %s waits (ceiling)\" % [_fmt(net), _fmt(tax), _fmt(total - gross)]) if ChikFeat.on(\"crypto\") else \"💰 Collected into your purse — the rest waits until there is room\", Color(0.6, 1.0, 0.7))\n\telse:\n\t\ttoast.emit((\"💰 Collected %s $CHIKI  (%s burned 🔥)\" % [_fmt(net), _fmt(tax)]) if ChikFeat.on(\"crypto\") else \"💰 Collected into your purse!\", Color(0.6, 1.0, 0.7))"
+ },
+ {
+  "file": "Profile.gd",
+  "why": "spend() refusal; does not name the token in the app",
+  "old": "\t\ttoast.emit(\"Not enough $CHIKI\", Color(1.0, 0.4, 0.4))",
+  "new": "\t\ttoast.emit(\"Not enough $CHIKI\" if ChikFeat.on(\"crypto\") else \"You can't afford that yet\", Color(1.0, 0.4, 0.4))"
+ },
+ {
+  "file": "Profile.gd",
+  "why": "egg_hold_msg feeds the start/tend/hatch/claim egg toasts (kept gameplay); an egg sold or listed on the website would say 'NFT sale' / 'escrow on the NFT marketplace — delist it there'",
+  "old": "\tvar lbl: = String(EGG_LABEL.get(kind, \"egg\"))\n\tif why == \"gone\":",
+  "new": "\tvar lbl: = String(EGG_LABEL.get(kind, \"egg\"))\n\tif not ChikFeat.on(\"crypto\"):\n\t\treturn (\"That %s isn't in your nest any more.\" if why == \"gone\" else \"🔒 Your %s isn't available right now — it's safe on your account.\") % lbl\n\tif why == \"gone\":"
+ },
+ {
+  "file": "Profile.gd",
+  "why": "hatch_precheck (Team-tab hatch) hints at trading a mount away; the app wording reuses the pack's own 'every chikimount is yours' line",
+  "old": "\t\tif full:\n\t\t\treturn \"Your stable is already full — the egg waits for a trade update\"",
+  "new": "\t\tif full:\n\t\t\treturn \"Your stable is already full — the egg waits for a trade update\" if ChikFeat.on(\"trading_post\") else \"Your stable is already full — every chikimount is yours!\""
+ },
+ {
+  "file": "Profile.gd",
+  "why": "hatch_egg: same line as a toast",
+  "old": "\t\tif pool.is_empty():\n\t\t\ttoast.emit(\"Your stable is already full — the egg waits for a trade update\", Color(0.8, 0.9, 1.0))",
+  "new": "\t\tif pool.is_empty():\n\t\t\ttoast.emit(\"Your stable is already full — the egg waits for a trade update\" if ChikFeat.on(\"trading_post\") else \"Your stable is already full — every chikimount is yours!\", Color(0.8, 0.9, 1.0))"
+ },
+ {
+  "file": "Profile.gd",
+  "why": "current_chapter() is what the HUD story line (GameHUD) and the Quests card (PlayerPanel) draw; Ch.36 'LIST an item on the Trading Post' is a required chapter. In the app a display copy carries neutral text and no commerce lore; id/need/chiki/xp are unchanged so progress, claim and sync behave as before",
+  "old": "\t\t\treturn q\n\treturn {}\n\n\nfunc optional_chapters_open() -> Array:",
+  "new": "\t\t\tif not ChikFeat.on(\"trading_post\") and String(q.get(\"kind\", \"\")).begins_with(\"market_\"):\n\t\t\t\tvar shown: Dictionary = (q as Dictionary).duplicate()\n\t\t\t\tshown[\"desc\"] = \"Trading isn't part of the app. Everything you earn here stays on your account.\"\n\t\t\t\tshown.erase(\"lore\")\n\t\t\t\treturn shown\n\t\t\treturn q\n\treturn {}\n\n\nfunc optional_chapters_open() -> Array:"
+ },
+ {
+  "file": "Profile.gd",
+  "why": "story-chapter claim (Quests tab, kept): the payout-to-wallet part is only about currency, so only 'complete!' is drawn",
+  "old": "\t\ttoast.emit(\"📜 %s complete — %d REAL $CHIKI → your Reward Vault! Open the LEDGER tab (top bar) to claim it to your wallet.\" % [String(q[\"name\"]), int(q[\"chiki\"])], Color(1.0, 0.85, 0.25))",
+  "new": "\t\ttoast.emit((\"📜 %s complete — %d REAL $CHIKI → your Reward Vault! Open the LEDGER tab (top bar) to claim it to your wallet.\" % [String(q[\"name\"]), int(q[\"chiki\"])]) if ChikFeat.on(\"crypto\") else (\"📜 %s complete!\" % String(q[\"name\"])), Color(1.0, 0.85, 0.25))"
+ },
+ {
+  "file": "Profile.gd",
+  "why": "non-real chapter claim: keep the Collect hint, drop the $CHIKI amount",
+  "old": "\t\ttoast.emit(\"📜 +%d $CHIKI → Quest Rewards vault  ·  Collect in the Quests tab  (%s)\" % [int(amt), String(q[\"name\"])], Color(1.0, 0.85, 0.25))",
+  "new": "\t\ttoast.emit((\"📜 +%d $CHIKI → Quest Rewards vault  ·  Collect in the Quests tab  (%s)\" % [int(amt), String(q[\"name\"])]) if ChikFeat.on(\"crypto\") else (\"📜 Reward → Quest Rewards vault  ·  Collect in the Quests tab  (%s)\" % String(q[\"name\"])), Color(1.0, 0.85, 0.25))"
+ },
+ {
+  "file": "Profile.gd",
+  "why": "side-quest tier claim: drop '+N $CHIKI'",
+  "old": "\ttoast.emit(\"%s  %s %s complete!  +%d $CHIKI\" % [String(q[\"icon\"]), String(q[\"name\"]), [\"I\", \"II\", \"III\", \"IV\"][int(st[1])], int(tier[\"chiki\"])], Color(1.0, 0.85, 0.25))",
+  "new": "\ttoast.emit((\"%s  %s %s complete!  +%d $CHIKI\" % [String(q[\"icon\"]), String(q[\"name\"]), [\"I\", \"II\", \"III\", \"IV\"][int(st[1])], int(tier[\"chiki\"])]) if ChikFeat.on(\"crypto\") else (\"%s  %s %s complete!\" % [String(q[\"icon\"]), String(q[\"name\"]), [\"I\", \"II\", \"III\", \"IV\"][int(st[1])]]), Color(1.0, 0.85, 0.25))"
+ },
+ {
+  "file": "Econ.gd",
+  "why": "avatar_perk() is what the Avatar panel (PlayerPanel), the avatar-switch toast (Player.gd) and the wardrobe draw: Sea Shanty / Crowd Favorite read '+15%/+20% $CHIKI from battles' -> 'battle rewards' (same perk, same numbers). Adds Econ.app_text(), a display filter for the const data Econ cannot rewrite in place (Lesson 2/5/8 side-quest text, the four Trading Post chapters, pouch 'holds N $CHIKI' descs); it does nothing until a display site calls it — see notes",
+  "old": "static func avatar_perk(id: String) -> Dictionary:\n\treturn AVATAR_PERK.get(id, {})",
+  "new": "static func avatar_perk(id: String) -> Dictionary:\n\tvar p: Dictionary = AVATAR_PERK.get(id, {})\n\tif not ChikFeat.on(\"crypto\") and String(p.get(\"desc\", \"\")).find(\"$CHIKI\") >= 0:\n\t\tp = p.duplicate()\n\t\tp[\"desc\"] = String(p[\"desc\"]).replace(\"$CHIKI from battles\", \"battle rewards\")\n\treturn p\n\n\n\n\nconst APP_TEXT: = {\n\t\"Stand by a tree, rock or bush and press E. Resources are the realm's raw wealth — every tool, meal, brew and Trading-Post sale starts with something you pulled from the land.\": \"Stand by a tree, rock or bush and press E. Resources are the realm's raw wealth — every tool, meal and brew starts with something you pulled from the land.\", \n\t\"Tap Collect to bank your quest earnings. Quests, side-quests and Trading-Post sales are how trainers earn — and main-story chapters pay REAL $CHIKI to your wallet.\": \"Tap Collect to bank your quest earnings. Quests and side-quests are how trainers earn.\", \n\t\"Send your chikimon against the corruption. Gather → craft → trade → battle → repeat: that loop levels your team, fills your purse and carries the campaign to mastery.\": \"Send your chikimon against the corruption. Gather → craft → battle → repeat: that loop levels your team and carries the campaign to mastery.\", \n\t\"LIST an item on the Trading Post — let another trainer's need meet your surplus\": \"Trading isn't part of the app. Everything you earn here stays on your account.\", \n\t\"Make your first SALE on the Trading Post — commerce is trust, banked\": \"Trading isn't part of the app. Everything you earn here stays on your account.\", \n\t\"BUY something from another trainer on the Trading Post\": \"Trading isn't part of the app. Everything you earn here stays on your account.\", \n\t\"Complete 3 sales in all — build a name the market trusts\": \"Trading isn't part of the app. Everything you earn here stays on your account.\", \n}\nstatic func app_text(s: String) -> String:\n\tif ChikFeat.on(\"crypto\"):\n\t\treturn s\n\tif APP_TEXT.has(s):\n\t\treturn String(APP_TEXT[s])\n\treturn s.replace(\"REAL $CHIKI\", \"\").replace(\" $CHIKI\", \"\")"
+ },
+ {
+  "file": "Chikiseum.gd",
+  "why": "Defence in depth: even if _tab is ever 'cup' (e.g. a future caller of _select_tab), the Cup hero ('Pool of 4 SOL', 'Link your wallet first (the Cup pays real SOL)', 'prize %.2f SOL', entry/fight buttons) is never drawn; the deck is drawn instead.",
+  "old": "\t\t\"cup\": _fill_cup()",
+  "new": "\t\t\"cup\":\n\t\t\tif ChikFeat.on(\"crypto\") and ChikFeat.on(\"chikoria_cup\"):\n\t\t\t\t_fill_cup()\n\t\t\telse:\n\t\t\t\t_fill_deck()"
+ },
+ {
+  "file": "Chikiseum.gd",
+  "why": "My Deck (now the landing tab in the app) no longer points the player at the real-SOL Chikoria Cup.",
+  "old": "\t\t_lbl(box, \"🔒 Only LEGENDARY Chikis may enter the Chikoria Cup.\", 15, GOLD)",
+  "new": "\t\t_lbl(box, \"🔒 Only LEGENDARY Chikis may enter the Chikoria Cup.\" if ChikFeat.on(\"chikoria_cup\") else \"🔒 Only LEGENDARY Chikis carry a Chikiseum deck.\", 15, GOLD)"
+ },
+ {
+  "file": "ChikiseumEntry.gd",
+  "why": "The entry gate's status line (shown on every open, and after a failed roster check) stops telling the player to connect a wallet. const->var because a const cannot call ChikFeat; the name has no external users (no class_name; only this file reads it).",
+  "old": "const ONLINE_UNAVAILABLE: = \"Connect and sign in with your wallet to check verified online PvP availability. No rehearsal replaces an online match.\"",
+  "new": "var ONLINE_UNAVAILABLE: String = \"Connect and sign in with your wallet to check verified online PvP availability. No rehearsal replaces an online match.\" if ChikFeat.on(\"crypto\") else \"Sign in to your Chikoria account to check online PvP availability. No rehearsal replaces an online match.\""
+ },
+ {
+  "file": "ChikiseumEntry.gd",
+  "why": "Fighter card hint stops naming a wallet (initial build).",
+  "old": "\t_fighter_hint = Label.new();_fighter_hint.name = \"SelectedFighterHint\";_fighter_hint.text = \"Wallet-verified ownership required\"",
+  "new": "\t_fighter_hint = Label.new();_fighter_hint.name = \"SelectedFighterHint\";_fighter_hint.text = \"Wallet-verified ownership required\" if ChikFeat.on(\"crypto\") else \"Verified ownership required\""
+ },
+ {
+  "file": "ChikiseumEntry.gd",
+  "why": "Fighter card hint stops naming a wallet (every refresh/selection).",
+  "old": "\t_fighter_hint.text = \"Battle Lv. %d · Verified owned\" % int(presentation.level) if not presentation.is_empty() and _selected_eligible() else \"Wallet-verified ownership required\"",
+  "new": "\t_fighter_hint.text = \"Battle Lv. %d · Verified owned\" % int(presentation.level) if not presentation.is_empty() and _selected_eligible() else (\"Wallet-verified ownership required\" if ChikFeat.on(\"crypto\") else \"Verified ownership required\")"
+ },
+ {
+  "file": "ChikiseumEntry.gd",
+  "why": "The gate's secondary button opens Chikiseum.gd, which in the app no longer has a Cup tab and lands on My Deck; label it for what it opens instead of advertising the real-SOL Cup. Node name kept (QA scripts look it up).",
+  "old": "\tvar cup: = Button.new();cup.name = \"OpenExistingCup\";cup.text = \"Chikoria Cup\";cup.focus_mode = Control.FOCUS_NONE",
+  "new": "\tvar cup: = Button.new();cup.name = \"OpenExistingCup\";cup.text = \"Chikoria Cup\" if ChikFeat.on(\"chikoria_cup\") else \"My Deck\";cup.focus_mode = Control.FOCUS_NONE"
+ },
+ {
+  "file": "ChikiseumEntry.gd",
+  "why": "Tooltip of the same button stops describing the Cup.",
+  "old": "\tcup.tooltip_text = \"Chikoria Cup keeps its own rules and service. Arena battle progression is separate from Chikoria.\"",
+  "new": "\tcup.tooltip_text = \"Chikoria Cup keeps its own rules and service. Arena battle progression is separate from Chikoria.\" if ChikFeat.on(\"chikoria_cup\") else \"Your Legendary's cards and how Chikiseum battles work.\""
+ },
+ {
+  "file": "ChikiseumEntry.gd",
+  "why": "Auth-lost status stops naming a wallet.",
+  "old": "\t\tif _route == \"entry\": _status.text = \"Wallet session expired. Sign in again, then refresh owned Chikimons.\";_enter_online.disabled = true;_refresh_online.disabled = false)",
+  "new": "\t\tif _route == \"entry\": _status.text = (\"Wallet session\" if ChikFeat.on(\"crypto\") else \"Session\") + \" expired. Sign in again, then refresh owned Chikimons.\";_enter_online.disabled = true;_refresh_online.disabled = false)"
+ },
+ {
+  "file": "ChikiseumEntry.gd",
+  "why": "Roster status stops talking about wagering and about listed/escrowed (marketplace) assets.",
+  "old": "\t_status.text = \"Choose one verified owned Chikimon. Online duels have no wagering.\" if first >= 0 else \"No eligible owned Chikimon is available. Listed, escrowed or inactive assets cannot enter.\"",
+  "new": "\tif ChikFeat.on(\"crypto\"):\n\t\t_status.text = \"Choose one verified owned Chikimon. Online duels have no wagering.\" if first >= 0 else \"No eligible owned Chikimon is available. Listed, escrowed or inactive assets cannot enter.\"\n\telse:\n\t\t_status.text = \"Choose one verified owned Chikimon.\" if first >= 0 else \"No eligible owned Chikimon is available.\""
+ },
+ {
+  "file": "ChikiseumEntry.gd",
+  "why": "Admission failure stops naming a wallet.",
+  "old": "\t\t_status.text = \"Admission could not start. Refresh ownership or reconnect your wallet.\";return",
+  "new": "\t\t_status.text = \"Admission could not start. Refresh ownership or reconnect your wallet.\" if ChikFeat.on(\"crypto\") else \"Admission could not start. Refresh and try again.\";return"
+ },
+ {
+  "file": "ChikiseumEntry.gd",
+  "why": "Attach failure stops naming a wallet.",
+  "old": "\t\t_status.text = \"Verified admission could not attach safely. Retry after refreshing your wallet.\";return",
+  "new": "\t\t_status.text = \"Verified admission could not attach safely. Retry after refreshing your wallet.\" if ChikFeat.on(\"crypto\") else \"Verified admission could not attach safely. Refresh and try again.\";return"
+ },
+ {
+  "file": "ChikiseumLiveClient.gd",
+  "why": "Notice (shown in the entry/arena status line) stops telling the player to connect a wallet. Auth logic unchanged.",
+  "old": "\tif auth.is_empty(): notice.emit(\"Connect and sign in with your wallet before entering online PvP.\");return false",
+  "new": "\tif auth.is_empty(): notice.emit(\"Connect and sign in with your wallet before entering online PvP.\" if ChikFeat.on(\"crypto\") else \"Sign in to your Chikoria account before entering online PvP.\");return false"
+ },
+ {
+  "file": "ChikiseumLiveClient.gd",
+  "why": "Auth-lost notice stops naming a wallet.",
+  "old": "\tnotice.emit(\"Wallet session changed or expired. Sign in again; online commands are stopped.\")",
+  "new": "\tnotice.emit((\"Wallet session\" if ChikFeat.on(\"crypto\") else \"Session\") + \" changed or expired. Sign in again; online commands are stopped.\")"
+ },
+ {
+  "file": "ChikiseumArena.gd",
+  "why": "Online lobby note (visible in online_entry_mode, the only mode a release/web build shows) stops naming a wallet.",
+  "old": "\t\t_lobby_note.text = \"Wallet session expired. Commands stopped; the previous result is unconfirmed. Return, sign in again, and re-enter with fresh verified admission.\"",
+  "new": "\t\t_lobby_note.text = (\"Wallet session\" if ChikFeat.on(\"crypto\") else \"Session\") + \" expired. Commands stopped; the previous result is unconfirmed. Return, sign in again, and re-enter with fresh verified admission.\""
+ },
+ {
+  "file": "ChikiseumArena.gd",
+  "why": "Online lobby note stops mentioning wagering.",
+  "old": "\t_lobby_note.text = \"Verified owned Chikimon admitted. Challenge a player or find a match. No wagering.\"",
+  "new": "\t_lobby_note.text = \"Verified owned Chikimon admitted. Challenge a player or find a match.\" + (\" No wagering.\" if ChikFeat.on(\"crypto\") else \"\")"
+ },
+ {
+  "file": "ChikiseumArena.gd",
+  "why": "The '?' How-to-duel dialog in online duels stops mentioning wagering/currency payouts (the replace still removes the 'No SOL wagering' sentence).",
+  "old": "\t_rules.dialog_text = _rules.dialog_text.replace(\"Connected practice uses test credits only. No SOL wagering.\", \"Online duels use verified owned Chikimons. No wagering or currency payouts.\")",
+  "new": "\t_rules.dialog_text = _rules.dialog_text.replace(\"Connected practice uses test credits only. No SOL wagering.\", \"Online duels use verified owned Chikimons. No wagering or currency payouts.\" if ChikFeat.on(\"crypto\") else \"Online duels use verified owned Chikimons.\")"
+ },
+ {
+  "file": "Temple.gd",
+  "why": "Temple intro (Grimwick's screen) stops talking about the $CHIKI tribute (_srv_on/runs are the server's $CHIKI payout switch). The currency-only line is dropped; the runs line keeps its non-currency half.",
+  "old": "\telif not _asset_test_mode() and not _srv_on:\n\t\tmessage = \"Practice is open. Reward tribute is not open today.\"\n\telif not _asset_test_mode() and _runs_left == 0:\n\t\tmessage = \"Today's reward runs are spent. Further practice pays no tribute.\"",
+  "new": "\telif not _asset_test_mode() and not _srv_on and ChikFeat.on(\"crypto\"):\n\t\tmessage = \"Practice is open. Reward tribute is not open today.\"\n\telif not _asset_test_mode() and _runs_left == 0:\n\t\tmessage = \"Today's reward runs are spent. Further practice pays no tribute.\" if ChikFeat.on(\"crypto\") else \"Today's reward runs are spent.\""
+ },
+ {
+  "file": "Temple.gd",
+  "why": "Result screen (non-wheel path): the whole $CHIKI tribute block is skipped - '+N $CHIKI' coin row, 'nothing was paid', 'ledger', 'daily tribute', and 'Reconnect your wallet before the next purge'. Loot rows above (_draw_loot_result) and the buttons below stay; earning itself is untouched.",
+  "old": "\telif _paid_why == \"sandbox\":\n\t\t_head(\"SANDBOX PREVIEW  /  REWARDS AND INVENTORY ARE NOT SAVED\", 10, result_dim)\n\telif _paid_why == \"off\":",
+  "new": "\telif _paid_why == \"sandbox\":\n\t\t_head(\"SANDBOX PREVIEW  /  REWARDS AND INVENTORY ARE NOT SAVED\", 10, result_dim)\n\telif not ChikFeat.on(\"crypto\"):\n\t\tpass\n\telif _paid_why == \"off\":"
+ },
+ {
+  "file": "Temple.gd",
+  "why": "Result screen (reward-wheel path): '+N $CHIKI' coin row and 'Currency tribute was not recorded' are not drawn. The payout is still credited (_credit/_profile.earn unchanged), so progress syncs.",
+  "old": "\tif _paid_amt > 0.0:\n\t\tUISkin.coin_row(_body, \"+%d $CHIKI\" % int(round(_paid_amt)), 14, Color(\"efb84d\"), 16)\n\telif _paid_why in [\"offline\", \"auth\"]:",
+  "new": "\tif _paid_amt > 0.0 and ChikFeat.on(\"crypto\"):\n\t\tUISkin.coin_row(_body, \"+%d $CHIKI\" % int(round(_paid_amt)), 14, Color(\"efb84d\"), 16)\n\telif _paid_why in [\"offline\", \"auth\"] and ChikFeat.on(\"crypto\"):"
+ },
+ {
+  "file": "Temple.gd",
+  "why": "Victory-reward row stops telling the player to reconnect a wallet.",
+  "old": "\t\t\treturn \"reconnect your wallet to prove ownership; no item was issued\"",
+  "new": "\t\t\treturn \"reconnect your wallet to prove ownership; no item was issued\" if ChikFeat.on(\"crypto\") else \"sign in again to confirm your account; no item was issued\""
+ },
+ {
+  "file": "ChikFeat.gd",
+  "why": "In the app the in-game balance is named \"coins\" wherever it is drawn (TranslationServer rename, installed only when crypto is off)",
+  "old": "static func on(key: String) -> bool:\n\treturn bool(_all().get(key, true))",
+  "new": "static func on(key: String) -> bool:\n\treturn bool(_all().get(key, true))\n\n\n## In the app the game's own balance is shown as \"coins\".\n##\n## The balance is an in-game number the player earns and spends by playing. On the website it is\n## named after the $CHIKI token, because there it can be collected on-chain; in the app nothing is\n## collected anywhere, so the name would be the only thing left presenting a cryptocurrency. Rather\n## than rewrite several hundred call sites, every Label, Button and RichTextLabel already passes its\n## text through TranslationServer (the game does not use it for anything else), so one translation\n## renames the currency everywhere it is drawn. Installed only when `crypto` is off: the website\n## never sees it.\nstatic var _words: Translation = null\n\n\nstatic func install_app_words() -> void:\n\tif _words != null or on(\"crypto\"):\n\t\treturn\n\t_words = AppWords.new()\n\t_words.locale = TranslationServer.get_locale()\n\tTranslationServer.add_translation(_words)\n\n\n## Must run before the engine shuts down: a script-backed Translation still registered when its\n## script is freed crashes the engine on exit.\nstatic func remove_app_words() -> void:\n\tif _words != null:\n\t\tTranslationServer.remove_translation(_words)\n\t\t_words = null\n\n\nclass AppWords extends Translation:\n\tfunc _get_message(src_message: StringName, context: StringName = &\"\") -> StringName:\n\t\tvar s: = String(src_message)\n\t\tif s.find(\"$CHIKI\") < 0:\n\t\t\treturn &\"\"\n\t\treturn StringName(s.replace(\"REAL $CHIKI\", \"COINS\").replace(\"real $CHIKI\", \"coins\").replace(\"$CHIKI\", \"coins\"))"
+ },
+ {
+  "file": "Main.gd",
+  "why": "Install the app currency wording before any UI is built",
+  "old": "func _ready() -> void :\n\t_all_assets_sandbox_launch = _wants_all_assets_sandbox()",
+  "new": "func _ready() -> void :\n\tChikFeat.install_app_words()\n\t_all_assets_sandbox_launch = _wants_all_assets_sandbox()"
+ },
+ {
+  "file": "Main.gd",
+  "why": "Remove it again before shutdown (a script-backed Translation left registered crashes on exit)",
+  "old": "func _ready() -> void :\n\tChikFeat.install_app_words()\n\t_all_assets_sandbox_launch = _wants_all_assets_sandbox()",
+  "new": "func _exit_tree() -> void :\n\tChikFeat.remove_app_words()\n\n\nfunc _ready() -> void :\n\tChikFeat.install_app_words()\n\t_all_assets_sandbox_launch = _wants_all_assets_sandbox()"
+ },
+ {
+  "file": "InfoBar.gd",
+  "why": "The gate's Open Gates event line (about the website's token entry gate) is not drawn in the app",
+  "old": "\tif bool(og.get(\"active\", false)):\n\t\tvar until: = ev_end_date(int(og.get(\"ends_ms\", 0)))",
+  "new": "\tif bool(og.get(\"active\", false)) and ChikFeat.on(\"crypto\"):\n\t\tvar until: = ev_end_date(int(og.get(\"ends_ms\", 0)))"
+ }
+]

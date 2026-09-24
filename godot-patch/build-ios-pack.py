@@ -8,9 +8,10 @@ The app must not draw a marketplace, a wallet button or a chat box. The website 
 three. Those are drawn by GDScript inside the pack, so the two cannot share one — but they can
 share almost all of one.
 
-This takes the pack `realm/` already serves and rewrites **eight files**: the six compiled scripts
-`apply-ios-pack-patch.py` changes, the new `ChikFeat.gdc` with its `.remap`, and the global class
-cache that registers `ChikFeat` as a class name. Out of 5,459 files. Textures, scenes, audio, card
+This takes the pack `realm/` already serves and rewrites **twenty-two files**: the nineteen compiled
+scripts `apply-ios-pack-patch.py` and `apply-ios-trading-patch.py` change, the new `ChikFeat.gdc`
+with its `.remap`, and the global class cache that registers `ChikFeat` as a class name. Out of
+5,479 files. Textures, scenes, audio, card
 art and every other script are carried over byte for byte.
 
 WHY SO SMALL A CHANGE, measured rather than assumed. Compiling the *recovered* project and diffing
@@ -45,14 +46,39 @@ from pathlib import Path
 # Every file the iOS patch touches. Explicit rather than "whatever differs", so a regenerated
 # overlay cannot smuggle an unrelated script into the app.
 OVERLAY_FILES = [
-	"ChikFeat.gdc",
-	"ChikFeat.gd.remap",
-	"GameHUD.gdc",
-	"Chikiseum.gdc",
-	"Onboarding.gdc",
+	"Chain.gdc",
 	"Chat.gdc",
+	"ChikFeat.gdc",
+	"Chikiseum.gdc",
+	"ChikiseumArena.gdc",
+	"ChikiseumEntry.gdc",
+	"ChikiseumLiveClient.gdc",
+	"Econ.gdc",
+	"GameHUD.gdc",
 	"InfoBar.gdc",
+	"Main.gdc",
+	"Market.gdc",
+	"Minimap.gdc",
+	"Net.gdc",
+	"Onboarding.gdc",
+	"Player.gdc",
+	"PlayerPanel.gdc",
+	"Profile.gdc",
+	"Temple.gdc",
+	"Title.gdc",
+	"ChikFeat.gd.remap",
 	".godot/global_script_class_cache.cfg",
+]
+
+# Files the lite base is MISSING and the app needs, copied out of the HD pack. The lite family was
+# exported without the Chikiseum gate crest, and `ChikiseumReferenceWorld.gd` preloads it — so in a
+# lite pack that script fails to parse ("Preload file ... does not exist") and the Chikiseum arena
+# world never loads on a phone. The imported scene is self-contained (no textures of its own).
+# Extract them with:
+#   gdre_tools --headless --extract=index.pck --include=res://<path> --output=godot-patch/ios-overlay
+ADDED_FILES = [
+	"assets/glb/chikiseum_higgsfield_crest.glb.import",
+	".godot/imported/chikiseum_higgsfield_crest.glb-d1be0047d91385f697321cfa785cd320.scn",
 ]
 
 
@@ -117,7 +143,7 @@ def main() -> int:
 	if not overlay.is_dir():
 		print(f"error: {overlay} is not a directory")
 		return 1
-	missing = [f for f in OVERLAY_FILES if not (overlay / f).is_file()]
+	missing = [f for f in OVERLAY_FILES + ADDED_FILES if not (overlay / f).is_file()]
 	if missing:
 		print("error: the overlay is incomplete:")
 		for f in missing:
@@ -134,6 +160,10 @@ def main() -> int:
 		return 1
 
 	replaced = added = unchanged = 0
+	for rel in ADDED_FILES:
+		if rel not in files:
+			files[rel] = (overlay / rel).read_bytes()
+			added += 1
 	for rel in OVERLAY_FILES:
 		blob = (overlay / rel).read_bytes()
 		if rel in files:

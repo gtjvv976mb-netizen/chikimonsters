@@ -237,7 +237,7 @@ def build_project() -> tuple[str, list[str], list[str]]:
 		'PRODUCT_NAME = "$(TARGET_NAME)";',
 		"SWIFT_EMIT_LOC_STRINGS = YES;",
 		f"SWIFT_VERSION = {SWIFT_VERSION};",
-		"TARGETED_DEVICE_FAMILY = \"1,2\";",
+		"TARGETED_DEVICE_FAMILY = 1;",
 	]
 
 	def config(ident: str, name: str, settings: list[str], comment: str) -> None:
