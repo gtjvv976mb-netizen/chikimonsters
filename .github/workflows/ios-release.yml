@@ -53,8 +53,17 @@ jobs:
         with:
           sparse-checkout: ios
 
-      - name: Toolchain
-        run: xcodebuild -version
+      # App Store Connect only accepts builds made with the iOS 26 SDK or later (Xcode 26+); the
+      # runner's default Xcode is older. Pick the newest Xcode 26.x installed on the image.
+      - name: Toolchain (Xcode 26 or later)
+        run: |
+          XC=$(ls -d /Applications/Xcode_2[6-9]*.app 2>/dev/null | grep -v -i beta | sort -V | tail -1)
+          if [ -z "$XC" ]; then
+            echo "::error::No Xcode 26+ on this runner. Installed:"; ls -d /Applications/Xcode*.app; exit 1
+          fi
+          sudo xcode-select -s "$XC/Contents/Developer"
+          xcodebuild -version
+          xcodebuild -showsdks | grep -i iphoneos
 
       - name: API key on disk (runner-local, deleted with the runner)
         env:
