@@ -1,0 +1,72 @@
+# Builds the iOS export template for the NATIVE Chiki Monsters app: Godot 4.6-stable with the Voxel
+# Tools 1.6 module compiled in — the exact engine the game is made with (the editor's build stamp is
+# godotengine/godot 89cea14 "Bump version to 4.6-stable" + Zylann/godot_voxel 595f52e "Set version
+# to 1.6"). Stock Godot templates do not contain the voxel module, and the island, the player and
+# the Chikiseum arena all need it, so the template has to be built here.
+#
+# Output: the `godot-ios-template` artifact — godot_ios.zip, the file the Godot editor's iOS export
+# expects as its custom release template. It carries the device (arm64) and simulator (arm64)
+# release libraries, so the same template builds for an iPhone and for CI's iOS Simulator.
+#
+# Run it from the Actions tab, or by pushing a change to this file on a claude/* branch. It only has
+# to run again when the engine or the module version changes.
+name: iOS engine
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ['claude/**']
+    paths: ['.github/workflows/ios-engine.yml']
+
+env:
+  GODOT_REF: 4.6-stable
+  GODOT_SHA: 89cea143987d564363e15d207438530651d943ac
+  VOXEL_SHA: 595f52ee4e23203a865eeb981f115909f7aa92f4
+  # Vulkan/MoltenVK is not needed: Godot 4.6 renders on iOS through Metal (Mobile / Forward+) and
+  # OpenGL ES (Compatibility). Leaving it out also drops the Vulkan SDK install.
+  SCONS_FLAGS: platform=ios target=template_release arch=arm64 vulkan=no debug_symbols=no
+
+jobs:
+  template:
+    runs-on: macos-15
+    timeout-minutes: 330
+    steps:
+      - name: Toolchain (Xcode 26 or later)
+        run: |
+          XC=$(ls -d /Applications/Xcode_2[6-9]*.app 2>/dev/null | grep -v -i beta | sort -V | tail -1)
+          if [ -z "$XC" ]; then echo "::error::No Xcode 26+ on this runner"; ls -d /Applications/Xcode*.app; exit 1; fi
+          sudo xcode-select -s "$XC/Contents/Developer"
+          xcodebuild -version
+          python3 -m pip install --break-system-packages scons || python3 -m pip install scons
+          scons --version | head -2
+
+      - name: Sources (Godot 4.6-stable + Voxel Tools 1.6)
+        run: |
+          git clone --depth 1 --branch "$GODOT_REF" https://github.com/godotengine/godot.git godot
+          test "$(git -C godot rev-parse HEAD)" = "$GODOT_SHA" || { echo "::error::4.6-stable is not $GODOT_SHA"; exit 1; }
+          git init -q godot/modules/voxel
+          git -C godot/modules/voxel fetch -q --depth 1 https://github.com/Zylann/godot_voxel.git "$VOXEL_SHA"
+          git -C godot/modules/voxel checkout -q FETCH_HEAD
+          git -C godot/modules/voxel log -1 --format='voxel %h %s'
+
+      - name: Build — device (arm64)
+        working-directory: godot
+        run: scons $SCONS_FLAGS -j"$(sysctl -n hw.ncpu)"
+
+      - name: Build — simulator (arm64)
+        working-directory: godot
+        run: scons $SCONS_FLAGS ios_simulator=yes -j"$(sysctl -n hw.ncpu)"
+
+      - name: Bundle the export template
+        working-directory: godot
+        run: |
+          scons $SCONS_FLAGS generate_bundle=yes -j"$(sysctl -n hw.ncpu)"
+          ls -la bin
+          unzip -l bin/godot_ios.zip | grep -E "libgodot|\.xcframework/" | head -20
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: godot-ios-template
+          path: godot/bin/godot_ios.zip
+          retention-days: 90
+          if-no-files-found: error
