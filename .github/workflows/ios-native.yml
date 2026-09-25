@@ -112,7 +112,7 @@ jobs:
           ls -la "$APP" | head
 
       - name: Run in the iOS Simulator and take screenshots
-        timeout-minutes: 15
+        timeout-minutes: 28
         run: |
           set +e
           # Every simulator command is capped: a wedged simctl must not hold the job for 90 minutes.
@@ -128,10 +128,10 @@ jobs:
           cap 300 xcrun simctl bootstatus "$DEV" -b || echo "bootstatus did not finish"
           cap 180 xcrun simctl install "$DEV" "$APP"
           # stdout/stderr straight to files: no console attachment to hang on
-          cap 120 xcrun simctl launch --stdout="$PWD/shots/stdout.log" --stderr="$PWD/shots/stderr.log" \
+          cap 360 xcrun simctl launch --stdout="$PWD/shots/stdout.log" --stderr="$PWD/shots/stderr.log" \
             "$DEV" com.chikimonsters.Chikoria || echo "launch returned $?"
           prev=0
-          for t in 20 45 90 150; do
+          for t in 30 120 240 360 480; do
             sleep $((t - prev)); prev=$t
             cap 60 xcrun simctl io "$DEV" screenshot "shots/t${t}s.png" || true
             echo "--- ${t}s  running: $(cap 20 xcrun simctl spawn "$DEV" launchctl list 2>/dev/null | grep -c chikimonsters)"
