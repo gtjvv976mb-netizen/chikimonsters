@@ -5,7 +5,8 @@
 
 `recovered` is the project the web iOS pack is built from (the pack, trading and review patches
 already applied — see ../README.md). This copies its scripts aside, applies native-edits.json (and
-native-web-checks.json, where "production" checks are widened from the website to the app), adds
+native-web-checks.json, where "production" checks are widened from the website to the app, and
+native-hd.json, the full-detail world on 6 GB iPhones), adds
 src/*.gd, compiles every script that changed with GDRE Tools (bytecode 4.6.0) and writes the .gdc
 files, the .remap for each new script and override.cfg into overlay/. The recovered tree itself is
 not touched.
@@ -61,9 +62,9 @@ def main() -> int:
 		for f in recovered.glob("*.gd"):
 			shutil.copy(f, work / f.name)
 		edits = json.loads((HERE / "native-edits.json").read_text())
-		extra = HERE / "native-web-checks.json"
-		if extra.exists():
-			edits += json.loads(extra.read_text())
+		for extra in ("native-web-checks.json", "native-hd.json"):
+			if (HERE / extra).exists():
+				edits += json.loads((HERE / extra).read_text())
 		changed = set()
 		for e in edits:
 			p = work / e["file"]

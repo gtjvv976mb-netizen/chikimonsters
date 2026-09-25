@@ -6,8 +6,9 @@
 #
 # What it builds:
 #   1. the game pack — the published iOS pack (index.pck.ios.lite, the same files the web app
-#      runs: quests, trading and the Meme Dynasty already removed) plus godot-patch/native/overlay,
-#      repacked from ZIP to GDPC because a native app only mounts "<executable>.pck";
+#      runs: quests, trading and the Meme Dynasty already removed) with the full-resolution art of
+#      the website's HD pack (hd-upgrade.py) and godot-patch/native/overlay, repacked from ZIP to
+#      GDPC because a native app only mounts "<executable>.pck";
 #   2. the Xcode project — the Godot editor's iOS exporter run on a tiny shell project
 #      (godot-patch/native/shell) against OUR engine template (Godot 4.6 + Voxel Tools 1.6, built
 #      by ios-engine.yml), then the shell's pack swapped for the game's;
@@ -172,6 +173,10 @@ jobs:
         run: |
           python3 godot-patch/native/fetch-pack.py "$PACK" pack.zip
           mkdir x && (cd x && unzip -q ../pack.zip)
+          # HD art: the website's HD pack's full-resolution textures over the lite ones
+          python3 godot-patch/native/fetch-pack.py index.pck hd.pck
+          python3 godot-patch/native/hd-upgrade.py hd.pck x
+          rm hd.pck
           cp -R godot-patch/native/overlay/. x/
           "$GODOT" --headless --script godot-patch/native/zip2pck.gd -- "$PWD/x" "$PWD/Chikoria.pck"
           ls -la Chikoria.pck
