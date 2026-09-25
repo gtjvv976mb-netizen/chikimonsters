@@ -13,7 +13,8 @@
 #      by ios-engine.yml), then the shell's pack swapped for the game's;
 #   3. a simulator build that is launched in the iOS Simulator and photographed, so every run shows
 #      whether the game actually comes up;
-#   4. when run with upload=true: an App Store archive, signed and uploaded like ios-release.yml.
+#   4. when run with upload=true, or pushed with "[testflight]" in the commit message: an App Store
+#      archive, signed and uploaded like ios-release.yml.
 name: iOS native
 
 on:
@@ -249,7 +250,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: API key on disk
-        if: inputs.upload
+        if: inputs.upload || contains(github.event.head_commit.message, '[testflight]')
         env:
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
           ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
@@ -258,7 +259,7 @@ jobs:
           printf '%s\n' "$ASC_PRIVATE_KEY" > "$RUNNER_TEMP/asc/AuthKey_${ASC_KEY_ID}.p8"
 
       - name: Archive, sign and upload to App Store Connect
-        if: inputs.upload
+        if: inputs.upload || contains(github.event.head_commit.message, '[testflight]')
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
