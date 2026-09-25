@@ -209,24 +209,6 @@ em {
     url("/site-assets/scene-chikoria-cast-v9.webp") center 53% / cover no-repeat;
   transform: scale(1.025);
 }
-.hero-haze {
-  position: absolute;
-  z-index: -2;
-  inset: 0;
-  background:
-    radial-gradient(
-      ellipse 44% 65% at 75% 63%,
-      rgba(244, 179, 106, 0.17),
-      transparent 75%
-    ),
-    linear-gradient(
-      0deg,
-      #100b22 0%,
-      rgba(16, 11, 34, 0.65) 8%,
-      transparent 30%
-    ),
-    linear-gradient(90deg, rgba(12, 8, 29, 0.58), transparent 73%);
-}
 .hero-content {
   position: relative;
   z-index: 3;
@@ -243,6 +225,7 @@ em {
   text-transform: uppercase;
 }
 .eyebrow {
+  text-shadow: 0 1px 3px rgba(16, 11, 34, 0.9), 0 2px 10px rgba(16, 11, 34, 0.7);
   display: flex;
   align-items: center;
   gap: 14px;
@@ -270,13 +253,14 @@ h3 {
   max-width: 790px;
   margin: 28px 0 26px;
   text-wrap: balance;
-  text-shadow: 0 5px 28px rgba(11, 6, 26, 0.35);
+  text-shadow: 0 2px 3px rgba(11, 6, 26, 0.55), 0 5px 28px rgba(11, 6, 26, 0.6);
 }
 .hero h1 em {
   display: inline-block;
   color: #ffe09a;
   text-shadow:
-    0 3px 0 rgba(120, 65, 35, 0.35),
+    0 3px 0 rgba(120, 65, 35, 0.45),
+    0 2px 14px rgba(11, 6, 26, 0.55),
     0 0 35px rgba(255, 200, 98, 0.25);
 }
 .hero-lead {
@@ -284,7 +268,10 @@ h3 {
   color: #f0e8eb;
   font-size: clamp(17px, 1.55vw, 20px);
   line-height: 1.6;
-  text-shadow: 0 2px 12px #100b22;
+  text-shadow:
+    0 1px 2px rgba(16, 11, 34, 0.95),
+    0 0 10px rgba(16, 11, 34, 0.8),
+    0 2px 18px #100b22;
 }
 .hero-actions {
   display: flex;
@@ -343,6 +330,15 @@ h3 {
 .button-ghost:hover {
   background: rgba(33, 21, 62, 0.8);
 }
+/* Over the untinted scenery the hero's ghost button carries its own glass. */
+.hero .button-ghost {
+  border-color: rgba(255, 237, 200, 0.75);
+  background: rgba(13, 8, 30, 0.62);
+  backdrop-filter: blur(8px);
+}
+.hero .button-ghost:hover {
+  background: rgba(33, 21, 62, 0.85);
+}
 .play-icon {
   width: 26px;
   height: 26px;
@@ -360,7 +356,8 @@ h3 {
 }
 .hero-note {
   margin: 22px 0 0;
-  color: #dfd4e6;
+  color: #f1eaf4;
+  text-shadow: 0 1px 2px rgba(16, 11, 34, 0.95), 0 0 8px rgba(16, 11, 34, 0.85), 0 2px 12px rgba(16, 11, 34, 0.8);
   font-size: 12px;
   letter-spacing: 0.055em;
 }
@@ -982,17 +979,6 @@ h3 {
   .hero-land {
     background-position: 57% center;
   }
-  .hero-haze {
-    background:
-      linear-gradient(
-        180deg,
-        rgba(11, 7, 29, 0.48),
-        rgba(10, 7, 28, 0.36) 46%,
-        rgba(10, 7, 28, 0.18) 78%,
-        #100b22 100%
-      ),
-      linear-gradient(90deg, rgba(11, 7, 29, 0.5), transparent);
-  }
   .hero-content {
     padding-top: clamp(133px, 19vh, 170px);
     padding-bottom: 340px;
@@ -1149,12 +1135,6 @@ h3 {
 .world-track > .hero { isolation: isolate; }
 .hero-land { display: none; }
 .hero-light { z-index: 0; mix-blend-mode: normal; }
-.hero-haze {
-  z-index: 1;
-  background:
-    linear-gradient(90deg, rgba(12, 8, 29, .58), transparent 73%),
-    linear-gradient(180deg, rgba(12, 8, 29, .12), transparent 45%, rgba(16, 11, 34, .16));
-}
 /* ONE video, ONE world. The stage holds a single first-person walk through
    Chikoria; the scroll position is its playhead (see site.js). The poster is
    the walk's first frame and sits underneath until the clip has data, so the
@@ -1177,16 +1157,9 @@ h3 {
   inset: -4%;
   background: radial-gradient(ellipse 48% 60% at 62% 35%, rgba(255, 237, 154, .16), transparent 76%);
 }
-.hero-haze { pointer-events: none; }
 .hero-content { z-index: 5; padding-top: clamp(130px, 15vh, 190px); padding-bottom: 36px; }
-.journey-vignette {
-  position: absolute;
-  z-index: 3;
-  inset: 0;
-  background:
-    linear-gradient(90deg, rgba(7, 5, 18, .78), rgba(9, 7, 25, .4) 56%, rgba(9, 7, 25, .12)),
-    linear-gradient(0deg, rgba(16, 11, 34, .52), transparent 25%, transparent 77%, rgba(11, 8, 27, .3));
-}
+/* No tint over the stage: the scenery shows at full strength and every line of
+   copy carries its own shadow instead. */
 .journey-beats { position: relative; z-index: 2; }
 .journey-beat {
   min-height: 100svh;
@@ -1195,7 +1168,7 @@ h3 {
   align-items: center;
   padding: 100px max(32px, calc((100vw - var(--wrap)) / 2));
 }
-.journey-copy { max-width: 690px; text-shadow: 0 4px 26px rgba(4, 3, 13, .72); }
+.journey-copy { max-width: 690px; text-shadow: 0 2px 4px rgba(4, 3, 13, .7), 0 4px 26px rgba(4, 3, 13, .8); }
 .journey-copy h2 {
   margin: 20px 0 18px;
   font-size: clamp(52px, 6.4vw, 96px);
@@ -1270,10 +1243,37 @@ h3 {
   justify-content: space-between;
   align-items: flex-start;
   padding: clamp(17px, 3vw, 35px);
-  background: linear-gradient(180deg, rgba(8, 6, 24, .37), transparent 35%, transparent 52%, rgba(8, 6, 24, .68));
   color: #fff9eb;
   pointer-events: none;
 }
+/* Recorded clips: the card takes the clip's own shape, shows its poster, and
+   offers one play button. Nothing but the poster loads until it is pressed. */
+.gameplay-media.has-clip { aspect-ratio: 1920 / 1100; }
+.gameplay-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: #090817; }
+.gameplay-media.has-clip .gameplay-slot-overlay { z-index: 1; }
+.gameplay-play {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  place-items: center;
+  width: clamp(62px, 7vw, 86px);
+  aspect-ratio: 1;
+  border: 1px solid rgba(255, 228, 164, .8);
+  border-radius: 50%;
+  background: rgba(17, 10, 36, .72);
+  box-shadow: 0 10px 34px rgba(5, 3, 15, .45), 0 0 0 7px rgba(255, 219, 119, .14);
+  backdrop-filter: blur(7px);
+  cursor: pointer;
+  transform: translate(-50%, -50%);
+  transition: transform .2s ease, background .2s ease;
+}
+.gameplay-play > span { width: 0; height: 0; margin-left: 6px; border-left: 22px solid var(--gold); border-top: 14px solid transparent; border-bottom: 14px solid transparent; }
+.gameplay-play:hover { background: rgba(38, 24, 70, .82); transform: translate(-50%, -50%) scale(1.06); }
+.gameplay-play:focus-visible { outline: 3px solid var(--gold); outline-offset: 4px; }
+.gameplay-media.is-playing .gameplay-play,
+.gameplay-media.is-playing .gameplay-slot-overlay { display: none; }
 .gameplay-slot-label {
   border: 1px solid rgba(255, 228, 164, .7);
   border-radius: 4px;
@@ -1318,7 +1318,6 @@ h3 {
   .journey-beat { padding: 100px 30px; align-items: end; }
   .journey-copy { margin-bottom: 10vh; }
   .journey-copy h2 { font-size: clamp(49px, 8vw, 76px); }
-  .journey-vignette { background: linear-gradient(0deg, rgba(7, 5, 18, .67), rgba(9, 7, 25, .2) 82%); }
   .journey-progress { right: 17px; height: 98px; }
   .gameplay-grid { gap: 30px 16px; }
   .gameplay-caption { display: block; }
@@ -1371,14 +1370,8 @@ html:not(.has-js) .journey-beat:nth-child(4) { background-image: linear-gradient
     background-position: center 80%;
     transform-origin: 50% 54%;
   }
-  .hero-haze {
-    background:
-      linear-gradient(180deg, rgba(11, 7, 29, .52), rgba(10, 7, 28, .35) 46%, rgba(10, 7, 28, .12) 70%, rgba(16, 11, 34, .54) 100%),
-      linear-gradient(90deg, rgba(11, 7, 29, .38), transparent);
-  }
   .hero-land { background-position: center bottom; }
   html:not(.has-js) .journey-beat { background-position: center 80%; }
-  .journey-vignette { background: linear-gradient(180deg, rgba(7, 5, 18, .78), rgba(9, 7, 25, .42) 45%, transparent 74%); }
   html:not(.has-js) .journey-beat:nth-child(1) { background-image: linear-gradient(180deg, rgba(7, 5, 18, .78), rgba(7, 5, 18, .16) 65%), url("/site-assets/scene-chikoria-mobile-cast-v9.webp"); }
   html:not(.has-js) .journey-beat:nth-child(2) { background-image: linear-gradient(180deg, rgba(7, 5, 18, .78), rgba(7, 5, 18, .16) 65%), url("/site-assets/chapter-02-v5-mobile.webp"); }
   html:not(.has-js) .journey-beat:nth-child(3) { background-image: linear-gradient(180deg, rgba(7, 5, 18, .78), rgba(7, 5, 18, .16) 65%), url("/site-assets/chapter-03-v5-mobile.webp"); }

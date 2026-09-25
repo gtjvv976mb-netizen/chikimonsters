@@ -393,12 +393,34 @@
     closeCodex();
   });
 
-  // Gameplay footage is intentionally not wired yet. The four static preview
-  // cards in index.html carry data-video-slot IDs (exploration, gathering,
-  // wicked-temple, chikiseum). When verified footage is available, add a
-  // poster and a click-to-play video for each matching slot; never autoplay.
+  // Gameplay clips are click-to-play and never autoplay. Each <video> ships
+  // preload="none", so only its poster loads until a visitor presses play.
+  // Native controls stay in the markup for no-JS visitors; with JS the one
+  // play button stands in for them until the clip starts. Chikiseum has no
+  // clip yet and stays a static preview (see SITE-FOOTAGE.md).
+  const gameplayVideos = [];
+  for (const media of document.querySelectorAll(".gameplay-media.has-clip")) {
+    const video = media.querySelector(".gameplay-video");
+    const play = media.querySelector(".gameplay-play");
+    gameplayVideos.push(video);
+    video.controls = false;
+    play.addEventListener("click", () => {
+      media.classList.add("is-playing");
+      video.controls = true;
+      video.play().catch(() => {
+        /* Native controls remain available when play() is refused. */
+      });
+      video.focus({ preventScroll: true });
+    });
+    video.addEventListener("play", () => {
+      for (const other of gameplayVideos) if (other !== video) other.pause();
+    });
+  }
+
   document.addEventListener("visibilitychange", () => {
-    if (document.hidden) introVideo.pause();
-    else scheduleScroll();
+    if (document.hidden) {
+      introVideo.pause();
+      for (const video of gameplayVideos) video.pause();
+    } else scheduleScroll();
   });
 })();

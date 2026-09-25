@@ -77,13 +77,11 @@
         <div class="world-stage" aria-hidden="true">
           <img class="world-poster" src="/site-assets/scene-chikoria-cast-v9.webp" alt="" decoding="async" fetchpriority="high" />
           <video class="world-journey" data-src="/site-assets/chikoria-walk-v4-900.mp4" data-src-phone="/site-assets/chikoria-walk-v4-540.mp4" muted playsinline preload="auto" aria-hidden="true"></video>
-          <div class="journey-vignette"></div>
           <div class="journey-progress"><span></span></div>
         </div>
       <section class="hero" aria-labelledby="hero-title">
         <div class="hero-land scene-layer scene-layer-back" aria-hidden="true"></div>
         <div class="hero-light scene-layer scene-layer-mid" aria-hidden="true"></div>
-        <div class="hero-haze" aria-hidden="true"></div>
         <div class="hero-content section-wrap">
           <p class="eyebrow">
             <span class="eyebrow-line"></span> Welcome to Chikoria
@@ -154,30 +152,34 @@
           <div class="section-heading reveal">
             <p class="kicker">FOUR WAYS INTO CHIKORIA</p>
             <h2 id="gameplay-title">Pick your path.<br /><em>Make it yours.</em></h2>
-            <p>Explore the world and its challenges below. Gameplay clips will join these previews once recorded.</p>
+            <p>Real gameplay, recorded in the realm. Press play on any clip. The Chikiseum&rsquo;s is still to come.</p>
           </div>
-          <!-- Future footage mapping: data-video-slot="exploration|gathering|wicked-temple|chikiseum"
-               corresponds to /site-assets/video-{slot}.mp4. Add a verified clip and poster to the
-               matching card only when that recording exists; these previews are intentionally inert. -->
+          <!-- Footage mapping: data-video-slot="exploration|gathering|wicked-temple|chikiseum"
+               corresponds to /site-assets/video-{slot}.mp4 with video-{slot}-poster.webp. Three slots
+               carry recorded clips; chikiseum stays an inert preview until its recording exists.
+               Clips are click-to-play with preload="none": nothing but the poster loads until play. -->
           <div class="gameplay-grid">
             <article class="gameplay-card gameplay-card-wide reveal" data-video-slot="exploration">
-              <div class="gameplay-media">
-                <img src="/site-assets/scene-chikoria-cast-v9.webp" width="1672" height="941" alt="Illustrated Chikoria landscape with Firix and Bamboran beside the path" loading="lazy" decoding="async" />
-                <div class="gameplay-slot-overlay"><span class="gameplay-slot-label">World exploration</span><span class="gameplay-slot-status">Gameplay clip coming soon</span></div>
+              <div class="gameplay-media has-clip">
+                <video class="gameplay-video" src="/site-assets/video-exploration.mp4" poster="/site-assets/video-exploration-poster.webp" width="1920" height="1100" controls playsinline muted preload="none" aria-label="Recorded gameplay: flying a griffin mount across the Chikoria Realm"></video>
+                <button class="gameplay-play" type="button" aria-label="Play the world exploration gameplay clip (0:20)"><span aria-hidden="true"></span></button>
+                <div class="gameplay-slot-overlay"><span class="gameplay-slot-label">World exploration</span><span class="gameplay-slot-status">Gameplay &middot; 0:20</span></div>
               </div>
               <div class="gameplay-caption"><div><span class="gameplay-index">01 / EXPLORE</span><h3>Wander into wonder</h3></div><p>Follow your curiosity through Chikoria.</p></div>
             </article>
             <article class="gameplay-card reveal" data-video-slot="gathering">
-              <div class="gameplay-media">
-                <img src="/site-assets/chapter-02-v5.webp" width="1672" height="941" alt="Illustrated Firix and Rivaros beside Chikoria's gathering river" loading="lazy" decoding="async" />
-                <div class="gameplay-slot-overlay"><span class="gameplay-slot-label">Gather and discover</span><span class="gameplay-slot-status">Gameplay clip coming soon</span></div>
+              <div class="gameplay-media has-clip">
+                <video class="gameplay-video" src="/site-assets/video-gathering.mp4" poster="/site-assets/video-gathering-poster.webp" width="1920" height="1100" controls playsinline muted preload="none" aria-label="Recorded gameplay: quarrying, chopping, mining and fishing in Chikoria"></video>
+                <button class="gameplay-play" type="button" aria-label="Play the gathering gameplay clip (0:50)"><span aria-hidden="true"></span></button>
+                <div class="gameplay-slot-overlay"><span class="gameplay-slot-label">Gather and discover</span><span class="gameplay-slot-status">Gameplay &middot; 0:50</span></div>
               </div>
               <div class="gameplay-caption"><div><span class="gameplay-index">02 / GATHER</span><h3>Find your next surprise</h3></div><p>There's more to discover between battles.</p></div>
             </article>
             <article class="gameplay-card reveal" data-video-slot="wicked-temple">
-              <div class="gameplay-media">
-                <img src="/site-assets/chapter-03-v5.webp" width="1672" height="941" alt="Illustrated Wicked Temple on its cliff above a waterfall" loading="lazy" decoding="async" />
-                <div class="gameplay-slot-overlay"><span class="gameplay-slot-label">Wicked Temple</span><span class="gameplay-slot-status">Gameplay clip coming soon</span></div>
+              <div class="gameplay-media has-clip">
+                <video class="gameplay-video" src="/site-assets/video-wicked-temple.mp4" poster="/site-assets/video-wicked-temple-poster.webp" width="1920" height="1100" controls playsinline muted preload="none" aria-label="Recorded gameplay: a Wicked Temple fight in the Drowned Sanctum"></video>
+                <button class="gameplay-play" type="button" aria-label="Play the Wicked Temple gameplay clip (1:30)"><span aria-hidden="true"></span></button>
+                <div class="gameplay-slot-overlay"><span class="gameplay-slot-label">Wicked Temple</span><span class="gameplay-slot-status">Gameplay &middot; 1:30</span></div>
               </div>
               <div class="gameplay-caption"><div><span class="gameplay-index">03 / BATTLE</span><h3>Break the corruption</h3></div><p>Move, dodge, and play your ability cards.</p></div>
             </article>
