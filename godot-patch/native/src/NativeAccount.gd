@@ -58,18 +58,31 @@ func _ready() -> void:
 	_probe_network()
 
 
-## One line in the device log at start-up saying whether HTTPS to the backend works — the first
-## thing to look at when a phone "can't connect".
+## A few lines in the device log at start-up saying whether the network works, and if not, which
+## layer fails: plain HTTP (the network), HTTPS without certificate checks (the TLS stack itself),
+## HTTPS as shipped (trust store), and the crypto RNG. The first thing to read when a phone "can't
+## connect".
 func _probe_network() -> void:
+	var rnd := Crypto.new().generate_random_bytes(8)
+	print("[native] rng: ", rnd.hex_encode())
+	await _probe("http://neverssl.com/", null)
+	await _probe(API + "/health", TLSOptions.client_unsafe())
+	await _probe(API + "/health", null)
+
+
+func _probe(url: String, tls: TLSOptions) -> void:
 	var probe := HTTPRequest.new()
 	probe.timeout = 20.0
 	add_child(probe)
-	if probe.request(API + "/health") != OK:
-		print("[native] network probe could not start")
+	if tls != null:
+		probe.set_tls_options(tls)
+	var tag := url + (" (no cert check)" if tls != null else "")
+	if probe.request(url) != OK:
+		print("[native] probe %s: could not start" % tag)
 		probe.queue_free()
 		return
 	var r: Array = await probe.request_completed
-	print("[native] network probe: result %d, HTTP %d" % [int(r[0]), int(r[1])])
+	print("[native] probe %s: result %d, HTTP %d" % [tag, int(r[0]), int(r[1])])
 	probe.queue_free()
 
 

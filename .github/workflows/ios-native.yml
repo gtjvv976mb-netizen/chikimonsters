@@ -73,6 +73,12 @@ jobs:
           echo "GODOT=$PWD/Godot.app/Contents/MacOS/Godot" >> "$GITHUB_ENV"
           Godot.app/Contents/MacOS/Godot --version
 
+      - name: Network check from the runner (curl, and the official Godot 4.6 engine's own HTTPS)
+        continue-on-error: true
+        run: |
+          curl -sS -m 20 -o /dev/null -w "curl: HTTP %{http_code}\n" https://api.chikimonsters.com/health
+          perl -e 'alarm 60; exec @ARGV' "$GODOT" --headless --script godot-patch/native/tls-probe.gd
+
       - name: Game pack
         run: |
           python3 godot-patch/native/fetch-pack.py "$PACK" pack.zip
