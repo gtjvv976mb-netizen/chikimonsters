@@ -34,6 +34,8 @@ run/flush_stdout_on_print=true
 [autoload]
 
 NativeAccount="*res://NativeAccount.gd"
+NativeVitals="*res://NativeVitals.gd"
+NativeSafeArea="*res://NativeSafeArea.gd"
 
 [debug]
 
@@ -45,6 +47,8 @@ file_logging/enable_file_logging.pc=true
 [display]
 
 window/handheld/orientation=4
+; 60 fps, not ProMotion's 120: the HD world at 120 Hz buys no gameplay and costs heat and battery
+window/ios/allow_high_refresh_rate=false
 
 [rendering]
 
@@ -62,7 +66,7 @@ def main() -> int:
 		for f in recovered.glob("*.gd"):
 			shutil.copy(f, work / f.name)
 		edits = json.loads((HERE / "native-edits.json").read_text())
-		for extra in ("native-web-checks.json", "native-hd.json"):
+		for extra in ("native-web-checks.json", "native-hd.json", "native-ui.json"):
 			if (HERE / extra).exists():
 				edits += json.loads((HERE / extra).read_text())
 		changed = set()

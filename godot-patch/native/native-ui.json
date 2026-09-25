@@ -1,0 +1,14 @@
+[
+ {
+  "file": "Main.gd",
+  "why": "native UI: 11% larger on iPhone (touch targets and text toward Apple's 44 pt / 11 pt), the most the top bar allows once the safe-area insets are taken",
+  "old": "\t\tget_window().content_scale_factor = 1.35",
+  "new": "\t\t# the native app: 11% larger than a phone browser, the most the top bar (>= 1100 units wide)\n\t\t# allows once the Dynamic Island's safe-area insets are taken off both sides\n\t\tget_window().content_scale_factor = 1.5 if ChikFeat.native() else 1.35"
+ },
+ {
+  "file": "GameHUD.gd",
+  "why": "native UI: the corner utility buttons at Apple's 44 pt touch size",
+  "old": "\t_utility_size = 36.0 if lite else 48.0",
+  "new": "\t_utility_size = 36.0 if lite else (60.0 if ChikFeat.native() else 48.0)"
+ }
+]

@@ -30,7 +30,7 @@ on:
         default: '1.0'
   push:
     branches: ['claude/**']
-    paths: ['.github/workflows/ios-native.yml', 'godot-patch/native/**']
+    paths: ['.github/workflows/ios-native.yml', '.github/workflows/ios-evaluate.yml', 'godot-patch/native/**']
 
 permissions:
   contents: read
@@ -263,7 +263,31 @@ jobs:
           mkdir -p "$RUNNER_TEMP/asc"
           printf '%s\n' "$ASC_PRIVATE_KEY" > "$RUNNER_TEMP/asc/AuthKey_${ASC_KEY_ID}.p8"
 
-      - name: Archive, sign and upload to App Store Connect
+      - name: Device archive (unsigned) and its size
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          set -o pipefail
+          xcodebuild archive -project shell/build/Chikoria.xcodeproj -scheme Chikoria \
+            -configuration Release -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/Chikoria.xcarchive" \
+            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" | tail -8
+          APPDIR="$RUNNER_TEMP/Chikoria.xcarchive/Products/Applications/Chikoria.app"
+          echo "=== app bundle"; du -sh "$APPDIR"; ls -laS "$APPDIR" | head -12
+          echo "=== Info.plist"; plutil -p "$APPDIR/Info.plist" | head -60
+          echo "=== PrivacyInfo.xcprivacy"; plutil -lint "$APPDIR/PrivacyInfo.xcprivacy" && plutil -p "$APPDIR/PrivacyInfo.xcprivacy"
+          # an unsigned IPA of this exact build, for the static security scan in ios-evaluate.yml
+          mkdir -p ipa/Payload && cp -R "$APPDIR" ipa/Payload/
+          (cd ipa && zip -qry ../Chikoria.ipa Payload) && ls -la Chikoria.ipa
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: device-app
+          path: Chikoria.ipa
+          retention-days: 14
+          compression-level: 0
+
+      - name: Sign and upload to App Store Connect
         if: inputs.upload || contains(github.event.head_commit.message, '[testflight]')
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
@@ -271,10 +295,6 @@ jobs:
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
         run: |
           set -o pipefail
-          xcodebuild archive -project shell/build/Chikoria.xcodeproj -scheme Chikoria \
-            -configuration Release -destination 'generic/platform=iOS' \
-            -archivePath "$RUNNER_TEMP/Chikoria.xcarchive" \
-            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" | tail -30
           cat > "$RUNNER_TEMP/ExportOptions.plist" <<PLIST
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -294,3 +314,9 @@ jobs:
       - name: Remove the key
         if: always()
         run: rm -rf "$RUNNER_TEMP/asc"
+
+  # App Store Connect feedback/crashes/metrics and a MobSF scan of this run's device build
+  evaluate:
+    needs: native
+    uses: ./.github/workflows/ios-evaluate.yml
+    secrets: inherit
