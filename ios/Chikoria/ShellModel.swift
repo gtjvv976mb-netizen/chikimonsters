@@ -173,6 +173,19 @@ final class ShellModel: NSObject, ObservableObject {
     nonisolated static let realmHost = "chikimonsters.com"
     nonisolated static let realmPathPrefix = "/realm/"
 
+    /// Whether a URL is under /realm/.
+    ///
+    /// NOT `url.path.hasPrefix("/realm/")`. `URL.path` STRIPS A TRAILING SLASH, so the realm's own
+    /// address, https://chikimonsters.com/realm/, has the path "/realm" — which does not start with
+    /// "/realm/". That check cancelled the very page this app exists to show: WebKit drops a
+    /// navigation cancelled by policy without calling any failure callback, so the app sat on a
+    /// blank web view forever, and every TestFlight build up to 8 never loaded the game at all.
+    /// URLComponents keeps the path exactly as written.
+    nonisolated static func isRealmPath(_ url: URL) -> Bool {
+        let path = URLComponents(url: url, resolvingAgainstBaseURL: false)?.path ?? url.path
+        return path == "/realm" || path.hasPrefix(realmPathPrefix)
+    }
+
     /// Links the loading screen legitimately offers. Re-validated HERE and not trusted from the
     /// page: `webkit.messageHandlers.chikiLink` lives in the page world, so any script in the realm
     /// — the compiled game pack included — can post an `external-link` of its choosing.
@@ -487,6 +500,18 @@ final class ShellModel: NSObject, ObservableObject {
         bootStage = stage
         loadStartedAt = Date()
         diag("load: \(stage)")
+        // A load that goes quiet sends nothing, and quiet is exactly how the blocked-navigation bug
+        // looked: one event and then silence. So check in on this load while it has not come alive.
+        let started = loadStartedAt
+        Task { @MainActor [weak self] in
+            var waited: UInt64 = 0
+            for step in [20, 40, 90] as [UInt64] {     // check-ins at 20 s, 60 s and 150 s
+                try? await Task.sleep(nanoseconds: step * 1_000_000_000)
+                waited += step
+                guard let self, self.loadStartedAt == started, !self.pageAlive else { return }
+                self.diag("still not alive after \(waited)s — \(self.bootStage)")
+            }
+        }
     }
 
     /// Everything worth knowing about a load that has not come alive, in one screenshot.
@@ -856,9 +881,12 @@ extension ShellModel: WKNavigationDelegate {
 
         let ok = url.scheme == "https"
             && url.host?.lowercased() == Self.realmHost
-            && url.path.hasPrefix(Self.realmPathPrefix)
+            && Self.isRealmPath(url)
 
-        if !ok { NSLog("[chikoria] blocked navigation: \(url.absoluteString)") }
+        if !ok {
+            NSLog("[chikoria] blocked navigation: \(url.absoluteString)")
+            Task { @MainActor in self.diag("BLOCKED navigation: \(url.absoluteString)", sendNow: true) }
+        }
 
         // NOTE: the query string is never inspected or rewritten. The loader reloads itself with
         // ?swretry=1 to break a cross-origin-isolation deadlock, and a shell that "restored the
