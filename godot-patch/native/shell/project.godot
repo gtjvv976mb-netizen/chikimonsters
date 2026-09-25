@@ -1,0 +1,17 @@
+; THE SHELL PROJECT. It exists only so the Godot editor's iOS exporter can write the Xcode project
+; (Info.plist, icons, launch screen, signing settings) around our custom engine template. Its own
+; pack is thrown away: CI replaces build/Chikoria.pck with the real game — see ios-native.yml.
+config_version=5
+
+[application]
+
+config/name="Chiki Monsters"
+config/icon="res://icon1024.png"
+
+[display]
+
+window/handheld/orientation=4
+
+[rendering]
+
+textures/vram_compression/import_etc2_astc=true

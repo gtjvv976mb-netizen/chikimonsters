@@ -1,0 +1,17 @@
+config_version=5
+
+[application]
+
+config/name="TLS Probe"
+run/main_scene="res://probe.tscn"
+run/flush_stdout_on_print=true
+
+[debug]
+
+file_logging/enable_file_logging=true
+file_logging/enable_file_logging.pc=true
+
+[rendering]
+
+textures/vram_compression/import_etc2_astc=true
+renderer/rendering_method.mobile="gl_compatibility"

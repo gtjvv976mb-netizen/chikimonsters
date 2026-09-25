@@ -1,0 +1,134 @@
+[
+ {
+  "file": "ChikFeat.gd",
+  "why": "native: the app's policy is compiled in, plus account helpers",
+  "old": "static var _read: bool = false",
+  "new": "static var _read: bool = false\n\n\n## THE NATIVE iOS APP. There is no page and no window.CHIK_FEATURES there, so the app's policy is\n## compiled in: the same table realm/chiki-ios.js publishes as features(true). Keep the two in step.\nconst APP_POLICY := {\n\t\"platform\": \"ios-app\",\n\t\"account\": \"link\",\n\t\"pvp_mode\": \"season\",\n\t\"account_create\": true,\n\t\"wallet_bind\": true,\n\t\"can_sell\": false,\n\t\"gathering\": true,\n\t\"crafting\": true,\n\t\"fishing\": true,\n\t\"hatching\": true,\n\t\"wicked_temple\": true,\n\t\"chikiseum_pvp\": true,\n\t\"chikoria_cup\": false,\n\t\"quests\": false,\n\t\"meme_dynasty\": false,\n\t\"meme_allow\": [],\n\t\"cloud_sync\": true,\n\t\"chat\": false,\n\t\"whispers\": false,\n\t\"crypto\": false,\n\t\"wallet_connect\": false,\n\t\"trading_post\": false,\n\t\"marketplace\": false,\n\t\"wagers\": false,\n\t\"token_purchase\": false,\n\t\"token_gate\": false,\n\t\"story_payouts\": false,\n\t\"asset_rewards\": true,\n\t\"coin_pouch\": true,\n}\n\n## The sentinel the web app's shell put in authSig; the server never sees it (Chain.gd swaps it for\n## the link token on /verify, exactly as chiki-ios.js did).\nconst NATIVE_SENTINEL := \"CHIKI-LINK-V1\"\nconst _ACCOUNT_FILE := \"user://native_account.json\"\n\n\nstatic func native() -> bool:\n\t# CHIK_NATIVE_TEST lets the native paths run in a desktop engine for testing; iOS has no env.\n\treturn OS.has_feature(\"ios\") or OS.get_environment(\"CHIK_NATIVE_TEST\") == \"1\"\n\n\n## \"This is the real game\": the website, or the native app. Where the scripts used to read\n## OS.has_feature(\"web\") as \"a player, not a developer at the editor\", they read this.\nstatic func prod() -> bool:\n\treturn OS.has_feature(\"web\") or native()\n\n\n## {wallet, token, label, app_made, device_id} for the account on this iPhone, or {} when none.\nstatic func native_account() -> Dictionary:\n\tvar d := _account_file()\n\tif String(d.get(\"wallet\", \"\")) == \"\" or String(d.get(\"token\", \"\")) == \"\":\n\t\treturn {}\n\treturn d\n\n\nstatic func save_native_account(acct: Dictionary) -> void:\n\tvar d := acct.duplicate()\n\td[\"device_id\"] = native_device_id()\n\t_write_account(d)\n\n\n## Forget the account but KEEP the device id: the server binds a link token to it, and a new id on\n## every unlink would leak a new device into the player's device list each time.\nstatic func clear_native_account() -> void:\n\t_write_account({\"device_id\": native_device_id()})\n\n\nstatic func native_device_id() -> String:\n\tvar d := _account_file()\n\tvar id := String(d.get(\"device_id\", \"\"))\n\tif id == \"\":\n\t\tvar c := Crypto.new()\n\t\tid = c.generate_random_bytes(16).hex_encode()\n\t\td[\"device_id\"] = id\n\t\t_write_account(d)\n\treturn id\n\n\nstatic func _account_file() -> Dictionary:\n\tif not FileAccess.file_exists(_ACCOUNT_FILE):\n\t\treturn {}\n\tvar f := FileAccess.open(_ACCOUNT_FILE, FileAccess.READ)\n\tif f == null:\n\t\treturn {}\n\tvar parsed: Variant = JSON.parse_string(f.get_as_text())\n\treturn parsed if parsed is Dictionary else {}\n\n\nstatic func _write_account(d: Dictionary) -> void:\n\tvar f := FileAccess.open(_ACCOUNT_FILE, FileAccess.WRITE)\n\tif f != null:\n\t\tf.store_string(JSON.stringify(d))"
+ },
+ {
+  "file": "ChikFeat.gd",
+  "why": "native: read the compiled-in policy",
+  "old": "\t\t\t\t_cache = parsed\n\treturn _cache",
+  "new": "\t\t\t\t_cache = parsed\n\telif native():\n\t\t_cache = APP_POLICY.duplicate(true)\n\treturn _cache"
+ },
+ {
+  "file": "Chain.gd",
+  "why": "native: resume the session for the account on this iPhone (the web app's shell seeded chikResume)",
+  "old": "\tif OS.has_feature(\"web\") and not _network_blocked():\n\t\tvar raw: = str(JavaScriptBridge.eval(\"(function(){try{var v=sessionStorage.getItem('chikResume')",
+  "new": "\tif ChikFeat.native() and not _network_blocked():\n\t\tvar acct: = ChikFeat.native_account()\n\t\tif not acct.is_empty():\n\t\t\tresuming = true\n\t\t\t_resume_addr = String(acct[\"wallet\"])\n\t\t\t_auth_msg = \"Chikoria link\\nwallet:\" + _resume_addr\n\t\t\t_auth_sig = ChikFeat.NATIVE_SENTINEL\n\t\t\tprint(\"[native] resuming account \", _resume_addr.left(6))\n\t\t\tcall_deferred(\"_finish_resume\")\n\tif OS.has_feature(\"web\") and not _network_blocked():\n\t\tvar raw: = str(JavaScriptBridge.eval(\"(function(){try{var v=sessionStorage.getItem('chikResume')"
+ },
+ {
+  "file": "Chain.gd",
+  "why": "native: /verify carries the link token instead of a wallet signature (chiki-ios.js swapAuth)",
+  "old": "\tif _auth_msg != \"\" and _auth_sig != \"\":\n\t\treq[\"authMsg\"] = _auth_msg\n\t\treq[\"authSig\"] = _auth_sig\n\tvar body: = JSON.stringify(req)",
+  "new": "\tif _auth_msg != \"\" and _auth_sig != \"\":\n\t\treq[\"authMsg\"] = _auth_msg\n\t\treq[\"authSig\"] = _auth_sig\n\tif ChikFeat.native() and _auth_sig == ChikFeat.NATIVE_SENTINEL:\n\t\tvar acct: = ChikFeat.native_account()\n\t\treq.erase(\"authMsg\")\n\t\treq.erase(\"authSig\")\n\t\treq[\"linkToken\"] = String(acct.get(\"token\", \"\"))\n\t\treq[\"device_id\"] = ChikFeat.native_device_id()\n\t\treq[\"client\"] = \"ios-app\"\n\tvar body: = JSON.stringify(req)"
+ },
+ {
+  "file": "Chain.gd",
+  "why": "native: a refused link (4xx) ends this device's credential and brings back the welcome screen",
+  "old": "\tif wallet() == \"\" or code != 200:\n\t\tlinked = false\n\t\tsigned_in = false\n\t\tstatus = \"sign-in failed\"",
+  "new": "\tif ChikFeat.native():\n\t\tprint(\"[native] /verify answered \", code)\n\tif ChikFeat.native() and code >= 400 and code < 500 and _auth_sig == ChikFeat.NATIVE_SENTINEL:\n\t\t_native_link_rejected()\n\tif wallet() == \"\" or code != 200:\n\t\tlinked = false\n\t\tsigned_in = false\n\t\tstatus = \"sign-in failed\""
+ },
+ {
+  "file": "Chain.gd",
+  "why": "native: signedIn false for our token ends the credential; movedFrom follows a bound account",
+  "old": "\tsigned_in = bool(j.get(\"signedIn\", false))\n\tlinked = signed_in or not OS.has_feature(\"web\")",
+  "new": "\tsigned_in = bool(j.get(\"signedIn\", false))\n\tif ChikFeat.native() and _auth_sig == ChikFeat.NATIVE_SENTINEL:\n\t\tprint(\"[native] signedIn=\", signed_in)\n\t\tif not signed_in:\n\t\t\t_native_link_rejected()\n\t\telif String(j.get(\"movedFrom\", \"\")) != \"\" and String(j.get(\"wallet\", \"\")) != \"\":\n\t\t\tvar acct: = ChikFeat.native_account()\n\t\t\tacct[\"wallet\"] = String(j[\"wallet\"])\n\t\t\tacct.erase(\"app_made\")\n\t\t\tChikFeat.save_native_account(acct)\n\tlinked = signed_in or not OS.has_feature(\"web\")"
+ },
+ {
+  "file": "Chain.gd",
+  "why": "native: the rejection handler",
+  "old": "func verify() -> void :\n\t_vretry = 0\n\t_verify_send()",
+  "new": "func verify() -> void :\n\t_vretry = 0\n\t_verify_send()\n\n\nvar _native_rejected: = false\n\nfunc _native_link_rejected() -> void :\n\tif _native_rejected:\n\t\treturn\n\t_native_rejected = true\n\tChikFeat.clear_native_account()\n\tvar na: = get_tree().root.get_node_or_null(\"NativeAccount\")\n\tif na != null:\n\t\tna.call(\"show_welcome\", \"Your link to this account has ended. Link again with a code from the website, or create a new account.\")"
+ },
+ {
+  "file": "Chat.gd",
+  "why": "native phone: an iPhone app is a phone too (the checks only knew mobile browsers)",
+  "old": "\treturn OS.has_feature(\"web_android\") or OS.has_feature(\"web_ios\") or OS.get_environment(\"CHIK_FORCEPHONE\") == \"1\"",
+  "new": "\treturn OS.has_feature(\"web_android\") or OS.has_feature(\"web_ios\") or OS.has_feature(\"ios\") or OS.get_environment(\"CHIK_FORCEPHONE\") == \"1\""
+ },
+ {
+  "file": "ChikoriaGen.gd",
+  "why": "native phone: an iPhone app is a phone too (the checks only knew mobile browsers)",
+  "old": "var _phone_road: = OS.has_feature(\"web_android\") or OS.has_feature(\"web_ios\")\\",
+  "new": "var _phone_road: = OS.has_feature(\"web_android\") or OS.has_feature(\"web_ios\") or OS.has_feature(\"ios\")\\"
+ },
+ {
+  "file": "Companion.gd",
+  "why": "native phone: an iPhone app is a phone too (the checks only knew mobile browsers)",
+  "old": "var _no_mouse: = OS.has_feature(\"web_android\") or OS.has_feature(\"web_ios\")",
+  "new": "var _no_mouse: = OS.has_feature(\"web_android\") or OS.has_feature(\"web_ios\") or OS.has_feature(\"ios\")"
+ },
+ {
+  "file": "GameHUD.gd",
+  "why": "native phone: an iPhone app is a phone too (the checks only knew mobile browsers)",
+  "old": "\tif OS.has_feature(\"web_android\") or OS.has_feature(\"web_ios\"):",
+  "new": "\tif OS.has_feature(\"web_android\") or OS.has_feature(\"web_ios\") or OS.has_feature(\"ios\"):"
+ },
+ {
+  "file": "HDStruct.gd",
+  "why": "native phone: an iPhone app is a phone too (the checks only knew mobile browsers)",
+  "old": "\treturn OS.has_feature(\"web_android\") or OS.has_feature(\"web_ios\")\\",
+  "new": "\treturn OS.has_feature(\"web_android\") or OS.has_feature(\"web_ios\") or OS.has_feature(\"ios\")\\"
+ },
+ {
+  "file": "Main.gd",
+  "why": "native phone: an iPhone app is a phone too (the checks only knew mobile browsers)",
+  "old": "\t_is_phone = OS.has_feature(\"web_android\") or OS.has_feature(\"web_ios\")\\",
+  "new": "\t_is_phone = OS.has_feature(\"web_android\") or OS.has_feature(\"web_ios\") or OS.has_feature(\"ios\")\\"
+ },
+ {
+  "file": "Main.gd",
+  "why": "native phone: an iPhone app is a phone too (the checks only knew mobile browsers)",
+  "old": "\tif OS.has_feature(\"web_android\") or OS.has_feature(\"web_ios\"):",
+  "new": "\tif OS.has_feature(\"web_android\") or OS.has_feature(\"web_ios\") or OS.has_feature(\"ios\"):"
+ },
+ {
+  "file": "Sound.gd",
+  "why": "native music: stream the same tracks the phone web build streams",
+  "old": "func _is_web_platform() -> bool:\n\treturn OS.has_feature(\"web\")",
+  "new": "func _is_web_platform() -> bool:\n\treturn OS.has_feature(\"web\") or ChikFeat.native()"
+ },
+ {
+  "file": "Sound.gd",
+  "why": "native music: the stream comes from the production site",
+  "old": "\tif not OS.has_feature(\"web\"):\n\t\treturn {}\n\tvar raw: Variant = JavaScriptBridge.eval(\"JSON.stringify({protocol:location.protocol",
+  "new": "\tif ChikFeat.native():\n\t\treturn {\"protocol\": \"https:\", \"hostname\": \"chikimonsters.com\", \"port\": \"\", \"origin\": \"https://chikimonsters.com\", \"pathname\": \"/realm/\"}\n\tif not OS.has_feature(\"web\"):\n\t\treturn {}\n\tvar raw: Variant = JavaScriptBridge.eval(\"JSON.stringify({protocol:location.protocol"
+ },
+ {
+  "file": "Sound.gd",
+  "why": "native music: there is no browser fetch guard to install; HTTPRequest is the only client",
+  "old": "func _install_audio_fetch_guard() -> bool:\n\tif not OS.has_feature(\"web\"):\n\t\treturn false",
+  "new": "func _install_audio_fetch_guard() -> bool:\n\tif ChikFeat.native():\n\t\treturn true\n\tif not OS.has_feature(\"web\"):\n\t\treturn false"
+ },
+ {
+  "file": "Sound.gd",
+  "why": "native music: requests are not owned by a browser guard",
+  "old": "\tvar guarded: = OS.has_feature(\"web\") and bool(",
+  "new": "\tvar guarded: = ChikFeat.native() or OS.has_feature(\"web\") and bool("
+ },
+ {
+  "file": "TempleAbilityArtStream.gd",
+  "why": "native art: ability art streams from the production site",
+  "old": "\t\t\treturn OS.get_environment(\"CHIK_ABILITY_ART_BASE\").strip_edges()\n\t\treturn \"\"",
+  "new": "\t\t\treturn OS.get_environment(\"CHIK_ABILITY_ART_BASE\").strip_edges()\n\t\tif ChikFeat.native():\n\t\t\treturn \"https://chikimonsters.com/realm/\"\n\t\treturn \"\""
+ },
+ {
+  "file": "ChikiseumArena.gd",
+  "why": "native art: the live arena streams ability art from the production site",
+  "old": "\t\tif base is String and not String(base).is_empty() and _live_art_bound:\n\t\t\t_stream.configure(String(base), true, size.x < 760 or size.y < 500)",
+  "new": "\t\tif base is String and not String(base).is_empty() and _live_art_bound:\n\t\t\t_stream.configure(String(base), true, size.x < 760 or size.y < 500)\n\telif ChikFeat.native() and _live_art_bound:\n\t\t_stream.configure(\"https://chikimonsters.com/realm/\", true, size.x < 760 or size.y < 500)"
+ },
+ {
+  "file": "Temple2D.gd",
+  "why": "native touch: CSS pixels are iOS points — divide by the screen scale",
+  "old": "\t\tif OS.has_feature(\"web\"):\n\t\t\tvar d = JavaScriptBridge.eval(\"Math.min(window.devicePixelRatio||1,2)\", true)\n\t\t\tif typeof(d) == TYPE_FLOAT or typeof(d) == TYPE_INT:\n\t\t\t\tper /= maxf(1.0, float(d))",
+  "new": "\t\tif OS.has_feature(\"web\"):\n\t\t\tvar d = JavaScriptBridge.eval(\"Math.min(window.devicePixelRatio||1,2)\", true)\n\t\t\tif typeof(d) == TYPE_FLOAT or typeof(d) == TYPE_INT:\n\t\t\t\tper /= maxf(1.0, float(d))\n\t\telif ChikFeat.native():\n\t\t\tper /= maxf(1.0, DisplayServer.screen_get_scale())"
+ },
+ {
+  "file": "TemplePlatformer2D.gd",
+  "why": "native touch: CSS pixels are iOS points — divide by the screen scale",
+  "old": "\tif OS.has_feature(\"web\"):\n\t\tvar d = JavaScriptBridge.eval(\"Math.min(window.devicePixelRatio||1,2)\", true)\n\t\tif typeof(d) == TYPE_FLOAT or typeof(d) == TYPE_INT:\n\t\t\tper /= maxf(1.0, float(d))",
+  "new": "\tif OS.has_feature(\"web\"):\n\t\tvar d = JavaScriptBridge.eval(\"Math.min(window.devicePixelRatio||1,2)\", true)\n\t\tif typeof(d) == TYPE_FLOAT or typeof(d) == TYPE_INT:\n\t\t\tper /= maxf(1.0, float(d))\n\telif ChikFeat.native():\n\t\tper /= maxf(1.0, DisplayServer.screen_get_scale())"
+ }
+]

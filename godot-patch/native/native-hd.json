@@ -1,0 +1,86 @@
+[
+ {
+  "file": "ChikFeat.gd",
+  "why": "native HD: which iPhones get the full-detail world",
+  "old": "static func prod() -> bool:",
+  "new": "## An iPhone with the memory for the full-detail world: 6 GB and up (iPhone 12 Pro and later Pros,\n## iPhone 15 and later). It gets the HD graphics tier, full-resolution voxel buildings and trees,\n## and the 3D drawn at Full HD instead of the phone's half resolution. Smaller phones keep the\n## light world, which is what fits their memory.\nstatic func native_hd() -> bool:\n\tif not native():\n\t\treturn false\n\tvar force: = OS.get_environment(\"CHIK_NATIVE_HD\")\n\tif force != \"\":\n\t\treturn force == \"1\"\n\treturn int(OS.get_memory_info().get(\"physical\", 0)) >= 5_500_000_000\n\n\nstatic func prod() -> bool:"
+ },
+ {
+  "file": "HDStruct.gd",
+  "why": "native HD: world detail cuts apply to phones that are not native HD",
+  "old": "static func lite_world() -> bool:",
+  "new": "## The phone cuts to WORLD DETAIL (half-resolution voxels, shorter tree draw distance). A native HD\n## iPhone draws the full world; its touch-sized UI still follows phone_world().\nstatic func phone_detail() -> bool:\n\treturn phone_world() and not ChikFeat.native_hd()\n\n\nstatic func lite_world() -> bool:"
+ },
+ {
+  "file": "HDStruct.gd",
+  "why": "native HD: full-resolution voxel structures",
+  "old": "\tmm.mesh = box\n\tvar phone: = phone_world()",
+  "new": "\tmm.mesh = box\n\tvar phone: = phone_detail()"
+ },
+ {
+  "file": "Castle.gd",
+  "why": "native HD: full-resolution voxels",
+  "old": "\tmm.mesh = box\n\tif load(\"res://HDStruct.gd\").phone_world():",
+  "new": "\tmm.mesh = box\n\tif load(\"res://HDStruct.gd\").phone_detail():"
+ },
+ {
+  "file": "Trees.gd",
+  "why": "native HD: full-resolution voxels",
+  "old": "\tmm.mesh = box\n\tif load(\"res://HDStruct.gd\").phone_world():",
+  "new": "\tmm.mesh = box\n\tif load(\"res://HDStruct.gd\").phone_detail():"
+ },
+ {
+  "file": "Gather.gd",
+  "why": "native HD: full-resolution voxels",
+  "old": "\tmm.mesh = box\n\tif load(\"res://HDStruct.gd\").phone_world():",
+  "new": "\tmm.mesh = box\n\tif load(\"res://HDStruct.gd\").phone_detail():"
+ },
+ {
+  "file": "Trees.gd",
+  "why": "native HD: trees drawn to the full distance",
+  "old": "\tvar phone: bool = load(\"res://HDStruct.gd\").phone_world()\n\tfor t in inst:",
+  "new": "\tvar phone: bool = load(\"res://HDStruct.gd\").phone_detail()\n\tfor t in inst:"
+ },
+ {
+  "file": "Main.gd",
+  "why": "native HD: the automatic graphics tier is HD",
+  "old": "static func gfx_auto_tier() -> int:\n",
+  "new": "static func gfx_auto_tier() -> int:\n\tif ChikFeat.native_hd():\n\t\treturn 2\n"
+ },
+ {
+  "file": "Main.gd",
+  "why": "native HD: desktop view distance, and the 3D drawn at Full HD instead of half resolution",
+  "old": "\tvar _phone: bool = load(\"res://HDStruct.gd\").phone_world()",
+  "new": "\tvar _phone: bool = load(\"res://HDStruct.gd\").phone_detail()"
+ },
+ {
+  "file": "Main.gd",
+  "why": "native HD: Full HD render scale",
+  "old": "\tif _phone:\n\t\tvp.scaling_3d_scale = minf(vp.scaling_3d_scale, 0.5 if low else 0.7)",
+  "new": "\tif _phone:\n\t\tvp.scaling_3d_scale = minf(vp.scaling_3d_scale, 0.5 if low else 0.7)\n\telif ChikFeat.native_hd():\n\t\t# FULL HD: the 3D drawn 1080 pixels tall (the whole screen on one that is not taller). A\n\t\t# Pro Max is 1290 pixels tall, so its native size would cost 40% more for detail the eye\n\t\t# cannot find at arm's length.\n\t\tvar ws: = DisplayServer.window_get_size()\n\t\tvar fhd: = clampf(1080.0 / float(maxi(1, mini(ws.x, ws.y))), 0.5, 1.0)\n\t\tvp.scaling_3d_scale = minf(vp.scaling_3d_scale, fhd)"
+ },
+ {
+  "file": "Main.gd",
+  "why": "native HD: the quality button reaches HD",
+  "old": "\tvar cap: int = 2 if not load(\"res://HDStruct.gd\").phone_world() else 1",
+  "new": "\tvar cap: int = 2 if (not load(\"res://HDStruct.gd\").phone_world() or ChikFeat.native_hd()) else 1"
+ },
+ {
+  "file": "Main.gd",
+  "why": "native: the app remembers its own quality choice (the web phone one was always Low)",
+  "old": "\t\tpf.d[\"gfx_tier\"] = _gfx_tier",
+  "new": "\t\tpf.d[\"gfx_tier_native\" if ChikFeat.native() else \"gfx_tier\"] = _gfx_tier"
+ },
+ {
+  "file": "GameHUD.gd",
+  "why": "native: read the app's own quality choice",
+  "old": "\t\ttier = int(_profile.d.get(\"gfx_tier\", -1))\n\t\tif tier < 0 and _profile.d.has(\"low_q\"):",
+  "new": "\t\ttier = int(_profile.d.get(\"gfx_tier_native\" if ChikFeat.native() else \"gfx_tier\", -1))\n\t\tif tier < 0 and _profile.d.has(\"low_q\") and not ChikFeat.native():"
+ },
+ {
+  "file": "GameHUD.gd",
+  "why": "native HD: not forced to Low like a phone browser",
+  "old": "\tif OS.has_feature(\"web_android\") or OS.has_feature(\"web_ios\") or OS.has_feature(\"ios\"):\n\t\ttier = 0",
+  "new": "\tif (OS.has_feature(\"web_android\") or OS.has_feature(\"web_ios\") or OS.has_feature(\"ios\")) and not ChikFeat.native_hd():\n\t\ttier = 0"
+ }
+]
