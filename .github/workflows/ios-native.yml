@@ -1,0 +1,178 @@
+# The NATIVE Chiki Monsters iOS app: the game running on Godot itself, not in a web view.
+#
+# Why: in the WKWebView app the phone killed the web content process for memory every one to three
+# minutes of play (load diagnostics, iPhone 15 Pro Max, build 9). A native Godot app has no web
+# content process and a far larger memory budget.
+#
+# What it builds:
+#   1. the game pack — the published iOS pack (index.pck.ios.lite, the same files the web app
+#      runs: quests, trading and the Meme Dynasty already removed) plus godot-patch/native/overlay,
+#      repacked from ZIP to GDPC because a native app only mounts "<executable>.pck";
+#   2. the Xcode project — the Godot editor's iOS exporter run on a tiny shell project
+#      (godot-patch/native/shell) against OUR engine template (Godot 4.6 + Voxel Tools 1.6, built
+#      by ios-engine.yml), then the shell's pack swapped for the game's;
+#   3. a simulator build that is launched in the iOS Simulator and photographed, so every run shows
+#      whether the game actually comes up;
+#   4. when run with upload=true: an App Store archive, signed and uploaded like ios-release.yml.
+name: iOS native
+
+on:
+  workflow_dispatch:
+    inputs:
+      upload:
+        description: 'Also sign and upload to App Store Connect (TestFlight)'
+        type: boolean
+        default: false
+      version:
+        description: 'Marketing version'
+        default: '1.0'
+  push:
+    branches: ['claude/**']
+    paths: ['.github/workflows/ios-native.yml', 'godot-patch/native/**']
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  # ios-engine.yml run that produced the template (godot 4.6-stable + godot_voxel 1.6).
+  TEMPLATE_RUN_ID: '36092477173'
+  GODOT_EDITOR_URL: https://github.com/godotengine/godot/releases/download/4.6-stable/Godot_v4.6-stable_macos.universal.zip
+  PACK: index.pck.ios.lite
+
+jobs:
+  native:
+    runs-on: macos-15
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            godot-patch/native
+            ios/Chikoria/Assets.xcassets/AppIcon.appiconset
+
+      - name: Toolchain (Xcode 26 or later)
+        run: |
+          XC=$(ls -d /Applications/Xcode_2[6-9]*.app 2>/dev/null | grep -v -i beta | sort -V | tail -1)
+          if [ -z "$XC" ]; then echo "::error::No Xcode 26+"; exit 1; fi
+          sudo xcode-select -s "$XC/Contents/Developer"
+          xcodebuild -version
+
+      - name: Engine template (Godot 4.6 + Voxel Tools 1.6)
+        uses: actions/download-artifact@v4
+        with:
+          name: godot-ios-template
+          run-id: ${{ env.TEMPLATE_RUN_ID }}
+          github-token: ${{ github.token }}
+          path: template
+
+      - name: Godot editor (for the exporter only)
+        run: |
+          curl -fsSL -o godot.zip "$GODOT_EDITOR_URL"
+          unzip -q godot.zip
+          echo "GODOT=$PWD/Godot.app/Contents/MacOS/Godot" >> "$GITHUB_ENV"
+          Godot.app/Contents/MacOS/Godot --version
+
+      - name: Game pack
+        run: |
+          python3 godot-patch/native/fetch-pack.py "$PACK" pack.zip
+          mkdir x && (cd x && unzip -q ../pack.zip)
+          cp -R godot-patch/native/overlay/. x/
+          "$GODOT" --headless --script godot-patch/native/zip2pck.gd -- "$PWD/x" "$PWD/Chikoria.pck"
+          ls -la Chikoria.pck
+
+      - name: Xcode project (Godot iOS exporter)
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          VERSION: ${{ inputs.version || '1.0' }}
+        run: |
+          cp -R godot-patch/native/shell shell
+          cp ios/Chikoria/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png shell/icon1024.png
+          TEAM="${APPLE_TEAM_ID:-AAAAAAAAAA}"
+          sed -i '' -e "s|__TEAM_ID__|$TEAM|" -e "s|__TEMPLATE__|$PWD/template/godot_ios.zip|" \
+            -e "s|__VERSION__|$VERSION|" -e "s|__BUILD__|$((100 + ${{ github.run_number }}))|" shell/export_presets.cfg
+          mkdir -p shell/build
+          "$GODOT" --headless --path shell --import || true
+          "$GODOT" --headless --path shell --export-release "iOS" build/Chikoria.ipa
+          ls -la shell/build
+          cp Chikoria.pck shell/build/Chikoria.pck
+          xcodebuild -list -project shell/build/Chikoria.xcodeproj
+
+      - name: Simulator build
+        run: |
+          set -o pipefail
+          xcodebuild build -project shell/build/Chikoria.xcodeproj -scheme Chikoria \
+            -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath dd CODE_SIGNING_ALLOWED=NO | tail -40
+          APP=$(ls -d dd/Build/Products/Release-iphonesimulator/*.app | head -1)
+          echo "APP=$APP" >> "$GITHUB_ENV"
+          ls -la "$APP" | head
+
+      - name: Run in the iOS Simulator and take screenshots
+        run: |
+          DEV=$(xcrun simctl list devices available -j | python3 -c "
+          import json,sys
+          d=json.load(sys.stdin)['devices']
+          c=[x['udid'] for k,v in d.items() if 'iOS' in k for x in v if x['name'].startswith('iPhone')]
+          print(c[-1] if c else '')")
+          echo "device $DEV"
+          xcrun simctl boot "$DEV"
+          xcrun simctl bootstatus "$DEV" -b
+          xcrun simctl install "$DEV" "$APP"
+          mkdir -p shots
+          (xcrun simctl launch --console-pty "$DEV" com.chikimonsters.Chikoria > shots/app.log 2>&1 &)
+          for t in 20 45 90 150; do
+            sleep $((t - ${prev:-0})); prev=$t
+            xcrun simctl io "$DEV" screenshot "shots/t${t}s.png" || true
+            echo "--- ${t}s: $(tail -c 300 shots/app.log | tr '\n' ' ')"
+          done
+          xcrun simctl spawn "$DEV" log show --last 5m --predicate 'process == "Chikoria"' --style compact > shots/system.log 2>&1 || true
+          tail -60 shots/app.log
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: simulator-run
+          path: shots
+          if-no-files-found: ignore
+
+      - name: API key on disk
+        if: inputs.upload
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/asc"
+          printf '%s\n' "$ASC_PRIVATE_KEY" > "$RUNNER_TEMP/asc/AuthKey_${ASC_KEY_ID}.p8"
+
+      - name: Archive, sign and upload to App Store Connect
+        if: inputs.upload
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+        run: |
+          set -o pipefail
+          xcodebuild archive -project shell/build/Chikoria.xcodeproj -scheme Chikoria \
+            -configuration Release -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/Chikoria.xcarchive" \
+            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" | tail -30
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>destination</key><string>upload</string>
+            <key>teamID</key><string>${APPLE_TEAM_ID}</string>
+            <key>signingStyle</key><string>automatic</string>
+            <key>manageAppVersionAndBuildNumber</key><false/>
+          </dict></plist>
+          PLIST
+          xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/Chikoria.xcarchive" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" -exportPath "$RUNNER_TEMP/export" \
+            -allowProvisioningUpdates -authenticationKeyPath "$RUNNER_TEMP/asc/AuthKey_${ASC_KEY_ID}.p8" \
+            -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID" | tail -30
+
+      - name: Remove the key
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/asc"
