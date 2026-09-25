@@ -96,6 +96,9 @@ jobs:
           "$GODOT" --headless --path shell --export-release "iOS" build/Chikoria.ipa
           ls -la shell/build
           cp Chikoria.pck shell/build/Chikoria.pck
+          # The template is built without Vulkan (the app draws with OpenGL ES / Metal), so there is no
+          # MoltenVK.xcframework to link; drop the exporter's references to it.
+          sed -i '' '/MoltenVK/d' shell/build/Chikoria.xcodeproj/project.pbxproj
           xcodebuild -list -project shell/build/Chikoria.xcodeproj
 
       - name: Simulator build

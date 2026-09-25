@@ -1,0 +1,86 @@
+[
+  {
+    "file": "Chain.gd",
+    "why": "B (Chain:223) /verify must not be sent without a signed auth message in production; iOS must refuse the same way (native sign-in supplies _auth_msg/_auth_sig).",
+    "old": "\tif OS.has_feature(\"web\") and (_auth_msg == \"\" or _auth_sig == \"\"):\n\t\tlinked = false",
+    "new": "\tif ChikFeat.prod() and (_auth_msg == \"\" or _auth_sig == \"\"):\n\t\tlinked = false"
+  },
+  {
+    "file": "Chain.gd",
+    "why": "B (Chain:318-319) 'linked' only when the server says signedIn; unsigned verify is a production failure, not a dev pass-through.",
+    "old": "\tlinked = signed_in or not OS.has_feature(\"web\")\n\tif OS.has_feature(\"web\") and not signed_in:",
+    "new": "\tlinked = signed_in or not ChikFeat.prod()\n\tif ChikFeat.prod() and not signed_in:"
+  },
+  {
+    "file": "Chain.gd",
+    "why": "B (Chain:344) apply the server's cloud save (profile.mmo) only for a signed-in session in production.",
+    "old": "\tif signed_in or not OS.has_feature(\"web\"):\n\t\tvar pj0 = j.get(\"profile\")",
+    "new": "\tif signed_in or not ChikFeat.prod():\n\t\tvar pj0 = j.get(\"profile\")"
+  },
+  {
+    "file": "Chain.gd",
+    "why": "C (Chain:473) web reload stays JS-only; production native needs the same restart after stash_and_lock() (profile is frozen and SAVE is blank) - mirrors the existing native fallback in _accept_signed_wallet.",
+    "old": "\t\tif OS.has_feature(\"web\"):\n\t\t\tJavaScriptBridge.eval(\"setTimeout(function(){location.reload();}, 700);\", true)\n\t_profile.d[\"wallet\"] = \"\"",
+    "new": "\t\tif OS.has_feature(\"web\"):\n\t\t\tJavaScriptBridge.eval(\"setTimeout(function(){location.reload();}, 700);\", true)\n\t\telif ChikFeat.prod():\n\t\t\tget_tree().create_timer(0.7).timeout.connect( func(): get_tree().reload_current_scene())\n\t_profile.d[\"wallet\"] = \"\""
+  },
+  {
+    "file": "Chain.gd",
+    "why": "B (Chain:966) hatching is server-authoritative in production (/assets/egg hatch via HTTPRequest); the local _profile.hatch_egg() path is the dev/offline fallback.",
+    "old": "\tif aid == \"\" or tok == \"\" or wallet() == \"\" or not OS.has_feature(\"web\"):\n\t\tvar before0: = _hatch_owned(kind)",
+    "new": "\tif aid == \"\" or tok == \"\" or wallet() == \"\" or not ChikFeat.prod():\n\t\tvar before0: = _hatch_owned(kind)"
+  },
+  {
+    "file": "Chain.gd",
+    "why": "B (Chain:1186) scroll redemption is a plain HTTPRequest to /assets/scroll/redeem; must run in production builds.",
+    "old": "\tif tok == \"\" or wallet() == \"\" or not OS.has_feature(\"web\"):\n\t\ton_answer.call(\"\")",
+    "new": "\tif tok == \"\" or wallet() == \"\" or not ChikFeat.prod():\n\t\ton_answer.call(\"\")"
+  },
+  {
+    "file": "Chain.gd",
+    "why": "B (Chain:1399) chikimon sync is a plain HTTPRequest to /assets/chikimon/sync; must run in production builds.",
+    "old": "\tif tok == \"\" or not OS.has_feature(\"web\"):\n\t\treturn\n\tvar req: = HTTPRequest.new()",
+    "new": "\tif tok == \"\" or not ChikFeat.prod():\n\t\treturn\n\tvar req: = HTTPRequest.new()"
+  },
+  {
+    "file": "Chain.gd",
+    "why": "B (Chain:2214) no cloud push / polling loop for an unauthenticated wallet in production.",
+    "old": "\tif OS.has_feature(\"web\") and not signed_in and (_auth_msg == \"\" or _auth_sig == \"\"):\n\t\treturn",
+    "new": "\tif ChikFeat.prod() and not signed_in and (_auth_msg == \"\" or _auth_sig == \"\"):\n\t\treturn"
+  },
+  {
+    "file": "ChikiseumEntry.gd",
+    "why": "B (ChikiseumEntry:49) offline Chikiseum rehearsal is a dev-machine feature; a debug iOS build must not unlock it.",
+    "old": "\treturn rehearsal_allowed(OS.is_debug_build(), OS.has_feature(\"web\"), profile != null and bool(profile.get(\"asset_sandbox\")))",
+    "new": "\treturn rehearsal_allowed(OS.is_debug_build(), ChikFeat.prod(), profile != null and bool(profile.get(\"asset_sandbox\")))"
+  },
+  {
+    "file": "InfoBar.gd",
+    "why": "B (InfoBar:192) the sign-in / guest / demo gate (freezes player, holds Net) is production behaviour; _build_gate() uses no JavaScriptBridge.",
+    "old": "\tif OS.has_feature(\"web\") and not asset_boot:\n\t\t_build_gate()",
+    "new": "\tif ChikFeat.prod() and not asset_boot:\n\t\t_build_gate()"
+  },
+  {
+    "file": "Onboarding.gd",
+    "why": "B (Onboarding:142) production boot waits for a signed-in + linked account (boot_wait) instead of showing the onboarding gate straight away.",
+    "old": "\treturn OS.has_feature(\"web\") or OS.get_environment(\"CHIK_WEB_BOOT_TEST\") == \"1\"",
+    "new": "\treturn ChikFeat.prod() or OS.get_environment(\"CHIK_WEB_BOOT_TEST\") == \"1\""
+  },
+  {
+    "file": "TempleAbilityArtStream.gd",
+    "why": "C (TempleAbilityArtStream:217) keep the web check (else-branch calls JavaScriptBridge), but the debug-only --art-base / CHIK_ABILITY_ART_BASE override inside the not-web branch is dev-machine only; close it for production (iOS).",
+    "old": "\tif not OS.has_feature(\"web\"):\n\t\tif OS.is_debug_build():\n\t\t\tfor value in OS.get_cmdline_user_args():",
+    "new": "\tif not OS.has_feature(\"web\"):\n\t\tif OS.is_debug_build() and not ChikFeat.prod():\n\t\t\tfor value in OS.get_cmdline_user_args():"
+  },
+  {
+    "file": "TempleAbilitySprites.gd",
+    "why": "B (TempleAbilitySprites:310) --art-manifest override is dev-machine only (no JS involved).",
+    "old": "\tif OS.is_debug_build() and not OS.has_feature(\"web\"):\n\t\tfor value in OS.get_cmdline_user_args():",
+    "new": "\tif OS.is_debug_build() and not ChikFeat.prod():\n\t\tfor value in OS.get_cmdline_user_args():"
+  },
+  {
+    "file": "TempleAbilitySprites.gd",
+    "why": "B (TempleAbilitySprites:1318) loading loose art from res://../art/native/ is dev-machine only (no JS involved).",
+    "old": "\telif _reborn_external_dev_enabled and OS.is_debug_build() and not OS.has_feature(\"web\")\\",
+    "new": "\telif _reborn_external_dev_enabled and OS.is_debug_build() and not ChikFeat.prod()\\"
+  }
+]
