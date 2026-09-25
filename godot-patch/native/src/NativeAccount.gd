@@ -56,6 +56,14 @@ func _ready() -> void:
 	else:
 		_corner.visible = true
 	_probe_network()
+	# frame rate and memory in the device log every 30 s: how the game runs on a phone, and what
+	# it was doing just before iOS ends it
+	var vitals := Timer.new()
+	vitals.wait_time = 30.0
+	vitals.timeout.connect(func():
+		print("[native] %d fps, %d MB" % [Engine.get_frames_per_second(), OS.get_static_memory_usage() / 1048576]))
+	add_child(vitals)
+	vitals.start()
 
 
 ## One line in the device log at start-up saying whether the backend is reachable: the first thing
