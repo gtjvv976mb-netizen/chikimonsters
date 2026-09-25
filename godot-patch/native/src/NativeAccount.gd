@@ -55,6 +55,22 @@ func _ready() -> void:
 		show_welcome("")
 	else:
 		_corner.visible = true
+	_probe_network()
+
+
+## One line in the device log at start-up saying whether HTTPS to the backend works — the first
+## thing to look at when a phone "can't connect".
+func _probe_network() -> void:
+	var probe := HTTPRequest.new()
+	probe.timeout = 20.0
+	add_child(probe)
+	if probe.request(API + "/health") != OK:
+		print("[native] network probe could not start")
+		probe.queue_free()
+		return
+	var r: Array = await probe.request_completed
+	print("[native] network probe: result %d, HTTP %d" % [int(r[0]), int(r[1])])
+	probe.queue_free()
 
 
 ## THE SAVE WHEN THE APP GOES AWAY. The website flushes the cloud save from the browser's pagehide

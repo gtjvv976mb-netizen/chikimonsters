@@ -33,6 +33,15 @@ NativeAccount="*res://NativeAccount.gd"
 
 window/handheld/orientation=4
 
+[network]
+
+; HTTPS on the phone is the engine's own (mbedTLS), not a browser's — the web build never used it.
+; The first simulator run had every handshake fail with MBEDTLS_ERR_SSL_INTERNAL_ERROR. Pin the
+; trust store to the current Mozilla bundle (curl.se/ca/cacert.pem, shipped as res://cacert.pem)
+; and negotiate TLS 1.2, which every host the game talks to serves.
+tls/certificate_bundle_override="res://cacert.pem"
+tls/enable_tls_v1.3=false
+
 [rendering]
 
 ; The game is built and tuned on the Compatibility renderer (the only one the web has). Keep it,
@@ -79,6 +88,8 @@ def main() -> int:
 		for name in new:
 			(out / (name + ".remap")).write_text(f'[remap]\n\npath="res://{name[:-3]}.gdc"\n')
 		(out / "override.cfg").write_text(OVERRIDE)
+		for f in sorted((HERE / "assets").glob("*")):
+			shutil.copy(f, out / f.name)
 		# the edited sources, for reading and for the headless test; not part of the pack
 		src_out = HERE / "patched-src"
 		if src_out.exists():
