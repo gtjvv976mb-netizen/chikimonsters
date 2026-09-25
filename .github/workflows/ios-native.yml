@@ -49,7 +49,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          sparse-checkout: godot-patch/native
+          sparse-checkout: |
+            godot-patch/native
+            ios/Chikoria/Assets.xcassets/AppIcon.appiconset
 
       - name: Toolchain (Xcode 26 or later)
         run: |
@@ -81,6 +83,7 @@ jobs:
         run: |
           set -o pipefail
           cp -R godot-patch/native/tlstest p
+          cp ios/Chikoria/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png p/icon1024.png
           sed -i '' -e "s|__TEAM_ID__|AAAAAAAAAA|" -e "s|__TEMPLATE__|$PWD/template/godot_ios.zip|" \
             -e "s|__VERSION__|1.0|" -e "s|__BUILD__|1|" p/export_presets.cfg
           mkdir -p p/build
