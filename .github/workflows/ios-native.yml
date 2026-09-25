@@ -41,6 +41,91 @@ env:
   PACK: index.pck.ios.lite
 
 jobs:
+  # A tiny app on the same engine template, answering one question quickly: does the engine's own
+  # HTTP/HTTPS work on iOS? (The full game is too slow on the CI simulator's software renderer to tell.)
+  tls-smoke:
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: godot-patch/native
+
+      - name: Toolchain (Xcode 26 or later)
+        run: |
+          XC=$(ls -d /Applications/Xcode_2[6-9]*.app 2>/dev/null | grep -v -i beta | sort -V | tail -1)
+          if [ -z "$XC" ]; then echo "::error::No Xcode 26+"; exit 1; fi
+          sudo xcode-select -s "$XC/Contents/Developer"
+
+      - name: Engine template (Godot 4.6 + Voxel Tools 1.6)
+        uses: actions/download-artifact@v4
+        with:
+          name: godot-ios-template
+          run-id: ${{ env.TEMPLATE_RUN_ID }}
+          github-token: ${{ github.token }}
+          path: template
+
+      - name: Godot editor (for the exporter only)
+        run: |
+          curl -fsSL -o godot.zip "$GODOT_EDITOR_URL"
+          unzip -q godot.zip
+          echo "GODOT=$PWD/Godot.app/Contents/MacOS/Godot" >> "$GITHUB_ENV"
+
+      - name: Network check from the runner
+        continue-on-error: true
+        run: |
+          curl -sS -m 20 -o /dev/null -w "curl: HTTP %{http_code}\n" https://api.chikimonsters.com/health
+          perl -e 'alarm 90; exec @ARGV' "$GODOT" --headless --script godot-patch/native/tls-probe.gd
+
+      - name: Xcode project and simulator build
+        run: |
+          set -o pipefail
+          cp -R godot-patch/native/tlstest p
+          sed -i '' -e "s|__TEAM_ID__|AAAAAAAAAA|" -e "s|__TEMPLATE__|$PWD/template/godot_ios.zip|" \
+            -e "s|__VERSION__|1.0|" -e "s|__BUILD__|1|" p/export_presets.cfg
+          mkdir -p p/build
+          "$GODOT" --headless --path p --import || true
+          "$GODOT" --headless --path p --export-release "iOS" build/Probe.ipa
+          sed -i '' '/MoltenVK/d' p/build/Probe.xcodeproj/project.pbxproj
+          xcodebuild build -project p/build/Probe.xcodeproj -scheme Probe \
+            -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath dd CODE_SIGNING_ALLOWED=NO | tail -15
+          echo "APP=$(ls -d dd/Build/Products/Release-iphonesimulator/*.app | head -1)" >> "$GITHUB_ENV"
+
+      - name: Run in the iOS Simulator
+        timeout-minutes: 20
+        run: |
+          set +e
+          cap() { local s=$1; shift; perl -e 'alarm shift; exec @ARGV' "$s" "$@"; }
+          DEV=$(xcrun simctl list devices available -j | python3 -c "
+          import json,sys
+          d=json.load(sys.stdin)['devices']
+          c=[x['udid'] for k,v in d.items() if 'iOS' in k for x in v if x['name'].startswith('iPhone')]
+          print(c[-1] if c else '')")
+          mkdir -p shots
+          cap 240 xcrun simctl boot "$DEV"
+          cap 300 xcrun simctl bootstatus "$DEV" -b
+          cap 180 xcrun simctl install "$DEV" "$APP"
+          cap 240 xcrun simctl launch --stdout="$PWD/shots/stdout.log" --stderr="$PWD/shots/stderr.log" \
+            "$DEV" com.chikimonsters.tlsprobe || echo "launch returned $?"
+          for i in $(seq 1 30); do
+            sleep 10
+            if grep -q "\[probe\] done" shots/stdout.log 2>/dev/null; then break; fi
+          done
+          cap 60 xcrun simctl io "$DEV" screenshot shots/probe.png
+          DATA=$(cap 60 xcrun simctl get_app_container "$DEV" com.chikimonsters.tlsprobe data 2>/dev/null)
+          for f in $(find "$DATA" -name "godot*.log" -maxdepth 6 2>/dev/null); do cp "$f" shots/; done
+          echo "=== probe results"; grep -h "probe\|TLS\|ERROR" shots/stdout.log shots/godot*.log 2>/dev/null | sort -u
+          echo "=== stdout"; tail -60 shots/stdout.log
+          echo "=== stderr"; tail -40 shots/stderr.log
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tls-smoke
+          path: shots
+          if-no-files-found: ignore
+
   native:
     runs-on: macos-15
     timeout-minutes: 90
