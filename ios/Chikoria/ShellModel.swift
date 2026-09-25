@@ -359,6 +359,7 @@ final class ShellModel: NSObject, ObservableObject {
     func retry() {
         phase = record.isLinked ? .booting : .pairing(nil)
         guard record.isLinked else { return }   // see start(): no account, nothing to load
+        diag("player pressed Try again")
         restarts = 0
         bootStalled = false
         lastLoadError = nil
@@ -485,6 +486,7 @@ final class ShellModel: NSObject, ObservableObject {
         progress = 0
         bootStage = stage
         loadStartedAt = Date()
+        diag("load: \(stage)")
     }
 
     /// Everything worth knowing about a load that has not come alive, in one screenshot.
@@ -498,6 +500,78 @@ final class ShellModel: NSObject, ObservableObject {
         ]
         if let lastLoadError { lines.append("error: \(lastLoadError)") }
         return lines.joined(separator: "\n")
+    }
+
+    // MARK: - Load diagnostics
+
+    /// A record of this launch's load, sent to /client-diag.
+    ///
+    /// WHY IT EXISTS: a TestFlight tester reported a white screen, then a loop, then "still can't
+    /// load", and each fix was a guess, because the only witness to a web view dying on a phone is
+    /// the phone. This sends what the shell saw — every load stage with its time, every content
+    /// process death, the page's own errors and what the page can see of itself — so the next fix
+    /// is not a guess. It carries NO account and NO device id: `session` is minted per launch.
+    /// Declared as Other Diagnostic Data, not linked, in PrivacyInfo.xcprivacy and APPSTORE.md.
+    ///
+    /// Bounded: only in the first 15 minutes of a launch, at most one send per 10 s and 50 in all.
+    private let diagSession = UUID().uuidString
+    private let launchedAt = Date()
+    private var diagEvents: [[String: Any]] = []
+    private var diagPage: [String: Any] = [:]
+    private var diagSendScheduled = false
+    private var diagSends = 0
+
+    fileprivate func diag(_ event: String, sendNow: Bool = false) {
+        let t = (Date().timeIntervalSince(launchedAt) * 10).rounded() / 10
+        diagEvents.append(["t": t, "e": String(event.prefix(240))])
+        if diagEvents.count > 120 { diagEvents.removeFirst(diagEvents.count - 120) }
+        if sendNow { sendDiag() } else { scheduleDiagSend() }
+    }
+
+    private var diagOpen: Bool { diagSends < 50 && Date().timeIntervalSince(launchedAt) < 15 * 60 }
+
+    private func scheduleDiagSend() {
+        guard !diagSendScheduled, diagOpen else { return }
+        diagSendScheduled = true
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: 10_000_000_000)
+            guard let self else { return }
+            self.diagSendScheduled = false
+            self.sendDiag()
+        }
+    }
+
+    private func sendDiag() {
+        guard diagOpen else { return }
+        diagSends += 1
+        var body: [String: Any] = [
+            "session": diagSession,
+            "app": appVersionDisplay,
+            "testflight": Self.isTestFlight,
+            "ios": UIDevice.current.systemVersion,
+            "model": Self.hardwareModel,
+            "ramGB": (Double(ProcessInfo.processInfo.physicalMemory) / 107_374_182.4).rounded() / 10,
+            "metered": isMetered,
+            "linked": record.isLinked,
+            "phase": "\(phase)",
+            "stage": bootStage,
+            "alive": pageAlive,
+            "policy": policyIsLive,
+            "progress": progress,
+            "restarts": restarts,
+            "crashes24h": Self.recentCrashes,
+            "stalled": bootStalled,
+            "uptime": Int(Date().timeIntervalSince(launchedAt)),
+            "page": diagPage,
+            "events": diagEvents,
+        ]
+        if let lastLoadError { body["error"] = lastLoadError }
+        guard let data = try? JSONSerialization.data(withJSONObject: body) else { return }
+        var req = URLRequest(url: Self.apiBase.appendingPathComponent("client-diag"), timeoutInterval: 15)
+        req.httpMethod = "POST"
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.httpBody = data
+        URLSession.shared.dataTask(with: req).resume()
     }
 
     // MARK: - Calling into the page
@@ -642,6 +716,7 @@ final class ShellModel: NSObject, ObservableObject {
             policyIsLive = true
             if !pageAlive { bootStage = "Starting the game…" }
             let linked = body["linked"] as? Bool ?? false
+            diag("page ready (linked \(linked))")
             if case .pairing = phase, linked { phase = .booting }
             if !linked { phase = .pairing(nil) }
 
@@ -683,9 +758,21 @@ final class ShellModel: NSObject, ObservableObject {
 
         case "progress":
             // The loader is running and drawing its own screen: the cover can come down.
+            if !pageAlive { diag("page alive") }
             pageAlive = true
-            progress = body["percent"] as? Int ?? progress
+            let pct = body["percent"] as? Int ?? progress
+            let note = body["note"] as? String ?? ""
+            if pct / 10 != progress / 10 || !note.isEmpty { diag("progress \(pct)%" + (note.isEmpty ? "" : " \(note)")) }
+            if let pack = body["pack"] as? String, !pack.isEmpty { diagPage["pack"] = pack }
+            progress = pct
             progressNote = body["note"] as? String ?? progressNote
+
+        case "diag":
+            if let info = body["info"] as? [String: Any] {
+                for (k, v) in info { diagPage[k] = v }
+                diag("page info")
+            }
+            if let text = body["error"] as? String { diag("page error: \(text)") }
 
         case "external-link":
             openExternal(body["url"] as? String)
@@ -788,7 +875,10 @@ extension ShellModel: WKNavigationDelegate {
     }
 
     nonisolated func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
-        Task { @MainActor in if !self.pageAlive { self.bootStage = "Loading the realm…" } }
+        Task { @MainActor in
+            if !self.pageAlive { self.bootStage = "Loading the realm…" }
+            self.diag("navigation committed")
+        }
     }
 
     nonisolated func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
@@ -796,6 +886,7 @@ extension ShellModel: WKNavigationDelegate {
             if !self.pageAlive {
                 self.bootStage = "Page loaded — waiting for the game to start…"
             }
+            self.diag("navigation finished")
             if case .booting = self.phase, self.record.isLinked {
                 self.phase = .playing
                 // Remember enough that an offline launch has something true to show.
@@ -834,6 +925,7 @@ extension ShellModel: WKNavigationDelegate {
             // know this one was killed.
             Self.recordCrash()
             self.installInjection()
+            self.diag("WEB CONTENT PROCESS TERMINATED (#\(self.restarts)) at \(self.progress)%", sendNow: true)
             // Not forever. A phone that cannot hold the realm would otherwise reload, die and
             // reload behind the cover for as long as the app is open.
             guard self.restarts <= Self.maxAutoRestarts else {
@@ -842,6 +934,7 @@ extension ShellModel: WKNavigationDelegate {
                 self.bootStalled = true
                 self.bootStage = "The game keeps closing on this iPhone — usually it ran out of memory. "
                     + "Close other apps and try again."
+                self.diag("stalled after \(self.restarts) terminations", sendNow: true)
                 return
             }
             NSLog("[chikoria] web content process terminated — reloading the same view")
@@ -855,6 +948,7 @@ extension ShellModel: WKNavigationDelegate {
         let ns = error as NSError
         if ns.domain == NSURLErrorDomain && ns.code == NSURLErrorCancelled { return }
         lastLoadError = "\(ns.domain) \(ns.code): \(ns.localizedDescription)"
+        diag("navigation failed: \(lastLoadError ?? "")", sendNow: true)
 
         let offline = ns.domain == NSURLErrorDomain && [
             NSURLErrorNotConnectedToInternet,
