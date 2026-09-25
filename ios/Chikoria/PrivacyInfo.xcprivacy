@@ -11,13 +11,17 @@
       AND in the App Privacy answers in App Store Connect, and the two must agree.
 
     * NSPrivacyCollectedDataTypes lists what leaves the phone and is kept by the game server, all
-      of it linked to the player, none of it used for tracking, all of it for App Functionality:
+      of it but the diagnostics linked to the player, none of it used for tracking, all of it for App Functionality:
         - User ID: the app can CREATE an account (/account/new), and the account id travels with
           every save.
         - Device ID: a random id generated on first launch (LinkKeychain.swift), sent with the
           link token so a device can be listed and revoked. Not the IDFA, not identifierForVendor.
         - Gameplay Content: the save — creatures, items, progress — syncs to the account so the
           same player can continue on the website.
+        - Other Diagnostic Data, NOT linked: when the realm fails to load, the shell reports what it
+          saw (load stages and timings, web content process deaths, the page's errors, hardware
+          model, iOS version) to /client-diag under a random per-launch id — no account, no device
+          id. See ShellModel's "Load diagnostics".
       These must match the App Privacy answers in App Store Connect (APPSTORE.md §3).
 
   REQUIRED-REASON APIS: the app links UserDefaults through Foundation (SwiftUI and WKWebView both
@@ -65,6 +69,18 @@
 			<string>NSPrivacyCollectedDataTypeGameplayContent</string>
 			<key>NSPrivacyCollectedDataTypeLinked</key>
 			<true/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+			</array>
+		</dict>
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypeOtherDiagnosticData</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<false/>
 			<key>NSPrivacyCollectedDataTypeTracking</key>
 			<false/>
 			<key>NSPrivacyCollectedDataTypePurposes</key>

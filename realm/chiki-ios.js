@@ -604,9 +604,50 @@
 		lastSent = pct;
 		try {
 			var h = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.chikiLink;
-			if (h) { h.postMessage({ kind: 'progress', percent: pct, note: String(note || ''), metered: !!window.CHIK_METERED }); }
+			if (h) { h.postMessage({ kind: 'progress', percent: pct, note: String(note || ''), metered: !!window.CHIK_METERED, pack: String(window.CHIK_PACK || '') }); }
 		} catch (e) {}
 	};
+
+	// LOAD DIAGNOSTICS, for the native shell only. When the realm fails to load on a phone, the phone
+	// is the only witness, so the page tells the shell what it can see — whether it is cross-origin
+	// isolated, whether SharedArrayBuffer exists, and its own errors — and the shell puts that in the
+	// report it sends (ShellModel, "Load diagnostics"). Nothing here runs in a browser.
+	(function () {
+		var h = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.chikiLink;
+		if (!h) { return; }
+		// Defensive throughout: nothing in here may ever break the page it is reporting on.
+		function post(msg) { try { msg.kind = 'diag'; h.postMessage(msg); } catch (e) {} }
+		var sent = 0;
+		function err(text) { if (sent++ < 40) { post({ error: String(text).slice(0, 300) }); } }
+		if (typeof window.addEventListener === 'function') {
+		window.addEventListener('error', function (e) {
+			err((e.message || 'error') + (e.filename ? ' @' + String(e.filename).split('/').pop() + ':' + e.lineno : ''));
+		});
+		window.addEventListener('unhandledrejection', function (e) {
+			var r = e && e.reason;
+			err('unhandled: ' + ((r && (r.message || r)) || '?'));
+		});
+		}
+		try {
+			var consoleError = console.error;
+			if (typeof consoleError === 'function') {
+				console.error = function () {
+					try { err('console: ' + Array.prototype.map.call(arguments, function (a) { return (a && a.message) || String(a); }).join(' ')); } catch (x) {}
+					return consoleError.apply(console, arguments);
+				};
+			}
+		} catch (e) {}
+		try { post({ info: {
+			coi: !!window.crossOriginIsolated,
+			sab: typeof SharedArrayBuffer !== 'undefined',
+			wasm: typeof WebAssembly !== 'undefined',
+			sw: 'serviceWorker' in navigator,
+			cores: navigator.hardwareConcurrency || 0,
+			dpr: window.devicePixelRatio || 0,
+			screen: (screen.width || 0) + 'x' + (screen.height || 0),
+			ua: String(navigator.userAgent || '').slice(0, 200),
+		} }); } catch (e) {}
+	}());
 
 	// ------------------------------------------------------------------ §3c the news feed
 	//

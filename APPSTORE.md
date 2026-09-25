@@ -416,7 +416,7 @@ of the two surfaces, which is worth fixing at the source when the project is rec
 
 ## 3. App Privacy ("nutrition label")
 
-These must agree with `ios/Chikoria/PrivacyInfo.xcprivacy`. The app can now create its own account and syncs the save to it, so it **does** collect data. It is all linked to the player, used only for App Functionality, and never used for tracking.
+These must agree with `ios/Chikoria/PrivacyInfo.xcprivacy`. The app can now create its own account and syncs the save to it, so it **does** collect data. All of it except load diagnostics is linked to the player; all of it is used only for App Functionality, and never used for tracking.
 
 | Question | Answer |
 |---|---|
@@ -424,6 +424,7 @@ These must agree with `ios/Chikoria/PrivacyInfo.xcprivacy`. The app can now crea
 | Identifiers → **User ID** | Collected, linked to the user, App Functionality, not tracking. This is the account id: the app can create one, and it travels with every save. |
 | Identifiers → **Device ID** | Collected, linked, App Functionality, not tracking. This is a random id made on first launch (`LinkKeychain.swift`) so a device can be listed and revoked. It is not the IDFA. |
 | Other Data → **Gameplay Content** | Collected, linked, App Functionality, not tracking. This is the save: creatures, items and progress, synced so the player can continue on the website. |
+| Diagnostics → **Other Diagnostic Data** | Collected, **not linked** to the user, App Functionality, not tracking. When the game fails to load, the app reports the load stages, crashes of the game's web view, the page's errors, the iPhone model and iOS version under a random per-launch id (`/client-diag`). |
 | Does this app use data for tracking? | **No** |
 | Third-party SDKs | **None**: the app links no analytics, ads or attribution framework. |
 
