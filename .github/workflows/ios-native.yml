@@ -135,7 +135,11 @@ jobs:
             cap 60 xcrun simctl io "$DEV" screenshot "shots/t${t}s.png" || true
             echo "--- ${t}s"; tail -5 shots/stdout.log 2>/dev/null; tail -5 shots/stderr.log 2>/dev/null
           done
-          cap 120 xcrun simctl spawn "$DEV" log show --last 4m --predicate 'process == "Chikoria"' --style compact > shots/system.log 2>&1 || true
+          DATA=$(cap 60 xcrun simctl get_app_container "$DEV" com.chikimonsters.Chikoria data 2>/dev/null || true)
+          echo "app data: $DATA"
+          find "$DATA" -name "*.log" -maxdepth 6 2>/dev/null | head
+          for f in $(find "$DATA" -name "godot*.log" -maxdepth 6 2>/dev/null); do cp "$f" shots/; done
+          echo "=== godot.log"; cat shots/godot*.log 2>/dev/null | tail -150 || true
           echo "=== stdout"; tail -80 shots/stdout.log 2>/dev/null || true
           echo "=== stderr"; tail -80 shots/stderr.log 2>/dev/null || true
 
