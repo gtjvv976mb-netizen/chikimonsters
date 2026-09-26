@@ -13,6 +13,7 @@ not touched.
 """
 import importlib.util
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -34,6 +35,11 @@ run/flush_stdout_on_print=true
 [autoload]
 
 NativeAccount="*res://NativeAccount.gd"
+NativeVitals="*res://NativeVitals.gd"
+NativeSafeArea="*res://NativeSafeArea.gd"
+NativeQuality="*res://NativeQuality.gd"
+NativeHUD="*res://NativeHUD.gd"
+NativeVoxelMesh="*res://NativeVoxelMesh.gd"
 
 [debug]
 
@@ -45,13 +51,23 @@ file_logging/enable_file_logging.pc=true
 [display]
 
 window/handheld/orientation=4
+; 60 fps, not ProMotion's 120: the HD world at 120 Hz buys no gameplay and costs heat and battery
+window/ios/allow_high_refresh_rate=false
 
 [rendering]
 
-; The game is built and tuned on the Compatibility renderer (the only one the web has). Keep it,
-; so the phone draws exactly what the website draws.
-renderer/rendering_method.mobile="gl_compatibility"
+; METAL. The website can only use the Compatibility renderer (OpenGL ES through WebGL); on iOS that
+; means OpenGL ES, which Apple deprecated in 2018 and runs through a translation layer. The Mobile
+; renderer draws with Metal, Apple's own graphics API, as native iOS games do. The game already
+; carries tuning for it (Companion's skin gain table has "gl" and "fp" columns). If Metal cannot
+; start (the CI simulator has none), Godot falls back to OpenGL on its own.
+renderer/rendering_method.mobile="mobile"
+rendering_device/driver.ios="metal"
+rendering_device/fallback_to_opengl3=true
 """
+
+
+TEX_READ = re.compile(r"(?<![\w.)\]])\b(\w+)\.get_image\(\)")
 
 
 def main() -> int:
@@ -62,7 +78,8 @@ def main() -> int:
 		for f in recovered.glob("*.gd"):
 			shutil.copy(f, work / f.name)
 		edits = json.loads((HERE / "native-edits.json").read_text())
-		for extra in ("native-web-checks.json", "native-hd.json"):
+		for extra in ("native-web-checks.json", "native-hd.json", "native-ui.json", "native-perf.json",
+				"native-textures.json"):
 			if (HERE / extra).exists():
 				edits += json.loads((HERE / extra).read_text())
 		changed = set()
@@ -73,6 +90,20 @@ def main() -> int:
 				raise SystemExit(f"anchor not unique/absent in {e['file']}: {e['why']}")
 			p.write_text(s.replace(e["old"], e["new"]))
 			changed.add(e["file"])
+		# the phone's textures are ASTC (tools/astc-pack.gd): every pixel read of a texture decompresses
+		# first. `name.get_image()` only: a viewport's get_texture().get_image() is never compressed.
+		reads = 0
+		for p in sorted(work.glob("*.gd")):
+			if p.name == "ChikFeat.gd":
+				continue
+			s, n = TEX_READ.subn(r"ChikFeat.plain_image(\1)", p.read_text())
+			if n:
+				p.write_text(s)
+				changed.add(p.name)
+				reads += n
+		print(f"  texture pixel reads routed through ChikFeat.plain_image: {reads}")
+		if reads < 14:
+			raise SystemExit("fewer texture pixel reads than the 14 known: check TEX_READ")
 		new = []
 		for f in sorted((HERE / "src").glob("*.gd")):
 			shutil.copy(f, work / f.name)

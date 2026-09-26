@@ -1,0 +1,78 @@
+# EVALUATE the iOS app with the tools that work for a Godot game built in CI:
+#   asc      — App Store Connect: builds, TestFlight crash reports and screenshot feedback testers
+#              sent, and Apple's power & performance metrics from real iPhones;
+#   security — MobSF static analysis of the app binary (binary hardening, ATS, Info.plist, embedded
+#              secrets), on the unsigned simulator-free device build of the current branch.
+# Real-device frame rate, memory and safe-area numbers come from the game itself: NativeVitals.gd
+# posts them to the backend's /client-diag while people play.
+name: iOS evaluate
+
+on:
+  workflow_dispatch:
+  workflow_call:   # from ios-native.yml, after its device build
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  asc:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: godot-patch/native/tools
+      - name: App Store Connect report
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+        run: |
+          pip install -q pyjwt cryptography
+          umask 077
+          printf '%s\n' "$ASC_PRIVATE_KEY" > "$RUNNER_TEMP/key.p8"
+          ASC_KEY_PATH="$RUNNER_TEMP/key.p8" python3 godot-patch/native/tools/asc_report.py com.chikimonsters.Chikoria
+          rm -f "$RUNNER_TEMP/key.p8"
+
+  security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: godot-patch/native/tools
+      - name: This run's device build (when called from iOS native)
+        if: github.event_name != 'workflow_dispatch'
+        uses: actions/download-artifact@v4
+        with:
+          name: device-app
+          path: app
+      - name: Newest device build (when run by hand)
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          RUN=$(gh run list -R "$GITHUB_REPOSITORY" --workflow ios-native.yml --status success --limit 1 --json databaseId -q '.[0].databaseId')
+          echo "iOS native run $RUN"
+          gh run download "$RUN" -R "$GITHUB_REPOSITORY" -n device-app -D app || { echo "::warning::run $RUN has no device-app artifact"; exit 0; }
+      - name: MobSF static analysis
+        run: |
+          [ -f app/Chikoria.ipa ] || { echo "no IPA to scan"; exit 0; }
+          KEY=$(openssl rand -hex 16)
+          docker run -d --name mobsf -p 8000:8000 -e MOBSF_API_KEY=$KEY opensecurity/mobile-security-framework-mobsf:latest
+          for i in $(seq 1 60); do curl -sf -o /dev/null http://127.0.0.1:8000/ && break; sleep 5; done
+          H="X-Mobsf-Api-Key: $KEY"
+          UP=$(curl -sf -H "$H" -F "file=@app/Chikoria.ipa" http://127.0.0.1:8000/api/v1/upload)
+          HASH=$(echo "$UP" | python3 -c 'import json,sys;print(json.load(sys.stdin)["hash"])')
+          curl -sf -H "$H" -d "hash=$HASH" http://127.0.0.1:8000/api/v1/scan -o /dev/null --max-time 1500
+          curl -sf -H "$H" -d "hash=$HASH" http://127.0.0.1:8000/api/v1/scorecard -o scorecard.json
+          curl -sf -H "$H" -d "hash=$HASH" http://127.0.0.1:8000/api/v1/report_json -o report.json
+          python3 godot-patch/native/tools/mobsf_summary.py scorecard.json report.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mobsf-report
+          path: |
+            scorecard.json
+            report.json
+          if-no-files-found: ignore

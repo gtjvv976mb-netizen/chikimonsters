@@ -30,7 +30,7 @@ on:
         default: '1.0'
   push:
     branches: ['claude/**']
-    paths: ['.github/workflows/ios-native.yml', 'godot-patch/native/**']
+    paths: ['.github/workflows/ios-native.yml', '.github/workflows/ios-evaluate.yml', 'godot-patch/native/**']
 
 permissions:
   contents: read
@@ -177,6 +177,16 @@ jobs:
           python3 godot-patch/native/fetch-pack.py index.pck hd.pck
           python3 godot-patch/native/hd-upgrade.py hd.pck x
           rm hd.pck
+          # GPU textures: WebP -> ASTC 4x4, one process per core (tools/astc-pack.gd)
+          N=$(sysctl -n hw.ncpu)
+          for i in $(seq 0 $((N - 1))); do
+            "$GODOT" --headless --script godot-patch/native/tools/astc-pack.gd -- "$PWD/x" "$i" "$N" 2>&1 | grep "^astc" &
+          done
+          wait
+          python3 -c "
+          import pathlib,struct,sys
+          n=sum(1 for p in pathlib.Path('x/.godot/imported').glob('*.ctex') if struct.unpack('<I',p.read_bytes()[36:40])[0]==0)
+          print('ASTC textures in the pack:',n); sys.exit(0 if n>=1200 else 1)"
           cp -R godot-patch/native/overlay/. x/
           "$GODOT" --headless --script godot-patch/native/zip2pck.gd -- "$PWD/x" "$PWD/Chikoria.pck"
           ls -la Chikoria.pck
@@ -227,9 +237,12 @@ jobs:
           cap 240 xcrun simctl boot "$DEV" || true
           cap 300 xcrun simctl bootstatus "$DEV" -b || echo "bootstatus did not finish"
           cap 180 xcrun simctl install "$DEV" "$APP"
-          # stdout/stderr straight to files: no console attachment to hang on
+          # stdout/stderr straight to files: no console attachment to hang on.
+          # The simulator engine has no Metal (Apple's simulator GPU lacks what the Mobile renderer
+          # needs), so this run uses OpenGL; the phone build keeps Metal from override.cfg.
           cap 360 xcrun simctl launch --stdout="$PWD/shots/stdout.log" --stderr="$PWD/shots/stderr.log" \
-            "$DEV" com.chikimonsters.Chikoria || echo "launch returned $?"
+            "$DEV" com.chikimonsters.Chikoria --rendering-driver opengl3 --rendering-method gl_compatibility \
+            || echo "launch returned $?"
           prev=0
           for t in 30 120 240 360 480; do
             sleep $((t - prev)); prev=$t
@@ -246,6 +259,11 @@ jobs:
           echo "=== godot.log"; cat shots/godot*.log 2>/dev/null | tail -150 || true
           echo "=== stdout"; tail -80 shots/stdout.log 2>/dev/null || true
           echo "=== stderr"; tail -80 shots/stderr.log 2>/dev/null || true
+          # an engine that cannot start must never reach TestFlight
+          if [ -z "$(ls shots/godot*.log 2>/dev/null)" ]; then echo "::error::the game wrote no log"; exit 1; fi
+          if grep -qE "Unable to create DisplayServer|Failed to make RendererCompositor|Couldn't load project data" shots/godot*.log; then
+            echo "::error::the engine did not start in the simulator"; exit 1
+          fi
 
       - uses: actions/upload-artifact@v4
         if: always()
@@ -263,7 +281,31 @@ jobs:
           mkdir -p "$RUNNER_TEMP/asc"
           printf '%s\n' "$ASC_PRIVATE_KEY" > "$RUNNER_TEMP/asc/AuthKey_${ASC_KEY_ID}.p8"
 
-      - name: Archive, sign and upload to App Store Connect
+      - name: Device archive (unsigned) and its size
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          set -o pipefail
+          xcodebuild archive -project shell/build/Chikoria.xcodeproj -scheme Chikoria \
+            -configuration Release -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/Chikoria.xcarchive" \
+            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" | tail -8
+          APPDIR="$RUNNER_TEMP/Chikoria.xcarchive/Products/Applications/Chikoria.app"
+          echo "=== app bundle"; du -sh "$APPDIR"; ls -laS "$APPDIR" | head -12
+          echo "=== Info.plist"; plutil -p "$APPDIR/Info.plist" | head -60
+          echo "=== PrivacyInfo.xcprivacy"; plutil -lint "$APPDIR/PrivacyInfo.xcprivacy" && plutil -p "$APPDIR/PrivacyInfo.xcprivacy"
+          # an unsigned IPA of this exact build, for the static security scan in ios-evaluate.yml
+          mkdir -p ipa/Payload && cp -R "$APPDIR" ipa/Payload/
+          (cd ipa && zip -qry ../Chikoria.ipa Payload) && ls -la Chikoria.ipa
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: device-app
+          path: Chikoria.ipa
+          retention-days: 14
+          compression-level: 0
+
+      - name: Sign and upload to App Store Connect
         if: inputs.upload || contains(github.event.head_commit.message, '[testflight]')
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
@@ -271,10 +313,6 @@ jobs:
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
         run: |
           set -o pipefail
-          xcodebuild archive -project shell/build/Chikoria.xcodeproj -scheme Chikoria \
-            -configuration Release -destination 'generic/platform=iOS' \
-            -archivePath "$RUNNER_TEMP/Chikoria.xcarchive" \
-            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" | tail -30
           cat > "$RUNNER_TEMP/ExportOptions.plist" <<PLIST
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -294,3 +332,9 @@ jobs:
       - name: Remove the key
         if: always()
         run: rm -rf "$RUNNER_TEMP/asc"
+
+  # App Store Connect feedback/crashes/metrics and a MobSF scan of this run's device build
+  evaluate:
+    needs: native
+    uses: ./.github/workflows/ios-evaluate.yml
+    secrets: inherit

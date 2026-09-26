@@ -43,12 +43,13 @@ func _ready() -> void:
 	_corner = Button.new()
 	_corner.text = "Account"
 	_corner.focus_mode = Control.FOCUS_NONE
+	# top right, 44 pt tall on an iPhone; NativeSafeArea keeps it clear of the Dynamic Island
 	_corner.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	_corner.offset_left = -118
-	_corner.offset_top = 8
+	_corner.offset_left = -150
+	_corner.offset_top = 6
 	_corner.offset_right = -10
-	_corner.offset_bottom = 48
-	_corner.add_theme_font_size_override("font_size", 18)
+	_corner.offset_bottom = 68
+	_corner.add_theme_font_size_override("font_size", 22)
 	_corner.pressed.connect(show_account)
 	add_child(_corner)
 	if ChikFeat.native_account().is_empty():
