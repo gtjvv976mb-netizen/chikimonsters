@@ -227,9 +227,12 @@ jobs:
           cap 240 xcrun simctl boot "$DEV" || true
           cap 300 xcrun simctl bootstatus "$DEV" -b || echo "bootstatus did not finish"
           cap 180 xcrun simctl install "$DEV" "$APP"
-          # stdout/stderr straight to files: no console attachment to hang on
+          # stdout/stderr straight to files: no console attachment to hang on.
+          # The simulator engine has no Metal (Apple's simulator GPU lacks what the Mobile renderer
+          # needs), so this run uses OpenGL; the phone build keeps Metal from override.cfg.
           cap 360 xcrun simctl launch --stdout="$PWD/shots/stdout.log" --stderr="$PWD/shots/stderr.log" \
-            "$DEV" com.chikimonsters.Chikoria || echo "launch returned $?"
+            "$DEV" com.chikimonsters.Chikoria --rendering-driver opengl3 --rendering-method gl_compatibility \
+            || echo "launch returned $?"
           prev=0
           for t in 30 120 240 360 480; do
             sleep $((t - prev)); prev=$t
@@ -246,6 +249,11 @@ jobs:
           echo "=== godot.log"; cat shots/godot*.log 2>/dev/null | tail -150 || true
           echo "=== stdout"; tail -80 shots/stdout.log 2>/dev/null || true
           echo "=== stderr"; tail -80 shots/stderr.log 2>/dev/null || true
+          # an engine that cannot start must never reach TestFlight
+          if [ -z "$(ls shots/godot*.log 2>/dev/null)" ]; then echo "::error::the game wrote no log"; exit 1; fi
+          if grep -qE "Unable to create DisplayServer|Failed to make RendererCompositor|Couldn't load project data" shots/godot*.log; then
+            echo "::error::the engine did not start in the simulator"; exit 1
+          fi
 
       - uses: actions/upload-artifact@v4
         if: always()
