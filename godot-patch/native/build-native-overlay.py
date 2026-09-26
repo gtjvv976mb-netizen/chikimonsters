@@ -37,6 +37,7 @@ NativeAccount="*res://NativeAccount.gd"
 NativeVitals="*res://NativeVitals.gd"
 NativeSafeArea="*res://NativeSafeArea.gd"
 NativeQuality="*res://NativeQuality.gd"
+NativeHUD="*res://NativeHUD.gd"
 
 [debug]
 
@@ -53,9 +54,14 @@ window/ios/allow_high_refresh_rate=false
 
 [rendering]
 
-; The game is built and tuned on the Compatibility renderer (the only one the web has). Keep it,
-; so the phone draws exactly what the website draws.
-renderer/rendering_method.mobile="gl_compatibility"
+; METAL. The website can only use the Compatibility renderer (OpenGL ES through WebGL); on iOS that
+; means OpenGL ES, which Apple deprecated in 2018 and runs through a translation layer. The Mobile
+; renderer draws with Metal, Apple's own graphics API, as native iOS games do. The game already
+; carries tuning for it (Companion's skin gain table has "gl" and "fp" columns). If Metal cannot
+; start (the CI simulator has none), Godot falls back to OpenGL on its own.
+renderer/rendering_method.mobile="mobile"
+rendering_device/driver.ios="metal"
+rendering_device/fallback_to_opengl3=true
 """
 
 
@@ -67,7 +73,7 @@ def main() -> int:
 		for f in recovered.glob("*.gd"):
 			shutil.copy(f, work / f.name)
 		edits = json.loads((HERE / "native-edits.json").read_text())
-		for extra in ("native-web-checks.json", "native-hd.json", "native-ui.json"):
+		for extra in ("native-web-checks.json", "native-hd.json", "native-ui.json", "native-perf.json"):
 			if (HERE / extra).exists():
 				edits += json.loads((HERE / extra).read_text())
 		changed = set()

@@ -1,0 +1,8 @@
+[
+ {
+  "file": "Main.gd",
+  "why": "native perf: 32-voxel terrain mesh blocks (one quarter of the draw calls of 16)",
+  "old": "\t\tterrain.mesh_block_size = 32 if OS.get_environment(\"CHIK_BLOCK32\") == \"1\" else 16",
+  "new": "\t\t# the phone: 32-voxel mesh blocks \u2014 a quarter of the draw calls of 16, the web default\n\t\tterrain.mesh_block_size = 32 if (OS.get_environment(\"CHIK_BLOCK32\") == \"1\" or ChikFeat.native()) else 16"
+ }
+]

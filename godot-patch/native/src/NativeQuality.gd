@@ -45,6 +45,7 @@ func _process(delta: float) -> void:
 	if level < 0:
 		# the world is up: start one step below the top, on phones that get the HD world
 		level = START_LEVEL if ChikFeat.native_hd() else 4
+		_build_scenery(mn)
 		_apply(mn)
 		_cooldown = 8.0  # let loading hitches pass before judging
 		return
@@ -126,3 +127,46 @@ func _apply(mn: Node) -> void:
 			vp.scaling_3d_scale = fhd * 0.7
 		_:
 			pass  # Low tier's own settings
+	_look(mn, vp)
+
+
+## GRASS AND CLOUDS. The phone build never made them (Main skips both on phones). The grass is one
+## MultiMesh of small wind-blown tufts over the island's grass surfaces; its density follows the
+## quality level, so it never costs the frame rate the ladder is protecting.
+const GRASS_SHARE := [1.0, 0.8, 0.6, 0.45, 0.3]
+
+
+func _build_scenery(mn: Node) -> void:
+	if mn.get_node_or_null("GrassField") == null and mn.has_method("_build_grass"):
+		mn.call("_build_grass")
+	if mn.get_node_or_null("Clouds") == null and mn.has_method("_build_clouds"):
+		mn.call("_build_clouds")
+
+
+## THE LOOK: a little glow on bright light, richer colour, sun-lit fog and debanding, on the
+## upper levels; grass at every level; clouds while there is headroom. set_quality_tier resets
+## these, so they are applied after it every time.
+func _look(mn: Node, vp: Viewport) -> void:
+	var grass := mn.get_node_or_null("GrassField") as MultiMeshInstance3D
+	if grass != null and grass.multimesh != null:
+		grass.visible = true
+		grass.multimesh.visible_instance_count = int(grass.multimesh.instance_count * GRASS_SHARE[clampi(level, 0, 4)])
+	var clouds := mn.get_node_or_null("Clouds") as Node3D
+	if clouds != null:
+		clouds.visible = level <= 2
+	vp.use_debanding = level <= 2
+	var env = mn.get("_env")
+	if env is Environment:
+		var e := env as Environment
+		e.adjustment_enabled = true
+		e.adjustment_saturation = 1.16
+		e.adjustment_contrast = 1.06
+		e.adjustment_brightness = 1.02
+		e.fog_sun_scatter = 0.25
+		e.glow_enabled = level <= 2
+		if e.glow_enabled:
+			e.glow_intensity = 0.4
+			e.glow_strength = 0.9
+			e.glow_bloom = 0.04
+			e.glow_hdr_threshold = 1.1
+			e.glow_blend_mode = Environment.GLOW_BLEND_MODE_SOFTLIGHT
