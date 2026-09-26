@@ -22,5 +22,59 @@
   "why": "native HUD: the touch tips name the new menu button",
   "old": "\"Tap a chikimon to pet it \u00b7 tap the right-edge plaques for your bags and team\"",
   "new": "\"Tap a chikimon to pet it \u00b7 the Menu button, top-right, opens your bags and team\" if ChikFeat.native() else \"Tap a chikimon to pet it \u00b7 tap the right-edge plaques for your bags and team\""
+ },
+ {
+  "file": "TouchControls.gd",
+  "why": "native controls: joystick rest position",
+  "old": "var _joy_cur: = Vector2.ZERO\n",
+  "new": "var _joy_cur: = Vector2.ZERO\nvar _joy_home: = Vector2.ZERO  # native: where the joystick rests\n"
+ },
+ {
+  "file": "TouchControls.gd",
+  "why": "native controls: joystick by default",
+  "old": "\tif FileAccess.file_exists(MODE_FILE):\n\t\tmode = FileAccess.get_file_as_string(MODE_FILE).strip_edges()\n",
+  "new": "\tif ChikFeat.native():\n\t\tmode = \"joystick\"  # a phone game's stick; the controls button still switches to tap-to-walk\n\tif FileAccess.file_exists(MODE_FILE):\n\t\tmode = FileAccess.get_file_as_string(MODE_FILE).strip_edges()\n"
+ },
+ {
+  "file": "TouchControls.gd",
+  "why": "native controls: placed by _recalc, not the safe-area pass",
+  "old": "\tadd_to_group(\"touchui\")\n",
+  "new": "\tadd_to_group(\"touchui\")\n\tif ChikFeat.native():\n\t\t# placed inside the safe area by _recalc itself: the safe-area pass moving this layer made the\n\t\t# buttons draw ~118 units away from where they are hit-tested\n\t\tset_meta(\"safe_area_ignore\", true)\n"
+ },
+ {
+  "file": "TouchControls.gd",
+  "why": "native controls: mobile-game layout",
+  "old": "\t\t\"run\": Rect2(s.x - 420.0, s.y - 356.0, 108.0, 60.0), \n\t}\n\tqueue_redraw()\n",
+  "new": "\t\t\"run\": Rect2(s.x - 420.0, s.y - 356.0, 108.0, 60.0), \n\t}\n\tif ChikFeat.native():\n\t\t# a mobile-game cluster inside the safe area: the big action button in the corner, jump to its\n\t\t# left, sprint above it; the joystick rests bottom-left\n\t\tvar sa: = get_node_or_null(\"/root/NativeSafeArea\")\n\t\tvar ins: Vector4 = sa.get(\"_insets\") if sa != null else Vector4.ZERO\n\t\tvar R: = s.x - ins.z - 24.0\n\t\tvar B: = s.y - maxf(ins.w, 12.0) - 18.0\n\t\t_btn = {\n\t\t\t\"action\": Rect2(R - 172.0, B - 172.0, 172.0, 172.0), \n\t\t\t\"jump\": Rect2(R - 172.0 - 128.0, B - 112.0, 112.0, 112.0), \n\t\t\t\"run\": Rect2(R - 142.0, B - 172.0 - 124.0, 112.0, 112.0), \n\t\t}\n\t\t_joy_home = Vector2(ins.x + 40.0 + 118.0, B - 118.0)\n\t\tif _joy_finger < 0:\n\t\t\t_joy_base = _joy_home\n\t\t\t_joy_cur = _joy_home\n\tqueue_redraw()\n"
+ },
+ {
+  "file": "TouchControls.gd",
+  "why": "native controls: follow the safe area",
+  "old": "func _process(delta: float) -> void :\n",
+  "new": "func _process(delta: float) -> void :\n\tif ChikFeat.native() and Engine.get_process_frames() % 30 == 0:\n\t\t_recalc()  # the safe-area insets arrive after the first frames\n"
+ },
+ {
+  "file": "TouchControls.gd",
+  "why": "native controls: joystick returns to rest",
+  "old": "\t\t_joy_finger = -1\n\t\t_joy_cur = _joy_base\n",
+  "new": "\t\t_joy_finger = -1\n\t\t_joy_cur = _joy_base\n\t\tif ChikFeat.native():\n\t\t\t_joy_base = _joy_home\n\t\t\t_joy_cur = _joy_home\n"
+ },
+ {
+  "file": "TouchControls.gd",
+  "why": "native controls: step aside for the menu",
+  "old": "func _right_popup_open() -> bool:\n",
+  "new": "func _right_popup_open() -> bool:\n\tvar nh: = get_node_or_null(\"/root/NativeHUD\")\n\tif nh != null and bool(nh.get(\"_tabs_open\")):\n\t\treturn true  # the Menu's tab column is open over the right side\n"
+ },
+ {
+  "file": "TouchControls.gd",
+  "why": "native controls: always-visible joystick",
+  "old": "\tif mode == \"joystick\" and _joy_finger >= 0:\n",
+  "new": "\tif ChikFeat.native() and mode == \"joystick\" and _tex.has(\"joybase\") and _tex.has(\"knob\"):\n\t\tvar br: = 118.0\n\t\tvar kr: = 50.0\n\t\tvar on: = _joy_finger >= 0\n\t\tdraw_texture_rect(_tex[\"joybase\"], Rect2(_joy_base - Vector2(br, br), Vector2(br, br) * 2.0), false, Color(1, 1, 1, 0.9 if on else 0.55))\n\t\tdraw_texture_rect(_tex[\"knob\"], Rect2(_joy_cur - Vector2(kr, kr), Vector2(kr, kr) * 2.0), false, Color(1, 1, 1, 1.0 if on else 0.7))\n\telif mode == \"joystick\" and _joy_finger >= 0:\n"
+ },
+ {
+  "file": "TouchControls.gd",
+  "why": "native controls: the HUD's art (after the game's own textures load)",
+  "old": "\t_recalc()\n\tget_viewport().size_changed.connect(_recalc)\n",
+  "new": "\tif ChikFeat.native():\n\t\tfor e in [[\"run\", \"sprint\"], [\"jump\", \"jump\"], [\"action\", \"action\"], [\"joybase\", \"joybase\"], [\"knob\", \"knob\"]]:\n\t\t\tvar img: = Image.load_from_file(\"res://nat_%s.png\" % e[1])\n\t\t\tif img != null and not img.is_empty():\n\t\t\t\t_tex[e[0]] = ImageTexture.create_from_image(img)\n\t_recalc()\n\tget_viewport().size_changed.connect(_recalc)\n"
  }
 ]

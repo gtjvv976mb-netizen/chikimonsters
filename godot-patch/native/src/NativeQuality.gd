@@ -21,10 +21,10 @@
 ## The level is reported by NativeVitals, so the settings each phone settles on are visible.
 extends Node
 
-const TARGET_LOW := 50.0     # step down when a window averages below this
-const TARGET_HIGH := 58.0    # step up after UP_AFTER seconds at or above this
-const WINDOW := 4.0
-const UP_AFTER := 45.0
+const TARGET_LOW := 45.0     # step down when a window averages below this
+const TARGET_HIGH := 54.0    # step up after UP_AFTER seconds at or above this (a 60 Hz phone averages ~57)
+const WINDOW := 5.0
+const UP_AFTER := 20.0
 const START_LEVEL := 1
 const MAX_LEVEL := 4
 
@@ -63,6 +63,11 @@ func _process(delta: float) -> void:
 		level = maxi(level, _level_for_tier(mn.gfx_tier()))
 		_apply(mn)
 	if _pinned:
+		return
+	# no judging while the world is still loading: voxel models are meshed one per frame after entering
+	var vm := get_node_or_null("/root/NativeVoxelMesh")
+	if vm != null and not (vm.get("_queue") as Array).is_empty():
+		_cooldown = maxf(_cooldown, 10.0)
 		return
 	_cooldown = maxf(0.0, _cooldown - delta)
 	_t += delta
