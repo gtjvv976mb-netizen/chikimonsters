@@ -105,6 +105,8 @@ func _send() -> void:
 		"ios": OS.get_version(),
 		"ramGB": snappedf(float(mem.get("physical", 0)) / 1073741824.0, 0.1),
 		"hd": ChikFeat.native_hd(),
+		"qualityLevel": get_node("/root/NativeQuality").get("level") if has_node("/root/NativeQuality") else -1,
+		"availMB": int(float(mem.get("available", 0)) / 1048576.0),
 		"tier": mn.gfx_tier() if (mn != null and mn.has_method("gfx_tier")) else -1,
 		"scale3d": snappedf(vp.scaling_3d_scale, 0.01),
 		"screen": [DisplayServer.window_get_size().x, DisplayServer.window_get_size().y],

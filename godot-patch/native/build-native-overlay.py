@@ -36,6 +36,7 @@ run/flush_stdout_on_print=true
 NativeAccount="*res://NativeAccount.gd"
 NativeVitals="*res://NativeVitals.gd"
 NativeSafeArea="*res://NativeSafeArea.gd"
+NativeQuality="*res://NativeQuality.gd"
 
 [debug]
 
