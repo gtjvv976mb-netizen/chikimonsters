@@ -23,6 +23,8 @@ var _frames := 0
 var _worst_ms := 0.0
 var _second := 0.0
 var _prev_unclean := false
+var _prev_last := {}  # the previous session's last breadcrumb, when it did not close cleanly
+var _crumb_t := 0.0
 var _http: HTTPRequest
 var _sends := 0
 
@@ -35,9 +37,11 @@ func _ready() -> void:
 	_session = Crypto.new().generate_random_bytes(8).hex_encode()
 	_started = Time.get_ticks_msec()
 	_prev_unclean = FileAccess.file_exists(RUNNING)
-	var f := FileAccess.open(RUNNING, FileAccess.WRITE)
-	if f != null:
-		f.store_string(_session)
+	if _prev_unclean:
+		var last = JSON.parse_string(FileAccess.get_file_as_string(RUNNING))
+		if last is Dictionary:
+			_prev_last = last
+	_mark()
 	_http = HTTPRequest.new()
 	_http.timeout = 20.0
 	add_child(_http)
@@ -53,18 +57,39 @@ func _ready() -> void:
 	t.start()
 
 
+## The marker: present only while the game is on screen and active, and holding a breadcrumb of the
+## session (uptime, memory, quality level, scene), rewritten every 5 s. A launch that finds it knows
+## the last session died in the foreground (a crash or a memory kill) and reports its breadcrumb.
+## iPhone's usual close is swipe-up-and-flick in the app switcher: the app only goes INACTIVE
+## (focus out) before it is killed, never background, so the marker goes on focus-out too (builds
+## 118-121 counted every such close as unclean).
+func _mark() -> void:
+	var mem: Dictionary = OS.get_memory_info()
+	var f := FileAccess.open(RUNNING, FileAccess.WRITE)
+	if f != null:
+		f.store_string(JSON.stringify({
+			"session": _session, "uptime": int((Time.get_ticks_msec() - _started) / 1000),
+			"availMB": int(float(mem.get("available", 0)) / 1048576.0),
+			"vramMB": int(Performance.get_monitor(Performance.RENDER_VIDEO_MEM_USED) / 1048576),
+			"fps": Engine.get_frames_per_second(), "scene": _scene_name(),
+			"qualityLevel": get_node("/root/NativeQuality").get("level") if has_node("/root/NativeQuality") else -1,
+		}))
+
+
+func _unmark() -> void:
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(RUNNING))
+
+
 func _notification(what: int) -> void:
-	# a clean close removes the marker; a launch that finds it knows the last one was killed
 	if what == NOTIFICATION_WM_CLOSE_REQUEST or what == NOTIFICATION_PREDELETE:
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(RUNNING))
+		_unmark()
+	elif what == NOTIFICATION_APPLICATION_FOCUS_OUT:
+		_unmark()  # inactive: the app switcher, a call, the lock screen; a kill from here is a close
 	elif what == NOTIFICATION_APPLICATION_PAUSED:
-		# backgrounded: iOS may end it there without a crash, so do not count that as unclean
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(RUNNING))
+		_unmark()
 		_send()
-	elif what == NOTIFICATION_APPLICATION_RESUMED:
-		var f := FileAccess.open(RUNNING, FileAccess.WRITE)
-		if f != null:
-			f.store_string(_session)
+	elif what == NOTIFICATION_APPLICATION_FOCUS_IN or what == NOTIFICATION_APPLICATION_RESUMED:
+		_mark()
 
 
 func _process(delta: float) -> void:
@@ -73,6 +98,11 @@ func _process(delta: float) -> void:
 	if ms > 50.0:
 		_slow_frames += 1
 	_worst_ms = maxf(_worst_ms, ms)
+	_crumb_t += delta
+	if _crumb_t >= 5.0:
+		_crumb_t = 0.0
+		if FileAccess.file_exists(RUNNING):
+			_mark()
 	_second += delta
 	if _second >= 1.0:
 		_fps_seconds.append(Engine.get_frames_per_second())
@@ -130,6 +160,7 @@ func _send() -> void:
 		"nodes": int(Performance.get_monitor(Performance.OBJECT_NODE_COUNT)),
 		"scene": _scene_name(),
 		"prevUnclean": _prev_unclean,
+		"prevLast": _prev_last,
 		"sends": _sends,
 	}
 	_slow_frames = 0
