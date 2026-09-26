@@ -177,6 +177,16 @@ jobs:
           python3 godot-patch/native/fetch-pack.py index.pck hd.pck
           python3 godot-patch/native/hd-upgrade.py hd.pck x
           rm hd.pck
+          # GPU textures: WebP -> ASTC 4x4, one process per core (tools/astc-pack.gd)
+          N=$(sysctl -n hw.ncpu)
+          for i in $(seq 0 $((N - 1))); do
+            "$GODOT" --headless --script godot-patch/native/tools/astc-pack.gd -- "$PWD/x" "$i" "$N" 2>&1 | grep "^astc" &
+          done
+          wait
+          python3 -c "
+          import pathlib,struct,sys
+          n=sum(1 for p in pathlib.Path('x/.godot/imported').glob('*.ctex') if struct.unpack('<I',p.read_bytes()[36:40])[0]==0)
+          print('ASTC textures in the pack:',n); sys.exit(0 if n>=1200 else 1)"
           cp -R godot-patch/native/overlay/. x/
           "$GODOT" --headless --script godot-patch/native/zip2pck.gd -- "$PWD/x" "$PWD/Chikoria.pck"
           ls -la Chikoria.pck

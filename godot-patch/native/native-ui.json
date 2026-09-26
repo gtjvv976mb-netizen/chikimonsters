@@ -10,5 +10,17 @@
   "why": "native UI: the corner utility buttons at Apple's 44 pt touch size",
   "old": "\t_utility_size = 36.0 if lite else 48.0",
   "new": "\t_utility_size = 36.0 if lite else (60.0 if ChikFeat.native() else 48.0)"
+ },
+ {
+  "file": "InfoBar.gd",
+  "why": "native HUD: the touch tips name the new settings gear",
+  "old": "\"MOVE \u2014 tap the ground to walk there (prefer a wheel? toggle \ud83c\udfae in the top-left)\"",
+  "new": "\"MOVE \u2014 tap the ground to walk there (prefer a wheel? open Settings (the gear, top-left) and toggle \ud83c\udfae)\" if ChikFeat.native() else \"MOVE \u2014 tap the ground to walk there (prefer a wheel? toggle \ud83c\udfae in the top-left)\""
+ },
+ {
+  "file": "InfoBar.gd",
+  "why": "native HUD: the touch tips name the new menu button",
+  "old": "\"Tap a chikimon to pet it \u00b7 tap the right-edge plaques for your bags and team\"",
+  "new": "\"Tap a chikimon to pet it \u00b7 the Menu button, top-right, opens your bags and team\" if ChikFeat.native() else \"Tap a chikimon to pet it \u00b7 tap the right-edge plaques for your bags and team\""
  }
 ]

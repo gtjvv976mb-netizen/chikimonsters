@@ -13,6 +13,7 @@ not touched.
 """
 import importlib.util
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -38,6 +39,7 @@ NativeVitals="*res://NativeVitals.gd"
 NativeSafeArea="*res://NativeSafeArea.gd"
 NativeQuality="*res://NativeQuality.gd"
 NativeHUD="*res://NativeHUD.gd"
+NativeVoxelMesh="*res://NativeVoxelMesh.gd"
 
 [debug]
 
@@ -65,6 +67,9 @@ rendering_device/fallback_to_opengl3=true
 """
 
 
+TEX_READ = re.compile(r"(?<![\w.)\]])\b(\w+)\.get_image\(\)")
+
+
 def main() -> int:
 	recovered, gdre = Path(sys.argv[1]), Path(sys.argv[2])
 	out = HERE / "overlay"
@@ -73,7 +78,8 @@ def main() -> int:
 		for f in recovered.glob("*.gd"):
 			shutil.copy(f, work / f.name)
 		edits = json.loads((HERE / "native-edits.json").read_text())
-		for extra in ("native-web-checks.json", "native-hd.json", "native-ui.json", "native-perf.json"):
+		for extra in ("native-web-checks.json", "native-hd.json", "native-ui.json", "native-perf.json",
+				"native-textures.json"):
 			if (HERE / extra).exists():
 				edits += json.loads((HERE / extra).read_text())
 		changed = set()
@@ -84,6 +90,20 @@ def main() -> int:
 				raise SystemExit(f"anchor not unique/absent in {e['file']}: {e['why']}")
 			p.write_text(s.replace(e["old"], e["new"]))
 			changed.add(e["file"])
+		# the phone's textures are ASTC (tools/astc-pack.gd): every pixel read of a texture decompresses
+		# first. `name.get_image()` only: a viewport's get_texture().get_image() is never compressed.
+		reads = 0
+		for p in sorted(work.glob("*.gd")):
+			if p.name == "ChikFeat.gd":
+				continue
+			s, n = TEX_READ.subn(r"ChikFeat.plain_image(\1)", p.read_text())
+			if n:
+				p.write_text(s)
+				changed.add(p.name)
+				reads += n
+		print(f"  texture pixel reads routed through ChikFeat.plain_image: {reads}")
+		if reads < 14:
+			raise SystemExit("fewer texture pixel reads than the 14 known: check TEX_READ")
 		new = []
 		for f in sorted((HERE / "src").glob("*.gd")):
 			shutil.copy(f, work / f.name)

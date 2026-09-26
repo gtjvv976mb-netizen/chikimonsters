@@ -1,0 +1,8 @@
+[
+ {
+  "file": "ChikFeat.gd",
+  "why": "native textures: pixel reads of GPU-compressed (ASTC) textures",
+  "old": "static func prod() -> bool:",
+  "new": "## A texture's pixels as an image the pixel functions can read. The phone's textures are\n## GPU-compressed (ASTC 4x4, tools/astc-pack.gd), which get_pixel, get_region, blit_rect and\n## BitMap cannot use; this decompresses first. Everything else comes back exactly as get_image()\n## returns it. Every texture.get_image() in the game goes through here on the phone (the overlay\n## builder rewrites them).\nstatic func plain_image(t) -> Image:\n\tif t == null:\n\t\treturn null\n\tif t is AtlasTexture and t.atlas != null:\n\t\tvar whole: Image = t.atlas.get_image()\n\t\tif whole != null and whole.is_compressed():\n\t\t\twhole.decompress()\n\t\t\tvar r: = Rect2i(t.region).intersection(Rect2i(Vector2i.ZERO, whole.get_size()))\n\t\t\treturn whole.get_region(r)\n\tvar img: Image = t.get_image()\n\tif img != null and img.is_compressed():\n\t\timg.decompress()\n\treturn img\n\n\n## How far the phone streams terrain, fixed for the whole session (Main.gd): 16 blocks of 32 voxels\n## on the HD iPhones, and the light phone world's own distance on the rest.\nstatic func native_view_distance() -> int:\n\treturn 512 if native_hd() else 224\n\n\nstatic func prod() -> bool:"
+ }
+]

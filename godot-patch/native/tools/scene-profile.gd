@@ -55,6 +55,8 @@ func _report(tag: String) -> void:
 	var shadow := 0
 	var surfaces := 0
 	var owners := {}
+	var tris := {}
+	var shadow_tris := {}
 	for g in _geoms(get_tree().root):
 		var gi := g as GeometryInstance3D
 		if not gi.is_visible_in_tree():
@@ -76,6 +78,14 @@ func _report(tag: String) -> void:
 		var p := gi.get_parent()
 		var pn := str(p.name).rstrip("0123456789_@") if p != null else "?"
 		owners[pn] = int(owners.get(pn, 0)) + 1
+		# triangles this one draws (after its own draw distance), grouped by what the world built it under
+		var tri := _tris(gi)
+		if cam != null and gi.visibility_range_end > 0.0 and cam.global_position.distance_to(aabb.get_center()) > gi.visibility_range_end:
+			tri = 0
+		var top := _top(gi)
+		tris[top] = int(tris.get(top, 0)) + tri
+		if gi.cast_shadow != GeometryInstance3D.SHADOW_CASTING_SETTING_OFF:
+			shadow_tris[top] = int(shadow_tris.get(top, 0)) + tri
 	var top := []
 	for o in owners:
 		top.append([owners[o], o])
@@ -87,9 +97,12 @@ func _report(tag: String) -> void:
 		"objects": int(Performance.get_monitor(Performance.RENDER_TOTAL_OBJECTS_IN_FRAME)),
 		"primitives": int(Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME)),
 		"visibleGeoms": by_kind, "bySize": by_size, "byDist": by_dist,
-		"castShadow": shadow, "meshSurfaces": surfaces, "topParents": top.slice(0, 15),
+		"castShadow": shadow, "tris": _sorted(tris), "shadowTris": _sorted(shadow_tris), "meshSurfaces": surfaces, "topParents": top.slice(0, 15),
 		"camera": [cam.global_position, cam.far] if cam != null else null,
 	}))
+	var dir := OS.get_environment("CHIK_AUDIT_DIR")
+	if dir != "":
+		get_viewport().get_texture().get_image().save_png(dir.path_join("%s.png" % tag))
 
 
 func _geoms(n: Node, out: Array = []) -> Array:
@@ -114,3 +127,49 @@ func _hide_small_far() -> int:
 			gi.visible = false
 			n += 1
 	return n
+
+
+func _sorted(d: Dictionary) -> Array:
+	var a := []
+	for k in d:
+		a.append([d[k], k])
+	a.sort()
+	a.reverse()
+	return a.slice(0, 14)
+
+
+func _mesh_tris(m: Mesh) -> int:
+	if m == null:
+		return 0
+	var t := 0
+	for s in m.get_surface_count():
+		if m is ArrayMesh:
+			var n := (m as ArrayMesh).surface_get_array_index_len(s)
+			t += (n if n > 0 else (m as ArrayMesh).surface_get_array_len(s)) / 3
+		else:
+			var arr := m.surface_get_arrays(s)
+			var idx = arr[Mesh.ARRAY_INDEX]
+			t += (idx.size() if idx != null and idx.size() > 0 else arr[Mesh.ARRAY_VERTEX].size()) / 3
+	return t
+
+
+func _tris(g: GeometryInstance3D) -> int:
+	if g is MultiMeshInstance3D:
+		var mm := (g as MultiMeshInstance3D).multimesh
+		if mm == null:
+			return 0
+		var n := mm.visible_instance_count if mm.visible_instance_count >= 0 else mm.instance_count
+		return _mesh_tris(mm.mesh) * n
+	if g is MeshInstance3D:
+		return _mesh_tris((g as MeshInstance3D).mesh)
+	return 2
+
+
+## the name of the world-level node this geometry was built under, and its script
+func _top(g: Node) -> String:
+	var mn := get_tree().get_first_node_in_group("world_main")
+	var n := g
+	while n.get_parent() != null and n.get_parent() != mn and n.get_parent() != get_tree().root:
+		n = n.get_parent()
+	var sc: Script = n.get_script()
+	return "%s%s" % [str(n.name).rstrip("0123456789_@"), (" (" + sc.resource_path.get_file() + ")") if sc != null else ""]
