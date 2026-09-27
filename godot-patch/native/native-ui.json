@@ -76,5 +76,29 @@
   "why": "native controls: the HUD's art (after the game's own textures load)",
   "old": "\t_recalc()\n\tget_viewport().size_changed.connect(_recalc)\n",
   "new": "\tif ChikFeat.native():\n\t\tfor e in [[\"run\", \"sprint\"], [\"jump\", \"jump\"], [\"action\", \"action\"], [\"joybase\", \"joybase\"], [\"knob\", \"knob\"]]:\n\t\t\tvar img: = Image.load_from_file(\"res://nat_%s.png\" % e[1])\n\t\t\tif img != null and not img.is_empty():\n\t\t\t\t_tex[e[0]] = ImageTexture.create_from_image(img)\n\t_recalc()\n\tget_viewport().size_changed.connect(_recalc)\n"
+ },
+ {
+  "file": "TouchControls.gd",
+  "why": "native controls: a held joystick keeps its base (recalc runs every 30 frames)",
+  "old": "\tvar s: = get_viewport_rect().size\n\t_joy_base = Vector2(150.0, s.y - 320.0)\n",
+  "new": "\tvar s: = get_viewport_rect().size\n\tif not ChikFeat.native():\n\t\t_joy_base = Vector2(150.0, s.y - 320.0)  # native: _joy_home below, and never under a held thumb\n"
+ },
+ {
+  "file": "TouchControls.gd",
+  "why": "native controls: the phone HUD's buttons are UI, not camera or joystick touches",
+  "old": "\tfor g in [\"playerpanel\", \"chikiseum\", \"minimap\"]:\n\t\tvar extra: = get_tree().get_first_node_in_group(g)\n\t\tif extra != null and not roots.has(extra): roots.append(extra)\n",
+  "new": "\tfor g in [\"playerpanel\", \"chikiseum\", \"minimap\"]:\n\t\tvar extra: = get_tree().get_first_node_in_group(g)\n\t\tif extra != null and not roots.has(extra): roots.append(extra)\n\tvar nh: = get_node_or_null(\"/root/NativeHUD\")\n\tif nh != null:\n\t\tvar nl = nh.get(\"_layer\")  # the gear, the Menu button and the settings grid\n\t\tif nl != null and is_instance_valid(nl) and not roots.has(nl): roots.append(nl)\n"
+ },
+ {
+  "file": "TouchControls.gd",
+  "why": "native controls: hidden layers block no touches",
+  "old": "\tif n is CanvasItem and not (n as CanvasItem).visible:\n\t\treturn false\n\tif n is Control:\n\t\tvar c: = n as Control\n",
+  "new": "\tif n is CanvasItem and not (n as CanvasItem).visible:\n\t\treturn false\n\tif n is CanvasLayer and not (n as CanvasLayer).visible:\n\t\treturn false  # a folded layer (the minimap while Settings is closed) blocks nothing\n\tif n is Control:\n\t\tvar c: = n as Control\n"
+ },
+ {
+  "file": "TouchControls.gd",
+  "why": "native controls: hidden layers hold no scrollable panels",
+  "old": "\t\tif nd is CanvasItem and not (nd as CanvasItem).visible: continue\n",
+  "new": "\t\tif nd is CanvasItem and not (nd as CanvasItem).visible: continue\n\t\tif nd is CanvasLayer and not (nd as CanvasLayer).visible: continue\n"
  }
 ]

@@ -55,6 +55,20 @@ static func HDStruct_phone() -> bool:
 
 
 func _process(_d: float) -> void:
+	# the world can be rebuilt under this autoload (account create/link/unlink and the wallet switch
+	# reload the scene): everything built in it was freed with it, so start over for the new one
+	if _done and (_layer == null or not is_instance_valid(_layer) or not _layer.is_inside_tree()):
+		_done = false
+		_layer = null
+		_gear = null
+		_menu = null
+		_col = null
+		_hidden = null
+		_plaque = null
+		_settings_open = false
+		_tabs_open = false  # TouchControls hides the action buttons while this is true
+		_chat_was_open = false
+		_art_w = 0.0
 	var mn := get_tree().get_first_node_in_group("world_main")
 	if mn == null:
 		return
@@ -74,7 +88,7 @@ func _process(_d: float) -> void:
 func _build(mn: Node, hud: Node, ib: Node) -> void:
 	_layer = CanvasLayer.new()
 	_layer.name = "NativeHUD"
-	_layer.layer = 60
+	_layer.layer = 54  # above the HUD it arranges (40-52), under the game's full-screen layers (55+)
 	mn.add_child(_layer)
 
 	_gear = _button("gear", "Settings")
@@ -110,7 +124,10 @@ func _build(mn: Node, hud: Node, ib: Node) -> void:
 		if tr.texture != null and tr.texture.get_width() > 1000:
 			if _tex.has("topbar"):
 				tr.texture = _tex["topbar"]
-			_art_w = minf(host.size.x, host.size.y * tr.texture.get_width() / float(tr.texture.get_height()))
+			# drawn keep-aspect inside its wrap (the host is only as tall as the bar's seam)
+			var wrap := tr.get_parent() as Control
+			var wsz := wrap.size.max(wrap.custom_minimum_size) if wrap != null else host.size
+			_art_w = minf(wsz.x, wsz.y * tr.texture.get_width() / float(tr.texture.get_height()))
 	for c in host.find_children("*", "Panel", true, false):
 		var sb := (c as Panel).get_theme_stylebox("panel") as StyleBoxFlat
 		if sb != null and sb.bg_color.is_equal_approx(Color("862b00")):
@@ -129,6 +146,7 @@ func _build(mn: Node, hud: Node, ib: Node) -> void:
 	_hidden.name = "NativeHiddenDocks"
 	_hidden.visible = false
 	_hidden.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_hidden.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	hud.add_child(_hidden)
 	for k in ["_dock_l", "_dock_r"]:
 		var d: Control = hud.get(k)
@@ -247,21 +265,18 @@ func _insets() -> Vector4:
 
 func _placed(ib: Node) -> Array[Control]:
 	var out: Array[Control] = []
-	for c in [ib.get("_clock_panel"), _chat_panel()] + _minimap_panels():
+	for c in [ib.get("_clock_panel"), _chat_panel(), _minimap_panel()]:
 		if c is Control and is_instance_valid(c):
 			out.append(c)
 	return out
 
 
-## the minimap first, then the other panels on its layer
-func _minimap_panels() -> Array:
-	var out := []
+func _minimap_panel() -> Control:
 	var mm := get_tree().get_first_node_in_group("minimap")
-	if mm != null:
-		for c in mm.get_children():
-			if c is Control and (c as Control).visible:
-				out.append(c)
-	return out
+	if mm == null:
+		return null
+	var p = mm.get("_panel")
+	return p if p is Control and is_instance_valid(p) else null
 
 
 func _chat_panel() -> Control:
@@ -284,6 +299,8 @@ func _put(c: Control, pos: Vector2) -> void:
 
 
 func _layout(ib: Node) -> void:
+	if _gear == null or not is_instance_valid(_gear):
+		return
 	var vs := _gear.get_viewport_rect().size
 	var ins := _insets()
 	var x0 := ins.x + 6.0
@@ -317,14 +334,16 @@ func _layout(ib: Node) -> void:
 	# the minimap only: the layer's other panels (the "Island's Chronicles" feed, the ping pill) are
 	# desktop extras that would stack onto the joystick on a phone
 	var chat_x := side_x
-	var panels := _minimap_panels()
-	for i in panels.size():
-		var c: Control = panels[i]
-		if i == 0:
-			_put(c, Vector2(side_x, col_top))
-			chat_x = side_x + c.size.x + GAP
-		else:
-			c.visible = false
+	var mmp := _minimap_panel()
+	if mmp != null and mmp.visible:
+		_put(mmp, Vector2(side_x, col_top))
+		chat_x = side_x + mmp.size.x + GAP
+	var mml := get_tree().get_first_node_in_group("minimap")
+	if mml != null:
+		for n in ["_feed_panel", "_ping_panel"]:
+			var c = mml.get(n)
+			if c is Control and is_instance_valid(c) and (c as Control).visible:
+				(c as Control).visible = false
 	var cp := _chat_panel()
 	if cp != null and is_instance_valid(cp):
 		_put(cp, Vector2(chat_x, col_top))
@@ -347,7 +366,7 @@ func _layout(ib: Node) -> void:
 				rail.offset_bottom = rail_top + h
 
 	# the "online" pill, and the event pill below it, just under the header
-	var net := get_node_or_null("/root/Net")
+	var net := get_tree().get_first_node_in_group("net")
 	if net != null and host != null:
 		var under: float = host.position.y + host.size.y * host.scale.y + 4.0
 		var pill: Control = net.get("_online_pill")

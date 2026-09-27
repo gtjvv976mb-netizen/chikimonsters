@@ -6,8 +6,9 @@
 ## snapshot of the launch: frame rate (now, average and worst second over the last minute), slow
 ## frames, memory, GPU memory, draw calls, the quality settings in force, the screen and its safe
 ## area, and whether the previous launch ended without the app closing cleanly (iOS memory kill or
-## crash). Declared in App Privacy as Other Diagnostic Data, not linked: `session` is a random id
-## per launch; no account, device id or location is sent.
+## crash). Declared in App Privacy (and the export's privacy manifest) as Performance Data, Crash
+## Data and Other Diagnostic Data, none linked: `session` is a random id per launch; no account,
+## device id or location is sent.
 extends Node
 
 const API := "https://api.chikimonsters.com"
@@ -27,6 +28,8 @@ var _prev_last := {}  # the previous session's last breadcrumb, when it did not 
 var _crumb_t := 0.0
 var _http: HTTPRequest
 var _sends := 0
+var _last_send := -1000000
+var _grace := 0.0  # seconds after a return to the foreground that are not sampled
 
 
 func _ready() -> void:
@@ -44,7 +47,14 @@ func _ready() -> void:
 	_mark()
 	_http = HTTPRequest.new()
 	_http.timeout = 20.0
+	# its own thread: the request keeps going while the main loop is stopped (focus out) or busy
+	# (the world build right after launch)
+	_http.use_threads = true
 	add_child(_http)
+	# A launch after one that died reports it now, not in 20 s: a phone that is memory-killed
+	# while the world loads would otherwise never get a report out.
+	if _prev_unclean:
+		_send.call_deferred()
 	var t := Timer.new()
 	t.one_shot = true
 	t.wait_time = FIRST_AFTER
@@ -83,16 +93,23 @@ func _unmark() -> void:
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_CLOSE_REQUEST or what == NOTIFICATION_PREDELETE:
 		_unmark()
-	elif what == NOTIFICATION_APPLICATION_FOCUS_OUT:
-		_unmark()  # inactive: the app switcher, a call, the lock screen; a kill from here is a close
-	elif what == NOTIFICATION_APPLICATION_PAUSED:
+	elif what == NOTIFICATION_APPLICATION_FOCUS_OUT or what == NOTIFICATION_APPLICATION_PAUSED:
+		# inactive: the app switcher, a call, the lock screen; a kill from here is a close. The
+		# report goes now (on its thread), since the main loop stops with focus out.
 		_unmark()
-		_send()
+		if Time.get_ticks_msec() - _last_send > 10000:
+			_send()
 	elif what == NOTIFICATION_APPLICATION_FOCUS_IN or what == NOTIFICATION_APPLICATION_RESUMED:
 		_mark()
+		# the first frame back spans the whole time away: not a hitch the player saw
+		_grace = 2.0
+		_second = 0.0
 
 
 func _process(delta: float) -> void:
+	if _grace > 0.0:
+		_grace -= delta
+		return
 	_frames += 1
 	var ms := delta * 1000.0
 	if ms > 50.0:
@@ -115,6 +132,7 @@ func _send() -> void:
 	if _http.get_http_client_status() != HTTPClient.STATUS_DISCONNECTED:
 		return
 	_sends += 1
+	_last_send = Time.get_ticks_msec()
 	var fps_avg := 0.0
 	var fps_min := 0.0
 	if not _fps_seconds.is_empty():
@@ -148,8 +166,8 @@ func _send() -> void:
 		"slowFrames": _slow_frames,
 		"frames": _frames,
 		"worstMs": int(_worst_ms),
-		"memMB": int(OS.get_static_memory_usage() / 1048576),
-		"memPeakMB": int(OS.get_static_memory_peak_usage() / 1048576),
+		# the engine's own memory counters read 0 in release builds; this is the phone's used RAM
+		"sysUsedMB": int(float(mem.get("physical", 0) - mem.get("available", 0)) / 1048576.0),
 		"vramMB": int(Performance.get_monitor(Performance.RENDER_VIDEO_MEM_USED) / 1048576),
 		"texMB": int(Performance.get_monitor(Performance.RENDER_TEXTURE_MEM_USED) / 1048576),
 		"drawCalls": int(Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME)),

@@ -62,7 +62,7 @@ func _ready() -> void:
 	var vitals := Timer.new()
 	vitals.wait_time = 30.0
 	vitals.timeout.connect(func():
-		print("[native] %d fps, %d MB" % [Engine.get_frames_per_second(), OS.get_static_memory_usage() / 1048576]))
+		print("[native] %d fps, %d MB free" % [Engine.get_frames_per_second(), int(OS.get_memory_info().get("available", 0)) / 1048576]))
 	add_child(vitals)
 	vitals.start()
 
@@ -280,6 +280,7 @@ func _screen(title: String) -> VBoxContainer:
 		_root.queue_free()
 	_root = Control.new()
 	_root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_root.set_meta("safe_area_ignore", true)  # full-bleed backdrop; the card itself is centred
 	_root.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(_root)
 	var bg := ColorRect.new()

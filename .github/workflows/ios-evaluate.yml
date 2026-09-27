@@ -10,6 +10,12 @@ name: iOS evaluate
 on:
   workflow_dispatch:
   workflow_call:   # from ios-native.yml, after its device build
+    inputs:
+      # In a called workflow github.event_name is the caller's, so a hand-run iOS native would look
+      # like a hand-run of this one; this input is what tells the two apart.
+      called:
+        type: boolean
+        default: true
 
 permissions:
   contents: read
@@ -30,8 +36,9 @@ jobs:
         run: |
           pip install -q pyjwt cryptography
           umask 077
+          # The repository is public, so its logs are: --public keeps tester feedback out of them.
           printf '%s\n' "$ASC_PRIVATE_KEY" > "$RUNNER_TEMP/key.p8"
-          ASC_KEY_PATH="$RUNNER_TEMP/key.p8" python3 godot-patch/native/tools/asc_report.py com.chikimonsters.Chikoria
+          ASC_KEY_PATH="$RUNNER_TEMP/key.p8" python3 godot-patch/native/tools/asc_report.py --public com.chikimonsters.Chikoria
           rm -f "$RUNNER_TEMP/key.p8"
 
   security:
@@ -42,13 +49,13 @@ jobs:
         with:
           sparse-checkout: godot-patch/native/tools
       - name: This run's device build (when called from iOS native)
-        if: github.event_name != 'workflow_dispatch'
+        if: inputs.called
         uses: actions/download-artifact@v4
         with:
           name: device-app
           path: app
       - name: Newest device build (when run by hand)
-        if: github.event_name == 'workflow_dispatch'
+        if: ${{ !inputs.called }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

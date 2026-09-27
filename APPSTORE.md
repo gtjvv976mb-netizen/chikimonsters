@@ -425,6 +425,8 @@ These must agree with `ios/Chikoria/PrivacyInfo.xcprivacy`. The app can now crea
 | Identifiers → **Device ID** | Collected, linked, App Functionality, not tracking. This is a random id made on first launch (`LinkKeychain.swift`) so a device can be listed and revoked. It is not the IDFA. |
 | Other Data → **Gameplay Content** | Collected, linked, App Functionality, not tracking. This is the save: creatures, items and progress, synced so the player can continue on the website. |
 | Diagnostics → **Other Diagnostic Data** | Collected, **not linked** to the user, App Functionality, not tracking. When the game fails to load, the app reports the load stages, crashes of the game's web view, the page's errors, the iPhone model and iOS version under a random per-launch id (`/client-diag`). |
+| Diagnostics → **Crash Data** | Collected, **not linked**, App Functionality, not tracking. Native build: when the previous launch ended without closing (a crash or an iOS memory kill), the next launch reports that, with the last breadcrumb of the dead session (uptime, free memory, frame rate, scene, quality level). Same random per-launch id, no account (`NativeVitals.gd`). |
+| Diagnostics → **Performance Data** | Collected, **not linked**, App Functionality, not tracking. Native build: once a minute, frame rate (now, average, worst second), slow frames, memory, draw calls and the quality settings in force (`NativeVitals.gd`). |
 | Does this app use data for tracking? | **No** |
 | Third-party SDKs | **None**: the app links no analytics, ads or attribution framework. |
 

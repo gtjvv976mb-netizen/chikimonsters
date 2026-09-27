@@ -35,6 +35,9 @@ var _good_for := 0.0
 var _cooldown := 0.0
 var _applied_tier := -1
 var _pinned := false
+var _setup_world: Node = null    # the world the settings below were made for
+var _up_after := UP_AFTER        # doubles each time a step up is undone soon after (no flip-flopping)
+var _last_up_at := -1000.0
 
 
 func _ready() -> void:
@@ -42,34 +45,60 @@ func _ready() -> void:
 		queue_free()
 		return
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	get_tree().node_added.connect(_on_node_added)
+
+
+func _on_node_added(n: Node) -> void:
+	if n is GeometryInstance3D and is_instance_valid(_world) and _world.is_ancestor_of(n):
+		_range.call_deferred(n)
+
+
+func _now() -> float:
+	return Time.get_ticks_msec() / 1000.0
 
 
 func _process(delta: float) -> void:
 	var mn = get_tree().get_first_node_in_group("world_main")
 	if mn == null or not mn.has_method("set_quality_tier"):
 		return
-	if level < 0:
-		# the world is up: start one step below the top, on phones that get the HD world
-		level = START_LEVEL if ChikFeat.native_hd() else 4
-		if OS.get_environment("CHIK_QUALITY_LEVEL") != "":  # tests: hold one level
-			level = clampi(int(OS.get_environment("CHIK_QUALITY_LEVEL")), 0, MAX_LEVEL)
-			_pinned = true
+	if level < 0 or mn != _setup_world:
+		# a world is up (the first one, or a new one after an account switch reloaded the scene)
+		if level < 0:
+			# start one step below the top on phones that get the HD world, never above the player's pick
+			level = maxi(START_LEVEL if ChikFeat.native_hd() else 4, _ceiling(mn))
+			if OS.get_environment("CHIK_QUALITY_LEVEL") != "":  # tests: hold one level
+				level = clampi(int(OS.get_environment("CHIK_QUALITY_LEVEL")), 0, MAX_LEVEL)
+				_pinned = true
+		_setup_world = mn
+		_grass_tiles.clear()  # the old world's tiles were freed with it
+		_fps.clear()
+		_good_for = 0.0
+		_t = 0.0
+		_up_after = UP_AFTER
 		_build_scenery(mn)
 		_apply(mn)
 		_cooldown = 8.0  # let loading hitches pass before judging
 		return
-	# the player changed the quality button: follow it as the new ceiling
+	# the player changed the quality button: their pick sets the level, both ways, and is the ceiling
 	if mn.gfx_tier() != _applied_tier:
-		level = maxi(level, _level_for_tier(mn.gfx_tier()))
+		var ut: int = mn.gfx_tier()
+		level = maxi(_level_for_tier(ut), _ceiling(mn)) if ut < 2 else maxi(START_LEVEL, _ceiling(mn))
+		_fps.clear()
+		_good_for = 0.0
+		_cooldown = 6.0
+		_up_after = UP_AFTER
 		_apply(mn)
 	if _pinned:
 		return
-	# no judging while the world is still loading: voxel models are meshed one per frame after entering
+	# no judging while the world is still loading: voxel models are being meshed after entering
 	var vm := get_node_or_null("/root/NativeVoxelMesh")
 	if vm != null and not (vm.get("_queue") as Array).is_empty():
 		_cooldown = maxf(_cooldown, 10.0)
 		return
-	_cooldown = maxf(0.0, _cooldown - delta)
+	if _cooldown > 0.0:
+		_cooldown -= delta
+		_t = 0.0
+		return  # the frames right after a switch are not sampled
 	_t += delta
 	if _t < 1.0:
 		return
@@ -77,19 +106,26 @@ func _process(delta: float) -> void:
 	_fps.append(Engine.get_frames_per_second())
 	if _fps.size() > int(WINDOW):
 		_fps.pop_front()
-	if _fps.size() < int(WINDOW) or _cooldown > 0.0:
+	if _fps.size() < int(WINDOW):
 		return
 	var avg := 0.0
 	for v in _fps:
 		avg += v
 	avg /= _fps.size()
+	if _last_up_at > 0.0 and _now() - _last_up_at > 45.0:
+		_up_after = UP_AFTER  # the last step up held
+		_last_up_at = -1000.0
 	if avg < TARGET_LOW and level < MAX_LEVEL:
+		if _now() - _last_up_at < 45.0:
+			_up_after = minf(_up_after * 2.0, 600.0)  # that step up did not hold: wait longer next time
+		_last_up_at = -1000.0
 		level += 1
 		_step(mn, "down", avg)
-	elif avg >= TARGET_HIGH and level > 0 and level > _level_for_tier(_user_tier(mn)):
+	elif avg >= TARGET_HIGH and level > _ceiling(mn):
 		_good_for += 1.0
-		if _good_for >= UP_AFTER:
+		if _good_for >= _up_after:
 			level -= 1
+			_last_up_at = _now()
 			_step(mn, "up", avg)
 	else:
 		_good_for = 0.0
@@ -103,11 +139,19 @@ func _step(mn: Node, dir: String, avg: float) -> void:
 	_cooldown = 6.0
 
 
-func _user_tier(mn: Node) -> int:
+## the player's graphics pick (GameHUD's quality button, saved in the profile). The light-world
+## phones stop at Medium, as GameHUD and cycle_quality allow them.
+func _user_tier(_mn: Node) -> int:
+	var t := 2 if ChikFeat.native_hd() else 0
 	var pf = get_tree().get_first_node_in_group("profile")
 	if pf != null and "d" in pf:
-		return int(pf.d.get("gfx_tier_native", 2))
-	return 2
+		t = int(pf.d.get("gfx_tier_native", t))
+	return t if ChikFeat.native_hd() else mini(t, 1)
+
+
+## the best (lowest) level the ladder may climb to
+func _ceiling(mn: Node) -> int:
+	return _level_for_tier(_user_tier(mn))
 
 
 func _level_for_tier(t: int) -> int:
@@ -123,8 +167,11 @@ func _apply(mn: Node) -> void:
 	var ws := DisplayServer.window_get_size()
 	var fhd := clampf(1080.0 / float(maxi(1, mini(ws.x, ws.y))), 0.5, 1.0)
 	var sun = mn.get("_sun")
-	vp.scaling_3d_scale = fhd * [1.0, 0.9, 0.8, 0.7, 0.6][clampi(level, 0, 4)] if level < 4 else vp.scaling_3d_scale
-	vp.msaa_3d = Viewport.MSAA_2X if level == 0 else Viewport.MSAA_DISABLED
+	if level < 4:
+		var sc: float = fhd * [1.0, 0.9, 0.8, 0.7, 0.6][clampi(level, 0, 4)]
+		# the light-world phones keep Main's phone clamp: they got the light world for lack of memory
+		vp.scaling_3d_scale = sc if ChikFeat.native_hd() else minf(sc, 0.7)
+	vp.msaa_3d = Viewport.MSAA_2X if (level == 0 and ChikFeat.native_hd()) else Viewport.MSAA_DISABLED
 	if sun is DirectionalLight3D and level <= 3:
 		var d := sun as DirectionalLight3D
 		d.directional_shadow_max_distance = [160.0, 130.0, 100.0, 80.0][level]
@@ -157,11 +204,7 @@ func _set_ranges(scale: float) -> void:
 	var mn := get_tree().get_first_node_in_group("world_main") as Node3D
 	if mn == null:
 		return
-	if _world != mn:
-		_world = mn
-		get_tree().node_added.connect(func(n: Node):
-			if n is GeometryInstance3D and is_instance_valid(_world) and _world.is_ancestor_of(n):
-				_range.call_deferred(n))
+	_world = mn  # _on_node_added gives new meshes in it their range
 	for n in mn.find_children("*", "GeometryInstance3D", true, false):
 		_range(n)
 
@@ -177,7 +220,10 @@ func _range(g: GeometryInstance3D) -> void:
 			return
 		var size := (g.global_transform.basis * g.get_aabb().size).abs()
 		var longest := maxf(size.x, maxf(size.y, size.z))
-		if longest >= 40.0 or longest <= 0.0 or g.name == "GrassField":
+		# markers meant to be seen from afar (the waypoint pin, fixed-size labels) keep drawing
+		var marker := (g is SpriteBase3D and (g as SpriteBase3D).no_depth_test) \
+			or (g is Label3D and ((g as Label3D).no_depth_test or (g as Label3D).fixed_size))
+		if longest >= 40.0 or longest <= 0.0 or g.name == "GrassField" or marker:
 			g.set_meta("chik_range_own", true)
 			return
 		g.set_meta("chik_range", clampf(longest * RANGE_PER_METRE, 70.0, float(ChikFeat.native_view_distance()) * 1.1))
@@ -285,5 +331,8 @@ func _tile_grass(mn: Node) -> void:
 		t.visibility_range_end_margin = 8.0
 		g.add_child(t)
 		_grass_tiles.append(t)
-	mm.visible_instance_count = 0
+	# the tiles hold their own copies: drop the original's buffers (CPU and GPU, ~13 MB), and the
+	# count Main cached from it, so its tier code sets 0 visible instead of 45% of a count now gone
+	mm.instance_count = 0
+	mn.set("_grass_full", 0)
 	print("[native] grass: %d tufts in %d tiles of %d m" % [n, _grass_tiles.size(), int(GRASS_TILE)])

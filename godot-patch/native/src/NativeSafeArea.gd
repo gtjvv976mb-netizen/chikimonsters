@@ -72,6 +72,8 @@ func _fit(c: Control) -> void:
 		return
 	if c.top_level or c.get_meta("safe_area_ignore", false):
 		return
+	if _is_overlay(c):
+		return  # a full-screen dimmed overlay: its backdrop must reach the edges; its content is centred
 	var cur := Vector4(c.offset_left, c.offset_top, c.offset_right, c.offset_bottom)
 	var base := cur
 	if c.has_meta(META):
@@ -101,6 +103,20 @@ func _fit(c: Control) -> void:
 		c.offset_right = want.z
 		c.offset_bottom = want.w
 	c.set_meta(META, [base, want])
+
+
+## A full-screen overlay (onboarding ceremonies, the account screens): a full-rect Control whose
+## first child is a full-rect ColorRect or TextureRect backdrop. Shrinking it would leave undimmed
+## strips at the sides where taps reach the game.
+static func _is_overlay(c: Control) -> bool:
+	if not (is_zero_approx(c.anchor_left) and is_zero_approx(c.anchor_top)
+			and is_equal_approx(c.anchor_right, 1.0) and is_equal_approx(c.anchor_bottom, 1.0)):
+		return false
+	if c.get_child_count() == 0:
+		return false
+	var b := c.get_child(0) as Control
+	return (b is ColorRect or b is TextureRect) and is_equal_approx(b.anchor_right, 1.0) \
+		and is_equal_approx(b.anchor_bottom, 1.0) and is_zero_approx(b.anchor_left) and is_zero_approx(b.anchor_top)
 
 
 func _refresh_insets() -> void:

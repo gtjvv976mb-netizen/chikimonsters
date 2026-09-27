@@ -178,15 +178,28 @@ jobs:
           python3 godot-patch/native/hd-upgrade.py hd.pck x
           rm hd.pck
           # GPU textures: WebP -> ASTC 4x4, one process per core (tools/astc-pack.gd)
+          # Every shard must exit 0 and print its summary line; its full output is kept in astc-logs.
+          # (The 384 bound card textures stay WebP: the card presenter checks their bytes.)
           N=$(sysctl -n hw.ncpu)
+          mkdir -p astc-logs
+          pids=()
           for i in $(seq 0 $((N - 1))); do
-            "$GODOT" --headless --script godot-patch/native/tools/astc-pack.gd -- "$PWD/x" "$i" "$N" 2>&1 | grep "^astc" &
+            "$GODOT" --headless --script godot-patch/native/tools/astc-pack.gd -- "$PWD/x" "$i" "$N" > "astc-logs/shard$i.log" 2>&1 &
+            pids+=($!)
           done
-          wait
+          bad=0
+          for i in $(seq 0 $((N - 1))); do
+            if ! wait "${pids[$i]}"; then echo "::error::ASTC shard $i failed"; bad=1; fi
+            grep -E "^astc|ERROR" "astc-logs/shard$i.log" || true
+            grep -q "^astc shard $i/$N:" "astc-logs/shard$i.log" || { echo "::error::ASTC shard $i printed no summary"; bad=1; }
+          done
+          if [ "$bad" != 0 ]; then tail -40 astc-logs/*.log; exit 1; fi
           python3 -c "
           import pathlib,struct,sys
           n=sum(1 for p in pathlib.Path('x/.godot/imported').glob('*.ctex') if struct.unpack('<I',p.read_bytes()[36:40])[0]==0)
-          print('ASTC textures in the pack:',n); sys.exit(0 if n>=1200 else 1)"
+          print('ASTC textures in the pack:',n); sys.exit(0 if n>=1000 else 1)"
+          # the committed bytecode must be what build-native-overlay.py makes from the committed sources
+          shasum -a 256 --quiet -c godot-patch/native/overlay.sha256 || { echo "::error::overlay is stale: run build-native-overlay.py and commit overlay/ and overlay.sha256"; exit 1; }
           cp -R godot-patch/native/overlay/. x/
           "$GODOT" --headless --script godot-patch/native/zip2pck.gd -- "$PWD/x" "$PWD/Chikoria.pck"
           ls -la Chikoria.pck
@@ -237,6 +250,9 @@ jobs:
           cap 240 xcrun simctl boot "$DEV" || true
           cap 300 xcrun simctl bootstatus "$DEV" -b || echo "bootstatus did not finish"
           cap 180 xcrun simctl install "$DEV" "$APP"
+          # crash reports from earlier runs on this runner must not count for (or hide) this one
+          mkdir -p "$RUNNER_TEMP/old-reports"
+          mv ~/Library/Logs/DiagnosticReports/*hikoria* "$RUNNER_TEMP/old-reports/" 2>/dev/null || true
           # stdout/stderr straight to files: no console attachment to hang on.
           # The simulator engine has no Metal (Apple's simulator GPU lacks what the Mobile renderer
           # needs), so this run uses OpenGL; the phone build keeps Metal from override.cfg.
@@ -244,14 +260,17 @@ jobs:
             "$DEV" com.chikimonsters.Chikoria --rendering-driver opengl3 --rendering-method gl_compatibility \
             || echo "launch returned $?"
           prev=0
+          running=0
           for t in 30 120 240 360 480; do
             sleep $((t - prev)); prev=$t
             cap 60 xcrun simctl io "$DEV" screenshot "shots/t${t}s.png" || true
-            echo "--- ${t}s  running: $(cap 20 xcrun simctl spawn "$DEV" launchctl list 2>/dev/null | grep -c chikimonsters)"
+            running=$(cap 20 xcrun simctl spawn "$DEV" launchctl list 2>/dev/null | grep -c chikimonsters)
+            echo "--- ${t}s  running: $running"
             tail -5 shots/stdout.log 2>/dev/null; tail -5 shots/stderr.log 2>/dev/null
           done
           # a crash leaves a report on the host
-          for f in $(ls -t ~/Library/Logs/DiagnosticReports/*hikoria* 2>/dev/null | head -3); do cp "$f" shots/; echo "=== crash report $f"; head -80 "$f"; done
+          crashed=0
+          for f in $(ls -t ~/Library/Logs/DiagnosticReports/*hikoria* 2>/dev/null | head -3); do crashed=1; cp "$f" shots/; echo "=== crash report $f"; head -80 "$f"; done
           DATA=$(cap 60 xcrun simctl get_app_container "$DEV" com.chikimonsters.Chikoria data 2>/dev/null || true)
           echo "app data: $DATA"
           find "$DATA" -name "*.log" -maxdepth 6 2>/dev/null | head
@@ -264,6 +283,17 @@ jobs:
           if grep -qE "Unable to create DisplayServer|Failed to make RendererCompositor|Couldn't load project data" shots/godot*.log; then
             echo "::error::the engine did not start in the simulator"; exit 1
           fi
+          # gdre compiles scripts without checking identifiers, so a broken script only shows here
+          if grep -E "Parse Error|Failed to load script|Failed to instantiate an autoload|Compile Error" shots/godot*.log shots/stdout.log shots/stderr.log 2>/dev/null; then
+            echo "::error::a game script failed to load in the simulator"; exit 1
+          fi
+          # ...and the scripts must get as far as building the world (the autoloads and Main._ready ran)
+          if ! grep -q "world built" shots/godot*.log; then echo "::error::the game never built its world in the simulator"; exit 1; fi
+          # The runner's simulator OpenGL cannot make render targets (no varyings, framebuffer
+          # incomplete) and the renderer dies a few seconds after the world is built; the phone draws
+          # with Metal. So a crash here is reported, not fatal: the device vitals are the real check.
+          if [ "$crashed" != 0 ]; then echo "::warning::the game crashed in the simulator (report in simulator-run)"; fi
+          if [ "$running" = 0 ]; then echo "::warning::the game was not running at 480 s"; fi
 
       - uses: actions/upload-artifact@v4
         if: always()

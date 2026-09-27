@@ -10,7 +10,12 @@ native-hd.json, the full-detail world on 6 GB iPhones), adds
 src/*.gd, compiles every script that changed with GDRE Tools (bytecode 4.6.0) and writes the .gdc
 files, the .remap for each new script and override.cfg into overlay/. The recovered tree itself is
 not touched.
+
+It also writes overlay.sha256: the SHA-256 of every input in this repository (src/, assets/, the
+native-*.json edits, this script) and every file it produced. CI checks it (shasum -a 256 -c), so
+an edit pushed without rebuilding the overlay fails the build instead of shipping stale bytecode.
 """
+import hashlib
 import importlib.util
 import json
 import re
@@ -132,7 +137,19 @@ def main() -> int:
 		src_out.mkdir()
 		for name in sorted(changed):
 			shutil.copy(work / name, src_out / name)
+	_write_manifest()
 	return 0
+
+
+def _write_manifest() -> None:
+	root = HERE.parent.parent  # the repository: shasum -c runs from there
+	files = [HERE / "build-native-overlay.py", HERE.parent / "apply-ios-trading-patch.py"]
+	files += sorted(HERE.glob("native-*.json"))
+	for d in ("src", "assets", "overlay"):  # patched-src/ is not committed
+		files += sorted(f for f in (HERE / d).rglob("*") if f.is_file())
+	lines = [f"{hashlib.sha256(f.read_bytes()).hexdigest()}  {f.relative_to(root).as_posix()}" for f in files]
+	(HERE / "overlay.sha256").write_text("\n".join(lines) + "\n")
+	print(f"  overlay.sha256: {len(lines)} files")
 
 
 if __name__ == "__main__":

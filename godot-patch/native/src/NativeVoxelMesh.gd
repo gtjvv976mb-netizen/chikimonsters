@@ -13,16 +13,23 @@
 ## only gets a one-instance MultiMesh holding the new mesh. A model it cannot reproduce exactly
 ## (non-cube or rotated instances, a mismatch in bounds) is left as the game made it.
 ##
-## Models convert one per frame while the world loads, and a model shared by many instances (every
-## tree of a kind) converts once.
+## Models convert one at a time, each spread over as many frames as it needs (the work yields every
+## BUDGET_US, so even the 319k-cube town wall never stalls a frame), and a model shared by many
+## instances (every tree of a kind) converts once. The player's own models (egg, tools, rods: Player
+## reads them back as cubes) are left alone. Everything is dropped when the world is rebuilt.
 extends Node
 
 const MIN_CUBES := 400        # smaller models are cheap already, and some are read back by the game
+const BUDGET_US := 4000       # work per frame before yielding
+const CHUNK := 64
 
-var _done := {}      # original MultiMesh -> converted MultiMesh, or null when left alone
+var _done := {}      # original MultiMesh instance id -> converted MultiMesh, or null when left alone
 var _queue: Array[MultiMesh] = []
-var _users := {}     # original MultiMesh -> the instances using it
+var _users := {}     # original MultiMesh instance id -> the instances using it
 var _world: Node = null
+var _gen := 0        # bumped when the world is rebuilt: a conversion in flight is then discarded
+var _busy := false
+var _t0 := 0
 var tris_before := 0
 var tris_after := 0
 var converted := 0
@@ -44,47 +51,79 @@ func _on_added(n: Node) -> void:
 func _watch(mmi: MultiMeshInstance3D) -> void:
 	if not is_instance_valid(mmi) or not mmi.is_inside_tree():
 		return
+	if mmi.has_meta("vox") or mmi.name == &"EggVox":
+		return  # Player's egg, tool and rod models: Player reads multimesh.mesh back as a BoxMesh
 	var mm := mmi.multimesh
 	if mm == null:
 		return
-	if _done.has(mm):
-		if _done[mm] != null:
-			mmi.multimesh = _done[mm]
+	var id := mm.get_instance_id()
+	if _done.has(id):
+		if _done[id] != null:
+			mmi.multimesh = _done[id]
 		return
 	if not _candidate(mm):
 		return
-	if not _users.has(mm):
-		_users[mm] = []
+	if not _users.has(id):
+		_users[id] = []
 		_queue.append(mm)
-	_users[mm].append(mmi)
+	_users[id].append(mmi)
 
 
 func _process(_d: float) -> void:
 	if _world == null or not is_instance_valid(_world):
-		_world = get_tree().get_first_node_in_group("world_main")
+		var w := get_tree().get_first_node_in_group("world_main")
+		if w != null and w != _world:
+			# a new world: forget the old one's models (their originals were freed with it)
+			_done.clear()
+			_queue.clear()
+			_users.clear()
+			_gen += 1
+			_busy = false
+		_world = w
 		if _world != null:
 			# models built before this autoload saw them
 			for n in _world.find_children("*", "MultiMeshInstance3D", true, false):
 				_watch(n)
-	# the game swaps some models back (a gather node regrowing): put the converted one back in
-	if Engine.get_process_frames() % 30 == 0 and _world != null:
-		for n in _world.find_children("*", "MultiMeshInstance3D", true, false):
-			var mm: MultiMesh = (n as MultiMeshInstance3D).multimesh
-			if mm != null and _done.get(mm) != null:
-				(n as MultiMeshInstance3D).multimesh = _done[mm]
-	if _queue.is_empty():
+	if Engine.get_process_frames() % 30 == 0:
+		for id in _done.keys():
+			if not is_instance_id_valid(id):
+				_done.erase(id)  # a discarded model (tool, preview, egg): let its mesh go
+		# the game swaps some models back (a gather node regrowing): put the converted one back in
+		if _world != null and is_instance_valid(_world):
+			for n in _world.find_children("*", "MultiMeshInstance3D", true, false):
+				var mm: MultiMesh = (n as MultiMeshInstance3D).multimesh
+				if mm != null and _done.get(mm.get_instance_id()) != null:
+					(n as MultiMeshInstance3D).multimesh = _done[mm.get_instance_id()]
+	if _busy or _queue.is_empty():
 		return
-	var mm: MultiMesh = _queue.pop_front()
-	var out := convert_multimesh(mm)
-	_done[mm] = out
+	_busy = true
+	_run(_queue[0], _gen)
+
+
+func _run(mm: MultiMesh, gen: int) -> void:
+	var out = await convert_multimesh(mm)
+	if gen != _gen:
+		return  # the world was rebuilt meanwhile
+	var id := mm.get_instance_id()
+	_done[id] = out
 	if out != null:
 		converted += 1
-		for mmi in _users.get(mm, []):
+		for mmi in _users.get(id, []):
 			if is_instance_valid(mmi) and mmi.multimesh == mm:
 				mmi.multimesh = out
-		if _queue.is_empty():
-			print("[native] voxel models meshed: %d, triangles %d -> %d" % [converted, tris_before, tris_after])
-	_users.erase(mm)
+	_users.erase(id)
+	if not _queue.is_empty() and _queue[0] == mm:
+		_queue.pop_front()
+	if _queue.is_empty() and out != null:
+		print("[native] voxel models meshed: %d, triangles %d -> %d" % [converted, tris_before, tris_after])
+	_busy = false
+
+
+## hand the frame back once this frame's budget is spent
+func _tick() -> void:
+	if Time.get_ticks_usec() - _t0 > BUDGET_US:
+		await (Engine.get_main_loop() as SceneTree).process_frame
+		_t0 = Time.get_ticks_usec()
 
 
 static func _candidate(mm: MultiMesh) -> bool:
@@ -97,7 +136,9 @@ static func _candidate(mm: MultiMesh) -> bool:
 
 
 ## the model as one greedy-meshed MultiMesh instance, or null when it cannot be reproduced exactly
+## (a coroutine: call it with await)
 func convert_multimesh(mm: MultiMesh) -> MultiMesh:
+	_t0 = Time.get_ticks_usec()
 	var box := mm.mesh as BoxMesh
 	var n := mm.instance_count
 	var buf := mm.buffer  # per instance: 12 floats of transform (rows of basis | origin), 4 of colour
@@ -111,6 +152,8 @@ func convert_multimesh(mm: MultiMesh) -> MultiMesh:
 	var centers := PackedVector3Array()
 	centers.resize(n)
 	for i in n:
+		if (i & 1023) == 0:
+			await _tick()
 		var o := i * 16
 		if not (is_equal_approx(buf[o], s) and is_equal_approx(buf[o + 5], s) and is_equal_approx(buf[o + 10], s)):
 			return null
@@ -122,12 +165,12 @@ func convert_multimesh(mm: MultiMesh) -> MultiMesh:
 	# the grid: usually one cube edge apart; some models draw their cubes a little larger than the
 	# grid so neighbours overlap (Gather: 3%), so the spacing is measured when the edge does not fit
 	var a := e
-	var cells := _lattice(centers, a)
+	var cells: Array = await _lattice(centers, a)
 	if cells.is_empty():
 		a = _spacing(centers, e)
 		if a <= 0.0:
 			return null
-		cells = _lattice(centers, a)
+		cells = await _lattice(centers, a)
 		if cells.is_empty():
 			return null
 	var f: Vector3 = cells[0]
@@ -136,6 +179,8 @@ func convert_multimesh(mm: MultiMesh) -> MultiMesh:
 	# mesh in chunks of CHUNK^3 cells: memory stays small whatever the model's extent
 	var chunks := {}
 	for i in n:
+		if (i & 1023) == 0:
+			await _tick()
 		var k := Vector3i(idx[i * 3] / CHUNK, idx[i * 3 + 1] / CHUNK, idx[i * 3 + 2] / CHUNK)
 		if not chunks.has(k):
 			chunks[k] = PackedInt32Array()
@@ -150,11 +195,12 @@ func convert_multimesh(mm: MultiMesh) -> MultiMesh:
 	var vb := VoxelBuffer.new()
 	vb.set_channel_depth(VoxelBuffer.CHANNEL_COLOR, VoxelBuffer.DEPTH_32_BIT)
 	for k in chunks:
+		await _tick()
 		var base := Vector3i(k) * CHUNK
 		# the mesher reads a 1-voxel border, left as air: the faces it adds where chunks meet are
 		# inside the model, where nobody sees them, and cost a few triangles on the cut planes
 		vb.create(CHUNK + 2, CHUNK + 2, CHUNK + 2)
-		_fill(vb, chunks[k], idx, buf, base)
+		await _fill(vb, chunks[k], idx, buf, base)
 		var m := mesher.build_mesh(vb, [mat, mat])
 		if m == null or m.get_surface_count() == 0:
 			continue
@@ -200,12 +246,9 @@ func convert_multimesh(mm: MultiMesh) -> MultiMesh:
 	return out
 
 
-const CHUNK := 64
-
-
 ## [lattice offset, lowest cell, cell index triples from the lowest] or [] when the centres are not
 ## on a grid of this spacing
-static func _lattice(centers: PackedVector3Array, a: float) -> Array:
+func _lattice(centers: PackedVector3Array, a: float) -> Array:
 	var n := centers.size()
 	var f := centers[0] / a - Vector3(0.5, 0.5, 0.5)
 	f -= f.round()
@@ -213,6 +256,8 @@ static func _lattice(centers: PackedVector3Array, a: float) -> Array:
 	raw.resize(n * 3)
 	var cmin := Vector3i(1 << 30, 1 << 30, 1 << 30)
 	for i in n:
+		if (i & 1023) == 0:
+			await _tick()
 		var q := centers[i] / a - Vector3(0.5, 0.5, 0.5) - f
 		var c := Vector3i(q.round())
 		if (q - Vector3(c)).length_squared() > 0.0004:
@@ -244,8 +289,12 @@ static func _spacing(centers: PackedVector3Array, e: float) -> float:
 
 
 ## the chunk's voxels into the buffer, inside its 1-voxel border
-static func _fill(vb: VoxelBuffer, ids: PackedInt32Array, idx: PackedInt32Array, buf: PackedFloat32Array, base: Vector3i) -> void:
+func _fill(vb: VoxelBuffer, ids: PackedInt32Array, idx: PackedInt32Array, buf: PackedFloat32Array, base: Vector3i) -> void:
+	var j := 0
 	for i in ids:
+		j += 1
+		if (j & 1023) == 0:
+			await _tick()
 		var x := idx[i * 3] - base.x + 1
 		var y := idx[i * 3 + 1] - base.y + 1
 		var z := idx[i * 3 + 2] - base.z + 1

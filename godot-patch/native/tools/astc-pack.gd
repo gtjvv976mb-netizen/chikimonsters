@@ -10,6 +10,11 @@
 ## Converted: RGB8 / RGBA8 WebP textures without mipmaps whose sides are multiples of 4 and at
 ## least 32 px (the ASTC block is 4x4, so their size is unchanged). Everything else is left as it
 ## is. The game's scripts that read texture pixels decompress first (ChikFeat.plain_image).
+## Also left alone: the card art named in card-presentation-v4/export-bindings.json, whose .ctex
+## bytes the card presenter checks against a SHA-256 before it trims the card exteriors.
+## Each file is written beside the original and renamed over it, so a killed shard never leaves a
+## half-written texture. A texture that should convert but fails to (decode, compress or write)
+## counts as a failure, and any failure makes the process exit 1.
 ## Runs the editor binary (only the editor has the compressor); `shard`/`shards` split the work
 ## across processes, since each image is compressed on one thread.
 extends SceneTree
@@ -30,24 +35,54 @@ func _init() -> void:
 	var files: PackedStringArray = []
 	_collect(root.path_join(".godot/imported"), files)
 	files.sort()
+	var keep := _bound_cards(root)
 	var done := 0
 	var skipped := 0
+	var bound := 0
 	var before := 0
 	var after := 0
 	var t0 := Time.get_ticks_msec()
 	for i in files.size():
 		if i % shards != shard:
 			continue
+		if keep.has(files[i].get_file()):
+			bound += 1
+			continue
 		var r := _convert(files[i])
 		if r.is_empty():
 			skipped += 1
+		elif r[0] < 0:
+			_failed += 1
+			printerr("astc failed: %s (%s)" % [files[i].get_file(), r[1]])
 		else:
 			done += 1
 			before += r[0]
 			after += r[1]
-	print("astc shard %d/%d: %d converted (%.0f MB of pixels -> %.0f MB), %d left as they were, %.0f s" % [
-		shard, shards, done, before / 1048576.0, after / 1048576.0, skipped, (Time.get_ticks_msec() - t0) / 1000.0])
-	quit(0)
+	print("astc shard %d/%d: %d converted (%.0f MB of pixels -> %.0f MB), %d left as they were, %d bound cards kept, %d failed, %.0f s" % [
+		shard, shards, done, before / 1048576.0, after / 1048576.0, skipped, bound, _failed, (Time.get_ticks_msec() - t0) / 1000.0])
+	quit(1 if _failed > 0 else 0)
+
+
+var _failed := 0
+
+
+## file names of the imported card textures whose bytes ChikiseumCardPresentation verifies
+func _bound_cards(root: String) -> Dictionary:
+	var out := {}
+	var path := root.path_join("card-presentation-v4/export-bindings.json")
+	if not FileAccess.file_exists(path):
+		return out
+	var d = JSON.parse_string(FileAccess.get_file_as_string(path))
+	if d is Dictionary and d.get("entries") is Dictionary:
+		for e in d.entries.values():
+			if e is Dictionary:
+				var p := String(e.get("imported_ctex_path", ""))
+				if not p.is_empty():
+					out[p.get_file()] = true
+	if out.is_empty():
+		printerr("astc: export-bindings.json lists no card textures")
+		_failed += 1
+	return out
 
 
 func _collect(dir: String, out: PackedStringArray) -> void:
@@ -56,7 +91,7 @@ func _collect(dir: String, out: PackedStringArray) -> void:
 			out.append(dir.path_join(f))
 
 
-## [decoded bytes, ASTC bytes] when converted, [] when left alone
+## [decoded bytes, ASTC bytes] when converted, [] when left alone, [-1, reason] on a failure
 func _convert(path: String) -> Array:
 	var f := FileAccess.open(path, FileAccess.READ)
 	if f == null:
@@ -79,18 +114,19 @@ func _convert(path: String) -> Array:
 	var webp := f.get_buffer(size)
 	f.close()
 	var img := Image.new()
-	if img.load_webp_from_buffer(webp) != OK or img.get_width() != w or img.get_height() != h:
-		return []
+	if webp.size() != size or img.load_webp_from_buffer(webp) != OK or img.get_width() != w or img.get_height() != h:
+		return [-1, "decode"]
 	var decoded := img.get_data().size()
 	if img.get_format() != Image.FORMAT_RGBA8:
 		img.convert(Image.FORMAT_RGBA8)
 	if img.compress(Image.COMPRESS_ASTC, Image.COMPRESS_SOURCE_GENERIC, Image.ASTC_FORMAT_4x4) != OK:
-		return []
+		return [-1, "compress"]
 	if img.get_width() != w or img.get_height() != h:
-		return []
-	var out := FileAccess.open(path, FileAccess.WRITE)
+		return [-1, "size"]
+	var tmp := path + ".tmp"
+	var out := FileAccess.open(tmp, FileAccess.WRITE)
 	if out == null:
-		return []
+		return [-1, "open"]
 	out.store_buffer(header)
 	out.store_32(DATA_FORMAT_IMAGE)
 	out.store_16(w)
@@ -98,5 +134,9 @@ func _convert(path: String) -> Array:
 	out.store_32(0)
 	out.store_32(img.get_format())
 	out.store_buffer(img.get_data())
+	var werr := out.get_error()
 	out.close()
+	if werr != OK or DirAccess.rename_absolute(tmp, path) != OK:
+		DirAccess.remove_absolute(tmp)
+		return [-1, "write"]
 	return [decoded, img.get_data().size()]

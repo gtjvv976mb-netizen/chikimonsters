@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
 """App Store Connect report: what real iPhones say about the app.
 
-    ASC_KEY_ID=… ASC_ISSUER_ID=… ASC_KEY_PATH=AuthKey.p8 python3 asc_report.py [bundle id]
+    ASC_KEY_ID=… ASC_ISSUER_ID=… ASC_KEY_PATH=AuthKey.p8 python3 asc_report.py [--public] [bundle id]
 
 Prints, for the app's recent builds: processing state and TestFlight expiry, TestFlight crash
 reports testers sent (with the crash log's top frames), screenshot feedback and comments, and
 Apple's power & performance metrics (launch time, hangs, memory, disk writes, battery) where
 enough devices have reported. Needs PyJWT and cryptography. Read-only: it changes nothing.
+
+--public is for logs anyone can read (CI on a public repository): tester feedback stays private,
+so it prints only how many crash and screenshot reports there are and each crash's exception
+type, never a tester's comment, device, OS, battery, crash frames or screenshot links.
 """
 import json
 import os
@@ -49,7 +53,9 @@ def section(t: str) -> None:
 def main() -> int:
 	global TOKEN
 	TOKEN = token()
-	bundle = sys.argv[1] if len(sys.argv) > 1 else "com.chikimonsters.Chikoria"
+	args = [a for a in sys.argv[1:] if a != "--public"]
+	public = "--public" in sys.argv[1:]
+	bundle = args[0] if args else "com.chikimonsters.Chikoria"
 	apps = get(f"/v1/apps?filter[bundleId]={bundle}")
 	if not apps.get("data"):
 		print("app not found:", apps)
@@ -70,8 +76,16 @@ def main() -> int:
 	crashes = get(f"/v1/apps/{aid}/betaFeedbackCrashSubmissions?limit=20")
 	if "_error" in crashes:
 		print("  (not available:", crashes["_error"], crashes["_body"][:160], ")")
+	if public and crashes.get("data"):
+		print(f"  {len(crashes['data'])} report(s); details are in App Store Connect (TestFlight > Feedback)")
 	for c in crashes.get("data", []):
 		a = c["attributes"]
+		if public:
+			log = get(f"/v1/betaFeedbackCrashSubmissions/{c['id']}/crashLog")
+			text = (log.get("data") or {}).get("attributes", {}).get("logText", "")
+			kind = next((l.strip() for l in text.splitlines() if l.startswith("Exception Type")), "exception type not given")
+			print(f"  {a.get('createdDate', '')[:10]}  {kind}")
+			continue
 		print(f"  {a.get('createdDate', '')[:16]}  build {a.get('buildBundleId', '')} {a.get('appPlatform', '')}"
 			f"  {a.get('deviceModel', '')} iOS {a.get('osVersion', '')}  battery {a.get('batteryPercentage')}%"
 			f"  comment: {a.get('comment')!r}")
@@ -91,7 +105,9 @@ def main() -> int:
 	shots = get(f"/v1/apps/{aid}/betaFeedbackScreenshotSubmissions?limit=20")
 	if "_error" in shots:
 		print("  (not available:", shots["_error"], shots["_body"][:160], ")")
-	for s in shots.get("data", []):
+	if public and shots.get("data"):
+		print(f"  {len(shots['data'])} report(s); details are in App Store Connect (TestFlight > Feedback)")
+	for s in shots.get("data", []) if not public else []:
 		a = s["attributes"]
 		print(f"  {a.get('createdDate', '')[:16]}  {a.get('deviceModel', '')} iOS {a.get('osVersion', '')}  comment: {a.get('comment')!r}")
 		for sc in a.get("screenshots", []) or []:
