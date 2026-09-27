@@ -119,11 +119,11 @@ def main() -> int:
 	for b in builds.get("data", [])[:3]:
 		m = get(f"/v1/builds/{b['id']}/perfPowerMetrics", "application/vnd.apple.xcode-metrics+json")
 		v = b["attributes"].get("version")
+		# no metrics is not no diagnostics: the signatures below come from a separate endpoint
+		cats = [] if "_error" in m else m.get("productData", [])
 		if "_error" in m:
 			print(f"  build {v}: not available ({m['_error']})")
-			continue
-		cats = m.get("productData", [])
-		if not cats:
+		elif not cats:
 			print(f"  build {v}: no data yet (needs enough devices to report)")
 		for pd in cats:
 			for cat in pd.get("metricCategories", []):
@@ -134,6 +134,8 @@ def main() -> int:
 							p = pts[-1]
 							print(f"  build {v}: {cat.get('identifier')}/{met.get('identifier')} = {p.get('value')} {met.get('unit', {}).get('displayName', '')}")
 		sig = get(f"/v1/builds/{b['id']}/diagnosticSignatures?limit=10")
+		if "_error" in sig:
+			print(f"  build {v}: diagnostics not available ({sig['_error']})")
 		for d in sig.get("data", []):
 			a = d["attributes"]
 			print(f"  build {v}: diagnostic {a.get('diagnosticType')} weight {a.get('weight')}: {a.get('signature', '')[:140]}")

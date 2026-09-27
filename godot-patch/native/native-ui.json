@@ -100,5 +100,17 @@
   "why": "native controls: hidden layers hold no scrollable panels",
   "old": "\t\tif nd is CanvasItem and not (nd as CanvasItem).visible: continue\n",
   "new": "\t\tif nd is CanvasItem and not (nd as CanvasItem).visible: continue\n\t\tif nd is CanvasLayer and not (nd as CanvasLayer).visible: continue\n"
+ },
+ {
+  "file": "GameHUD.gd",
+  "why": "native controls: the Controls button shows the joystick the game starts on",
+  "old": "\ttc.setup(get_tree().get_first_node_in_group(\"player\"))\n\tadd_child(tc)\n",
+  "new": "\ttc.setup(get_tree().get_first_node_in_group(\"player\"))\n\tadd_child(tc)\n\t# the Controls button was built before this and read no mode: on the native app's default joystick\n\t# it showed off, and its first tap switched to the joystick already in use\n\tvar ct: = get_node_or_null(\"ControlsToggle\") as BaseButton\n\tif ct != null:\n\t\tvar joy: bool = String(tc.get(\"mode\")) == \"joystick\"\n\t\tct.set_pressed_no_signal(joy)\n\t\tct.modulate = Color.WHITE if joy else Color(1, 1, 1, 0.55)\n"
+ },
+ {
+  "file": "TouchControls.gd",
+  "why": "native controls: the account screens are not the world",
+  "old": "func _blocked() -> bool:\n\tif _suspended:\n\t\treturn true\n",
+  "new": "func _blocked() -> bool:\n\tif _suspended:\n\t\treturn true\n\tvar na: = get_node_or_null(\"/root/NativeAccount\")\n\tif na != null:\n\t\tvar ar = na.get(\"_root\")  # the account, welcome and link screens, over the world\n\t\tif ar != null and is_instance_valid(ar) and (ar as Control).is_visible_in_tree():\n\t\t\treturn true\n"
  }
 ]

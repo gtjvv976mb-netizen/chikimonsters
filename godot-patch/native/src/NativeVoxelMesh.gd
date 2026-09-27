@@ -14,14 +14,17 @@
 ## (non-cube or rotated instances, a mismatch in bounds) is left as the game made it.
 ##
 ## Models convert one at a time, each spread over as many frames as it needs (the work yields every
-## BUDGET_US, so even the 319k-cube town wall never stalls a frame), and a model shared by many
-## instances (every tree of a kind) converts once. The player's own models (egg, tools, rods: Player
-## reads them back as cubes) are left alone. Everything is dropped when the world is rebuilt.
+## BUDGET_US; the engine calls in between, one mesher run per CHUNK^3 cells and one surface upload
+## per SURFACE_VERTS vertices, cost a few ms each), and a model shared by many instances (every tree
+## of a kind) converts once. The player's own models (egg, tools, rods: Player reads them back as
+## cubes) are left alone. Everything is dropped when the world is rebuilt, a conversion in flight
+## included.
 extends Node
 
 const MIN_CUBES := 400        # smaller models are cheap already, and some are read back by the game
 const BUDGET_US := 4000       # work per frame before yielding
-const CHUNK := 64
+const CHUNK := 32             # cells per chunk edge: one mesher run, a few ms
+const SURFACE_VERTS := 65535  # vertices per surface: one upload, a few ms, and 16-bit indices
 
 var _done := {}      # original MultiMesh instance id -> converted MultiMesh, or null when left alone
 var _queue: Array[MultiMesh] = []
@@ -119,11 +122,12 @@ func _run(mm: MultiMesh, gen: int) -> void:
 	_busy = false
 
 
-## hand the frame back once this frame's budget is spent
-func _tick() -> void:
+## hand the frame back once this frame's budget is spent; false once the world was rebuilt meanwhile
+func _tick(gen: int) -> bool:
 	if Time.get_ticks_usec() - _t0 > BUDGET_US:
 		await (Engine.get_main_loop() as SceneTree).process_frame
 		_t0 = Time.get_ticks_usec()
+	return gen == _gen
 
 
 static func _candidate(mm: MultiMesh) -> bool:
@@ -139,6 +143,7 @@ static func _candidate(mm: MultiMesh) -> bool:
 ## (a coroutine: call it with await)
 func convert_multimesh(mm: MultiMesh) -> MultiMesh:
 	_t0 = Time.get_ticks_usec()
+	var gen := _gen
 	var box := mm.mesh as BoxMesh
 	var n := mm.instance_count
 	var buf := mm.buffer  # per instance: 12 floats of transform (rows of basis | origin), 4 of colour
@@ -152,8 +157,8 @@ func convert_multimesh(mm: MultiMesh) -> MultiMesh:
 	var centers := PackedVector3Array()
 	centers.resize(n)
 	for i in n:
-		if (i & 1023) == 0:
-			await _tick()
+		if (i & 1023) == 0 and not await _tick(gen):
+			return null
 		var o := i * 16
 		if not (is_equal_approx(buf[o], s) and is_equal_approx(buf[o + 5], s) and is_equal_approx(buf[o + 10], s)):
 			return null
@@ -165,56 +170,79 @@ func convert_multimesh(mm: MultiMesh) -> MultiMesh:
 	# the grid: usually one cube edge apart; some models draw their cubes a little larger than the
 	# grid so neighbours overlap (Gather: 3%), so the spacing is measured when the edge does not fit
 	var a := e
-	var cells: Array = await _lattice(centers, a)
+	var cells: Array = await _lattice(centers, a, gen)
 	if cells.is_empty():
 		a = _spacing(centers, e)
-		if a <= 0.0:
+		if a <= 0.0 or gen != _gen:
 			return null
-		cells = await _lattice(centers, a)
+		cells = await _lattice(centers, a, gen)
 		if cells.is_empty():
 			return null
 	var f: Vector3 = cells[0]
 	var cmin: Vector3i = cells[1]
 	var idx: PackedInt32Array = cells[2]
-	# mesh in chunks of CHUNK^3 cells: memory stays small whatever the model's extent
+	# mesh in chunks of CHUNK^3 cells: memory stays small whatever the model's extent. The mesher
+	# reads a 1-voxel border: the neighbouring chunks' cubes on it (edges) hide the faces where
+	# chunks meet, as in one piece
 	var chunks := {}
+	var edges := {}
 	for i in n:
-		if (i & 1023) == 0:
-			await _tick()
-		var k := Vector3i(idx[i * 3] / CHUNK, idx[i * 3 + 1] / CHUNK, idx[i * 3 + 2] / CHUNK)
+		if (i & 1023) == 0 and not await _tick(gen):
+			return null
+		var c := Vector3i(idx[i * 3], idx[i * 3 + 1], idx[i * 3 + 2])
+		var k := c / CHUNK
 		if not chunks.has(k):
 			chunks[k] = PackedInt32Array()
 		chunks[k].append(i)
+		for ax in 3:
+			var d := Vector3i.ZERO
+			if c[ax] % CHUNK == 0 and c[ax] > 0:
+				d[ax] = -1
+			elif c[ax] % CHUNK == CHUNK - 1:
+				d[ax] = 1
+			else:
+				continue
+			if not edges.has(k + d):
+				edges[k + d] = PackedInt32Array()
+			edges[k + d].append(i)
 	var mesher := VoxelMesherCubes.new()
 	mesher.color_mode = VoxelMesherCubes.COLOR_RAW
 	mesher.greedy_meshing_enabled = true
 	var mat: Material = box.material
-	var all := []
+	var mesh := ArrayMesh.new()
+	var all := []  # the surface being gathered: chunks' meshes until SURFACE_VERTS
 	all.resize(Mesh.ARRAY_MAX)
 	var vcount := 0
+	var tris := 0
 	var vb := VoxelBuffer.new()
 	vb.set_channel_depth(VoxelBuffer.CHANNEL_COLOR, VoxelBuffer.DEPTH_32_BIT)
 	for k in chunks:
-		await _tick()
+		if not await _tick(gen):
+			return null
 		var base := Vector3i(k) * CHUNK
-		# the mesher reads a 1-voxel border, left as air: the faces it adds where chunks meet are
-		# inside the model, where nobody sees them, and cost a few triangles on the cut planes
 		vb.create(CHUNK + 2, CHUNK + 2, CHUNK + 2)
-		await _fill(vb, chunks[k], idx, buf, base)
+		if not await _fill(vb, chunks[k], idx, buf, base, gen, false) or not await _fill(vb, edges.get(k, PackedInt32Array()), idx, buf, base, gen, true):
+			return null
 		var m := mesher.build_mesh(vb, [mat, mat])
 		if m == null or m.get_surface_count() == 0:
 			continue
 		var arr := m.surface_get_arrays(0)
-		var verts: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
-		var off := Vector3(base)
-		for vi in verts.size():
-			verts[vi] += off
+		var verts: PackedVector3Array = Transform3D(Basis(), Vector3(base)) * (arr[Mesh.ARRAY_VERTEX] as PackedVector3Array)
 		arr[Mesh.ARRAY_VERTEX] = verts
+		if vcount > 0 and vcount + verts.size() > SURFACE_VERTS:
+			# the gathered surface is full: hand it to the engine
+			if not await _tick(gen) or not _add_surface(mesh, all, mat):
+				return null
+			all.fill(null)
+			vcount = 0
 		var ind: PackedInt32Array = arr[Mesh.ARRAY_INDEX]
 		if vcount > 0:
 			for ii in ind.size():
+				if (ii & 4095) == 0 and not await _tick(gen):
+					return null
 				ind[ii] += vcount
 		arr[Mesh.ARRAY_INDEX] = ind
+		tris += ind.size() / 3
 		for slot in Mesh.ARRAY_MAX:
 			if arr[slot] == null:
 				continue
@@ -223,11 +251,10 @@ func convert_multimesh(mm: MultiMesh) -> MultiMesh:
 			else:
 				all[slot].append_array(arr[slot])
 		vcount += verts.size()
-	if vcount == 0:
+	if vcount > 0 and (not await _tick(gen) or not _add_surface(mesh, all, mat)):
 		return null
-	var mesh := ArrayMesh.new()
-	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, all)
-	mesh.surface_set_material(0, mat)
+	if mesh.get_surface_count() == 0:
+		return null
 	var xf := Transform3D(Basis.from_scale(Vector3(a, a, a)), (Vector3(cmin) + f) * a)
 	# the check: the new model covers the cubes' bounds (less their overlap, when they overlap)
 	var want := mm.get_aabb()
@@ -242,13 +269,22 @@ func convert_multimesh(mm: MultiMesh) -> MultiMesh:
 	out.instance_count = 1
 	out.set_instance_transform(0, xf)
 	tris_before += n * 12
-	tris_after += (all[Mesh.ARRAY_INDEX] as PackedInt32Array).size() / 3
+	tris_after += tris
 	return out
+
+
+## false when the mesh already holds as many surfaces as the engine allows
+static func _add_surface(mesh: ArrayMesh, arrays: Array, mat: Material) -> bool:
+	if mesh.get_surface_count() == RenderingServer.MAX_MESH_SURFACES:
+		return false
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	mesh.surface_set_material(mesh.get_surface_count() - 1, mat)
+	return true
 
 
 ## [lattice offset, lowest cell, cell index triples from the lowest] or [] when the centres are not
 ## on a grid of this spacing
-func _lattice(centers: PackedVector3Array, a: float) -> Array:
+func _lattice(centers: PackedVector3Array, a: float, gen: int) -> Array:
 	var n := centers.size()
 	var f := centers[0] / a - Vector3(0.5, 0.5, 0.5)
 	f -= f.round()
@@ -256,8 +292,8 @@ func _lattice(centers: PackedVector3Array, a: float) -> Array:
 	raw.resize(n * 3)
 	var cmin := Vector3i(1 << 30, 1 << 30, 1 << 30)
 	for i in n:
-		if (i & 1023) == 0:
-			await _tick()
+		if (i & 1023) == 0 and not await _tick(gen):
+			return []
 		var q := centers[i] / a - Vector3(0.5, 0.5, 0.5) - f
 		var c := Vector3i(q.round())
 		if (q - Vector3(c)).length_squared() > 0.0004:
@@ -267,6 +303,8 @@ func _lattice(centers: PackedVector3Array, a: float) -> Array:
 		raw[i * 3 + 2] = c.z
 		cmin = cmin.min(c)
 	for i in n:
+		if (i & 1023) == 0 and not await _tick(gen):
+			return []
 		raw[i * 3] -= cmin.x
 		raw[i * 3 + 1] -= cmin.y
 		raw[i * 3 + 2] -= cmin.z
@@ -288,15 +326,21 @@ static func _spacing(centers: PackedVector3Array, e: float) -> float:
 	return best if best < e * 1.01 else -1.0
 
 
-## the chunk's voxels into the buffer, inside its 1-voxel border
-func _fill(vb: VoxelBuffer, ids: PackedInt32Array, idx: PackedInt32Array, buf: PackedFloat32Array, base: Vector3i) -> void:
+## these voxels into the chunk's buffer: its own inside the 1-voxel border, or its neighbours' on it
+## (edge), filled after its own; false once the world was rebuilt meanwhile
+func _fill(vb: VoxelBuffer, ids: PackedInt32Array, idx: PackedInt32Array, buf: PackedFloat32Array, base: Vector3i, gen: int, edge: bool) -> bool:
 	var j := 0
 	for i in ids:
 		j += 1
-		if (j & 1023) == 0:
-			await _tick()
+		if (j & 1023) == 0 and not await _tick(gen):
+			return false
 		var x := idx[i * 3] - base.x + 1
 		var y := idx[i * 3 + 1] - base.y + 1
 		var z := idx[i * 3 + 2] - base.z + 1
+		# a border cube only hides the face of the cube inside next to it: against air the mesher
+		# would give it a face of its own, a copy of the one its own chunk makes
+		if edge and vb.get_voxel(clampi(x, 1, CHUNK), clampi(y, 1, CHUNK), clampi(z, 1, CHUNK), VoxelBuffer.CHANNEL_COLOR) == 0:
+			continue
 		var o := i * 16 + 12
 		vb.set_voxel(Color(buf[o], buf[o + 1], buf[o + 2], 1.0).to_rgba32(), x, y, z, VoxelBuffer.CHANNEL_COLOR)
+	return true

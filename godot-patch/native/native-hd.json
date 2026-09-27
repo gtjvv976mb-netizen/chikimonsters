@@ -61,9 +61,9 @@
  },
  {
   "file": "Main.gd",
-  "why": "native HD: the quality button reaches HD",
-  "old": "\tvar cap: int = 2 if not load(\"res://HDStruct.gd\").phone_world() else 1",
-  "new": "\tvar cap: int = 2 if (not load(\"res://HDStruct.gd\").phone_world() or ChikFeat.native_hd()) else 1"
+  "why": "native HD: the quality button reaches HD, and steps from the player's pick",
+  "old": "\tvar cap: int = 2 if not load(\"res://HDStruct.gd\").phone_world() else 1\n\tset_quality_tier((_gfx_tier + 1) % (cap + 1))",
+  "new": "\tvar cap: int = 2 if (not load(\"res://HDStruct.gd\").phone_world() or ChikFeat.native_hd()) else 1\n\t# the app's quality ladder moves _gfx_tier under the button: the button steps from the pick it shows\n\tvar nq = get_node_or_null(\"/root/NativeQuality\")\n\tvar cur: int = nq.user_tier() if nq != null else _gfx_tier\n\tset_quality_tier((cur + 1) % (cap + 1))"
  },
  {
   "file": "Main.gd",
@@ -79,8 +79,8 @@
  },
  {
   "file": "GameHUD.gd",
-  "why": "native HD: not forced to Low like a phone browser",
+  "why": "native: the button shows the player's pick (the light-world phones' too), not a forced Low",
   "old": "\tif OS.has_feature(\"web_android\") or OS.has_feature(\"web_ios\") or OS.has_feature(\"ios\"):\n\t\ttier = 0",
-  "new": "\tif (OS.has_feature(\"web_android\") or OS.has_feature(\"web_ios\") or OS.has_feature(\"ios\")) and not ChikFeat.native_hd():\n\t\ttier = 0"
+  "new": "\tvar nq = get_node_or_null(\"/root/NativeQuality\")\n\tif nq != null:\n\t\ttier = nq.user_tier()  # the app: the saved pick, which the quality ladder keeps as its ceiling\n\telif OS.has_feature(\"web_android\") or OS.has_feature(\"web_ios\") or OS.has_feature(\"ios\"):\n\t\ttier = 0"
  }
 ]

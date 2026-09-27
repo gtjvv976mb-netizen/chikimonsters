@@ -10,7 +10,8 @@
 ##   level 1  3D at 90%, shadows to 130 m, object distances 85%
 ##   level 2  3D at 80%, one shadow cascade to 100 m, object distances 70%
 ##   level 3  Medium tier, 3D at 70%, shadows to 80 m, object distances 60%
-##   level 4  Low tier (build 113's settings, which ran smoothly on this phone), distances 50%
+##   level 4  Low tier (build 113's settings, which ran smoothly on this phone), 3D at 60%, one
+##            shadow cascade to 64 m, object distances 50%
 ##
 ## The desktop HD tier drew the sun's shadows in 4 cascades to 620 m (every shadow caster drawn up
 ## to 4 more times) with SSAO; no level uses that on the phone. The terrain's streaming distance is
@@ -34,6 +35,7 @@ var _t := 0.0
 var _good_for := 0.0
 var _cooldown := 0.0
 var _applied_tier := -1
+var _applied_pick := -1          # the player's pick when the settings were last applied
 var _pinned := false
 var _setup_world: Node = null    # the world the settings below were made for
 var _up_after := UP_AFTER        # doubles each time a step up is undone soon after (no flip-flopping)
@@ -63,12 +65,13 @@ func _process(delta: float) -> void:
 		return
 	if level < 0 or mn != _setup_world:
 		# a world is up (the first one, or a new one after an account switch reloaded the scene)
-		if level < 0:
-			# start one step below the top on phones that get the HD world, never above the player's pick
+		if level < 0 and OS.get_environment("CHIK_QUALITY_LEVEL") != "":  # tests: hold one level
+			level = clampi(int(OS.get_environment("CHIK_QUALITY_LEVEL")), 0, MAX_LEVEL)
+			_pinned = true
+		elif not _pinned:
+			# start one step below the top on phones that get the HD world, never above the player's
+			# pick; on every world, since the account a reload brings in has its own pick
 			level = maxi(START_LEVEL if ChikFeat.native_hd() else 4, _ceiling(mn))
-			if OS.get_environment("CHIK_QUALITY_LEVEL") != "":  # tests: hold one level
-				level = clampi(int(OS.get_environment("CHIK_QUALITY_LEVEL")), 0, MAX_LEVEL)
-				_pinned = true
 		_setup_world = mn
 		_grass_tiles.clear()  # the old world's tiles were freed with it
 		_fps.clear()
@@ -80,8 +83,8 @@ func _process(delta: float) -> void:
 		_cooldown = 8.0  # let loading hitches pass before judging
 		return
 	# the player changed the quality button: their pick sets the level, both ways, and is the ceiling
-	if mn.gfx_tier() != _applied_tier:
-		var ut: int = mn.gfx_tier()
+	var ut := user_tier()
+	if mn.gfx_tier() != _applied_tier or ut != _applied_pick:
 		level = maxi(_level_for_tier(ut), _ceiling(mn)) if ut < 2 else maxi(START_LEVEL, _ceiling(mn))
 		_fps.clear()
 		_good_for = 0.0
@@ -96,7 +99,7 @@ func _process(delta: float) -> void:
 		_cooldown = maxf(_cooldown, 10.0)
 		return
 	if _cooldown > 0.0:
-		_cooldown -= delta
+		_cooldown -= minf(delta, 0.25)  # the first frame back in the app spans the time away
 		_t = 0.0
 		return  # the frames right after a switch are not sampled
 	_t += delta
@@ -131,6 +134,17 @@ func _process(delta: float) -> void:
 		_good_for = 0.0
 
 
+func _notification(what: int) -> void:
+	if what in [NOTIFICATION_APPLICATION_FOCUS_OUT, NOTIFICATION_APPLICATION_PAUSED,
+			NOTIFICATION_APPLICATION_FOCUS_IN, NOTIFICATION_APPLICATION_RESUMED]:
+		# the main loop stops while the app is away, and the engine's fps count spans the gap on
+		# the way back (1 to 60, by timing): those seconds are not the phone's speed
+		_fps.clear()
+		_t = 0.0
+		_good_for = 0.0
+		_cooldown = maxf(_cooldown, 3.0)
+
+
 func _step(mn: Node, dir: String, avg: float) -> void:
 	print("[native] quality %s to level %d (%.0f fps)" % [dir, level, avg])
 	_apply(mn)
@@ -140,8 +154,9 @@ func _step(mn: Node, dir: String, avg: float) -> void:
 
 
 ## the player's graphics pick (GameHUD's quality button, saved in the profile). The light-world
-## phones stop at Medium, as GameHUD and cycle_quality allow them.
-func _user_tier(_mn: Node) -> int:
+## phones stop at Medium, as GameHUD and cycle_quality allow them. The button shows and steps from
+## this, not from Main's tier, which the ladder moves under it.
+func user_tier() -> int:
 	var t := 2 if ChikFeat.native_hd() else 0
 	var pf = get_tree().get_first_node_in_group("profile")
 	if pf != null and "d" in pf:
@@ -151,7 +166,7 @@ func _user_tier(_mn: Node) -> int:
 
 ## the best (lowest) level the ladder may climb to
 func _ceiling(mn: Node) -> int:
-	return _level_for_tier(_user_tier(mn))
+	return _level_for_tier(user_tier())
 
 
 func _level_for_tier(t: int) -> int:
@@ -163,29 +178,32 @@ func _apply(mn: Node) -> void:
 	if mn.gfx_tier() != tier:
 		mn.set_quality_tier(tier)  # resets scale, shadows, fog for that tier
 	_applied_tier = tier
+	_applied_pick = user_tier()
 	var vp := get_viewport()
 	var ws := DisplayServer.window_get_size()
 	var fhd := clampf(1080.0 / float(maxi(1, mini(ws.x, ws.y))), 0.5, 1.0)
 	var sun = mn.get("_sun")
-	if level < 4:
+	if level < 4 or ChikFeat.native_hd():
 		var sc: float = fhd * [1.0, 0.9, 0.8, 0.7, 0.6][clampi(level, 0, 4)]
-		# the light-world phones keep Main's phone clamp: they got the light world for lack of memory
+		# the light-world phones keep Main's phone clamp (0.5 at Low): they got the light world for
+		# lack of memory
 		vp.scaling_3d_scale = sc if ChikFeat.native_hd() else minf(sc, 0.7)
 	vp.msaa_3d = Viewport.MSAA_2X if (level == 0 and ChikFeat.native_hd()) else Viewport.MSAA_DISABLED
-	if sun is DirectionalLight3D and level <= 3:
+	if sun is DirectionalLight3D:
+		# every level, the last too: the Low tier's own sun (2 cascades to 96 m) costs more than level 3's
 		var d := sun as DirectionalLight3D
-		d.directional_shadow_max_distance = [160.0, 130.0, 100.0, 80.0][level]
+		d.directional_shadow_max_distance = [160.0, 130.0, 100.0, 80.0, 64.0][clampi(level, 0, 4)]
 		d.directional_shadow_mode = (DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS if level <= 1
 			else DirectionalLight3D.SHADOW_ORTHOGONAL)
 		vp.positional_shadow_atlas_size = 2048 if level <= 1 else 1024
 	var env = mn.get("_env")
 	if env is Environment:
 		(env as Environment).ssao_enabled = false  # the Mobile renderer has none; keep the tier from asking
-		if ChikFeat.native_hd():
-			# the fog closes where the terrain stops streaming, so the world has no hard edge
-			var vd := float(ChikFeat.native_view_distance())
-			(env as Environment).fog_depth_begin = vd * 0.55
-			(env as Environment).fog_depth_end = vd * 1.02
+		# the fog closes where the terrain stops streaming, so the world has no hard edge (Main's
+		# phone fog is sized for the per-tier distances the phone no longer streams)
+		var vd := float(ChikFeat.native_view_distance())
+		(env as Environment).fog_depth_begin = vd * 0.55
+		(env as Environment).fog_depth_end = vd * 1.02
 	_set_ranges([1.0, 0.85, 0.7, 0.6, 0.5][clampi(level, 0, 4)])
 	_look(mn, vp)
 
@@ -211,6 +229,13 @@ func _set_ranges(scale: float) -> void:
 
 func _range(g: GeometryInstance3D) -> void:
 	if not is_instance_valid(g) or not g.is_inside_tree():
+		return
+	if not is_instance_valid(_world) or g.get_viewport() != _world.get_viewport():
+		# another camera draws it (the Chikiseum arena's own world 150 m off, a portrait): the
+		# player's distances would hide it there
+		if g.has_meta("chik_range"):
+			g.remove_meta("chik_range")
+			g.visibility_range_end = 0.0
 		return
 	if g.has_meta("chik_range_own"):
 		return

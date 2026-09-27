@@ -30,7 +30,9 @@ on:
         default: '1.0'
   push:
     branches: ['claude/**']
-    paths: ['.github/workflows/ios-native.yml', '.github/workflows/ios-evaluate.yml', 'godot-patch/native/**']
+    # the web-pack edits and the pack itself too: overlay.sha256 pins them (build-native-overlay.py)
+    paths: ['.github/workflows/ios-native.yml', '.github/workflows/ios-evaluate.yml', 'godot-patch/native/**',
+      'godot-patch/ios-*-edits.json', 'godot-patch/apply-ios-*-patch.py', 'realm/index.pck.ios.lite.manifest.json']
 
 permissions:
   contents: read
@@ -170,7 +172,11 @@ jobs:
           perl -e 'alarm 60; exec @ARGV' "$GODOT" --headless --script godot-patch/native/tls-probe.gd
 
       - name: Game pack
+        env:
+          VERSION: ${{ inputs.version || '1.0' }}
         run: |
+          BUILD=$((100 + ${{ github.run_number }}))
+          echo "BUILD=$BUILD" >> "$GITHUB_ENV"
           python3 godot-patch/native/fetch-pack.py "$PACK" pack.zip
           mkdir x && (cd x && unzip -q ../pack.zip)
           # HD art: the website's HD pack's full-resolution textures over the lite ones
@@ -198,22 +204,36 @@ jobs:
           import pathlib,struct,sys
           n=sum(1 for p in pathlib.Path('x/.godot/imported').glob('*.ctex') if struct.unpack('<I',p.read_bytes()[36:40])[0]==0)
           print('ASTC textures in the pack:',n); sys.exit(0 if n>=1000 else 1)"
-          # the committed bytecode must be what build-native-overlay.py makes from the committed sources
-          shasum -a 256 --quiet -c godot-patch/native/overlay.sha256 || { echo "::error::overlay is stale: run build-native-overlay.py and commit overlay/ and overlay.sha256"; exit 1; }
+          # the committed bytecode must be what build-native-overlay.py makes from the committed sources,
+          # over the very pack (pack.zip) it was built against; and nothing unlisted may ride along
+          shasum -a 256 --quiet -c godot-patch/native/overlay.sha256 || { echo "::error::overlay is stale (or the live pack is not the realm/ build it was made for): run build-native-overlay.py and commit overlay/ and overlay.sha256"; exit 1; }
+          diff <(find godot-patch/native/overlay godot-patch/native/src godot-patch/native/assets -type f | LC_ALL=C sort) \
+            <(sed 's/^[0-9a-f]*  //' godot-patch/native/overlay.sha256 | grep -E '^godot-patch/native/(overlay|src|assets)/' | LC_ALL=C sort) \
+            || { echo "::error::files in overlay/, src/ or assets/ that overlay.sha256 does not list (or the reverse): run build-native-overlay.py and commit the result, deletions too"; exit 1; }
           cp -R godot-patch/native/overlay/. x/
+          # the app's version and build, for NativeVitals' reports (the pack's own project has none)
+          python3 - "x/override.cfg" "$VERSION ($BUILD)" <<'PY'
+          import re, sys
+          p, v = sys.argv[1], sys.argv[2]
+          s = open(p).read()
+          line = f'config/version="{v}"\n'
+          s, n = re.subn(r"^\[application\]\n", lambda m: m.group(0) + line, s, count=1, flags=re.M)
+          open(p, "w").write(s if n else s + "\n[application]\n" + line)
+          PY
+          grep -n "config/version" x/override.cfg
           "$GODOT" --headless --script godot-patch/native/zip2pck.gd -- "$PWD/x" "$PWD/Chikoria.pck"
           ls -la Chikoria.pck
 
       - name: Xcode project (Godot iOS exporter)
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          VERSION: ${{ inputs.version || '1.0' }}
+          VERSION: ${{ inputs.version || '1.0' }}  # also in the Game pack step's override.cfg
         run: |
           cp -R godot-patch/native/shell shell
           cp ios/Chikoria/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png shell/icon1024.png
           TEAM="${APPLE_TEAM_ID:-AAAAAAAAAA}"
           sed -i '' -e "s|__TEAM_ID__|$TEAM|" -e "s|__TEMPLATE__|$PWD/template/godot_ios.zip|" \
-            -e "s|__VERSION__|$VERSION|" -e "s|__BUILD__|$((100 + ${{ github.run_number }}))|" shell/export_presets.cfg
+            -e "s|__VERSION__|$VERSION|" -e "s|__BUILD__|$BUILD|" shell/export_presets.cfg
           mkdir -p shell/build
           "$GODOT" --headless --path shell --import || true
           "$GODOT" --headless --path shell --export-release "iOS" build/Chikoria.ipa

@@ -11,9 +11,16 @@ src/*.gd, compiles every script that changed with GDRE Tools (bytecode 4.6.0) an
 files, the .remap for each new script and override.cfg into overlay/. The recovered tree itself is
 not touched.
 
+Before compiling, it checks that `recovered` carries every edit in ../ios-trading-edits.json and
+../ios-review-edits.json, so an App Review fix that is committed but not yet applied there cannot
+be compiled out of the overlay (the overlay's scripts replace the pack's own copies).
+
 It also writes overlay.sha256: the SHA-256 of every input in this repository (src/, assets/, the
-native-*.json edits, this script) and every file it produced. CI checks it (shasum -a 256 -c), so
-an edit pushed without rebuilding the overlay fails the build instead of shipping stale bytecode.
+native-*.json edits, this script, the ios-*-edits.json edits and the scripts that apply them) and
+every file it produced, plus the SHA-256 of the published lite pack in ../../realm/ as `pack.zip`.
+CI checks it (shasum -a 256 -c) right after fetch-pack.py downloads the live pack to pack.zip, so an
+edit pushed without rebuilding the overlay, or a pack republished since, fails the build instead of
+shipping stale bytecode. (Locally, without pack.zip: shasum -a 256 -c --ignore-missing.)
 """
 import hashlib
 import importlib.util
@@ -72,11 +79,13 @@ rendering_device/fallback_to_opengl3=true
 """
 
 
+PACK_MANIFEST = "realm/index.pck.ios.lite.manifest.json"  # the pack CI fetches (ios-native.yml PACK)
 TEX_READ = re.compile(r"(?<![\w.)\]])\b(\w+)\.get_image\(\)")
 
 
 def main() -> int:
 	recovered, gdre = Path(sys.argv[1]), Path(sys.argv[2])
+	_check_recovered(recovered)
 	out = HERE / "overlay"
 	with tempfile.TemporaryDirectory() as td:
 		work = Path(td)
@@ -141,13 +150,39 @@ def main() -> int:
 	return 0
 
 
+def _check_recovered(recovered: Path) -> None:
+	"""Every web-pack edit must already be in `recovered`: the overlay is compiled from it.
+
+	A trading edit a later review edit rewrote is the one exception (its new text is gone by design).
+	"""
+	trading = json.loads((HERE.parent / "ios-trading-edits.json").read_text(encoding="utf-8"))
+	review = json.loads((HERE.parent / "ios-review-edits.json").read_text(encoding="utf-8"))
+	missing = []
+	for e, later in [(e, review) for e in trading] + [(e, []) for e in review]:
+		if _trading._find((recovered / e["file"]).read_text(encoding="utf-8"), e["new"]) is not None:
+			continue
+		if any(r["file"] == e["file"] and (_trading._find(r["old"], e["new"]) is not None
+				or _trading._find(e["new"], r["old"]) is not None) for r in later):
+			continue
+		missing.append(f"{e['file']}: {e['why'][:100]}")
+	if missing:
+		raise SystemExit("recovered lacks these web-pack edits (run ../apply-ios-*-patch.py on it first):\n  "
+			+ "\n  ".join(missing))
+
+
 def _write_manifest() -> None:
 	root = HERE.parent.parent  # the repository: shasum -c runs from there
-	files = [HERE / "build-native-overlay.py", HERE.parent / "apply-ios-trading-patch.py"]
+	files = [HERE / "build-native-overlay.py"]
+	files += [HERE.parent / n for n in ("apply-ios-pack-patch.py", "apply-ios-trading-patch.py",
+		"apply-ios-review-patch.py", "ios-trading-edits.json", "ios-review-edits.json")]
 	files += sorted(HERE.glob("native-*.json"))
 	for d in ("src", "assets", "overlay"):  # patched-src/ is not committed
 		files += sorted(f for f in (HERE / d).rglob("*") if f.is_file())
 	lines = [f"{hashlib.sha256(f.read_bytes()).hexdigest()}  {f.relative_to(root).as_posix()}" for f in files]
+	# the lite pack the overlay goes over, as fetch-pack.py writes it in CI (its manifest's sha256 is
+	# of the reassembled file): a republished pack must be matched by a rebuilt overlay
+	pack = json.loads((root / PACK_MANIFEST).read_text())
+	lines.append(f"{pack['sha256']}  pack.zip")
 	(HERE / "overlay.sha256").write_text("\n".join(lines) + "\n")
 	print(f"  overlay.sha256: {len(lines)} files")
 

@@ -5,7 +5,7 @@
 ## HUD scripts:
 ##
 ##   top-left      SETTINGS gear; opening it drops a 2 x 3 grid of the six setting buttons under it,
-##                 with the minimap and the chat beside it
+##                 with the minimap (the Island's Chronicles under it) and the chat beside it
 ##   top centre    the header bar, scaled to fit between the corner buttons, with an ACCOUNT tab where
 ##                 the wallet plaque was, and the "online" pill just under it
 ##   top-right     MENU; the world clock under it; MENU opens the tab column under the
@@ -331,19 +331,37 @@ func _layout(ib: Node) -> void:
 	var col_top := top + BTN + GAP * 1.5
 	_col.position = Vector2(x0, col_top)
 	var side_x := x0 + BTN * 2.0 + GAP * 2.5
-	# the minimap only: the layer's other panels (the "Island's Chronicles" feed, the ping pill) are
-	# desktop extras that would stack onto the joystick on a phone
 	var chat_x := side_x
 	var mmp := _minimap_panel()
 	if mmp != null and mmp.visible:
 		_put(mmp, Vector2(side_x, col_top))
 		chat_x = side_x + mmp.size.x + GAP
+	# under the minimap, the "Island's Chronicles" feed folded to its title: the only way into the
+	# chronicles and their unread badge (its rows would stack onto the joystick). The ping pill is a
+	# desktop extra
 	var mml := get_tree().get_first_node_in_group("minimap")
 	if mml != null:
-		for n in ["_feed_panel", "_ping_panel"]:
+		for n in ["_ping_panel", "_feed_box", "_feed_rule"]:
 			var c = mml.get(n)
-			if c is Control and is_instance_valid(c) and (c as Control).visible:
-				(c as Control).visible = false
+			if c is CanvasItem and is_instance_valid(c) and (c as CanvasItem).visible:
+				(c as CanvasItem).visible = false
+		var feed = mml.get("_feed_panel")
+		if feed is Control and is_instance_valid(feed):
+			var fp := feed as Control
+			var show := mmp != null and mmp.visible  # the game hides the minimap under its popups
+			if fp.visible != show:
+				fp.visible = show
+			if show:
+				var rule = mml.get("_feed_rule")  # its column: the title, centred in the tap-sized pill
+				if rule is Control and is_instance_valid(rule) and rule.get_parent() is BoxContainer:
+					var fcol := rule.get_parent() as BoxContainer
+					if fcol.alignment != BoxContainer.ALIGNMENT_CENTER:
+						fcol.alignment = BoxContainer.ALIGNMENT_CENTER
+				_put(fp, Vector2(side_x, mmp.position.y + mmp.size.y + GAP))
+				var fmin := fp.get_combined_minimum_size()
+				var fsz := Vector2(maxf(mmp.size.x, fmin.x), fmin.y)
+				if not fp.size.is_equal_approx(fsz):
+					fp.size = fsz
 	var cp := _chat_panel()
 	if cp != null and is_instance_valid(cp):
 		_put(cp, Vector2(chat_x, col_top))

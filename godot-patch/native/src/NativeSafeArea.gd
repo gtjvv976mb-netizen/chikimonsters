@@ -11,7 +11,7 @@
 ## anything centred is untouched. Backdrops (ColorRect / TextureRect) stay full-bleed.
 ##
 ## The game sets its own offsets when it builds or re-lays out a panel; each pass takes whatever the
-## game last wrote as the base and re-applies the inset, so the two never fight.
+## game last wrote to an edge as that edge's base and re-applies the inset, so the two never fight.
 ## CHIK_SAFE_TEST="left,right,bottom" (points) simulates a phone's insets on a desktop.
 extends Node
 
@@ -77,9 +77,16 @@ func _fit(c: Control) -> void:
 	var cur := Vector4(c.offset_left, c.offset_top, c.offset_right, c.offset_bottom)
 	var base := cur
 	if c.has_meta(META):
+		# edge by edge: an edge still where the last pass put it re-applies to its base (the insets may
+		# have changed); only an edge the game rewrote takes a new base. The game often rewrites a
+		# single edge (the Menu's tab column its top, the tab panel its bottom), and re-basing all four
+		# then took the already-inset sides as the base and added the inset a second time
 		var m: Array = c.get_meta(META)
-		if cur == m[1]:
-			base = m[0]  # still ours: re-apply to the base (the insets may have changed)
+		var was: Vector4 = m[0]
+		var ours: Vector4 = m[1]
+		for i in 4:
+			if is_equal_approx(cur[i], ours[i]):
+				base[i] = was[i]
 	var want := base
 	if is_zero_approx(c.anchor_left):
 		want.x += _insets.x

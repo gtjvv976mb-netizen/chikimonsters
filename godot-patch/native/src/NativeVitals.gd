@@ -17,6 +17,7 @@ const EVERY := 60.0
 const RUNNING := "user://vitals_running"
 
 var _session := ""
+var _app := ""  # "1.4 (130)": CI writes it into the pack's override.cfg; empty in a local build
 var _started := 0
 var _fps_seconds: Array[float] = []
 var _slow_frames := 0
@@ -40,6 +41,9 @@ func _ready() -> void:
 		return
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_session = Crypto.new().generate_random_bytes(8).hex_encode()
+	_app = str(ProjectSettings.get_setting("application/config/version", ""))
+	if _app.is_empty():
+		_app = "unversioned"
 	_started = Time.get_ticks_msec()
 	_prev_unclean = FileAccess.file_exists(RUNNING)
 	if _prev_unclean:
@@ -48,10 +52,10 @@ func _ready() -> void:
 			_prev_last = last
 	_mark()
 	_http = HTTPRequest.new()
-	_http.timeout = 20.0
-	# its own thread: the request keeps going while the main loop is stopped (focus out) or busy
-	# (the world build right after launch)
-	_http.use_threads = true
+	# Long enough for the backend to wake from idle. Polled on the main loop, never threaded: a
+	# threaded request's timeout joins its thread on the main thread, and that thread sits in a
+	# blocking read until the server answers, so a slow or lost response froze the game.
+	_http.timeout = 50.0
 	add_child(_http)
 	# A launch after one that died reports it now, not in 20 s: a phone that is memory-killed
 	# while the world loads would otherwise never get a report out.
@@ -80,7 +84,7 @@ func _mark() -> void:
 	var f := FileAccess.open(RUNNING, FileAccess.WRITE)
 	if f != null:
 		f.store_string(JSON.stringify({
-			"session": _session, "uptime": int((Time.get_ticks_msec() - _started) / 1000),
+			"session": _session, "app": _app, "uptime": int((Time.get_ticks_msec() - _started) / 1000),
 			"availMB": int(float(mem.get("available", 0)) / 1048576.0),
 			"vramMB": int(Performance.get_monitor(Performance.RENDER_VIDEO_MEM_USED) / 1048576),
 			"fps": Engine.get_frames_per_second(), "scene": _scene_name(),
@@ -97,7 +101,7 @@ func _notification(what: int) -> void:
 		_unmark()
 	elif what == NOTIFICATION_APPLICATION_FOCUS_OUT or what == NOTIFICATION_APPLICATION_PAUSED:
 		# inactive: the app switcher, a call, the lock screen; a kill from here is a close. The
-		# report goes now (on its thread), since the main loop stops with focus out.
+		# report is taken now; the main loop stops with focus out, so it leaves on the way back.
 		_unmark()
 		if Time.get_ticks_msec() - _last_send > 10000:
 			_send()
@@ -150,7 +154,7 @@ func _send() -> void:
 	var body := {
 		"session": _session,
 		"native": true,
-		"app": "%s (%s)" % [ProjectSettings.get_setting("application/config/version", "?"), OS.get_name()],
+		"app": _app,
 		"model": OS.get_model_name(),
 		"ios": OS.get_version(),
 		"ramGB": snappedf(float(mem.get("physical", 0)) / 1073741824.0, 0.1),
