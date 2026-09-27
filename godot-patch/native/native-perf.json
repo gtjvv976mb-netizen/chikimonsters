@@ -1,0 +1,20 @@
+[
+ {
+  "file": "Main.gd",
+  "why": "native perf: 32-voxel terrain mesh blocks (one quarter of the draw calls of 16)",
+  "old": "\t\tterrain.mesh_block_size = 32 if OS.get_environment(\"CHIK_BLOCK32\") == \"1\" else 16",
+  "new": "\t\t# the phone: 32-voxel mesh blocks \u2014 a quarter of the draw calls of 16, the web default\n\t\tterrain.mesh_block_size = 32 if (OS.get_environment(\"CHIK_BLOCK32\") == \"1\" or ChikFeat.native()) else 16"
+ },
+ {
+  "file": "Main.gd",
+  "why": "native perf: one terrain streaming distance, set before the terrain starts",
+  "old": "\tterrain.max_view_distance = 1050",
+  "new": "\t# the phone streams one fixed distance, never changed while it plays: Voxel Tools 1.6 loses track\n\t# of 32-voxel blocks queued for meshing when the view distance moves under them (holes in the\n\t# ground). The quality ladder trims detail with other settings instead.\n\tterrain.max_view_distance = ChikFeat.native_view_distance() if ChikFeat.native() else 1050"
+ },
+ {
+  "file": "Main.gd",
+  "why": "native perf: the graphics tier leaves the phone's terrain distance alone",
+  "old": "\t\tterr.set(\"max_view_distance\", (208 if _phone else 288) if low\n\t\t\telse ((320 if _phone else 640) if _gfx_tier == 1 else (420 if _phone else 1050)))",
+  "new": "\t\tif not ChikFeat.native():\n\t\t\tterr.set(\"max_view_distance\", (208 if _phone else 288) if low\n\t\t\t\telse ((320 if _phone else 640) if _gfx_tier == 1 else (420 if _phone else 1050)))"
+ }
+]

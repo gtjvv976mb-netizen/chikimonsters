@@ -43,12 +43,13 @@ func _ready() -> void:
 	_corner = Button.new()
 	_corner.text = "Account"
 	_corner.focus_mode = Control.FOCUS_NONE
+	# top right, 44 pt tall on an iPhone; NativeSafeArea keeps it clear of the Dynamic Island
 	_corner.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	_corner.offset_left = -118
-	_corner.offset_top = 8
+	_corner.offset_left = -150
+	_corner.offset_top = 6
 	_corner.offset_right = -10
-	_corner.offset_bottom = 48
-	_corner.add_theme_font_size_override("font_size", 18)
+	_corner.offset_bottom = 68
+	_corner.add_theme_font_size_override("font_size", 22)
 	_corner.pressed.connect(show_account)
 	add_child(_corner)
 	if ChikFeat.native_account().is_empty():
@@ -61,7 +62,7 @@ func _ready() -> void:
 	var vitals := Timer.new()
 	vitals.wait_time = 30.0
 	vitals.timeout.connect(func():
-		print("[native] %d fps, %d MB" % [Engine.get_frames_per_second(), OS.get_static_memory_usage() / 1048576]))
+		print("[native] %d fps, %d MB free" % [Engine.get_frames_per_second(), int(OS.get_memory_info().get("available", 0)) / 1048576]))
 	add_child(vitals)
 	vitals.start()
 
@@ -279,6 +280,7 @@ func _screen(title: String) -> VBoxContainer:
 		_root.queue_free()
 	_root = Control.new()
 	_root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_root.set_meta("safe_area_ignore", true)  # full-bleed backdrop; the card itself is centred
 	_root.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(_root)
 	var bg := ColorRect.new()

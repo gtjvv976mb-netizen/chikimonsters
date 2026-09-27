@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  The app's privacy manifest. Add it to the app target in Xcode (File → New → File → App Privacy),
-  or drag this one in and make sure it is in "Copy Bundle Resources".
+  The web-view shell's privacy manifest. Add it to the app target in Xcode (File → New → File →
+  App Privacy), or drag this one in and make sure it is in "Copy Bundle Resources".
 
   THIS FILE DESCRIBES THE APP AS IT IS BUILT TODAY, and it has to stay true as the app changes.
   Two of these answers in particular are only correct because of decisions made elsewhere:
@@ -22,7 +22,10 @@
           saw (load stages and timings, web content process deaths, the page's errors, hardware
           model, iOS version) to /client-diag under a random per-launch id — no account, no device
           id. See ShellModel's "Load diagnostics".
-      These must match the App Privacy answers in App Store Connect (APPSTORE.md §3).
+      These must match the App Privacy answers in App Store Connect (APPSTORE.md §3). Those answers
+      also list Crash Data and Performance Data: the native build (godot-patch/native) sends them and
+      declares them in its own manifest (privacy/collected_data/* in shell/export_presets.cfg). This
+      shell sends neither, so they are not declared here.
 
   REQUIRED-REASON APIS: the app links UserDefaults through Foundation (SwiftUI and WKWebView both
   touch it), which is a required-reason API even when your own code never calls it directly. CA92.1

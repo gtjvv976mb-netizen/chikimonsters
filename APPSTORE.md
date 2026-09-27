@@ -416,7 +416,12 @@ of the two surfaces, which is worth fixing at the source when the project is rec
 
 ## 3. App Privacy ("nutrition label")
 
-These must agree with `ios/Chikoria/PrivacyInfo.xcprivacy`. The app can now create its own account and syncs the save to it, so it **does** collect data. All of it except load diagnostics is linked to the player; all of it is used only for App Functionality, and never used for tracking.
+These answers cover every build uploaded to the app record, so they are the union of two privacy manifests, and each manifest must stay true for its own build:
+
+- the **native build** (the game itself): generated at export from the `privacy/collected_data/*` keys in `godot-patch/native/shell/export_presets.cfg`. It declares all six rows below.
+- the **web-view shell** (`ios/Chikoria`): `ios/Chikoria/PrivacyInfo.xcprivacy`. It declares only User ID, Device ID, Gameplay Content and Other Diagnostic Data, because the shell sends no crash or performance reports. Do not add the native-only rows to it, and do not drop them from this table because that file lacks them.
+
+The app can now create its own account and syncs the save to it, so it **does** collect data. All of it except load diagnostics is linked to the player; all of it is used only for App Functionality, and never used for tracking.
 
 | Question | Answer |
 |---|---|
@@ -424,11 +429,13 @@ These must agree with `ios/Chikoria/PrivacyInfo.xcprivacy`. The app can now crea
 | Identifiers → **User ID** | Collected, linked to the user, App Functionality, not tracking. This is the account id: the app can create one, and it travels with every save. |
 | Identifiers → **Device ID** | Collected, linked, App Functionality, not tracking. This is a random id made on first launch (`LinkKeychain.swift`) so a device can be listed and revoked. It is not the IDFA. |
 | Other Data → **Gameplay Content** | Collected, linked, App Functionality, not tracking. This is the save: creatures, items and progress, synced so the player can continue on the website. |
-| Diagnostics → **Other Diagnostic Data** | Collected, **not linked** to the user, App Functionality, not tracking. When the game fails to load, the app reports the load stages, crashes of the game's web view, the page's errors, the iPhone model and iOS version under a random per-launch id (`/client-diag`). |
+| Diagnostics → **Other Diagnostic Data** | Collected, **not linked** to the user, App Functionality, not tracking. When the game fails to load, the app reports the load stages, crashes of the game's web view, the page's errors, the iPhone model and iOS version under a random per-launch id (`/client-diag`). The native build's reports (`NativeVitals.gd`) carry the iPhone model and iOS version too, plus its RAM, screen size and safe area, and the app version and build. |
+| Diagnostics → **Crash Data** | Collected, **not linked**, App Functionality, not tracking. Native build: when the previous launch ended without closing (a crash or an iOS memory kill), the next launch reports that, with the last breadcrumb of the dead session (uptime, free memory, frame rate, scene, quality level). Same random per-launch id, no account (`NativeVitals.gd`). |
+| Diagnostics → **Performance Data** | Collected, **not linked**, App Functionality, not tracking. Native build: once a minute, frame rate (now, average, worst second), slow frames, memory, draw calls and the quality settings in force (`NativeVitals.gd`). |
 | Does this app use data for tracking? | **No** |
 | Third-party SDKs | **None**: the app links no analytics, ads or attribution framework. |
 
-**Adding telemetry changes these answers.** If anything is added later, crash reporting included, both this table and the manifest must change.
+**Adding telemetry changes these answers.** If anything is added later, crash reporting included, both this table and the manifest of the build that sends it must change.
 
 ---
 
