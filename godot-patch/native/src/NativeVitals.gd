@@ -33,7 +33,9 @@ var _grace := 0.0  # seconds after a return to the foreground that are not sampl
 
 
 func _ready() -> void:
-	if not ChikFeat.native():
+	# phones only: a desktop test run (CHIK_NATIVE_TEST) or the simulator, whose model is its CPU
+	# ("arm64"), would report its own numbers as the app's
+	if not ChikFeat.native() or not OS.has_feature("ios") or not OS.get_model_name().begins_with("iP"):
 		queue_free()
 		return
 	process_mode = Node.PROCESS_MODE_ALWAYS
